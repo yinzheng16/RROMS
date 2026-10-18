@@ -50,24 +50,4 @@ public static class ReservationSeed
 
         db.SaveChanges();
     }
-
-    public static void UpdateTablePhotoPaths(ApplicationDbContext db)
-    {
-        var tables = db.RestaurantTables.ToList();
-
-        foreach (var table in tables)
-        {
-            table.PhotoPath = table.Type switch
-            {
-                TableType.Counter => "/images/tables/counter.jpg",
-                TableType.Double => "/images/tables/double.jpg",
-                TableType.Standard => "/images/tables/standard.jpg",
-                TableType.Vip => "/images/tables/vip.jpg",
-                TableType.Vvip => "/images/tables/vvip.jpg",
-                _ => table.PhotoPath
-            };
-        }
-
-        db.SaveChanges();
-    }
 }

@@ -81,9 +81,16 @@ public class ReservationService : IReservationService
         {
             _db.RestaurantTables.Add(new RestaurantTable
             {
-                TableNumber = number, Type = input.Type, MinGuests = input.MinGuests, Capacity = input.Capacity,
-                MinimumSpend = input.MinimumSpend, Description = input.Description, DiningAreaId = input.DiningAreaId,
-                IsActive = input.IsActive, Status = TableStatus.Available
+                TableNumber = number,
+                Type = input.Type,
+                MinGuests = input.MinGuests,
+                Capacity = input.Capacity,
+                MinimumSpend = input.MinimumSpend,
+                Description = input.Description,
+                DiningAreaId = input.DiningAreaId,
+                IsActive = input.IsActive,
+                Status = TableStatus.Available,
+                PhotoPath = TablePhotoPath(input.Type)
             });
         }
         else
@@ -91,6 +98,7 @@ public class ReservationService : IReservationService
             var table = await _db.RestaurantTables.FindAsync(input.Id);
             if (table is null) return ReservationResult.Fail("Table not found.");
             table.TableNumber = number;
+            if (table.Type != input.Type) table.PhotoPath = TablePhotoPath(input.Type);
             table.Type = input.Type;
             table.MinGuests = input.MinGuests;
             table.Capacity = input.Capacity;
@@ -112,9 +120,10 @@ public class ReservationService : IReservationService
         if (await _db.Reservations.AnyAsync(r => r.TableId == id))
             return ReservationResult.Fail($"Table {table.TableNumber} has reservations, so it cannot be deleted. Edit it and untick 'Active' instead.");
 
-        DeletePhotoFile(table.PhotoPath);
+        var oldPhoto = table.PhotoPath;
         _db.RestaurantTables.Remove(table);
         await _db.SaveChangesAsync();
+        await DeleteUnusedPhotoAsync(oldPhoto);
         return ReservationResult.Ok();
     }
 
@@ -135,16 +144,71 @@ public class ReservationService : IReservationService
         await using (var fs = new FileStream(Path.Combine(folder, fileName), FileMode.Create))
             await photo.CopyToAsync(fs);
 
-        DeletePhotoFile(table.PhotoPath);
+        var oldPhoto = table.PhotoPath;
         table.PhotoPath = $"/images/tables/{fileName}";
+        await _db.SaveChangesAsync();
+        await DeleteUnusedPhotoAsync(oldPhoto);
+        return ReservationResult.Ok();
+    }
+
+    // One shared image per table type; updates existing tables of that type.
+    public async Task<ReservationResult> SetTypePhotoAsync(TableType type, IFormFile photo)
+    {
+        if (!Enum.IsDefined(typeof(TableType), type)) return ReservationResult.Fail("Invalid table type.");
+        if (photo is null || photo.Length == 0) return ReservationResult.Fail("Choose a photo first.");
+        var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
+        if (!AllowedPhotoExt.Contains(ext) || photo.ContentType is null || !photo.ContentType.StartsWith("image/"))
+            return ReservationResult.Fail("Only JPG, PNG or WEBP images are allowed.");
+        if (photo.Length > MaxPhotoBytes) return ReservationResult.Fail("Photo is too large. Maximum size is 3 MB.");
+
+        var folder = Path.Combine(_env.WebRootPath, "images", "tables");
+        Directory.CreateDirectory(folder);
+        var fileName = $"{Guid.NewGuid():N}{ext}";
+        await using (var fs = new FileStream(Path.Combine(folder, fileName), FileMode.CreateNew))
+            await photo.CopyToAsync(fs);
+
+        var tables = await _db.RestaurantTables.Where(t => t.Type == type).ToListAsync();
+        if (tables.Count == 0)
+        {
+            File.Delete(Path.Combine(folder, fileName));
+            return ReservationResult.Fail("There are no tables of this type yet.");
+        }
+        var oldPaths = tables.Select(t => t.PhotoPath).Where(x => x != null).Distinct().ToList();
+        foreach (var table in tables) table.PhotoPath = $"/images/tables/{fileName}";
+        await _db.SaveChangesAsync();
+        foreach (var oldPath in oldPaths) await DeleteUnusedPhotoAsync(oldPath);
+        return ReservationResult.Ok();
+    }
+
+    public async Task<ReservationResult> SetTableStatusAsync(int id, TableStatus status)
+    {
+        if (!Enum.IsDefined(typeof(TableStatus), status)) return ReservationResult.Fail("Invalid status.");
+        var table = await _db.RestaurantTables.FindAsync(id);
+        if (table is null) return ReservationResult.Fail("Table not found.");
+        table.Status = status;
         await _db.SaveChangesAsync();
         return ReservationResult.Ok();
     }
 
-    private void DeletePhotoFile(string? path)
+    private static string TablePhotoPath(TableType type) => type switch
     {
-        if (string.IsNullOrEmpty(path) || !path.StartsWith("/images/tables/")) return;
-        var file = Path.Combine(_env.WebRootPath, "images", "tables", Path.GetFileName(path));
+        TableType.Counter => "/images/tables/counter.jpg",
+        TableType.Double => "/images/tables/double.jpg",
+        TableType.Standard => "/images/tables/standard.jpg",
+        TableType.Vip => "/images/tables/vip.jpg",
+        TableType.Vvip => "/images/tables/vvip.jpg",
+        _ => ""
+    };
+
+    // Never delete the five Git-shared sample images or a photo referenced by another table.
+    private async Task DeleteUnusedPhotoAsync(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !path.StartsWith("/images/tables/", StringComparison.Ordinal)) return;
+        var fileName = Path.GetFileName(path);
+        if (new[] { "counter.jpg", "double.jpg", "standard.jpg", "vip.jpg", "vvip.jpg" }
+            .Contains(fileName, StringComparer.OrdinalIgnoreCase)) return;
+        if (await _db.RestaurantTables.AnyAsync(t => t.PhotoPath == path)) return;
+        var file = Path.Combine(_env.WebRootPath, "images", "tables", fileName);
         if (File.Exists(file)) File.Delete(file);
     }
 

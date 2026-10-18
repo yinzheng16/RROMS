@@ -15,6 +15,8 @@ public interface IReservationService
     Task<ReservationResult> SaveTableAsync(RestaurantTable input);
     Task<ReservationResult> DeleteTableAsync(int id);
     Task<ReservationResult> SetTablePhotoAsync(int tableId, IFormFile photo);
+    Task<ReservationResult> SetTypePhotoAsync(TableType type, IFormFile photo);
+    Task<ReservationResult> SetTableStatusAsync(int id, TableStatus status);
 
     /// <summary>Always returns 7 rows (Monday to Sunday).</summary>
     Task<List<OperatingHour>> GetOperatingHoursAsync();

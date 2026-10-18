@@ -83,6 +83,12 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostDeleteTableAsync(int id) =>
         Done(await _service.DeleteTableAsync(id), "Table deleted.");
 
+    public async Task<IActionResult> OnPostTypePhotoAsync(TableType type, IFormFile? photo) =>
+        Done(await _service.SetTypePhotoAsync(type, photo!), "Table type photo updated on this computer.");
+
+    public async Task<IActionResult> OnPostStatusAsync(int id, TableStatus status) =>
+        Done(await _service.SetTableStatusAsync(id, status), "Table status updated.");
+
     public async Task<IActionResult> OnPostPhotoAsync(int id, IFormFile? photo) =>
         Done(await _service.SetTablePhotoAsync(id, photo!), "Photo updated.");
 

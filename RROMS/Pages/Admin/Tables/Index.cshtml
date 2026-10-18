@@ -92,69 +92,131 @@
     </div>
 </div>
 
+@{
+    var typeNames = new Dictionary<TableType, string>
+    {
+        [TableType.Counter] = "Counter seat",
+        [TableType.Double] = "Table for two",
+        [TableType.Standard] = "Standard table",
+        [TableType.Vip] = "VIP room",
+        [TableType.Vvip] = "VVIP room"
+    };
+    var sampleImages = new Dictionary<TableType, string>
+    {
+        [TableType.Counter] = "/images/tables/counter.jpg",
+        [TableType.Double] = "/images/tables/double.jpg",
+        [TableType.Standard] = "/images/tables/standard.jpg",
+        [TableType.Vip] = "/images/tables/vip.jpg",
+        [TableType.Vvip] = "/images/tables/vvip.jpg"
+    };
+}
+<style>
+    .yoru-type-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
+    .yoru-type-card { border:1px solid #e5d9c9; border-radius:9px; overflow:hidden; background:#fffdfa; min-width:0; }
+    .yoru-type-image { width:100%; height:135px; object-fit:cover; background:#eee8df; }
+    .yoru-type-body { padding:13px; }
+    .yoru-type-title { font-weight:700; margin:0; }
+    .yoru-type-meta { color:#796e62; font-size:.86rem; margin:7px 0 12px; }
+    .yoru-type-actions { display:flex; flex-wrap:wrap; gap:7px; }
+    .yoru-type-detail { margin-top:18px; border:1px solid #e5d9c9; border-radius:9px; padding:18px; background:#fffdfa; }
+    .yoru-status-select { min-width:145px; }
+    @@media(max-width:1200px) { .yoru-type-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    @@media(max-width:720px) { .yoru-type-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @@media(max-width:450px) { .yoru-type-grid { grid-template-columns:1fr; } }
+</style>
 <div class="card">
     <div class="card-body">
-        <h2 class="h5 mb-3">Tables and rooms</h2>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead><tr><th>Table</th><th>Type</th><th>Area</th><th>Seats</th><th>Minimum spend</th><th>Status</th><th>Photo</th><th></th></tr></thead>
-                <tbody>
-                    @foreach (var t in Model.AllTables)
-                    {
-                        var area = Model.Areas.First(a => a.Id == t.DiningAreaId);
-                        <tr>
-                            <td class="fw-semibold">@t.TableNumber</td>
-                            <td>@TableTypeInfo.Label(t.Type)</td>
-                            <td>@area.Name</td>
-                            <td>@(t.MinGuests == t.Capacity ? t.Capacity.ToString() : $"{t.MinGuests}-{t.Capacity}")</td>
-                            <td>@if (t.MinimumSpend > 0) {
-                                <span class="fw-bold text-danger">@TableTypeInfo.Rm(t.MinimumSpend)</span>
-                            } else
-                            {
-
-                                <span>-</span>
-                            }
-                        </td>
-                        <td><span class="status-badge status-@t.Status">@t.Status</span>@if (!t.IsActive) {
-                            <span class="status-badge status-Cancelled">Inactive</span>
-                        }
-                    </td>
-                    <td>@if (!string.IsNullOrEmpty(t.PhotoPath)) {
-                        <a href="@t.PhotoPath" target="_blank" rel="noopener">View</a>
-                    } else
-                    {
-
-                        <span>None</span>
-                    }
-                </td>
-                <td class="text-end text-nowrap">
-                    <form method="post" asp-page-handler="Photo" enctype="multipart/form-data" class="d-inline">
-                        <input type="hidden" name="id" value="@t.Id" />
-                        <label class="btn btn-sm btn-outline-secondary mb-0">
-                            Photo
-                            <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" hidden onchange="this.form.submit()" />
-                        </label>
-                    </form>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tableModal"
-                            data-id="@t.Id" data-number="@t.TableNumber" data-type="@((int)t.Type)" data-area="@t.DiningAreaId"
-                            data-min="@t.MinGuests" data-max="@t.Capacity" data-spend="@t.MinimumSpend.ToString("0")" data-desc="@t.Description" data-active="@t.IsActive.ToString().ToLower()">
-                        Edit
-                    </button>
-                    <form method="post" asp-page-handler="DeleteTable" class="d-inline" onsubmit="return confirm('Delete table @t.TableNumber?');">
-                        <input type="hidden" name="id" value="@t.Id" />
-                        <button class="btn btn-sm btn-outline-secondary">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        }
-        @if (!Model.AllTables.Any())
+        <h2 class="h5 mb-1">Table types</h2>
+        <p class="text-muted mb-3">Select a table type to manage individual tables and their status.</p>
+        <div class="yoru-type-grid">
+            @foreach (var type in Enum.GetValues<TableType>())
+            {
+                var tables = Model.AllTables.Where(t => t.Type == type).ToList();
+                var imagePath = tables.Select(t => t.PhotoPath).FirstOrDefault(x => !string.IsNullOrEmpty(x)) ?? sampleImages[type];
+                var sectionId = $"tables-type-{(int)type}";
+                var isRoom = type == TableType.Vip || type == TableType.Vvip;
+                var unit = isRoom ? (tables.Count == 1 ? "room" : "rooms") : (tables.Count == 1 ? "table" : "tables");
+                var guestText = tables.Count == 0 ? "No tables" :
+                    tables.Min(t => t.MinGuests) == tables.Max(t => t.Capacity)
+                        ? $"{tables.Min(t => t.MinGuests)} guest"
+                        : $"{tables.Min(t => t.MinGuests)}–{tables.Max(t => t.Capacity)} guests";
+                <div class="yoru-type-card">
+                    <img class="yoru-type-image" src="@imagePath" alt="@typeNames[type]" onerror="this.style.visibility='hidden'" />
+                    <div class="yoru-type-body">
+                        <p class="yoru-type-title">@typeNames[type]</p>
+                        <p class="yoru-type-meta">@tables.Count @unit · @guestText</p>
+                        <div class="yoru-type-actions">
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#@sectionId" aria-expanded="false" aria-controls="@sectionId">
+                                @(type == TableType.Vip || type == TableType.Vvip ? "Manage rooms" : "Manage tables") </button>
+                            <form method="post" asp-page-handler="TypePhoto" enctype="multipart/form-data">
+                                <input type="hidden" name="type" value="@type" />
+                                <label class="btn btn-outline-secondary btn-sm mb-0">
+                                    Change photo
+                                    <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" hidden onchange="this.form.submit()" />
+                                </label>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        @foreach (var type in Enum.GetValues<TableType>())
         {
-            <tr><td colspan="8">No tables yet.</td></tr>
+            var tables = Model.AllTables.Where(t => t.Type == type).ToList();
+            var isRoom = type == TableType.Vip || type == TableType.Vvip;
+            var unit = isRoom ? (tables.Count == 1 ? "room" : "rooms") : (tables.Count == 1 ? "table" : "tables");
+            <div class="collapse yoru-type-detail" id="tables-type-@((int)type)">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h5 mb-0">@typeNames[type] — @tables.Count @unit</h3>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#tables-type-@((int)type)">Close</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead><tr><th>Table</th><th>Area</th><th>Seats</th><th>Minimum spend</th><th>Status</th><th>Active</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            @foreach (var t in tables)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@t.TableNumber</td>
+                                    <td>@Model.Areas.First(a => a.Id == t.DiningAreaId).Name</td>
+                                    <td>@(t.MinGuests == t.Capacity ? t.Capacity.ToString() : $"{t.MinGuests}-{t.Capacity}")</td>
+                                    <td>@(t.MinimumSpend > 0 ? TableTypeInfo.Rm(t.MinimumSpend) : "–")</td>
+                                    <td>
+                                        <form method="post" asp-page-handler="Status" class="d-flex gap-2 align-items-center">
+                                            <input type="hidden" name="id" value="@t.Id" />
+                                            <select name="status" class="form-select form-select-sm yoru-status-select" aria-label="Status for @t.TableNumber">
+                                                @foreach (var status in Enum.GetValues<TableStatus>())
+                                                {
+                                                    <option value="@status" selected="@(t.Status == status)">@(status == TableStatus.OutOfService ? "Out of service" : status.ToString())</option>
+                                                }
+                                            </select>
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Save</button>
+                                        </form>
+                                    </td>
+                                    <td>@(t.IsActive ? "Yes" : "No")</td>
+                                    <td class="text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tableModal"
+                                                data-id="@t.Id" data-number="@t.TableNumber" data-type="@((int)t.Type)" data-area="@t.DiningAreaId"
+                                                data-min="@t.MinGuests" data-max="@t.Capacity" data-spend="@t.MinimumSpend.ToString("0")" data-desc="@t.Description" data-active="@t.IsActive.ToString().ToLower()">
+                                            Edit
+                                        </button>
+                                        <form method="post" asp-page-handler="DeleteTable" class="d-inline" onsubmit="return confirm('Delete table @t.TableNumber?');">
+                                            <input type="hidden" name="id" value="@t.Id" />
+                                            <button class="btn btn-sm btn-outline-secondary">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!tables.Any())
+                            {
+                                <tr><td colspan="7">No tables of this type yet.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         }
-    </tbody>
-</table>
-</div>
-</div>
+    </div>
 </div>
 
 <div class="modal fade" id="areaModal" tabindex="-1" aria-labelledby="areaTitle" aria-hidden="true">
