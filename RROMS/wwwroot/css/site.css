@@ -1,31 +1,356 @@
-html {
-  font-size: 14px;
+/* =====================================================================
+   YORU IZAKAYA theme (EN04, Owner: Member 1)
+   Use normal Bootstrap classes in your pages; this file restyles them.
+   Need a new shared style? Ask Member 1 instead of editing this file.
+   ===================================================================== */
+
+:root {
+    --yoru-ink: #191919;          /* Charcoal Black: navbar, footer, headings */
+    --yoru-ink-soft: #242424;
+    --yoru-cream: #F5F0E7;        /* Warm Cream: page background */
+    --yoru-paper: #FCFAF5;        /* cards and inputs on cream */
+    --yoru-line: #E4DACA;         /* borders on cream */
+    --yoru-red: #C83E2D;          /* Vermilion Red: buttons, brand mark */
+    --yoru-red-dark: #A93324;     /* button hover */
+    --yoru-red-text: #B23526;     /* red text/links on cream (readable) */
+    --yoru-gold: #B79B72;         /* Muted Gold: accents on dark only */
+    --yoru-olive: #73766B;        /* Olive Grey: decoration, icons */
+    --yoru-olive-text: #5C5F55;   /* small grey text on cream (readable) */
+
+    --font-display: "Shippori Mincho", "Noto Serif JP", Georgia, serif;
+    --font-body: "Zen Kaku Gothic New", "Segoe UI", system-ui, sans-serif;
+
+    /* Bootstrap overrides */
+    --bs-body-bg: var(--yoru-cream);
+    --bs-body-color: var(--yoru-ink);
+    --bs-body-font-family: var(--font-body);
+    --bs-secondary-color: var(--yoru-olive-text);
+    --bs-border-color: var(--yoru-line);
+    --bs-link-color: var(--yoru-red-text);
+    --bs-link-color-rgb: 178, 53, 38;
+    --bs-link-hover-color: var(--yoru-red-dark);
+    --bs-link-hover-color-rgb: 169, 51, 36;
+    --bs-primary: var(--yoru-red);
+    --bs-primary-rgb: 200, 62, 45;
+    --bs-border-radius: .375rem;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
+html { font-size: 15px; position: relative; min-height: 100%; }
+@media (min-width: 768px) { html { font-size: 16px; } }
 
 body {
-  margin-bottom: 60px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--yoru-cream);
+    color: var(--yoru-ink);
+    font-family: var(--font-body);
 }
 
+.site-main { flex: 1 0 auto; }
+
+h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display-6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+/* Small label above a page title:  <p class="eyebrow">Reservations</p><h1>Today</h1> */
+.eyebrow {
+    font-size: .75rem;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--yoru-red-text);
+    margin-bottom: .35rem;
+    font-weight: 700;
+}
+
+.page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--yoru-line);
+}
+.page-header h1 { margin: 0; font-size: 1.9rem; }
+
+/* ---------- Navbar ---------- */
+.site-nav {
+    background: var(--yoru-ink);
+    border-bottom: 1px solid rgba(183, 155, 114, .25);
+    padding-top: .9rem;
+    padding-bottom: .9rem;
+    --bs-navbar-color: rgba(245, 240, 231, .78);
+    --bs-navbar-hover-color: var(--yoru-gold);
+    --bs-navbar-active-color: var(--yoru-cream);
+}
+
+.site-nav .nav-link {
+    font-size: .78rem;
+    font-weight: 500;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    position: relative;
+}
+@media (min-width: 992px) {
+    .site-nav .navbar-nav .nav-link { padding-left: .9rem; padding-right: .9rem; }
+    .site-nav .nav-link.active::after {
+        content: "";
+        position: absolute;
+        left: .9rem; right: .9rem; bottom: .15rem;
+        height: 2px;
+        background: var(--yoru-red);
+    }
+}
+.site-nav .nav-account { text-transform: none; letter-spacing: .02em; font-size: .9rem; }
+
+.site-nav .nav-icon { font-size: 1.15rem; letter-spacing: 0; position: relative; }
+.nav-badge {
+    position: absolute;
+    top: .2rem; right: .05rem;
+    min-width: 1.05rem; height: 1.05rem;
+    padding: 0 .25rem;
+    border-radius: 1rem;
+    background: var(--yoru-red);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 700;
+    line-height: 1.05rem;
+    text-align: center;
+}
+
+.site-nav .dropdown-menu {
+    --bs-dropdown-bg: var(--yoru-ink-soft);
+    --bs-dropdown-border-color: rgba(183, 155, 114, .3);
+    --bs-dropdown-link-color: var(--yoru-cream);
+    --bs-dropdown-link-hover-bg: #333;
+    --bs-dropdown-link-hover-color: var(--yoru-gold);
+    --bs-dropdown-link-active-bg: var(--yoru-red);
+    --bs-dropdown-divider-bg: rgba(245, 240, 231, .15);
+    font-size: .9rem;
+}
+
+/* ---------- Brand ---------- */
+.brand { display: inline-flex; align-items: center; gap: .7rem; text-decoration: none; }
+.brand-mark {
+    width: 2.6rem; height: 2.6rem;
+    border-radius: 50%;
+    background: var(--yoru-red);
+    color: var(--yoru-cream);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 700;
+    box-shadow: 0 0 0 3px var(--yoru-ink), 0 0 0 4px rgba(183, 155, 114, .55);
+}
+.brand-text { display: inline-flex; flex-direction: column; line-height: 1; }
+.brand-name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: .32em;
+    color: var(--yoru-cream);
+}
+.brand-sub {
+    font-size: .6rem;
+    letter-spacing: .5em;
+    color: var(--yoru-gold);
+    margin-top: .3rem;
+}
+.role-pill {
+    margin-left: .35rem;
+    padding: .2rem .55rem;
+    border: 1px solid var(--yoru-gold);
+    border-radius: 1rem;
+    color: var(--yoru-gold);
+    font-size: .62rem;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+}
+
+/* ---------- Buttons ---------- */
+.btn { font-weight: 500; letter-spacing: .04em; }
+.btn-primary {
+    --bs-btn-bg: var(--yoru-red);
+    --bs-btn-border-color: var(--yoru-red);
+    --bs-btn-hover-bg: var(--yoru-red-dark);
+    --bs-btn-hover-border-color: var(--yoru-red-dark);
+    --bs-btn-active-bg: var(--yoru-red-dark);
+    --bs-btn-active-border-color: var(--yoru-red-dark);
+    --bs-btn-disabled-bg: var(--yoru-red);
+    --bs-btn-disabled-border-color: var(--yoru-red);
+    --bs-btn-focus-shadow-rgb: 200, 62, 45;
+}
+.btn-dark {
+    --bs-btn-bg: var(--yoru-ink);
+    --bs-btn-border-color: var(--yoru-ink);
+}
+.btn-outline-gold {
+    --bs-btn-color: var(--yoru-gold);
+    --bs-btn-border-color: var(--yoru-gold);
+    --bs-btn-hover-color: var(--yoru-ink);
+    --bs-btn-hover-bg: var(--yoru-gold);
+    --bs-btn-hover-border-color: var(--yoru-gold);
+    --bs-btn-active-color: var(--yoru-ink);
+    --bs-btn-active-bg: var(--yoru-gold);
+    --bs-btn-focus-shadow-rgb: 183, 155, 114;
+}
+.btn-outline-secondary {
+    --bs-btn-color: var(--yoru-olive-text);
+    --bs-btn-border-color: #C9C1B3;
+    --bs-btn-hover-bg: var(--yoru-ink);
+    --bs-btn-hover-border-color: var(--yoru-ink);
+}
+
+/* ---------- Cards, tables, forms ---------- */
+.card {
+    --bs-card-bg: var(--yoru-paper);
+    --bs-card-border-color: var(--yoru-line);
+    --bs-card-cap-bg: transparent;
+}
+.card-title { font-family: var(--font-display); }
+
+.table {
+    --bs-table-bg: var(--yoru-paper);
+    --bs-table-striped-bg: #F7F2E9;
+    --bs-table-hover-bg: #F1EADD;
+    --bs-table-border-color: var(--yoru-line);
+}
+.table > thead th {
+    background: #ECE4D6;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--yoru-olive-text);
+    white-space: nowrap;
+}
+
+.form-control, .form-select {
+    background-color: var(--yoru-paper);
+    border-color: #D8CDBB;
+}
+.form-control:focus, .form-select:focus, .form-check-input:focus {
+    border-color: var(--yoru-gold);
+    box-shadow: 0 0 0 .2rem rgba(183, 155, 114, .3);
+}
+.form-check-input:checked { background-color: var(--yoru-red); border-color: var(--yoru-red); }
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+    text-align: start;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+/* ---------- Status badges (same look in every module) ----------
+   <span class="status-badge status-@item.Status">@item.Status</span>          */
+.status-badge {
+    display: inline-block;
+    padding: .25rem .6rem;
+    border-radius: 1rem;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+/* waiting */
+.status-Pending { background: #F3E9D7; color: #6E5A36; border-color: #DCC9A6; }
+/* in progress */
+.status-Confirmed, .status-Seated, .status-Preparing, .status-ReadyToServe, .status-Served {
+    background: #E9EAE4; color: #3F4239; border-color: #C9CBC0;
+}
+/* done / good */
+.status-Completed, .status-Paid { background: #191919; color: #F5F0E7; }
+/* stopped / bad */
+.status-Cancelled, .status-NoShow, .status-Failed { background: #F7E1DD; color: #8E2A1E; border-color: #E9B9B1; }
+.status-Refunded { background: transparent; color: var(--yoru-olive-text); border-color: #C9C1B3; }
+
+/* ---------- Dark section (e.g. home page hero) ----------
+   <section class="section-dark">...</section>  with ViewData["FullWidth"] = true */
+.section-dark {
+    background: var(--yoru-ink);
+    color: var(--yoru-cream);
+}
+.section-dark .eyebrow { color: var(--yoru-gold); }
+.section-dark .text-muted, .section-dark .text-secondary { color: rgba(245, 240, 231, .7) !important; }
+
+/* ---------- Footer ---------- */
+.site-footer {
+    flex-shrink: 0;
+    background: var(--yoru-ink);
+    color: rgba(245, 240, 231, .75);
+    font-size: .9rem;
+    padding-bottom: 1.5rem;
+}
+.site-footer p { margin-bottom: .6rem; }
+.seigaiha-band {
+    height: 34px;
+    margin-bottom: 2.5rem;
+    background-color: var(--yoru-ink);
+    background-image:
+        radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.45) 19% 22%, transparent 23% 38%, rgba(183,155,114,.45) 39% 42%, transparent 43% 58%, rgba(183,155,114,.45) 59% 62%, var(--yoru-ink) 63%),
+        radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.45) 19% 22%, transparent 23% 38%, rgba(183,155,114,.45) 39% 42%, transparent 43% 58%, rgba(183,155,114,.45) 59% 62%, var(--yoru-ink) 63%);
+    background-size: 34px 17px;
+    background-position: 0 0, 17px 8.5px;
+    border-top: 1px solid rgba(183, 155, 114, .3);
+    opacity: .8;
+}
+.brand-footer .brand-mark { box-shadow: none; }
+.footer-tagline {
+    margin-top: 1rem;
+    font-family: var(--font-display);
+    font-size: .9rem;
+    font-style: italic;
+    letter-spacing: .03em;
+    color: rgba(245, 240, 231, .65);
+}
+.footer-heading {
+    font-family: var(--font-body);
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    color: var(--yoru-gold);
+    margin-bottom: .8rem;
+}
+.footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-top: 2.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(245, 240, 231, .12);
+    font-size: .78rem;
+    color: rgba(245, 240, 231, .55);
+}
+.site-footer-slim { padding: 1rem 0; font-size: .78rem; color: rgba(245, 240, 231, .6); }
+
+/* Back office (Staff / Admin): wider area for tables, but still capped
+   so very large monitors don't stretch everything */
+@media (min-width: 1400px) { .container-wide { max-width: 1560px; } }
+
+/* Wide tables scroll sideways on small screens instead of breaking the page:
+   <div class="table-responsive"><table class="table">...</table></div> */
+.back-office .site-main { background: #F8F5EF; }
+
+/* Keyboard focus stays visible everywhere */
+:focus-visible { outline: 2px solid var(--yoru-gold); outline-offset: 2px; }
+
+
+.footer-tagline-jp {
+    margin: 1rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    letter-spacing: .2em;
+    color: var(--yoru-gold);
+}
+
+.footer-tagline-jp + .footer-tagline {
+     margin-top: .2rem;
 }
