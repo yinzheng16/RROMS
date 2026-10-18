@@ -49,6 +49,8 @@ namespace RROMS.Data
             builder.Properties<PaymentStatus>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<NotificationType>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<DayOfWeek>().HaveConversion<string>().HaveMaxLength(10);
+            builder.Properties<TableType>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<TableStatus>().HaveConversion<string>().HaveMaxLength(20);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

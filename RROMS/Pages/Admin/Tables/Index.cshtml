@@ -1,0 +1,254 @@
+﻿@page
+@model RROMS.Pages.Admin.Tables.IndexModel
+@using RROMS.Models
+@{
+    ViewData["Title"] = "Tables and opening hours";
+}
+
+<div class="page-header">
+    <div><p class="eyebrow">Reservations</p><h1>Tables and opening hours</h1></div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tableModal">Add table</button>
+</div>
+
+@if (Model.Message != null)
+{
+    <div class="alert alert-success">@Model.Message</div>
+}
+@if (Model.Error != null)
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 mb-0">Dining areas</h2>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#areaModal">Add area</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead><tr><th>Area</th><th>Description</th><th>Tables</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var a in Model.Areas)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@a.Name</td>
+                                    <td>@a.Description</td>
+                                    <td>@a.Tables.Count</td>
+                                    <td class="text-end text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#areaModal"
+                                                data-id="@a.Id" data-name="@a.Name" data-desc="@a.Description">
+                                            Edit
+                                        </button>
+                                        <form method="post" asp-page-handler="DeleteArea" class="d-inline" onsubmit="return confirm('Delete area @a.Name?');">
+                                            <input type="hidden" name="id" value="@a.Id" />
+                                            <button class="btn btn-sm btn-outline-secondary">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.Areas.Any())
+                            {
+                                <tr><td colspan="4">No dining areas yet. Add one first, then add tables to it.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Opening hours</h2>
+                <form method="post" asp-page-handler="SaveHours">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-3">
+                            <thead><tr><th>Day</th><th>Opens</th><th>Closes</th><th>Closed</th></tr></thead>
+                            <tbody>
+                                @for (var i = 0; i < Model.Hours.Count; i++)
+                                {
+                                    <tr>
+                                        <td>
+                                            @Model.Hours[i].Day
+                                            <input type="hidden" asp-for="Hours[i].Id" />
+                                            <input type="hidden" asp-for="Hours[i].Day" />
+                                        </td>
+                                        <td><input asp-for="Hours[i].OpenTime" type="time" class="form-control form-control-sm" /></td>
+                                        <td><input asp-for="Hours[i].CloseTime" type="time" class="form-control form-control-sm" /></td>
+                                        <td><input asp-for="Hours[i].IsClosed" class="form-check-input" /></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary">Save opening hours</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Tables and rooms</h2>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>Table</th><th>Type</th><th>Area</th><th>Seats</th><th>Minimum spend</th><th>Status</th><th>Photo</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.AllTables)
+                    {
+                        var area = Model.Areas.First(a => a.Id == t.DiningAreaId);
+                        <tr>
+                            <td class="fw-semibold">@t.TableNumber</td>
+                            <td>@TableTypeInfo.Label(t.Type)</td>
+                            <td>@area.Name</td>
+                            <td>@(t.MinGuests == t.Capacity ? t.Capacity.ToString() : $"{t.MinGuests}-{t.Capacity}")</td>
+                            <td>@if (t.MinimumSpend > 0) {
+                                <span class="fw-bold text-danger">@TableTypeInfo.Rm(t.MinimumSpend)</span>
+                            } else
+                            {
+
+                                <span>-</span>
+                            }
+                        </td>
+                        <td><span class="status-badge status-@t.Status">@t.Status</span>@if (!t.IsActive) {
+                            <span class="status-badge status-Cancelled">Inactive</span>
+                        }
+                    </td>
+                    <td>@if (!string.IsNullOrEmpty(t.PhotoPath)) {
+                        <a href="@t.PhotoPath" target="_blank" rel="noopener">View</a>
+                    } else
+                    {
+
+                        <span>None</span>
+                    }
+                </td>
+                <td class="text-end text-nowrap">
+                    <form method="post" asp-page-handler="Photo" enctype="multipart/form-data" class="d-inline">
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <label class="btn btn-sm btn-outline-secondary mb-0">
+                            Photo
+                            <input type="file" name="photo" accept=".jpg,.jpeg,.png,.webp" hidden onchange="this.form.submit()" />
+                        </label>
+                    </form>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tableModal"
+                            data-id="@t.Id" data-number="@t.TableNumber" data-type="@((int)t.Type)" data-area="@t.DiningAreaId"
+                            data-min="@t.MinGuests" data-max="@t.Capacity" data-spend="@t.MinimumSpend.ToString("0")" data-desc="@t.Description" data-active="@t.IsActive.ToString().ToLower()">
+                        Edit
+                    </button>
+                    <form method="post" asp-page-handler="DeleteTable" class="d-inline" onsubmit="return confirm('Delete table @t.TableNumber?');">
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <button class="btn btn-sm btn-outline-secondary">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        @if (!Model.AllTables.Any())
+        {
+            <tr><td colspan="8">No tables yet.</td></tr>
+        }
+    </tbody>
+</table>
+</div>
+</div>
+</div>
+
+<div class="modal fade" id="areaModal" tabindex="-1" aria-labelledby="areaTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" asp-page-handler="SaveArea" class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="areaTitle">Dining area</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" asp-for="AreaForm.Id" />
+                <label asp-for="AreaForm.Name" class="form-label">Name</label>
+                <input asp-for="AreaForm.Name" class="form-control mb-3" required maxlength="60" />
+                <label asp-for="AreaForm.Description" class="form-label">Description (optional)</label>
+                <input asp-for="AreaForm.Description" class="form-control" maxlength="200" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary">Save area</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="tableModal" tabindex="-1" aria-labelledby="tableTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" asp-page-handler="SaveTable" class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="tableTitle">Table or room</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body row g-3">
+                <input type="hidden" asp-for="TableForm.Id" />
+                <div class="col-6">
+                    <label asp-for="TableForm.TableNumber" class="form-label"></label>
+                    <input asp-for="TableForm.TableNumber" class="form-control" required maxlength="10" />
+                </div>
+                <div class="col-6">
+                    <label asp-for="TableForm.Type" class="form-label">Type</label>
+                    <select asp-for="TableForm.Type" asp-items="Html.GetEnumSelectList<TableType>()" class="form-select"></select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="TableForm.DiningAreaId" class="form-label">Dining area</label>
+                    <select asp-for="TableForm.DiningAreaId" class="form-select" asp-items="@(new SelectList(Model.Areas, "Id", "Name"))" required><option value="">Choose...</option></select>
+                </div>
+                <div class="col-4">
+                    <label asp-for="TableForm.MinGuests" class="form-label">Min guests</label>
+                    <input asp-for="TableForm.MinGuests" type="number" min="1" max="20" class="form-control" required />
+                </div>
+                <div class="col-4">
+                    <label asp-for="TableForm.Capacity" class="form-label">Max guests</label>
+                    <input asp-for="TableForm.Capacity" type="number" min="1" max="20" class="form-control" required />
+                </div>
+                <div class="col-4">
+                    <label asp-for="TableForm.MinimumSpend" class="form-label">Min. spend (RM)</label>
+                    <input asp-for="TableForm.MinimumSpend" type="number" min="0" step="50" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="TableForm.Description" class="form-label">Description (shown to customers)</label>
+                    <input asp-for="TableForm.Description" class="form-control" maxlength="300" />
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="TableForm.IsActive" class="form-check-input" />
+                        <label asp-for="TableForm.IsActive" class="form-check-label">Active (can be booked by customers)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary">Save table</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Fill the modals: "Edit" buttons carry data-* values, "Add" buttons carry none (so the form is cleared).
+        function bindModal(modalId, fields) {
+            const m = document.getElementById(modalId);
+            m.addEventListener('show.bs.modal', e => {
+                const d = e.relatedTarget ? e.relatedTarget.dataset : {};
+                for (const [name, key, fallback] of fields) {
+                    const el = m.querySelector('[name="' + name + '"]');
+                    if (!el) continue;
+                    const v = d[key] !== undefined ? d[key] : fallback;
+                    if (el.type === 'checkbox') el.checked = (v === 'true'); else el.value = v;
+                }
+            });
+        }
+        bindModal('areaModal', [['AreaForm.Id','id','0'], ['AreaForm.Name','name',''], ['AreaForm.Description','desc','']]);
+        bindModal('tableModal', [['TableForm.Id','id','0'], ['TableForm.TableNumber','number',''], ['TableForm.Type','type','2'],
+            ['TableForm.DiningAreaId','area',''], ['TableForm.MinGuests','min','1'], ['TableForm.Capacity','max','2'],
+            ['TableForm.MinimumSpend','spend','0'], ['TableForm.Description','desc',''], ['TableForm.IsActive','active','true']]);
+    </script>
+}

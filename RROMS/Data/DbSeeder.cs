@@ -42,9 +42,10 @@ namespace RROMS.Data
             await CreateUserAsync(userManager, "customer@rroms.com", "Test Customer", Roles.Customer);
 
             // ---------- Module sample data goes below this line ----------
-
+            ReservationSeed.Seed(db);
 
             await db.SaveChangesAsync();
+
         }
 
         private static async Task CreateUserAsync(UserManager<ApplicationUser> userManager,
