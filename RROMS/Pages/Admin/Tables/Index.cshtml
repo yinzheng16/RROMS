@@ -42,10 +42,11 @@
                                                 data-id="@a.Id" data-name="@a.Name" data-desc="@a.Description">
                                             Edit
                                         </button>
-                                        <form method="post" asp-page-handler="DeleteArea" class="d-inline" onsubmit="return confirm('Delete area @a.Name?');">
-                                            <input type="hidden" name="id" value="@a.Id" />
-                                            <button class="btn btn-sm btn-outline-secondary">Delete</button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="modal" data-bs-target="#deleteAreaModal"
+                                                data-id="@a.Id" data-name="@a.Name" data-has-tables="@(a.Tables.Any() ? "true" : "false")">
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -116,7 +117,8 @@
     .yoru-type-image { width:100%; height:135px; object-fit:cover; background:#eee8df; }
     .yoru-type-body { padding:13px; }
     .yoru-type-title { font-weight:700; margin:0; }
-    .yoru-type-meta { color:#796e62; font-size:.86rem; margin:7px 0 12px; }
+    .yoru-type-meta { color:#796e62; font-size:.86rem; margin:7px 0 8px; }
+    .yoru-type-spend { color:#8e2b24; font-size:.82rem; font-weight:600; margin:0 0 12px; }
     .yoru-type-actions { display:flex; flex-wrap:wrap; gap:7px; }
     .yoru-type-detail { margin-top:18px; border:1px solid #e5d9c9; border-radius:9px; padding:18px; background:#fffdfa; }
     .yoru-status-select { min-width:145px; }
@@ -145,9 +147,18 @@
                     <div class="yoru-type-body">
                         <p class="yoru-type-title">@typeNames[type]</p>
                         <p class="yoru-type-meta">@tables.Count @unit · @guestText</p>
+                        @if (isRoom && tables.Any())
+                        {
+                            var spends = tables.Select(t => t.MinimumSpend).Distinct().OrderBy(x => x).ToList();
+                            <p class="yoru-type-spend">
+                                Minimum spend:
+                                @(spends.Count == 1
+                                    ? TableTypeInfo.Rm(spends[0])
+                                    : $"{TableTypeInfo.Rm(spends.First())}–{TableTypeInfo.Rm(spends.Last())}")
+                            </p>
+                        }
                         <div class="yoru-type-actions">
-                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#@sectionId" aria-expanded="false" aria-controls="@sectionId">
-                                @(type == TableType.Vip || type == TableType.Vvip ? "Manage rooms" : "Manage tables") </button>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#@sectionId" aria-expanded="false" aria-controls="@sectionId">@(isRoom ? "Manage rooms" : "Manage tables")</button>
                             <form method="post" asp-page-handler="TypePhoto" enctype="multipart/form-data">
                                 <input type="hidden" name="type" value="@type" />
                                 <label class="btn btn-outline-secondary btn-sm mb-0">
@@ -200,10 +211,11 @@
                                                 data-min="@t.MinGuests" data-max="@t.Capacity" data-spend="@t.MinimumSpend.ToString("0")" data-desc="@t.Description" data-active="@t.IsActive.ToString().ToLower()">
                                             Edit
                                         </button>
-                                        <form method="post" asp-page-handler="DeleteTable" class="d-inline" onsubmit="return confirm('Delete table @t.TableNumber?');">
-                                            <input type="hidden" name="id" value="@t.Id" />
-                                            <button class="btn btn-sm btn-outline-secondary">Delete</button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="modal" data-bs-target="#deleteTableModal"
+                                                data-id="@t.Id" data-number="@t.TableNumber" data-kind="@(isRoom ? "room" : "table")">
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             }
@@ -293,6 +305,50 @@
     </div>
 </div>
 
+
+<!-- Delete table/room confirmation -->
+<div class="modal fade" id="deleteTableModal" tabindex="-1" aria-labelledby="deleteTableTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" asp-page-handler="DeleteTable" class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="deleteTableTitle">Confirm deletion</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" id="deleteTableId" />
+                <p>Are you sure you want to delete <strong id="deleteTableName"></strong>?</p>
+                <p class="text-danger small mb-0">This action cannot be undone. Existing reservations may prevent deletion.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete dining area confirmation -->
+<div class="modal fade" id="deleteAreaModal" tabindex="-1" aria-labelledby="deleteAreaTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post" asp-page-handler="DeleteArea" class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="deleteAreaTitle">Delete dining area</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="id" id="deleteAreaId" />
+                <p>Are you sure you want to delete <strong id="deleteAreaName"></strong>?</p>
+                <p id="deleteAreaBlocked" class="text-danger small mb-0 d-none">This dining area still contains tables. Remove or move them before deleting the area.</p>
+                <p id="deleteAreaWarning" class="text-danger small mb-0">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger" id="confirmDeleteArea">Delete area</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         // Fill the modals: "Edit" buttons carry data-* values, "Add" buttons carry none (so the form is cleared).
@@ -312,5 +368,19 @@
         bindModal('tableModal', [['TableForm.Id','id','0'], ['TableForm.TableNumber','number',''], ['TableForm.Type','type','2'],
             ['TableForm.DiningAreaId','area',''], ['TableForm.MinGuests','min','1'], ['TableForm.Capacity','max','2'],
             ['TableForm.MinimumSpend','spend','0'], ['TableForm.Description','desc',''], ['TableForm.IsActive','active','true']]);
+        document.getElementById('deleteTableModal').addEventListener('show.bs.modal', e => {
+            const d = e.relatedTarget.dataset;
+            document.getElementById('deleteTableId').value = d.id;
+            document.getElementById('deleteTableName').textContent = `${d.kind} ${d.number}`;
+        });
+        document.getElementById('deleteAreaModal').addEventListener('show.bs.modal', e => {
+            const d = e.relatedTarget.dataset;
+            const hasTables = d.hasTables === 'true';
+            document.getElementById('deleteAreaId').value = d.id;
+            document.getElementById('deleteAreaName').textContent = d.name;
+            document.getElementById('deleteAreaBlocked').classList.toggle('d-none', !hasTables);
+            document.getElementById('deleteAreaWarning').classList.toggle('d-none', hasTables);
+            document.getElementById('confirmDeleteArea').disabled = hasTables;
+        });
     </script>
 }
