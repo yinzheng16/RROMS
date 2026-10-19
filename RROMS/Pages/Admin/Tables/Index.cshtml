@@ -5,9 +5,8 @@
     ViewData["Title"] = "Tables and opening hours";
 }
 
-<div class="page-header">
+<div class="page-header yoru-tables-page">
     <div><p class="eyebrow">Reservations</p><h1>Tables and opening hours</h1></div>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tableModal">Add table</button>
 </div>
 
 @if (Model.Message != null)
@@ -64,9 +63,18 @@
     <div class="col-lg-5">
         <div class="card h-100">
             <div class="card-body">
-                <h2 class="h5 mb-3">Opening hours</h2>
-                <form method="post" asp-page-handler="SaveHours">
-                    <div class="table-responsive">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">Opening hours</h2>
+
+                <button type="submit"
+                        form="hoursForm"
+                        class="btn btn-primary btn-sm">
+                    Save opening hours
+                </button>
+            </div>
+
+            <form id="hoursForm" method="post" asp-page-handler="SaveHours">
+                <div class="table-responsive">
                         <table class="table align-middle mb-3">
                             <thead><tr><th>Day</th><th>Opens</th><th>Closes</th><th>Closed</th></tr></thead>
                             <tbody>
@@ -86,7 +94,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <button class="btn btn-primary">Save opening hours</button>
                 </form>
             </div>
         </div>
@@ -112,14 +119,17 @@
     };
 }
 <style>
+    body.back-office:has(.yoru-tables-page) .site-main > .container-wide {
+        padding-top: 16px !important;
+    }
     .yoru-type-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
-    .yoru-type-card { border:1px solid #e5d9c9; border-radius:9px; overflow:hidden; background:#fffdfa; min-width:0; }
+    .yoru-type-card { border:1px solid #e5d9c9; border-radius:9px; overflow:hidden; background:#fffdfa; min-width:0; display:flex; flex-direction:column; height:100%; }
     .yoru-type-image { width:100%; height:135px; object-fit:cover; background:#eee8df; }
-    .yoru-type-body { padding:13px; }
+    .yoru-type-body { padding:13px; display:flex; flex-direction:column; flex:1; }
     .yoru-type-title { font-weight:700; margin:0; }
     .yoru-type-meta { color:#796e62; font-size:.86rem; margin:7px 0 8px; }
     .yoru-type-spend { color:#8e2b24; font-size:.82rem; font-weight:600; margin:0 0 12px; }
-    .yoru-type-actions { display:flex; flex-wrap:wrap; gap:7px; }
+    .yoru-type-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:auto; align-items:center; }
     .yoru-type-detail { margin-top:18px; border:1px solid #e5d9c9; border-radius:9px; padding:18px; background:#fffdfa; }
     .yoru-status-select { min-width:145px; }
     @@media(max-width:1200px) { .yoru-type-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
@@ -128,8 +138,23 @@
 </style>
 <div class="card">
     <div class="card-body">
-        <h2 class="h5 mb-1">Table types</h2>
-        <p class="text-muted mb-3">Select a table type to manage individual tables and their status.</p>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="h5 mb-1">Table types</h2>
+                <p class="text-muted mb-0">
+                    Select a table type to manage individual tables and their status.
+                </p>
+            </div>
+
+            <button type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#tableModal">
+                Add table
+            </button>
+        </div>
+
         <div class="yoru-type-grid">
             @foreach (var type in Enum.GetValues<TableType>())
             {
@@ -171,12 +196,14 @@
                 </div>
             }
         </div>
+
+        <div id="tableTypeAccordion">
         @foreach (var type in Enum.GetValues<TableType>())
         {
             var tables = Model.AllTables.Where(t => t.Type == type).ToList();
             var isRoom = type == TableType.Vip || type == TableType.Vvip;
             var unit = isRoom ? (tables.Count == 1 ? "room" : "rooms") : (tables.Count == 1 ? "table" : "tables");
-            <div class="collapse yoru-type-detail" id="tables-type-@((int)type)">
+            <div class="collapse yoru-type-detail" id="tables-type-@((int)type)" data-bs-parent="#tableTypeAccordion">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="h5 mb-0">@typeNames[type] — @tables.Count @unit</h3>
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#tables-type-@((int)type)">Close</button>
@@ -228,6 +255,7 @@
                 </div>
             </div>
         }
+        </div>
     </div>
 </div>
 
