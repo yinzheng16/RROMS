@@ -52,8 +52,9 @@ builder.Services.AddScoped<INotificationService, NotificationService>();   // EN
 // Member 2: builder.Services.AddScoped<IReservationService, ReservationService>();
 // Member 3: builder.Services.AddScoped<IOrderService, OrderService>();
 // Member 4: builder.Services.AddScoped<IPaymentService, PaymentService>();
-// Member 5: builder.Services.AddScoped<IReportService, ReportService>();
 
+//Member 5
+builder.Services.AddScoped<IReportService, ReportService>();
 var app = builder.Build();
 
 // Apply migrations and create the roles and test accounts.
