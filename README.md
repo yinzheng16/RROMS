@@ -28,13 +28,13 @@ Pages in `Pages/Admin`, `Pages/Staff` and `Pages/Customer` are protected by role
 
 ## Module owners
 
-| Member | Module | Main files |
-| --- | --- | --- |
-| Member 1 | Identity, Access & AI Chatbot | `ApplicationUser.cs`, `ChatFaq.cs`, `Roles.cs` |
-| Member 2 | Tables & Reservations | `DiningArea.cs`, `RestaurantTable.cs`, `OperatingHour.cs`, `Reservation.cs`, `ReservationStatus.cs` |
-| Member 3 | Menu, Orders & Recommendations | `MenuCategory.cs`, `MenuItem.cs`, `Promotion.cs`, `Order.cs`, `OrderItem.cs`, `OrderStatus.cs`, `OrderType.cs` |
-| Member 4 | Payments, Billing & Notifications | `Payment.cs`, `PaymentMethod.cs`, `PaymentStatus.cs`, `Notification.cs`, `NotificationType.cs`, `NotificationService.cs` |
-| Member 5 | Feedback, Reports & Dashboard | `Feedback.cs`, `RestaurantSetting.cs` |
+| Member | Name (GitHub) | Module | Main files |
+| --- | --- | --- | --- |
+| Member 1 | Chan Yin Zheng ([@yinzheng16](https://github.com/yinzheng16)), Scrum Master | Identity, Access & AI Chatbot | `ApplicationUser.cs`, `ChatFaq.cs`, `Roles.cs` |
+| Member 2 | Teh Cheryl ([@cheryl415-o](https://github.com/cheryl415-o)) | Tables & Reservations | `DiningArea.cs`, `RestaurantTable.cs`, `OperatingHour.cs`, `Reservation.cs`, `ReservationStatus.cs` |
+| Member 3 | Tan Khai Wern ([@KhaiWern0525](https://github.com/KhaiWern0525)) | Menu, Orders & Recommendations | `MenuCategory.cs`, `MenuItem.cs`, `Promotion.cs`, `Order.cs`, `OrderItem.cs`, `OrderStatus.cs`, `OrderType.cs` |
+| Member 4 | Kung Xuan Yu ([@ckxy0758](https://github.com/ckxy0758)) | Payments, Billing & Notifications | `Payment.cs`, `PaymentMethod.cs`, `PaymentStatus.cs`, `Notification.cs`, `NotificationType.cs`, `NotificationService.cs` |
+| Member 5 | Chloe Yeoh Wen Ci ([@chloeywc](https://github.com/chloeywc)) | Feedback, Reports & Dashboard | `Feedback.cs`, `RestaurantSetting.cs` |
 
 Each file in `Models/` has its owner written at the top. Only edit your own files; ask the owner before changing someone else's.
 
