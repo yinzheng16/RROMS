@@ -1,0 +1,439 @@
+@page
+@model RROMS.Pages.Admin.Menu.IndexModel
+@using System
+@{
+    ViewData["Title"] = "Menu categories";
+    bool isEditing = Model.Input.Id.HasValue;
+    int listedItems = Model.ListedItemCount;
+    int emptyCategories = Model.EmptyCategoryCount;
+    string dishBadgeSizer = new string('8', Math.Max(0, listedItems).ToString().Length) + " dishes";
+    int firstPage = Math.Max(1, Model.PageNumber - 2);
+    int lastPage = Math.Min(Model.TotalPages, Model.PageNumber + 2);
+    string previewName = string.IsNullOrWhiteSpace(Model.Input.Name)
+        ? "Your category name" : Model.Input.Name.Trim();
+}
+
+<section class="section-dark rounded-4 p-4 p-md-5 mb-4 position-relative overflow-hidden" aria-labelledby="categories-title" data-category-hero>
+    <img src="~/images/menu/yoru-night-counter.png" asp-append-version="true"
+         class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover pe-none"
+         alt="" aria-hidden="true" decoding="async" fetchpriority="high" data-hero-backdrop />
+    <div class="position-absolute top-0 start-0 w-100 h-100 bg-black opacity-25 pe-none" aria-hidden="true"></div>
+    <div class="row g-3 g-md-4 align-items-center position-relative z-1">
+        <div class="col-8 col-md-9">
+            <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+                <span class="badge rounded-pill border border-light px-3 py-2 fw-normal text-white">YORU IZAKAYA</span>
+                <span class="small text-white opacity-75 text-uppercase">Menu studio</span>
+            </div>
+            <p class="eyebrow text-white opacity-75 mb-2">The art of a well-curated menu</p>
+            <h1 id="categories-title" class="display-5 fw-semibold text-white text-break mb-3">Menu categories.</h1>
+            <p class="text-white opacity-75 mb-4">From the first skewer to the last sip. Give every favourite its place.</p>
+            <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-SearchTerm="@Model.SearchTerm"
+               asp-route-SortOrder="@Model.SortOrder" asp-route-PageNumber="@Model.PageNumber" asp-fragment="category-editor"
+               class="btn btn-primary rounded-pill px-3 px-md-4 d-inline-flex align-items-center gap-2" data-category-jump data-category-shortcut>
+                <span class="d-inline-block" aria-hidden="true" data-shortcut-plus>＋</span> New category
+            </a>
+        </div>
+        <div class="col-4 col-md-3">
+            <div class="text-center">
+                <svg viewBox="0 0 200 220" width="11em" height="12.1em"
+                     class="d-block mw-100 h-auto mx-auto mb-2" role="img" aria-labelledby="yoru-emblem-title">
+                    <title id="yoru-emblem-title">Yoru — night</title>
+                    <rect x="17" y="17" width="166" height="186" rx="30" class="text-black"
+                          fill="currentColor" opacity="0.3" />
+                    <text x="104" y="49" text-anchor="middle" font-size="12" letter-spacing="7"
+                          class="text-white" fill="currentColor" opacity="0.8" aria-hidden="true">YORU</text>
+                    <text x="100" y="151" text-anchor="middle" font-size="100" lang="ja"
+                          class="text-white" fill="currentColor" aria-hidden="true">夜</text>
+                    <path d="M82 177h36" class="text-primary" stroke="currentColor"
+                          stroke-width="3" stroke-linecap="round" aria-hidden="true" />
+                </svg>
+                <span class="small text-white opacity-75 text-uppercase text-break d-block">Crafted for the night</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div data-category-workspace role="region" aria-label="Menu category management">
+<span class="visually-hidden" role="status" aria-live="polite" data-category-live-status></span>
+
+@if (TempData["MenuCategorySuccess"] is string successMessage)
+{
+    <div class="alert alert-success rounded-3 d-flex align-items-center gap-2" role="status" data-category-notice="success">
+        <span aria-hidden="true">✓</span> <span data-category-message>@successMessage</span>
+    </div>
+}
+@if (TempData["MenuCategoryError"] is string errorMessage)
+{
+    <div class="alert alert-danger rounded-3" role="alert" data-category-notice="error"><span data-category-message>@errorMessage</span></div>
+}
+
+<div class="row g-3 mb-4" aria-label="Summary of the current category list">
+    <div class="col-sm-4" data-category-summary>
+        <div class="card section-dark border-0 rounded-4 shadow-sm h-100 position-relative overflow-hidden" data-summary-surface>
+            <svg data-summary-art class="position-absolute bottom-0 end-0 me-3 mb-3 pe-none text-white" width="7em" height="7em"
+                 viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.1" aria-hidden="true">
+                <rect x="10" y="10" width="32" height="32" rx="7" />
+                <rect x="54" y="10" width="32" height="32" rx="7" />
+                <rect x="10" y="54" width="32" height="32" rx="7" />
+                <rect x="54" y="54" width="32" height="32" rx="7" />
+            </svg>
+            <div class="card-body p-4 position-relative">
+                <div class="d-flex align-items-center gap-2 mb-3 text-white opacity-75">
+                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16" stroke-linecap="round" /></svg>
+                    <span class="small text-uppercase">The collection</span>
+                </div>
+                <p class="display-5 fw-semibold lh-1 text-white mb-2">@Model.TotalCategories.ToString("D2")</p>
+                <h2 class="h6 text-white mb-1">Categories shown</h2>
+                <p class="small text-white opacity-75 mb-0">@(Model.IsSearching ? "Matching your search." : "A place for every flavour.")</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4" data-category-summary>
+        <div class="card bg-primary text-white border-0 rounded-4 shadow-sm h-100 position-relative overflow-hidden" data-summary-surface>
+            <svg data-summary-art class="position-absolute bottom-0 end-0 me-3 mb-3 pe-none text-white" width="7em" height="7em"
+                 viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.09" aria-hidden="true">
+                <path d="M17 12v25c0 12 21 12 21 0V12M27.5 12v76M17 29h21M78 88V12C60 21 57 41 61 55h17" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="card-body p-4 position-relative">
+                <div class="d-flex align-items-center gap-2 mb-3 text-white">
+                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 3v6a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-4 10h4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    <span class="small text-uppercase">On the menu</span>
+                </div>
+                <p class="display-5 fw-semibold lh-1 text-white mb-2">@listedItems.ToString("D2")</p>
+                <h2 class="h6 text-white mb-1">Menu items in view</h2>
+                <p class="small text-white opacity-75 mb-0">Dishes across these categories.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-4" data-category-summary>
+        <div class="card border-0 rounded-4 shadow-sm h-100 position-relative overflow-hidden" data-summary-surface>
+            <svg data-summary-art class="position-absolute bottom-0 end-0 me-3 mb-3 pe-none text-primary" width="7em" height="7em"
+                 viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.09" aria-hidden="true">
+                <path d="M13 32h29l8 9h37v39a7 7 0 0 1-7 7H20a7 7 0 0 1-7-7ZM13 32V20a7 7 0 0 1 7-7h23l8 10h29a7 7 0 0 1 7 7v11M40 62h20m-10-10v20" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <div class="card-body p-4 position-relative">
+                <div class="d-flex align-items-center gap-2 mb-3 text-primary">
+                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 7h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 0V5a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v2" stroke-linejoin="round" /></svg>
+                    <span class="small text-uppercase">Room to grow</span>
+                </div>
+                <p class="display-5 fw-semibold lh-1 mb-2">@emptyCategories.ToString("D2")</p>
+                <h2 class="h6 mb-1">Empty categories</h2>
+                <p class="small text-body-secondary mb-0">@(Model.TotalCategories == 0 ? "No categories in this view." : emptyCategories == 0 ? "Every section has dishes." : "Ready for their first dish.")</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 align-items-start">
+    <div class="col-xl-8">
+        <section class="card border-0 rounded-4 shadow-sm" id="category-collection" aria-labelledby="collection-title" data-category-collection>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+                    <div>
+                        <p class="eyebrow mb-1">Your collection</p>
+                        <h2 id="collection-title" class="h3 mb-1">@(Model.IsSearching ? "A closer look." : "A place for every flavour.")</h2>
+                        <p class="small text-body-secondary mb-0">Find, arrange and refine your menu categories.</p>
+                    </div>
+                    <span class="badge rounded-pill bg-dark text-white px-3 py-2 fw-normal">@Model.TotalCategories @(Model.TotalCategories == 1 ? "category" : "categories")</span>
+                </div>
+
+                <div class="border rounded-4 p-3 mb-4">
+                    <form method="get" asp-page="./Index" class="row g-3" asp-fragment="category-collection" data-category-keep-scroll>
+                        <input type="hidden" name="PageNumber" value="1" />
+                        <input type="hidden" name="ShowAll" value="@Model.ShowAll.ToString().ToLowerInvariant()" />
+                        @if (isEditing)
+                        {
+                            <input type="hidden" name="editId" value="@Model.Input.Id" />
+                        }
+                        <div class="col-md-6">
+                            <label asp-for="SearchTerm" class="form-label small fw-semibold">Find a category</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent text-body-secondary" aria-hidden="true">
+                                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5" stroke-linecap="round"/></svg>
+                                </span>
+                                <input asp-for="SearchTerm" type="search" class="form-control"
+                                       placeholder="Try Sushi or Drinks" aria-describedby="category-search-help" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SortOrder" class="form-label small fw-semibold">Arrange by</label>
+                            <select asp-for="SortOrder" class="form-select">
+                                <option value="display">Display order: low to high</option>
+                                <option value="display-desc">Display order: high to low</option>
+                                <option value="name">Name: A to Z</option>
+                                <option value="name-desc">Name: Z to A</option>
+                                <option value="items">Items: fewest first</option>
+                                <option value="items-desc">Items: most first</option>
+                            </select>
+                        </div>
+                        <div class="col-12 d-flex align-items-center gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">Apply</button>
+                            <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-editId="@Model.Input.Id" asp-route-PageNumber="1"
+                               class="btn btn-outline-secondary rounded-pill px-4" asp-fragment="category-collection" data-category-keep-scroll>Reset</a>
+                            <span id="category-search-help" class="visually-hidden">Search all or part of a category name.</span>
+                        </div>
+                    </form>
+                </div>
+
+                @if (Model.IsSearching)
+                {
+                    <p class="small text-body-secondary border-top pt-3 mb-3">Showing matches for <strong class="text-body">“@Model.SearchTerm”</strong></p>
+                }
+
+                @if (Model.ShowAll || Model.TotalPages > 1)
+                {
+                    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+                        <span class="small text-body-secondary">@(Model.ShowAll
+                            ? $"All {Model.TotalCategories} {(Model.IsSearching ? "matching categories" : "categories")}"
+                            : $"Page {Model.PageNumber} of {Model.TotalPages}")</span>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <a asp-page="./Index" asp-route-ShowAll="@(Model.ShowAll ? "false" : "true")"
+                           asp-route-PageNumber="1" asp-route-SearchTerm="@Model.SearchTerm"
+                           asp-route-SortOrder="@Model.SortOrder" asp-route-editId="@Model.Input.Id"
+                           asp-fragment="category-collection" data-category-keep-scroll
+                           class="btn btn-sm btn-outline-secondary rounded-3">@(Model.ShowAll ? "Show pages" : "Show all")</a>
+                        @if (!Model.ShowAll)
+                        {
+                        <nav aria-label="Category pages">
+                            <ul class="pagination pagination-sm flex-wrap gap-1 mb-0">
+                                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                                    @if (Model.PageNumber == 1)
+                                    {
+                                        <span class="btn btn-sm btn-outline-secondary rounded-3 disabled" aria-disabled="true">Previous</span>
+                                    }
+                                    else
+                                    {
+                                        <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-PageNumber="@(Model.PageNumber - 1)"
+                                           asp-route-SearchTerm="@Model.SearchTerm" asp-route-SortOrder="@Model.SortOrder"
+                                           asp-route-editId="@Model.Input.Id" asp-fragment="category-collection"
+                                           class="btn btn-sm btn-outline-secondary rounded-3" rel="prev" data-category-keep-scroll>Previous</a>
+                                    }
+                                </li>
+                                @if (firstPage > 1)
+                                {
+                                    <li class="page-item"><a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-PageNumber="1"
+                                        asp-route-SearchTerm="@Model.SearchTerm" asp-route-SortOrder="@Model.SortOrder"
+                                        asp-route-editId="@Model.Input.Id" asp-fragment="category-collection"
+                                        class="btn btn-sm btn-outline-secondary rounded-3" aria-label="Go to page 1" data-category-keep-scroll>1</a></li>
+                                    @if (firstPage > 2)
+                                    {
+                                        <li class="page-item disabled"><span class="d-inline-block small text-body-secondary px-2 py-1" aria-hidden="true">…</span></li>
+                                    }
+                                }
+                                @for (int pageIndex = firstPage; pageIndex <= lastPage; pageIndex++)
+                                {
+                                    <li class="page-item @(pageIndex == Model.PageNumber ? "active" : "")">
+                                        @if (pageIndex == Model.PageNumber)
+                                        {
+                                            <span class="btn btn-sm btn-primary rounded-3" aria-current="page">@pageIndex</span>
+                                        }
+                                        else
+                                        {
+                                            <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-PageNumber="@pageIndex"
+                                               asp-route-SearchTerm="@Model.SearchTerm" asp-route-SortOrder="@Model.SortOrder"
+                                               asp-route-editId="@Model.Input.Id" asp-fragment="category-collection"
+                                               class="btn btn-sm btn-outline-secondary rounded-3" aria-label="Go to page @pageIndex" data-category-keep-scroll>@pageIndex</a>
+                                        }
+                                    </li>
+                                }
+                                @if (lastPage < Model.TotalPages)
+                                {
+                                    @if (lastPage < Model.TotalPages - 1)
+                                    {
+                                        <li class="page-item disabled"><span class="d-inline-block small text-body-secondary px-2 py-1" aria-hidden="true">…</span></li>
+                                    }
+                                    <li class="page-item"><a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-PageNumber="@Model.TotalPages"
+                                        asp-route-SearchTerm="@Model.SearchTerm" asp-route-SortOrder="@Model.SortOrder"
+                                        asp-route-editId="@Model.Input.Id" asp-fragment="category-collection"
+                                        class="btn btn-sm btn-outline-secondary rounded-3" aria-label="Go to page @Model.TotalPages" data-category-keep-scroll>@Model.TotalPages</a></li>
+                                }
+                                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                                    @if (Model.PageNumber == Model.TotalPages)
+                                    {
+                                        <span class="btn btn-sm btn-outline-secondary rounded-3 disabled" aria-disabled="true">Next</span>
+                                    }
+                                    else
+                                    {
+                                        <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-PageNumber="@(Model.PageNumber + 1)"
+                                           asp-route-SearchTerm="@Model.SearchTerm" asp-route-SortOrder="@Model.SortOrder"
+                                           asp-route-editId="@Model.Input.Id" asp-fragment="category-collection"
+                                           class="btn btn-sm btn-outline-secondary rounded-3" rel="next" data-category-keep-scroll>Next</a>
+                                    }
+                                </li>
+                            </ul>
+                        </nav>
+                        }
+                        </div>
+                    </div>
+                }
+
+                @if (Model.TotalCategories == 0)
+                {
+                    <div class="text-center border rounded-4 p-4 p-md-5">
+                        <p class="display-5 text-body-secondary mb-3" aria-hidden="true">＋</p>
+                        <h3 class="h4">@(Model.IsSearching ? "No flavours found here." : "Your collection starts here.")</h3>
+                        <p class="text-body-secondary mb-4">@(Model.IsSearching ? "Try another category name, or reset your search to see the full collection." : "Add your first category and give your menu a little structure.")</p>
+                        @if (Model.IsSearching)
+                        {
+                            <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-editId="@Model.Input.Id" asp-route-PageNumber="1" class="btn btn-outline-secondary rounded-pill px-4" asp-fragment="category-collection" data-category-keep-scroll>Show all categories</a>
+                        }
+                        else
+                        {
+                            <a href="#category-editor" class="btn btn-primary rounded-pill px-4" data-category-jump data-category-shortcut>Create the first category</a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive overflow-y-hidden rounded-3">
+                        <table class="table table-hover align-middle mb-0" aria-label="Categories in the current view. @Model.SortDescription">
+                            <colgroup>
+                                <col class="col-1" />
+                                <col class="col-6" />
+                                <col class="col-2" />
+                                <col class="col-3" />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Order</th>
+                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-start">Category</th>
+                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Dishes</th>
+                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <tr class="@(Model.Input.Id == category.Id ? "table-active" : "")"
+                                        data-category-row data-editing="@(Model.Input.Id == category.Id ? "true" : "false")">
+                                        <td class="py-2 text-center">
+                                            <div class="d-inline-flex position-relative align-items-center justify-content-center">
+                                                <span class="position-absolute top-0 bottom-0 end-100 me-2 border-start border-3 border-primary @(Model.Input.Id == category.Id ? "opacity-100" : "opacity-0") pe-none"
+                                                      data-category-row-accent aria-hidden="true"></span>
+                                                <span class="d-inline-flex align-items-center justify-content-center rounded-3 border px-2 py-1 font-monospace small @(Model.Input.Id == category.Id ? "bg-primary text-white border-primary" : "")"
+                                                      data-category-order>@category.DisplayOrder.ToString("D2")</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-2">
+                                            <span class="d-block fw-semibold text-break @(Model.Input.Id == category.Id ? "text-primary" : "")" data-category-row-name>@category.Name</span>
+                                            @if (Model.Input.Id == category.Id)
+                                            {
+                                                <span class="small text-body-secondary">Currently editing</span>
+                                            }
+                                        </td>
+                                        <td class="py-2 text-center">
+                                            <span class="badge rounded-pill border text-body px-3 py-2 fw-normal text-nowrap position-relative">
+                                                <span class="invisible" aria-hidden="true">@dishBadgeSizer</span>
+                                                <span class="position-absolute top-50 start-50 translate-middle">@category.ItemCount @(category.ItemCount == 1 ? "dish" : "dishes")</span>
+                                            </span>
+                                        </td>
+                                        <td class="py-2 text-center">
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-12 col-md-6">
+                                                <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-editId="@category.Id"
+                                                   asp-route-SearchTerm="@Model.SearchTerm" asp-route-SortOrder="@Model.SortOrder" asp-route-PageNumber="@Model.PageNumber"
+                                                   asp-fragment="category-editor" class="btn btn-sm btn-outline-secondary rounded-pill px-2 w-100 d-inline-flex align-items-center justify-content-center gap-2 text-nowrap"
+                                                   aria-label="Edit @category.Name" data-category-keep-scroll>
+                                                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15Z" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                                                    <span>Edit</span>
+                                                </a>
+                                                </div>
+                                                <div class="col-12 col-md-6">
+                                                @if (category.ItemCount == 0)
+                                                {
+                                                    <form method="post" asp-page="./Index" asp-page-handler="Delete" asp-fragment="category-collection" class="mb-0" data-category-keep-scroll>
+                                                        <input type="hidden" name="id" value="@category.Id" />
+                                                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                                        <input type="hidden" name="SortOrder" value="@Model.SortOrder" />
+                                                        <input type="hidden" name="PageNumber" value="@Model.PageNumber" />
+                                                        <input type="hidden" name="ShowAll" value="@Model.ShowAll.ToString().ToLowerInvariant()" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill px-2 w-100 d-inline-flex align-items-center justify-content-center gap-2 text-nowrap"
+                                                                aria-label="Delete @category.Name"
+                                                                onclick="return confirm('Delete this empty category?');">
+                                                            <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                                                            <span>Delete</span>
+                                                        </button>
+                                                    </form>
+                                                }
+                                                else
+                                                {
+                                                    <span class="btn btn-sm rounded-pill px-2 w-100 d-inline-flex align-items-center justify-content-center gap-2 text-nowrap text-body-secondary pe-none" title="Contains dishes and cannot be deleted">In use</span>
+                                                }
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-body-secondary mt-3 mb-0">Showing @(Model.FirstCategoryNumber)–@(Model.LastCategoryNumber) of @Model.TotalCategories categories</p>
+                    <p class="small text-body-secondary border-top pt-3 mt-3 mb-0">Categories with dishes cannot be deleted.</p>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="col-xl-4">
+        <section id="category-editor" class="card border-0 rounded-4 shadow-sm" aria-labelledby="editor-title">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start justify-content-between gap-3 mb-4 flex-wrap">
+                    <div>
+                        <p class="eyebrow mb-1">@(isEditing ? "Refine the details" : "Shape your menu")</p>
+                        <h2 id="editor-title" class="h4 mb-1">@(isEditing ? "Edit category" : "New category")</h2>
+                        <p class="small text-body-secondary mb-0">@(isEditing ? "Update the name of this menu section." : "Name the next section of your menu.")</p>
+                    </div>
+                    <span class="badge rounded-pill bg-dark text-white fw-normal px-3 py-2">@(isEditing ? "Editing" : "Create")</span>
+                </div>
+
+                <form method="post" asp-page="./Index" asp-page-handler="Save" data-category-editor asp-fragment="category-editor" data-category-keep-scroll>
+                    <input type="hidden" asp-for="Input.Id" />
+                    <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                    <input type="hidden" name="SortOrder" value="@Model.SortOrder" />
+                    <input type="hidden" name="PageNumber" value="@Model.PageNumber" />
+                    <input type="hidden" name="ShowAll" value="@Model.ShowAll.ToString().ToLowerInvariant()" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="Input.Name" class="form-label fw-semibold"></label>
+                        <input asp-for="Input.Name" class="form-control form-control-lg" maxlength="50"
+                               placeholder="e.g. Yakitori &amp; Skewers" required data-category-name
+                               aria-describedby="category-name-error category-name-help" />
+                        <div class="d-flex justify-content-between gap-2 mt-2">
+                            <span id="category-name-help" class="small text-body-secondary">Keep it clear and memorable.</span>
+                            <span class="small text-body-secondary"><span data-category-name-count>@(Model.Input.Name?.Length ?? 0)</span>/50</span>
+                        </div>
+                        <span asp-validation-for="Input.Name" id="category-name-error" class="text-danger small"></span>
+                    </div>
+
+                    <div class="section-dark rounded-4 p-3 mb-4" aria-label="Category title preview">
+                        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap border-bottom border-secondary pb-3 mb-3">
+                            <span class="small text-white opacity-75 text-uppercase">YORU / Menu</span>
+                            <span class="badge rounded-pill border border-light text-white fw-normal px-3 py-2">Live preview</span>
+                        </div>
+                        <div class="border-start border-3 border-primary ps-3">
+                            <h3 class="h4 fw-normal text-white text-break mb-1" data-category-preview-name>@previewName</h3>
+                            <p class="small text-white opacity-75 mb-0">Category title</p>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill d-flex align-items-center justify-content-center">@(isEditing ? "Save changes" : "Create category")</button>
+                        @if (isEditing)
+                        {
+                            <a asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-SearchTerm="@Model.SearchTerm" asp-route-SortOrder="@Model.SortOrder" asp-route-PageNumber="@Model.PageNumber"
+                               class="btn btn-outline-secondary btn-lg rounded-pill d-flex align-items-center justify-content-center" asp-fragment="category-collection" data-category-keep-scroll>Cancel edit</a>
+                        }
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-transparent border-top p-4">
+                <p class="small text-body-secondary mb-0">A category is the start. Add its dishes next in menu-item management.</p>
+            </div>
+        </section>
+    </div>
+</div>
+
+</div>
+
+<script src="~/js/menu-categories.js" asp-append-version="true" defer></script>
