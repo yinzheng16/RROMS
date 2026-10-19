@@ -221,7 +221,7 @@ public class ReservationService : IReservationService
         if (missing.Count > 0)
         {
             foreach (var d in missing)
-                _db.OperatingHours.Add(new OperatingHour { Day = d, OpenTime = new TimeOnly(17, 0), CloseTime = new TimeOnly(23, 30), IsClosed = false });
+                _db.OperatingHours.Add(new OperatingHour { Day = d, OpenTime = new TimeOnly(10, 0), CloseTime = new TimeOnly(22, 0), IsClosed = false });
             await _db.SaveChangesAsync();
             hours = await _db.OperatingHours.ToListAsync();
         }
