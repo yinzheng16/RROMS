@@ -64,6 +64,10 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostSaveTableAsync()
     {
         KeepOnly(nameof(TableForm));
+        if (!Enum.IsDefined(TableForm.Type))
+            ModelState.AddModelError("TableForm.Type", "Choose a valid table type.");
+        if (TableForm.MinGuests > TableForm.Capacity)
+            ModelState.AddModelError("TableForm.Capacity", "Maximum capacity must be at least the minimum booking guests.");
         if (!ModelState.IsValid) return InvalidInput();
         var result = await _service.SaveTableAsync(new RestaurantTable
         {

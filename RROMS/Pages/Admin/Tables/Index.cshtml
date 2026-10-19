@@ -138,7 +138,7 @@
                 var sectionId = $"tables-type-{(int)type}";
                 var isRoom = type == TableType.Vip || type == TableType.Vvip;
                 var unit = isRoom ? (tables.Count == 1 ? "room" : "rooms") : (tables.Count == 1 ? "table" : "tables");
-                var guestText = tables.Count == 0 ? "No tables" :
+                var guestText = isRoom ? (type == TableType.Vip ? "Suggested: 6–10 guests" : "Suggested: 10–20 guests") : tables.Count == 0 ? "No tables" :
                     tables.Min(t => t.MinGuests) == tables.Max(t => t.Capacity)
                         ? $"{tables.Min(t => t.MinGuests)} guest"
                         : $"{tables.Min(t => t.MinGuests)}–{tables.Max(t => t.Capacity)} guests";
@@ -275,11 +275,11 @@
                     <select asp-for="TableForm.DiningAreaId" class="form-select" asp-items="@(new SelectList(Model.Areas, "Id", "Name"))" required><option value="">Choose...</option></select>
                 </div>
                 <div class="col-4">
-                    <label asp-for="TableForm.MinGuests" class="form-label">Min guests</label>
+                    <label asp-for="TableForm.MinGuests" class="form-label">Min booking guests</label>
                     <input asp-for="TableForm.MinGuests" type="number" min="1" max="20" class="form-control" required />
                 </div>
                 <div class="col-4">
-                    <label asp-for="TableForm.Capacity" class="form-label">Max guests</label>
+                    <label asp-for="TableForm.Capacity" class="form-label">Max capacity</label>
                     <input asp-for="TableForm.Capacity" type="number" min="1" max="20" class="form-control" required />
                 </div>
                 <div class="col-4">
@@ -368,6 +368,38 @@
         bindModal('tableModal', [['TableForm.Id','id','0'], ['TableForm.TableNumber','number',''], ['TableForm.Type','type','2'],
             ['TableForm.DiningAreaId','area',''], ['TableForm.MinGuests','min','1'], ['TableForm.Capacity','max','2'],
             ['TableForm.MinimumSpend','spend','0'], ['TableForm.Description','desc',''], ['TableForm.IsActive','active','true']]);
+        
+        // Apply defaults when adding a table or changing its type. Existing table values remain intact on Edit.
+        const tableModal = document.getElementById('tableModal');
+        const typeField = tableModal.querySelector('[name="TableForm.Type"]');
+        const areaField = tableModal.querySelector('[name="TableForm.DiningAreaId"]');
+        const minField = tableModal.querySelector('[name="TableForm.MinGuests"]');
+        const maxField = tableModal.querySelector('[name="TableForm.Capacity"]');
+        const spendField = tableModal.querySelector('[name="TableForm.MinimumSpend"]');
+        const defaults = {
+            '0': { area: 'Bar Counter', min: 1, max: 1, spend: 0 },
+            '1': { area: 'Main Hall', min: 1, max: 2, spend: 0 },
+            '2': { area: 'Main Hall', min: 3, max: 6, spend: 0 },
+            '3': { area: 'Private Rooms', min: 1, max: 10, spend: 500 },
+            '4': { area: 'Private Rooms', min: 1, max: 20, spend: 1000 }
+        };
+        function applyTypeDefaults() {
+            const d = defaults[typeField.value];
+            if (!d) return;
+            minField.value = d.min;
+            maxField.value = d.max;
+            spendField.value = d.spend;
+            const matchingArea = Array.from(areaField.options).find(o =>
+                o.text.trim().toLowerCase() === d.area.toLowerCase());
+            // No match? Leave area unselected, so the admin can choose an existing area.
+            areaField.value = matchingArea ? matchingArea.value : '';
+        }
+        typeField.addEventListener('change', applyTypeDefaults);
+        tableModal.addEventListener('show.bs.modal', e => {
+            // bindModal above runs first and fills existing values. Only reset defaults for Add.
+            const isEditing = !!(e.relatedTarget && e.relatedTarget.dataset.id);
+            if (!isEditing) applyTypeDefaults();
+        });
         document.getElementById('deleteTableModal').addEventListener('show.bs.modal', e => {
             const d = e.relatedTarget.dataset;
             document.getElementById('deleteTableId').value = d.id;
