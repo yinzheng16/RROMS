@@ -354,3 +354,30 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 .footer-tagline-jp + .footer-tagline {
      margin-top: .2rem;
 }
+
+/* ---------- Logo images (EN04 logo update) ---------- */
+.brand-emblem {
+    width: 3.4rem;
+    height: 3.4rem;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .35));
+}
+
+.footer-logo {
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    height: auto;
+}
+
+.brand-logo {
+    height: 4.2rem;
+    width: auto;
+    display: block;
+}
+
+@media (max-width: 575.98px) {
+    .brand-logo {
+        height: 3rem;
+    }
+}
