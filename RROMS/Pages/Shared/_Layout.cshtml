@@ -39,6 +39,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · @BrandName @BrandSub</title>
+    <link rel="icon" type="image/png" href="~/images/yoru-icon.png" />
+    <link rel="apple-touch-icon" href="~/images/yoru-icon-180.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -53,11 +55,7 @@
         <nav class="navbar navbar-expand-lg site-nav" data-bs-theme="dark">
             <div class="@containerClass">
                 <a class="navbar-brand brand" href="/">
-                    <span class="brand-mark" aria-hidden="true">夜</span>
-                    <span class="brand-text">
-                        <span class="brand-name">@BrandName</span>
-                        <span class="brand-sub">@BrandSub</span>
-                    </span>
+                    <img class="brand-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
                     @if (isAdmin)
                     {
                         <span class="role-pill">Admin</span>
@@ -162,13 +160,7 @@
             <div class="container-xl">
                 <div class="row gy-4">
                     <div class="col-md-5">
-                        <div class="brand brand-footer">
-                            <span class="brand-mark" aria-hidden="true">夜</span>
-                            <span class="brand-text">
-                                <span class="brand-name">@BrandName</span>
-                                <span class="brand-sub">@BrandSub</span>
-                            </span>
-                        </div>
+                        <img class="footer-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
                         <p class="footer-tagline-jp">@TaglineJp</p>
                         <p class="footer-tagline">@Tagline</p>
                     </div>
