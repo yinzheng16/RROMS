@@ -38,12 +38,12 @@ public static class ReservationSeed
             });
 
         for (var i = 1; i <= 3; i++)
-            db.RestaurantTables.Add(new RestaurantTable { TableNumber = $"VIP{i}", Type = TableType.Vip, MinGuests = 6, Capacity = 10,
+            db.RestaurantTables.Add(new RestaurantTable { TableNumber = $"VIP{i}", Type = TableType.Vip, MinGuests = 1, Capacity = 10,
                 MinimumSpend = 500, DiningArea = rooms, Description = "Private room for 6-10 guests.",
                 PhotoPath = "/images/tables/vip.jpg"
             });
 
-        db.RestaurantTables.Add(new RestaurantTable { TableNumber = "VVIP1", Type = TableType.Vvip, MinGuests = 10, Capacity = 20,
+        db.RestaurantTables.Add(new RestaurantTable { TableNumber = "VVIP1", Type = TableType.Vvip, MinGuests = 1, Capacity = 20,
             MinimumSpend = 1000, DiningArea = rooms, Description = "Our largest private room for 10-20 guests.",
             PhotoPath = "/images/tables/vvip.jpg"
         });
