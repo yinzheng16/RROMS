@@ -53,7 +53,7 @@
     .yoru-summary-item span {color: #796e62; font-size: .85rem; }
     .yoru-type-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
     .yoru-type-card { border:1px solid #e5d9c9; border-radius:12px; overflow:hidden; background:#fffdfa; display:flex; flex-direction:column; height:100%; transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
-    .yoru-type-card:hover, .yoru-type-card:focus-within {transform: translateY(-3px); border-color: #a83228; box-shadow: 0 10px 24px rgba(0, 0, 0, .12); }
+    .yoru-type-card:hover {transform: translateY(-3px); border-color: #a83228; box-shadow: 0 10px 24px rgba(0, 0, 0, .12); }
     .yoru-type-card.yoru-selected {border-color: #a83228; box-shadow: 0 0 0 1px #a83228; }
     .yoru-type-card:focus-visible {outline: 3px solid #a83228; outline-offset: 3px; }
     .yoru-type-image-wrap { overflow: hidden; }
@@ -64,18 +64,27 @@
     .yoru-type-meta { color:#796e62; font-size:.86rem; margin:7px 0 8px; }
     .yoru-type-spend { color:#8e2b24; font-size:.82rem; font-weight:600; margin:0 0 12px; }
     .yoru-type-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:auto; align-items:center; }
-    .yoru-type-detail { margin-top:20px; border:1px solid #e5d9c9; border-radius:12px; padding:20px; background:#fffdfa; }
-    .yoru-type-detail.collapsing { transition: height 250ms ease; }
     .yoru-status-select { min-width:145px; }
     .yoru-search-toolbar {display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
     .yoru-search-toolbar .form-control { flex: 1; min-width: 160px; }
     .yoru-search-toolbar .form-select { width: auto; min-width: 150px; }
     .yoru-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 12px;}
+    .yoru-type-detail .modal-body {flex:1 1 auto; min-height:0; display: flex; flex-direction: column; overflow:hidden; }
+    .yoru-type-detail .table-responsive {flex: 1 1 0; min-height: 0; overflow:auto;}
+    .yoru-type-detail .yoru-pagination {flex-shrink: 0; margin-top: 12px; }
+    .yoru-type-detail .modal-dialog { height:580px !important; min-height: 0 !important; max-height: calc(100dvh - 32px); }
+    .yoru-type-detail .modal-dialog-scrollable .modal-content {height: 100%; max-height: 100; display: flex; flex-direction: column;}
+    .yoru-type-detail .modal-content { height: 100% !important; min-height: 0 !important;max-height: 100% !important; display: flex; flex-direction: column; }
+    .yoru-type-detail .modal-header, .yoru-type-detail .modal-footer { flex: 0 0 auto; }
+    .yoru-type-detail .yoru-search-toolbar { flex-shrink: 0;}
     .yoru-secondary-section {border: 1px solid #e5d9c9; border-radius: 12px; background: #fffdfa; padding: 20px;}
     @@media(max-width:1200px) { .yoru-type-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
     @@media(max-width:720px) { .yoru-type-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @@media(max-width:450px) { .yoru-type-grid { grid-template-columns:1fr; } }
     @@media (prefers-reduced-motion: reduce) {.yoru-type-card, .yoru-type-image, .yoru-type-detail.collapsing {transition: none;} }
+
+    #tableModal .yoru-advanced-field { display: none !important;}
+    #tableModal.yoru-edit-mode .yoru-advanced-field { display: block !important;}
 </style>
 <div class="card mb-4">
     <div class="card-body">
@@ -118,13 +127,7 @@
                 ? $"{tables.Min(t => t.MinGuests)} guest"
                 : $"{tables.Min(t => t.MinGuests)}–{tables.Max(t => t.Capacity)} guests";
 
-        <div class="yoru-type-card"
-             role="button"
-             tabindex="0"
-             data-bs-toggle="collapse"
-             data-bs-target="#@sectionId"
-             aria-controls="@sectionId"
-             aria-expanded="false">
+        <div class="yoru-type-card">
 
             <div class="yoru-type-image-wrap">
                 <img class="yoru-type-image"
@@ -150,9 +153,12 @@
                 }
 
                 <div class="yoru-type-actions">
-                    <span class="btn btn-primary btn-sm">
+                    <button type="button"
+                            class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modal-@(sectionId)">
                         @(isRoom ? "Manage rooms" : "Manage tables")
-                    </span>
+                    </button>
 
                     <form method="post"
                           asp-page-handler="TypePhoto"
@@ -187,81 +193,81 @@
             var tables = Model.AllTables.Where(t => t.Type == type).ToList();
             var isRoom = type == TableType.Vip || type == TableType.Vvip;
             var unit = isRoom ? (tables.Count == 1 ? "room" : "rooms") : (tables.Count == 1 ? "table" : "tables");
-            <div class="collapse yoru-type-detail" id="tables-type-@((int)type)" data-bs-parent="#tableTypeAccordion">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="h5 mb-0">@typeNames[type] — @tables.Count @unit</h3>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#tables-type-@((int)type)">Close</button>
-                </div>
+            <div class="modal fade yoru-type-detail" id="modal-tables-type-@((int)type)" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-dialog-centered">
+                    <div class=" modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">@typeNames[type] — Manage Tables </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-lable="Close"></button>
+                        </div>
                 
-                <div class="yoru-search-toolbar"> <input type="search" class="form-control yoru-table-search" placeholder="Search table name..." aria-label="Search tables" />
+                        <div class="modal-body">
+                            <div class="yoru-search-toolbar"> <input type="search" class="form-control yoru-table-search" placeholder="Search table name..." aria-label="Search tables" />
+                                <select class="form-select yoru-table-status-filter" aria-label="Filter table status"> <option value="">All statuses</option>
+                                    @foreach (var status in Enum.GetValues<TableStatus>())
+                                    {<option value="@status"> @(status == TableStatus.OutOfService ? "Out of service" : status.ToString()) </option>}
+                                </select>
 
-                    <select class="form-select yoru-table-status-filter" aria-label="Filter table status"> <option value="">All statuses</option>
-                        @foreach (var status in Enum.GetValues<TableStatus>())
-                        {
-                            <option value="@status"> @(status == TableStatus.OutOfService ? "Out of service" : status.ToString()) </option>
-                        }
-                    </select>
+                                <select class="form-select yoru-table-active-filter" aria-label="Filter active tables">
+                                    <option value="">All tables</option> <option value="true">Active</option> <option value="false">Inactive</option>
+                                </select>
+                            </div>
 
-                    <select class="form-select yoru-table-active-filter"
-                            aria-label="Filter active tables">
-                        <option value="">All tables</option>
-                        <option value="true">Active</option>
-                        <option value="false">Inactive</option>
-                    </select>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead><tr><th>Table</th><th>Area</th><th>Seats</th><th>Minimum spend</th><th>Status</th><th>Active</th><th>Actions</th></tr></thead>
-                        <tbody>
-                            @foreach (var t in tables)
-                            {
-                                <tr class="yoru-table-row" data-name="@t.TableNumber" data-status="@t.Status" data-active="@t.IsActive.ToString().ToLowerInvariant()">
-                                    <td class="fw-semibold">@t.TableNumber</td>
-                                    <td>@Model.Areas.First(a => a.Id == t.DiningAreaId).Name</td>
-                                    <td>@(t.MinGuests == t.Capacity ? t.Capacity.ToString() : $"{t.MinGuests}-{t.Capacity}")</td>
-                                    <td>@(t.MinimumSpend > 0 ? TableTypeInfo.Rm(t.MinimumSpend) : "–")</td>
-                                    <td>
-                                        <form method="post" asp-page-handler="Status" class="d-flex gap-2 align-items-center">
-                                            <input type="hidden" name="id" value="@t.Id" />
-                                            <select name="status" class="form-select form-select-sm yoru-status-select" aria-label="Status for @t.TableNumber">
-                                                @foreach (var status in Enum.GetValues<TableStatus>())
-                                                {
-                                                    <option value="@status" selected="@(t.Status == status)">@(status == TableStatus.OutOfService ? "Out of service" : status.ToString())</option>
-                                                }
-                                            </select>
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Save</button>
-                                        </form>
-                                    </td>
-                                    <td>@(t.IsActive ? "Yes" : "No")</td>
-                                    <td class="text-nowrap">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tableModal"
-                                                data-id="@t.Id" data-number="@t.TableNumber" data-type="@((int)t.Type)" data-area="@t.DiningAreaId"
-                                                data-min="@t.MinGuests" data-max="@t.Capacity" data-spend="@t.MinimumSpend.ToString("0")" data-desc="@t.Description" data-active="@t.IsActive.ToString().ToLower()">
-                                            Edit
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                data-bs-toggle="modal" data-bs-target="#deleteTableModal"
-                                                data-id="@t.Id" data-number="@t.TableNumber" data-kind="@(isRoom ? "room" : "table")">
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!tables.Any())
-                            {
-                                <tr><td colspan="7">No tables of this type yet.</td></tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-                <div class="yoru-pagination"> <small class="text-muted yoru-page-info"></small>
-                    <div class="btn-group" role="group"> <button type="button" class="btn btn-outline-secondary btn-sm yoru-prev"> Previous</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm yoru-next"> Next </button>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle"> <thead><tr><th>Table</th><th>Area</th><th>Seats</th><th>Minimum spend</th><th>Status</th><th>Active</th><th>Actions</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var t in tables)
+                                            {
+                                                <tr class="yoru-table-row" data-name="@t.TableNumber" data-status="@t.Status" data-active="@t.IsActive.ToString().ToLowerInvariant()">
+                                                    <td class="fw-semibold">@t.TableNumber</td>
+                                                    <td>@Model.Areas.First(a => a.Id == t.DiningAreaId).Name</td>
+                                                    <td>@(t.MinGuests == t.Capacity ? t.Capacity.ToString() : $"{t.MinGuests}-{t.Capacity}")</td>
+                                                    <td>@(t.MinimumSpend > 0 ? TableTypeInfo.Rm(t.MinimumSpend) : "–")</td>
+                                                    <td>
+                                                        <form method="post" asp-page-handler="Status" class="d-flex gap-2 align-items-center">
+                                                            <input type="hidden" name="id" value="@t.Id" />
+                                                            <select name="status" class="form-select form-select-sm yoru-status-select" aria-label="Status for @t.TableNumber">
+                                                                @foreach (var status in Enum.GetValues<TableStatus>())
+                                                                {
+                                                                    <option value="@status" selected="@(t.Status == status)">@(status == TableStatus.OutOfService ? "Out of service" : status.ToString())</option>
+                                                                }
+                                                            </select>
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Save</button>
+                                                        </form>
+                                                    </td>
+                                                    <td>@(t.IsActive ? "Yes" : "No")</td>
+                                                    <td class="text-nowrap">
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tableModal"
+                                                                data-id="@t.Id" data-number="@t.TableNumber" data-type="@((int)t.Type)" data-area="@t.DiningAreaId"
+                                                                data-min="@t.MinGuests" data-max="@t.Capacity" data-spend="@t.MinimumSpend.ToString("0")" data-desc="@t.Description" data-active="@t.IsActive.ToString().ToLower()">
+                                                            Edit
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                                data-bs-toggle="modal" data-bs-target="#deleteTableModal"
+                                                                data-id="@t.Id" data-number="@t.TableNumber" data-kind="@(isRoom ? "room" : "table")">
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            @if (!tables.Any())
+                                            { <tr><td colspan="7">No tables of this type yet.</td></tr> }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="yoru-pagination"> <small class="text-muted yoru-page-info"></small>
+                                    <div class="btn-group" role="group"> <button type="button" class="btn btn-outline-secondary btn-sm yoru-prev"> Previous</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm yoru-next"> Next </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"> Close </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
         </div>
     </div>
 </div>
@@ -420,6 +426,10 @@
                     </div>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"> Cancel </button>
+                <button type="submit" class="btn btn-primary"> Save table </button>
+            </div>
         </form>
     </div>
 </div>
@@ -551,8 +561,7 @@
         tableModal.addEventListener('show.bs.modal', e => {
             isEditing = !!(e.relatedTarget && e.relatedTarget.dataset.id);
 
-            // Add: hide advanced fields.
-            // Edit: show all fields.
+            tableModal.classList.toggle('yoru-edit-mode', isEditing);
             tableModal.querySelectorAll('.yoru-advanced-field')
                 .forEach(field => {
                     field.classList.toggle('d-none', !isEditing);
@@ -613,13 +622,13 @@
                 page = Math.min(page, totalPages);
 
                 rows.forEach(row => {
-                    row.hidden = true;
+                    row.style.display = 'none';
                 });
 
                 matching
                     .slice((page - 1) * pageSize, page * pageSize)
                     .forEach(row => {
-                        row.hidden = false;
+                        row.style.display = '';
                     });
 
                 info.textContent = matching.length
@@ -674,9 +683,9 @@
 
             if (!refresh) return;
 
-            search.addEventListener('input', refresh);
-            status.addEventListener('change', refresh);
-            active.addEventListener('change', refresh);
+            search.addEventListener('input', () => refresh(true));
+            status.addEventListener('change', () => refresh(true));
+            active.addEventListener('change', () => refresh(true));
         });
 
         const areaSearch = document.getElementById('areaSearch');
@@ -710,43 +719,6 @@
                 areaFilter.addEventListener('change', refreshAreas);
             }
         }
-
-        document.querySelectorAll('.yoru-type-card').forEach(card => {
-            const targetSelector = card.dataset.bsTarget;
-            const target = targetSelector
-                ? document.querySelector(targetSelector)
-                : null;
-
-            if (!target) return;
-
-            target.addEventListener('shown.bs.collapse', () => {
-                document.querySelectorAll('.yoru-type-card')
-                    .forEach(otherCard => {
-                        otherCard.classList.remove('yoru-selected');
-                        otherCard.setAttribute('aria-expanded', 'false');
-                    });
-
-                card.classList.add('yoru-selected');
-                card.setAttribute('aria-expanded', 'true');
-            });
-
-            target.addEventListener('hidden.bs.collapse', () => {
-                card.classList.remove('yoru-selected');
-                card.setAttribute('aria-expanded', 'false');
-            });
-
-            card.addEventListener('keydown', e => {
-                if (e.target !== card) return;
-
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-
-                    bootstrap.Collapse
-                        .getOrCreateInstance(target)
-                        .toggle();
-                }
-            });
-        });
 
     </script>
 }
