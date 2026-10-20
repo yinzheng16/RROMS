@@ -24,6 +24,9 @@ namespace RROMS.Models
 
         // ---- Added for US11 (YORU table types, minimum spend, photo, live status) ----
         public TableType Type { get; set; } = TableType.Standard;
+        public int? TableTypeDefinitionId { get; set; }
+
+        public TableTypeDefinition? TableTypeDefinition { get; set; }
 
         [Range(1, 20)]
         public int MinGuests { get; set; } = 1;

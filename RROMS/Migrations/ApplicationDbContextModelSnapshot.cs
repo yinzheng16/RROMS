@@ -772,6 +772,9 @@ namespace RROMS.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
+                    b.Property<int?>("TableTypeDefinitionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -784,7 +787,67 @@ namespace RROMS.Migrations
                     b.HasIndex("TableNumber")
                         .IsUnique();
 
+                    b.HasIndex("TableTypeDefinitionId");
+
                     b.ToTable("RestaurantTables");
+                });
+
+            modelBuilder.Entity("RROMS.Models.TableTypeDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DefaultDiningAreaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DefaultMaxGuests")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DefaultMinGuests")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DefaultMinimumSpend")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("NumberPadding")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhotoPath")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Prefix")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int>("StartingNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DefaultDiningAreaId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("TableTypeDefinitions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -956,7 +1019,25 @@ namespace RROMS.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RROMS.Models.TableTypeDefinition", "TableTypeDefinition")
+                        .WithMany("Tables")
+                        .HasForeignKey("TableTypeDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("DiningArea");
+
+                    b.Navigation("TableTypeDefinition");
+                });
+
+            modelBuilder.Entity("RROMS.Models.TableTypeDefinition", b =>
+                {
+                    b.HasOne("RROMS.Models.DiningArea", "DefaultDiningArea")
+                        .WithMany()
+                        .HasForeignKey("DefaultDiningAreaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DefaultDiningArea");
                 });
 
             modelBuilder.Entity("RROMS.Models.ApplicationUser", b =>
@@ -1000,6 +1081,11 @@ namespace RROMS.Migrations
             modelBuilder.Entity("RROMS.Models.RestaurantTable", b =>
                 {
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("RROMS.Models.TableTypeDefinition", b =>
+                {
+                    b.Navigation("Tables");
                 });
 #pragma warning restore 612, 618
         }

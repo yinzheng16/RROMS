@@ -14,15 +14,62 @@ public class IndexModel : PageModel
     public IndexModel(IReservationService service) => _service = service;
 
     public List<DiningArea> Areas { get; set; } = new();
+    public List<TableTypeDefinition> TableTypes { get; set; } = new();
     public List<RestaurantTable> AllTables =>
         Areas.SelectMany(a => a.Tables).OrderBy(t => t.Type).ThenBy(t => t.TableNumber.Length).ThenBy(t => t.TableNumber).ToList();
 
+    [BindProperty] public TableTypeInput TableTypeForm { get; set; } = new();
     [BindProperty] public AreaInput AreaForm { get; set; } = new();
     [BindProperty] public TableInput TableForm { get; set; } = new();
     [BindProperty] public List<OperatingHour> Hours { get; set; } = new();
 
     [TempData] public string? Message { get; set; }
     [TempData] public string? Error { get; set; }
+
+    public class TableTypeInput
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Table type name is required.")]
+        [StringLength(50)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Prefix is required.")]
+        [RegularExpression(@"^[A-Za-z]+$", ErrorMessage = "Prefix must contain letters only.")]
+        [StringLength(10)]
+        public string Prefix { get; set; } = string.Empty;
+
+        [Range(1, int.MaxValue)]
+        public int StartingNumber { get; set; } = 1;
+
+        [Range(1, 10)]
+        public int NumberPadding { get; set; } = 1;
+
+        [Required(ErrorMessage = "Choose a dining area.")]
+        public int? DefaultDiningAreaId { get; set; }
+
+        [Range(1, 20)]
+        public int DefaultMinGuests { get; set; } = 1;
+
+        [Range(1, 20)]
+        public int DefaultMaxGuests { get; set; } = 2;
+
+        [Range(0, 100000)]
+        public decimal DefaultMinimumSpend { get; set; }
+
+        [StringLength(300)]
+        public string? Description { get; set; }
+
+        public bool IsActive { get; set; } = true;
+
+        public bool CreateFirstTable { get; set; }
+
+        [StringLength(10)]
+        public string? FirstTableName { get; set; }
+
+        public bool ApplyToExistingTables { get; set; }
+        public IFormFile? Photo { get; set; }
+    }
 
     public class AreaInput
     {
@@ -36,6 +83,7 @@ public class IndexModel : PageModel
         public int Id { get; set; }
         [Required(ErrorMessage = "Table name is required."), StringLength(10, ErrorMessage = "Table name can be at most 10 characters."), Display(Name = "Table name")] public string TableNumber { get; set; } = string.Empty;
         public TableType Type { get; set; }
+        public int? TableTypeDefinitionId { get; set; }
         [Required(ErrorMessage = "Choose a dining area.")] public int? DiningAreaId { get; set; }
         [Range(1, 20, ErrorMessage = "Minimum guests must be between 1 and 20.")] public int MinGuests { get; set; } = 1;
         [Range(1, 20, ErrorMessage = "Capacity must be between 1 and 20.")] public int Capacity { get; set; } = 2;
@@ -47,7 +95,103 @@ public class IndexModel : PageModel
     public async Task OnGetAsync()
     {
         Areas = await _service.GetAreasWithTablesAsync();
+        TableTypes = await _service.GetTableTypesAsync();
         Hours = await _service.GetOperatingHoursAsync();
+    }
+
+    public async Task<IActionResult> OnPostSaveTableTypeAsync()
+    {
+        KeepOnly(nameof(TableTypeForm));
+
+        if (TableTypeForm.DefaultMinGuests > TableTypeForm.DefaultMaxGuests)
+        {
+            ModelState.AddModelError(
+                "TableTypeForm.DefaultMaxGuests",
+                "Maximum guests must be at least minimum guests.");
+        }
+
+        if (TableTypeForm.CreateFirstTable && TableTypeForm.Id != 0)
+        {
+            ModelState.AddModelError(
+                "TableTypeForm.CreateFirstTable",
+                "First table creation is only available for new types.");
+        }
+
+        if (!ModelState.IsValid)
+            return InvalidInput();
+
+        var input = new TableTypeDefinition
+        {
+            Id = TableTypeForm.Id,
+            Name = TableTypeForm.Name,
+            Prefix = TableTypeForm.Prefix,
+            StartingNumber = TableTypeForm.StartingNumber,
+            NumberPadding = TableTypeForm.NumberPadding,
+            DefaultDiningAreaId = TableTypeForm.DefaultDiningAreaId!.Value,
+            DefaultMinGuests = TableTypeForm.DefaultMinGuests,
+            DefaultMaxGuests = TableTypeForm.DefaultMaxGuests,
+            DefaultMinimumSpend = TableTypeForm.DefaultMinimumSpend,
+            Description = TableTypeForm.Description,
+            IsActive = TableTypeForm.IsActive
+        };
+
+        var result = await _service.SaveTableTypeAsync(
+            input,
+            TableTypeForm.CreateFirstTable,
+            TableTypeForm.FirstTableName,
+            TableTypeForm.ApplyToExistingTables);
+
+        if (!result.Success)
+            return Done(result, "Table type saved.");
+
+        // Upload photo only when Admin selected a file.
+        if (TableTypeForm.Photo is { Length: > 0 })
+        {
+            var photoResult = await _service.SetTableTypePhotoAsync(
+                input.Id,
+                TableTypeForm.Photo);
+
+            if (!photoResult.Success)
+            {
+                Error = "Table type saved, but photo upload failed: "
+                        + photoResult.Error;
+
+                return RedirectToPage();
+            }
+        }
+
+        return Done(result, "Table type saved.");
+    }
+
+    public async Task<IActionResult> OnPostDeleteTableTypeAsync(int id) =>
+    Done(
+        await _service.DeleteTableTypeAsync(id),
+        "Table type deleted.");
+
+    public async Task<IActionResult> OnPostTableTypePhotoAsync(
+        int id,
+        IFormFile? photo) =>
+        Done(
+            await _service.SetTableTypePhotoAsync(id, photo!),
+            "Table type photo updated.");
+
+    public async Task<IActionResult> OnGetNextTableNameAsync(int id)
+    {
+        try
+        {
+            var name = await _service.GetNextTableNameAsync(id);
+            return new JsonResult(new { success = true, name });
+        }
+        catch (Exception ex) when (
+            ex is ArgumentException ||
+            ex is InvalidOperationException)
+        {
+            return new JsonResult(new
+            {
+                success = false,
+                error = ex.Message
+            });
+        }
     }
 
     public async Task<IActionResult> OnPostSaveAreaAsync()
@@ -74,6 +218,7 @@ public class IndexModel : PageModel
             Id = TableForm.Id,
             TableNumber = TableForm.TableNumber,
             Type = TableForm.Type,
+            TableTypeDefinitionId = TableForm.TableTypeDefinitionId,
             DiningAreaId = TableForm.DiningAreaId!.Value,
             MinGuests = TableForm.MinGuests,
             Capacity = TableForm.Capacity,

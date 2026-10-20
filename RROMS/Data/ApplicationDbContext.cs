@@ -17,6 +17,7 @@ namespace RROMS.Data
         // Member 2: Tables & Reservations
         public DbSet<DiningArea> DiningAreas => Set<DiningArea>();
         public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
+        public DbSet<TableTypeDefinition> TableTypeDefinitions => Set<TableTypeDefinition>();
         public DbSet<OperatingHour> OperatingHours => Set<OperatingHour>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
 
@@ -59,13 +60,26 @@ namespace RROMS.Data
             base.OnModelCreating(builder);
 
             // ---------- Tables & Reservations ----------
+            builder.Entity<TableTypeDefinition>(e =>
+            {
+                e.HasIndex(t => t.Name).IsUnique();
+
+                e.HasOne(t => t.DefaultDiningArea)
+                    .WithMany()
+                    .HasForeignKey(t => t.DefaultDiningAreaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
             builder.Entity<RestaurantTable>(e =>
             {
                 e.HasIndex(t => t.TableNumber).IsUnique();
+                e.HasOne(t => t.TableTypeDefinition)
+                     .WithMany(t => t.Tables)
+                     .HasForeignKey(t => t.TableTypeDefinitionId)
+                     .OnDelete(DeleteBehavior.Restrict);
                 e.HasOne(t => t.DiningArea)
-                 .WithMany(a => a.Tables)
-                 .HasForeignKey(t => t.DiningAreaId)
-                 .OnDelete(DeleteBehavior.Restrict);
+                     .WithMany(a => a.Tables)
+                     .HasForeignKey(t => t.DiningAreaId)
+                     .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<OperatingHour>()

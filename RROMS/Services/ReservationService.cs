@@ -20,8 +20,369 @@ public class ReservationService : IReservationService
         _env = env;
     }
 
+    // ================= US11: dynamic table types =================
+
+    public Task<List<TableTypeDefinition>> GetTableTypesAsync() =>
+        _db.TableTypeDefinitions
+            .Include(t => t.DefaultDiningArea)
+            .Include(t => t.Tables)
+            .OrderBy(t => t.Name)
+            .ToListAsync();
+
+    public Task<TableTypeDefinition?> GetTableTypeByIdAsync(int id) =>
+        _db.TableTypeDefinitions
+            .Include(t => t.DefaultDiningArea)
+            .Include(t => t.Tables)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+    public async Task<string> GetNextTableNameAsync(int tableTypeId)
+    {
+        var type = await _db.TableTypeDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tableTypeId);
+
+        if (type is null)
+            throw new ArgumentException("Table type not found.", nameof(tableTypeId));
+
+        var prefix = type.Prefix.Trim();
+
+        if (string.IsNullOrWhiteSpace(prefix) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(prefix, @"^[A-Za-z]+$"))
+            throw new InvalidOperationException("Invalid table type prefix.");
+
+        if (type.StartingNumber < 1 || type.NumberPadding < 1 ||
+            type.NumberPadding > 10)
+            throw new InvalidOperationException("Invalid table numbering settings.");
+
+        var existingNames = await _db.RestaurantTables
+            .AsNoTracking()
+            .Select(t => t.TableNumber)
+            .ToListAsync();
+
+        var usedNumbers = new HashSet<int>();
+
+        foreach (var name in existingNames)
+        {
+            if (!name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var suffix = name.Substring(prefix.Length);
+
+            if (int.TryParse(suffix, out var number) &&
+                number >= 0 &&
+                suffix.All(char.IsDigit))
+            {
+                usedNumbers.Add(number);
+            }
+        }
+
+        var nextNumber = type.StartingNumber;
+
+        while (usedNumbers.Contains(nextNumber))
+        {
+            if (nextNumber == int.MaxValue)
+                throw new InvalidOperationException("No available table number.");
+
+            nextNumber++;
+        }
+
+        var suggestedName =
+            prefix + nextNumber.ToString().PadLeft(type.NumberPadding, '0');
+
+        if (suggestedName.Length > 10)
+            throw new InvalidOperationException(
+                "Generated table name exceeds 10 characters.");
+
+        return suggestedName;
+    }
+
+    public async Task<ReservationResult> DeleteTableTypeAsync(int id)
+    {
+        var type = await _db.TableTypeDefinitions
+            .Include(t => t.Tables)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (type is null)
+            return ReservationResult.Fail("Table type not found.");
+
+        if (type.Tables.Any())
+            return ReservationResult.Fail(
+                "This table type still has tables. Delete or move its tables first.");
+
+        _db.TableTypeDefinitions.Remove(type);
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            return ReservationResult.Ok();
+        }
+        catch (DbUpdateException)
+        {
+            return ReservationResult.Fail(
+                "This table type is still referenced and cannot be deleted.");
+        }
+    }
+
+    public async Task<ReservationResult> SetTableTypePhotoAsync(
+    int tableTypeId,
+    IFormFile photo)
+    {
+        var type = await _db.TableTypeDefinitions
+            .FirstOrDefaultAsync(t => t.Id == tableTypeId);
+
+        if (type is null)
+            return ReservationResult.Fail("Table type not found.");
+
+        if (photo is null || photo.Length == 0)
+            return ReservationResult.Fail("Choose a photo first.");
+
+        var ext = Path.GetExtension(photo.FileName).ToLowerInvariant();
+
+        if (!AllowedPhotoExt.Contains(ext) ||
+            photo.ContentType is null ||
+            !photo.ContentType.StartsWith("image/"))
+            return ReservationResult.Fail(
+                "Only JPG, PNG or WEBP images are allowed.");
+
+        if (photo.Length > MaxPhotoBytes)
+            return ReservationResult.Fail(
+                "Photo is too large. Maximum size is 3 MB.");
+
+        var folder = Path.Combine(_env.WebRootPath, "images", "tables");
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"{Guid.NewGuid():N}{ext}";
+        var fullPath = Path.Combine(folder, fileName);
+        var newPhotoPath = $"/images/tables/{fileName}";
+
+        await using (var fs = new FileStream(fullPath, FileMode.CreateNew))
+        {
+            await photo.CopyToAsync(fs);
+        }
+
+        var oldPhoto = type.PhotoPath;
+
+        type.PhotoPath = newPhotoPath;
+
+        // Update the shared image for tables belonging to this dynamic type.
+        var tables = await _db.RestaurantTables
+            .Where(t => t.TableTypeDefinitionId == tableTypeId)
+            .ToListAsync();
+
+        foreach (var table in tables)
+        {
+            table.PhotoPath = newPhotoPath;
+        }
+
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            if (File.Exists(fullPath))
+                File.Delete(fullPath);
+
+            return ReservationResult.Fail("Could not save the table type photo.");
+        }
+
+        // Keep the old photo if another table or table type still uses it.
+        if (!string.IsNullOrWhiteSpace(oldPhoto))
+        {
+            var stillUsedByType = await _db.TableTypeDefinitions
+                .AnyAsync(t => t.PhotoPath == oldPhoto);
+
+            if (!stillUsedByType)
+                await DeleteUnusedPhotoAsync(oldPhoto);
+        }
+
+        return ReservationResult.Ok();
+    }
+
     // ================= US11: dining areas =================
 
+    public async Task<ReservationResult> SaveTableTypeAsync(
+        TableTypeDefinition input,
+        bool createFirstTable = false,
+        string? firstTableName = null,
+        bool applyToExistingTables = false)
+    {
+        // 1. Validate input
+        var name = input.Name?.Trim() ?? "";
+        var prefix = input.Prefix?.Trim() ?? "";
+
+        if (string.IsNullOrWhiteSpace(name) || name.Length > 50)
+            return ReservationResult.Fail("Type name must be 1–50 characters.");
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(prefix, @"^[A-Za-z]+$") ||
+            prefix.Length > 10)
+            return ReservationResult.Fail("Prefix must contain 1–10 letters only.");
+
+        if (input.StartingNumber < 1)
+            return ReservationResult.Fail("Starting number must be at least 1.");
+
+        if (input.NumberPadding < 1 || input.NumberPadding > 10)
+            return ReservationResult.Fail("Number padding must be between 1 and 10.");
+
+        if (input.DefaultMinGuests < 1 ||
+            input.DefaultMaxGuests > 20 ||
+            input.DefaultMinGuests > input.DefaultMaxGuests)
+            return ReservationResult.Fail("Invalid guest capacity range.");
+
+        if (input.DefaultMinimumSpend < 0)
+            return ReservationResult.Fail("Minimum spend cannot be negative.");
+
+        if (!await _db.DiningAreas.AnyAsync(a => a.Id == input.DefaultDiningAreaId))
+            return ReservationResult.Fail("Please select a valid dining area.");
+
+        if (await _db.TableTypeDefinitions.AnyAsync(
+            t => t.Name == name && t.Id != input.Id))
+            return ReservationResult.Fail("A table type with this name already exists.");
+
+        if (input.Id != 0 && createFirstTable)
+            return ReservationResult.Fail("First table creation is only available for new types.");
+
+        // 2. Validate first table name before saving anything
+        string? tableName = null;
+
+        if (input.Id == 0 && createFirstTable)
+        {
+            tableName = firstTableName?.Trim();
+
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                var number = input.StartingNumber.ToString()
+                    .PadLeft(input.NumberPadding, '0');
+
+                tableName = prefix + number;
+            }
+
+            if (tableName.Length > 10 ||
+                !System.Text.RegularExpressions.Regex.IsMatch(
+                    tableName, @"^[A-Za-z]+[0-9]+$"))
+                return ReservationResult.Fail(
+                    "Table name must contain letters followed by numbers, maximum 10 characters.");
+
+            if (await _db.RestaurantTables.AnyAsync(t => t.TableNumber == tableName))
+                return ReservationResult.Fail("This table name already exists.");
+        }
+
+        // 3. Load existing type and check reservation conflicts
+        TableTypeDefinition? existing = null;
+
+        if (input.Id != 0)
+        {
+            existing = await _db.TableTypeDefinitions
+                .Include(t => t.Tables)
+                .FirstOrDefaultAsync(t => t.Id == input.Id);
+
+            if (existing is null)
+                return ReservationResult.Fail("Table type not found.");
+
+            if (applyToExistingTables)
+            {
+                var now = DateTime.Now;
+                var tableIds = existing.Tables.Select(t => t.Id).ToList();
+
+                var conflictingReservation = await _db.Reservations
+                    .Where(r =>
+                        r.TableId.HasValue &&
+                        tableIds.Contains(r.TableId.Value) &&
+                        (r.Status == ReservationStatus.Pending ||
+                         r.Status == ReservationStatus.Confirmed ||
+                         r.Status == ReservationStatus.Seated) &&
+                        r.ReservedAt.AddMinutes(r.DurationMinutes) > now &&
+                        (r.Guests < input.DefaultMinGuests ||
+                         r.Guests > input.DefaultMaxGuests))
+                    .Select(r => new
+                    {
+                        r.ReferenceNo,
+                        r.Guests
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (conflictingReservation is not null)
+                    return ReservationResult.Fail(
+                        $"Cannot update existing tables. Reservation " +
+                        $"{conflictingReservation.ReferenceNo} has " +
+                        $"{conflictingReservation.Guests} guests, outside the new capacity range.");
+            }
+        }
+
+        // 4. Save everything in one transaction
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
+        try
+        {
+            TableTypeDefinition type;
+
+            if (existing is null)
+            {
+                type = new TableTypeDefinition();
+                _db.TableTypeDefinitions.Add(type);
+            }
+            else
+            {
+                type = existing;
+            }
+
+            type.Name = name;
+            type.Prefix = prefix;
+            type.StartingNumber = input.StartingNumber;
+            type.NumberPadding = input.NumberPadding;
+            type.DefaultDiningAreaId = input.DefaultDiningAreaId;
+            type.DefaultMinGuests = input.DefaultMinGuests;
+            type.DefaultMaxGuests = input.DefaultMaxGuests;
+            type.DefaultMinimumSpend = input.DefaultMinimumSpend;
+            type.Description = input.Description;
+            type.IsActive = input.IsActive;
+
+            await _db.SaveChangesAsync();
+
+            // 5. Optional first table
+            if (existing is null && createFirstTable)
+            {
+                _db.RestaurantTables.Add(new RestaurantTable
+                {
+                    TableNumber = tableName!,
+                    TableTypeDefinitionId = type.Id,
+                    DiningAreaId = type.DefaultDiningAreaId,
+                    MinGuests = type.DefaultMinGuests,
+                    Capacity = type.DefaultMaxGuests,
+                    MinimumSpend = type.DefaultMinimumSpend,
+                    Description = type.Description,
+                    PhotoPath = type.PhotoPath,
+                    IsActive = true,
+                    Status = TableStatus.Available
+                });
+            }
+
+            // 6. Optional bulk update
+            if (existing is not null && applyToExistingTables)
+            {
+                foreach (var table in existing.Tables)
+                {
+                    table.DiningAreaId = type.DefaultDiningAreaId;
+                    table.MinGuests = type.DefaultMinGuests;
+                    table.Capacity = type.DefaultMaxGuests;
+                    table.MinimumSpend = type.DefaultMinimumSpend;
+                }
+            }
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            
+            input.Id = type.Id;
+
+            return ReservationResult.Ok();
+        }
+        catch (DbUpdateException)
+        {
+            await transaction.RollbackAsync();
+            return ReservationResult.Fail(
+                "Could not save the table type. Check for duplicate names or database conflicts.");
+        }
+    }
     public Task<List<DiningArea>> GetAreasWithTablesAsync() =>
         _db.DiningAreas.Include(a => a.Tables).OrderBy(a => a.Name).ToListAsync();
 
@@ -65,6 +426,21 @@ public class ReservationService : IReservationService
     public async Task<ReservationResult> SaveTableAsync(RestaurantTable input)
     {
         var number = input.TableNumber?.Trim() ?? "";
+        TableTypeDefinition? dynamicType = null;
+
+        if (input.TableTypeDefinitionId.HasValue)
+        {
+            dynamicType = await _db.TableTypeDefinitions
+                .FirstOrDefaultAsync(t =>
+                    t.Id == input.TableTypeDefinitionId.Value);
+
+            if (dynamicType is null)
+                return ReservationResult.Fail("Invalid table type.");
+
+            if (input.Id == 0 && !dynamicType.IsActive)
+                return ReservationResult.Fail(
+                    "Cannot create a table under an inactive table type.");
+        }
         if (number.Length == 0) return ReservationResult.Fail("Table name is required.");
         if (number.Length > 10) return ReservationResult.Fail("Table name can be at most 10 characters.");
         if (input.Capacity <= 0) return ReservationResult.Fail("Capacity must be greater than 0.");
@@ -82,6 +458,7 @@ public class ReservationService : IReservationService
             _db.RestaurantTables.Add(new RestaurantTable
             {
                 TableNumber = number,
+                TableTypeDefinitionId = input.TableTypeDefinitionId,
                 Type = input.Type,
                 MinGuests = input.MinGuests,
                 Capacity = input.Capacity,
@@ -90,7 +467,7 @@ public class ReservationService : IReservationService
                 DiningAreaId = input.DiningAreaId,
                 IsActive = input.IsActive,
                 Status = TableStatus.Available,
-                PhotoPath = TablePhotoPath(input.Type)
+                PhotoPath = dynamicType?.PhotoPath ?? TablePhotoPath(input.Type)
             });
         }
         else
@@ -98,7 +475,23 @@ public class ReservationService : IReservationService
             var table = await _db.RestaurantTables.FindAsync(input.Id);
             if (table is null) return ReservationResult.Fail("Table not found.");
             table.TableNumber = number;
-            if (table.Type != input.Type) table.PhotoPath = TablePhotoPath(input.Type);
+            if(input.TableTypeDefinitionId.HasValue)
+            {
+                if (table.TableTypeDefinitionId != input.TableTypeDefinitionId ||
+                    table.Type != input.Type)
+                {
+                    table.PhotoPath = dynamicType?.PhotoPath
+                        ?? TablePhotoPath(input.Type);
+                }
+            }
+            else if (table.Type != input.Type)
+            {
+                table.PhotoPath = TablePhotoPath(input.Type);
+            }
+            if (input.TableTypeDefinitionId.HasValue)
+            {
+                table.TableTypeDefinitionId = input.TableTypeDefinitionId;
+            }
             table.Type = input.Type;
             table.MinGuests = input.MinGuests;
             table.Capacity = input.Capacity;
@@ -115,7 +508,7 @@ public class ReservationService : IReservationService
     {
         var table = await _db.RestaurantTables.FindAsync(id);
         if (table is null) return ReservationResult.Fail("Table not found.");
-
+ 
         // Keep booking history valid: a table that was ever booked cannot be deleted.
         if (await _db.Reservations.AnyAsync(r => r.TableId == id))
             return ReservationResult.Fail($"Table {table.TableNumber} has reservations, so it cannot be deleted. Edit it and untick 'Active' instead.");
@@ -208,6 +601,7 @@ public class ReservationService : IReservationService
         if (new[] { "counter.jpg", "double.jpg", "standard.jpg", "vip.jpg", "vvip.jpg" }
             .Contains(fileName, StringComparer.OrdinalIgnoreCase)) return;
         if (await _db.RestaurantTables.AnyAsync(t => t.PhotoPath == path)) return;
+        if (await _db.TableTypeDefinitions.AnyAsync(t => t.PhotoPath == path)) return;
         var file = Path.Combine(_env.WebRootPath, "images", "tables", fileName);
         if (File.Exists(file)) File.Delete(file);
     }

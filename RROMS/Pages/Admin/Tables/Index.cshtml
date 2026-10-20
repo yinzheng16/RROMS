@@ -10,7 +10,7 @@
 </div>
 <div class="yoru-summary mb-4">
     <div class="yoru-summary-item"> <strong>@Model.AllTables.Count</strong> <span>Total tables</span> </div>
-    <div class="yoru-summary-item"> <strong>@(Enum.GetValues<TableType>().Length)</strong> <span>Table types</span> </div>
+    <div class="yoru-summary-item"> <strong>@Model.TableTypes.Count</strong> <span>Table types</span> </div>
     <div class="yoru-summary-item"> <strong>@Model.Areas.Count</strong> <span>Dining areas</span> </div>
 </div>
 
@@ -73,7 +73,7 @@
     .yoru-type-detail .table-responsive {flex: 1 1 0; min-height: 0; overflow:auto;}
     .yoru-type-detail .yoru-pagination {flex-shrink: 0; margin-top: 12px; }
     .yoru-type-detail .modal-dialog { height:580px !important; min-height: 0 !important; max-height: calc(100dvh - 32px); }
-    .yoru-type-detail .modal-dialog-scrollable .modal-content {height: 100%; max-height: 100; display: flex; flex-direction: column;}
+    .yoru-type-detail .modal-dialog-scrollable .modal-content {height: 100%; max-height: 100%; display: flex; flex-direction: column;}
     .yoru-type-detail .modal-content { height: 100% !important; min-height: 0 !important;max-height: 100% !important; display: flex; flex-direction: column; }
     .yoru-type-detail .modal-header, .yoru-type-detail .modal-footer { flex: 0 0 auto; }
     .yoru-type-detail .yoru-search-toolbar { flex-shrink: 0;}
@@ -85,6 +85,42 @@
 
     #tableModal .yoru-advanced-field { display: none !important;}
     #tableModal.yoru-edit-mode .yoru-advanced-field { display: block !important;}
+    /* Manage Table Types - compact layout */
+    #manageTableTypesModal .modal-content {overflow: hidden;}
+    #manageTableTypesModal .modal-body { padding-bottom: 16px;}
+    #manageTableTypesModal .modal-footer {padding-top: 12px; padding-bottom: 12px;}
+    /* Smooth transition between list and form */
+    #manageTableTypesModal .yoru-type-view-enter {animation: yoruTypeViewEnter 220ms ease-out both;}
+    @@keyframes yoruTypeViewEnter {
+        from { opacity: 0; transform: translateY(10px);}
+        to { opacity: 1; transform: translateY(0);}}
+    @@media (prefers-reduced-motion: reduce) { #manageTableTypesModal .yoru-type-view-enter { animation: none;}}
+    /* Fixed Manage Table Types modal */
+    #manageTableTypesModal .modal-dialog { height: 600px; max-height: calc(100dvh - 32px);}
+    #manageTableTypesModal .modal-content { height: 100%; overflow: hidden; }
+    #manageTableTypesModal .modal-body { overflow-y: auto; min-height: 0; scrollbar-gutter: stable;}
+    /* Only the content changes, not the modal */
+    #manageTableTypesModal .modal-header,
+    #manageTableTypesModal .modal-footer {
+        flex-shrink: 0;
+    }
+    /* Manage Table Types column spacing */
+    #manageTableTypesModal #tableTypesListView table {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    #manageTableTypesModal #tableTypesListView th:nth-child(1) { width: 28%; }
+    #manageTableTypesModal #tableTypesListView th:nth-child(2) { width: 17%; }
+    #manageTableTypesModal #tableTypesListView th:nth-child(3) { width: 17%; }
+    #manageTableTypesModal #tableTypesListView th:nth-child(4) { width: 17%; }
+    #manageTableTypesModal #tableTypesListView th:nth-child(5) { width: 21%; } {
+        text-align: center;}
+    #manageTableTypesModal #tableTypesListView th:last-child,
+    #manageTableTypesModal #tableTypesListView td:last-child {
+        text-align: center;
+        white-space: nowrap;
+    }
 </style>
 <div class="card mb-4">
     <div class="card-body">
@@ -95,34 +131,45 @@
                 <p class="text-muted mb-0"> Select a table type to manage individual tables and their status.</p>
             </div>
 
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tableModal"> Add table </button>
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#manageTableTypesModal">
+                    Manage Table Types
+                </button>
+
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#tableModal">
+                    Add table
+                </button>
+            </div>
         </div>
 
         
 
 <div class="yoru-type-grid">
-    @foreach (var type in Enum.GetValues<TableType>())
+    @foreach (var type in Model.TableTypes)
     {
         var tables = Model.AllTables
-            .Where(t => t.Type == type)
+            .Where(t => t.TableTypeDefinitionId == type.Id)
             .ToList();
 
-        var imagePath = tables
-            .Select(t => t.PhotoPath)
-            .FirstOrDefault(x => !string.IsNullOrEmpty(x))
-            ?? sampleImages[type];
+        var imagePath = type.PhotoPath
+            ?? "/images/tables/standard.jpg";
 
-        var sectionId = $"tables-type-{(int)type}";
+        var sectionId = $"tables-type-{type.Id}";
 
-        var isRoom = type == TableType.Vip
-                  || type == TableType.Vvip;
+        var isRoom = type.Name.Contains("room", StringComparison.OrdinalIgnoreCase);                
 
         var unit = isRoom
             ? (tables.Count == 1 ? "room" : "rooms")
             : (tables.Count == 1 ? "table" : "tables");
 
         var guestText = tables.Count == 0
-            ? "No tables"
+            ? $"{type.DefaultMinGuests}–{type.DefaultMaxGuests} guests"
             : tables.Min(t => t.MinGuests) == tables.Max(t => t.Capacity)
                 ? $"{tables.Min(t => t.MinGuests)} guest"
                 : $"{tables.Min(t => t.MinGuests)}–{tables.Max(t => t.Capacity)} guests";
@@ -132,23 +179,30 @@
             <div class="yoru-type-image-wrap">
                 <img class="yoru-type-image"
                      src="@imagePath"
-                     alt="@typeNames[type]" />
+                     alt="@type.Name" />
             </div>
 
             <div class="yoru-type-body">
                 <p class="yoru-type-title">
-                    @typeNames[type]
+                    @type.Name
                 </p>
 
                 <p class="yoru-type-meta">
                     @tables.Count @unit · @guestText
                 </p>
 
-                @if (isRoom && tables.Any())
+                @if (type.DefaultMinimumSpend > 0)
                 {
                     <p class="yoru-type-spend">
                         Minimum spend:
-                        @TableTypeInfo.Rm(tables.Min(t => t.MinimumSpend))
+                        @TableTypeInfo.Rm(type.DefaultMinimumSpend)
+                    </p>
+                }
+
+                @if (!type.IsActive)
+                {
+                    <p class="text-muted small mb-2">
+                        Inactive
                     </p>
                 }
 
@@ -160,25 +214,6 @@
                         @(isRoom ? "Manage rooms" : "Manage tables")
                     </button>
 
-                    <form method="post"
-                          asp-page-handler="TypePhoto"
-                          enctype="multipart/form-data"
-                          onclick="event.stopPropagation()">
-
-                        <input type="hidden"
-                               name="type"
-                               value="@type" />
-
-                        <label class="btn btn-outline-secondary btn-sm mb-0">
-                            Change photo
-
-                            <input type="file"
-                                   name="photo"
-                                   accept=".jpg,.jpeg,.png,.webp"
-                                   hidden
-                                   onchange="this.form.submit()" />
-                        </label>
-                    </form>
                 </div>
             </div>
         </div>
@@ -187,23 +222,24 @@
 
 
 
-        <div id="tableTypeAccordion">
-        @foreach (var type in Enum.GetValues<TableType>())
+    <div id="tableTypeAccordion">
+        @foreach (var type in Model.TableTypes)
         {
-            var tables = Model.AllTables.Where(t => t.Type == type).ToList();
-            var isRoom = type == TableType.Vip || type == TableType.Vvip;
-            var unit = isRoom ? (tables.Count == 1 ? "room" : "rooms") : (tables.Count == 1 ? "table" : "tables");
-            <div class="modal fade yoru-type-detail" id="modal-tables-type-@((int)type)" tabindex="-1" aria-hidden="true">
+            var tables = Model.AllTables.Where(t => t.TableTypeDefinitionId == type.Id).ToList();
+            var isRoom = type.Name.Contains("room", StringComparison.OrdinalIgnoreCase);
+            <div class="modal fade yoru-type-detail" id="modal-tables-type-@(type.Id)" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-xl modal-dialog-centered">
                     <div class=" modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">@typeNames[type] — Manage Tables </h5>
+                            <h5 class="modal-title">@type.Name — Manage Tables </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-lable="Close"></button>
                         </div>
                 
                         <div class="modal-body">
                             <div class="yoru-search-toolbar"> <input type="search" class="form-control yoru-table-search" placeholder="Search table name..." aria-label="Search tables" />
-                                <select class="form-select yoru-table-status-filter" aria-label="Filter table status"> <option value="">All statuses</option>
+                                <select class="form-select yoru-table-status-filter" aria-label="Filter table status"> 
+                                    <option value="">All statuses</option>
+                                    
                                     @foreach (var status in Enum.GetValues<TableStatus>())
                                     {<option value="@status"> @(status == TableStatus.OutOfService ? "Out of service" : status.ToString()) </option>}
                                 </select>
@@ -238,7 +274,7 @@
                                                     <td>@(t.IsActive ? "Yes" : "No")</td>
                                                     <td class="text-nowrap">
                                                         <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tableModal"
-                                                                data-id="@t.Id" data-number="@t.TableNumber" data-type="@((int)t.Type)" data-area="@t.DiningAreaId"
+                                                                data-id="@t.Id" data-number="@t.TableNumber" data-type="@((int)t.Type)" data-dynamic-type="@t.TableTypeDefinitionId" data-area="@t.DiningAreaId"
                                                                 data-min="@t.MinGuests" data-max="@t.Capacity" data-spend="@t.MinimumSpend.ToString("0")" data-desc="@t.Description" data-active="@t.IsActive.ToString().ToLower()">
                                                             Edit
                                                         </button>
@@ -376,6 +412,319 @@
     </div>
 </div>
 
+<!-- Manage Table Types Modal -->
+<div class="modal fade"
+     id="manageTableTypesModal"
+     tabindex="-1"
+     aria-labelledby="manageTableTypesTitle"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="manageTableTypesTitle">
+                    Manage Table Types
+                </h2>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body py-3">
+
+                <div id="tableTypesListView">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="h6 mb-0">Existing Table Types</h3>
+
+                    <button type="button"
+                            class="btn btn-primary btn-sm"
+                            id="addNewTableTypeBtn">
+                        + Add New Type
+                    </button>
+                </div>
+
+                <div class="table-responsive mb-0">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Prefix</th>
+                                <th>Tables</th>
+                                <th>Status</th>
+                                <th class="text-center"> Actions </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var type in Model.TableTypes)
+                            {
+                                <tr>
+                                    <td>@type.Name</td>
+                                    <td>@type.Prefix</td>
+                                    <td>@type.Tables.Count</td>
+                                    <td>@(type.IsActive ? "Active" : "Inactive")</td>
+                                    <td class="text-center text-nowrap">
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-secondary yoru-edit-type"
+                                                data-id="@type.Id"
+                                                data-name="@type.Name"
+                                                data-prefix="@type.Prefix"
+                                                data-start="@type.StartingNumber"
+                                                data-padding="@type.NumberPadding"
+                                                data-area="@type.DefaultDiningAreaId"
+                                                data-min="@type.DefaultMinGuests"
+                                                data-max="@type.DefaultMaxGuests"
+                                                data-spend="@type.DefaultMinimumSpend.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                data-desc="@type.Description"
+                                                data-active="@type.IsActive.ToString().ToLowerInvariant()"
+                                                data-photo="@(type.PhotoPath ?? "/images/tables/standard.jpg")">
+                                            Edit
+                                        </button>
+                                   
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger ms-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteTableTypeModal"
+                                                data-id="@type.Id"
+                                                data-name="@type.Name"
+                                                data-has-tables="@(type.Tables.Any() ? "true" : "false")">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+
+                <div id="tableTypeFormView" class="d-none">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm mb-3"
+                            id="backToTableTypesBtn">
+                        ← Back to List
+                    </button>
+                <h3 class="h6 mb-3" id="tableTypeFormTitle">
+                    Add New Table Type
+                </h3>
+
+                <form id="tableTypeForm"
+                      method="post"
+                      asp-page-handler="SaveTableType"
+                      enctype="multipart/form-data">
+
+                    <input type="hidden" asp-for="TableTypeForm.Id" />
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label asp-for="TableTypeForm.Name" class="form-label">
+                                Type Name
+                            </label>
+                            <input asp-for="TableTypeForm.Name"
+                                   class="form-control"
+                                   maxlength="50"
+                                   required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="TableTypeForm.Prefix" class="form-label">
+                                Table Prefix
+                            </label>
+                            <input asp-for="TableTypeForm.Prefix"
+                                   class="form-control"
+                                   maxlength="10"
+                                   pattern="[A-Za-z]+"
+                                   required />
+                            <small class="text-muted">Example: VIP, T, C</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="TableTypeForm.StartingNumber" class="form-label">
+                                Starting Number
+                            </label>
+                            <input asp-for="TableTypeForm.StartingNumber"
+                                   type="number"
+                                   min="1"
+                                   class="form-control"
+                                   required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="TableTypeForm.NumberPadding" class="form-label">
+                                Number Padding
+                            </label>
+                            <input asp-for="TableTypeForm.NumberPadding"
+                                   type="number"
+                                   min="1"
+                                   max="10"
+                                   class="form-control"
+                                   required />
+                            <small class="text-muted">1 = VIP1, 2 = VIP01</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="TableTypeForm.DefaultDiningAreaId"
+                                   class="form-label">
+                                Default Dining Area
+                            </label>
+
+                            <select asp-for="TableTypeForm.DefaultDiningAreaId"
+                                    asp-items="@(new SelectList(Model.Areas, "Id", "Name"))"
+                                    class="form-select"
+                                    required>
+                                <option value="">Choose an area...</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="TableTypeForm.DefaultMinGuests"
+                                   class="form-label">
+                                Min Guests
+                            </label>
+                            <input asp-for="TableTypeForm.DefaultMinGuests"
+                                   type="number"
+                                   min="1"
+                                   max="20"
+                                   class="form-control"
+                                   required />
+                        </div>
+
+                        <div class="col-md-3">
+                            <label asp-for="TableTypeForm.DefaultMaxGuests"
+                                   class="form-label">
+                                Max Guests
+                            </label>
+                            <input asp-for="TableTypeForm.DefaultMaxGuests"
+                                   type="number"
+                                   min="1"
+                                   max="20"
+                                   class="form-control"
+                                   required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="TableTypeForm.DefaultMinimumSpend"
+                                   class="form-label">
+                                Default Minimum Spend (RM)
+                            </label>
+                            <input asp-for="TableTypeForm.DefaultMinimumSpend"
+                                   type="number"
+                                   min="0"
+                                   step="0.01"
+                                   class="form-control" />
+                        </div>
+
+                        <div class="col-md-6 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input asp-for="TableTypeForm.IsActive"
+                                       class="form-check-input" />
+                                <label asp-for="TableTypeForm.IsActive"
+                                       class="form-check-label">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="TableTypeForm.Description"
+                                   class="form-label">
+                                Description (optional)
+                            </label>
+                            <textarea asp-for="TableTypeForm.Description"
+                                      class="form-control"
+                                      rows="2"
+                                      maxlength="300"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="TableTypeForm.Photo" class="form-label">
+                                Table Type Photo (Optional)
+                            </label>
+
+                            <input asp-for="TableTypeForm.Photo"
+                                   type="file"
+                                   class="form-control"
+                                   accept=".jpg,.jpeg,.png,.webp"
+                                   id="tableTypePhotoInput" />
+
+                            <div class="form-text">
+                                JPG, PNG or WEBP. Maximum 3 MB.
+                                Leave empty to keep the existing photo.
+                            </div>
+
+                            <img id="tableTypePhotoPreview"
+                                 src="/images/tables/standard.jpg"
+                                 alt="Table type photo preview"
+                                 class="img-fluid rounded border mt-2"
+                                 style="width: 180px; height: 120px; object-fit: cover;" />
+                        </div>
+
+                        <div class="col-12" id="createFirstTableSection">
+                            <div class="form-check">
+                                <input asp-for="TableTypeForm.CreateFirstTable"
+                                       class="form-check-input" />
+                                <label asp-for="TableTypeForm.CreateFirstTable"
+                                       class="form-check-label">
+                                    Create the first table now
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-none" id="firstTableNameSection">
+                            <label asp-for="TableTypeForm.FirstTableName"
+                                   class="form-label">
+                                First Table Name (optional)
+                            </label>
+                            <input asp-for="TableTypeForm.FirstTableName"
+                                   class="form-control"
+                                   maxlength="10"
+                                   pattern="[A-Za-z]+[0-9]+" />
+                            <small class="text-muted">
+                                Leave blank to use the prefix and starting number.
+                            </small>
+                        </div>
+
+                        <div class="col-12 d-none" id="bulkUpdateSection">
+                            <label class="form-label">Apply Changes To</label>
+
+                            <select asp-for="TableTypeForm.ApplyToExistingTables"
+                                    class="form-select"
+                                    id="bulkUpdateChoice">
+                                <option value="false">Only New Tables</option>
+                                <option value="true">All Existing Tables</option>
+                            </select>
+
+                            <small class="text-muted">
+                                Updating existing tables changes their dining area,
+                                guest capacity and minimum spend.
+                            </small>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Close
+                </button>
+
+                <button type="submit"
+                        form="tableTypeForm"
+                        class="btn btn-primary d-none" id="saveTableTypeBtn">
+                    Save Table Type
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="tableModal" tabindex="-1" aria-labelledby="tableTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <form method="post" asp-page-handler="SaveTable" class="modal-content">
@@ -384,8 +733,36 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body row g-3"> <input type="hidden" asp-for="TableForm.Id" />           
-                <div class="col-12"><label asp-for="TableForm.Type" class="form-label"> Table Type </label>
-                    <select asp-for="TableForm.Type" asp-items="Html.GetEnumSelectList<TableType>()" class="form-select"> </select>
+                <div class="col-12">
+                    <label asp-for="TableForm.TableTypeDefinitionId"
+                           class="form-label">
+                        Table Type
+                    </label>
+
+                    <select asp-for="TableForm.TableTypeDefinitionId"
+                            class="form-select"
+                            required>
+
+                        <option value="">Choose a table type...</option>
+
+                        @foreach (var type in Model.TableTypes)
+                        {
+                            <option value="@type.Id"
+                            disabled="@(!type.IsActive)"
+                            data-inactive="@(!type.IsActive).ToString().ToLowerInvariant()"
+                            data-prefix="@type.Prefix"
+                            data-start="@type.StartingNumber"
+                            data-padding="@type.NumberPadding"
+                            data-area="@type.DefaultDiningAreaId"
+                            data-min="@type.DefaultMinGuests"
+                            data-max="@type.DefaultMaxGuests"
+                            data-spend="@type.DefaultMinimumSpend.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                @type.Name @(type.IsActive ? "" : "(Inactive)")
+                            </option>
+                        }
+                    </select>
+
+                    <input type="hidden" asp-for="TableForm.Type" />
                 </div>
 
                 <div class="col-12"><label asp-for="TableForm.TableNumber" class="form-label"> Table Name </label>
@@ -434,7 +811,67 @@
     </div>
 </div>
 
+<!-- Delete Table Type Confirmation -->
+<div class="modal fade"
+     id="deleteTableTypeModal"
+     tabindex="-1"
+     aria-labelledby="deleteTableTypeTitle"
+     aria-hidden="true">
 
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post"
+              asp-page-handler="DeleteTableType"
+              class="modal-content">
+
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="deleteTableTypeTitle">
+                    Delete Table Type
+                </h2>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden"
+                       name="id"
+                       id="deleteTableTypeId" />
+
+                <p>
+                    Are you sure you want to delete
+                    <strong id="deleteTableTypeName"></strong>?
+                </p>
+
+                <p id="deleteTableTypeBlocked"
+                   class="text-danger small d-none">
+                    This table type still contains tables.
+                    Delete or move its tables before deleting this type.
+                </p>
+
+                <p id="deleteTableTypeWarning"
+                   class="text-danger small">
+                    This action cannot be undone.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="btn btn-danger"
+                        id="confirmDeleteTableType">
+                    Delete Table Type
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
 
 <!-- Delete table/room confirmation -->
 <div class="modal fade" id="deleteTableModal" tabindex="-1" aria-labelledby="deleteTableTitle" aria-hidden="true">
@@ -494,86 +931,359 @@
                 }
             });
         }
+        // Manage Table Types: Create / Edit
+        const manageTypesModal = document.getElementById('manageTableTypesModal');
+        const tableTypesListView = document.getElementById('tableTypesListView');
+        const tableTypeFormView = document.getElementById('tableTypeFormView');
+        const addNewTableTypeBtn = document.getElementById('addNewTableTypeBtn');
+        const backToTableTypesBtn = document.getElementById('backToTableTypesBtn');
+        const saveTableTypeBtn = document.getElementById('saveTableTypeBtn');
+
+        function showTableTypesList() {
+            tableTypeFormView.classList.add('d-none');
+            tableTypesListView.classList.remove('d-none');
+
+            saveTableTypeBtn.classList.add('d-none');
+
+            tableTypesListView.classList.remove('yoru-type-view-enter');
+            void tableTypesListView.offsetWidth;
+            tableTypesListView.classList.add('yoru-type-view-enter');
+            manageTypesModal.querySelector('.modal-body').scrollTop = 0;
+        }
+
+        function showTableTypeForm() {
+            tableTypesListView.classList.add('d-none');
+            tableTypeFormView.classList.remove('d-none');
+
+            saveTableTypeBtn.classList.remove('d-none');
+
+            tableTypeFormView.classList.remove('yoru-type-view-enter');
+            void tableTypeFormView.offsetWidth;
+            tableTypeFormView.classList.add('yoru-type-view-enter');
+            manageTypesModal.querySelector('.modal-body').scrollTop = 0;
+        }
+        const tableTypeForm = document.getElementById('tableTypeForm');
+        const typeFormTitle = document.getElementById('tableTypeFormTitle');
+        const firstTableCheckbox = tableTypeForm.querySelector('[name="TableTypeForm.CreateFirstTable"]');
+        const firstTableSection = document.getElementById('firstTableNameSection');
+        const createFirstSection = document.getElementById('createFirstTableSection');
+        const bulkUpdateSection = document.getElementById('bulkUpdateSection');
+        const bulkUpdateChoice = document.getElementById('bulkUpdateChoice');
+
+        function setTypeFormValue(field, value) {
+            const input = tableTypeForm.querySelector(
+                '[name="TableTypeForm.' + field + '"]');
+
+            if (!input) return;
+
+            if (input.type === 'checkbox') {
+                input.checked = String(value) === 'true';
+            } else {
+                input.value = value ?? '';
+            }
+        }
+
+        const tableTypePhotoInput =
+            document.getElementById('tableTypePhotoInput');
+
+        const tableTypePhotoPreview =
+            document.getElementById('tableTypePhotoPreview');
+
+        const defaultTableTypePhoto = '/images/tables/standard.jpg';
+
+        let tableTypePhotoPreviewUrl = null;
+        let originalTableTypePhoto = defaultTableTypePhoto;
+
+        function setTableTypePhotoPreview(path) {
+            if (tableTypePhotoPreviewUrl) {
+                URL.revokeObjectURL(tableTypePhotoPreviewUrl);
+                tableTypePhotoPreviewUrl = null;
+            }
+
+            tableTypePhotoPreview.src = path || defaultTableTypePhoto;
+        }
+
+        tableTypePhotoInput.addEventListener('change', function () {
+            const file = this.files?.[0];
+
+            if (!file) {
+                setTableTypePhotoPreview(originalTableTypePhoto);
+                return;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+            if (!allowedTypes.includes(file.type) ||
+                file.size > 3 * 1024 * 1024) {
+                alert('Please choose a JPG, PNG or WEBP image under 3 MB.');
+                this.value = '';
+                setTableTypePhotoPreview(originalTableTypePhoto);
+                return;
+            }
+
+            setTableTypePhotoPreview(URL.createObjectURL(file));
+            tableTypePhotoPreviewUrl = tableTypePhotoPreview.src;
+        });
+
+        function resetTableTypeForm() {
+            tableTypeForm.reset();
+
+            setTypeFormValue('Id', '0');
+            setTypeFormValue('Name', '');
+            setTypeFormValue('Prefix', '');
+            setTypeFormValue('StartingNumber', '1');
+            setTypeFormValue('NumberPadding', '1');
+            setTypeFormValue('DefaultDiningAreaId', '');
+            setTypeFormValue('DefaultMinGuests', '1');
+            setTypeFormValue('DefaultMaxGuests', '2');
+            setTypeFormValue('DefaultMinimumSpend', '0');
+            setTypeFormValue('Description', '');
+            setTypeFormValue('IsActive', 'true');
+            setTypeFormValue('CreateFirstTable', 'false');
+            setTypeFormValue('FirstTableName', '');
+            setTypeFormValue('ApplyToExistingTables', 'false');
+
+            typeFormTitle.textContent = 'Add New Table Type';
+
+            createFirstSection.classList.remove('d-none');
+            firstTableSection.classList.add('d-none');
+            bulkUpdateSection.classList.add('d-none');
+            tableTypePhotoInput.value = '';
+            originalTableTypePhoto = defaultTableTypePhoto;
+            setTableTypePhotoPreview(originalTableTypePhoto);
+        }
+
+        function editTableType(button) {
+            const d = button.dataset;
+
+            resetTableTypeForm();
+
+            setTypeFormValue('Id', d.id);
+            setTypeFormValue('Name', d.name);
+            setTypeFormValue('Prefix', d.prefix);
+            setTypeFormValue('StartingNumber', d.start);
+            setTypeFormValue('NumberPadding', d.padding);
+            setTypeFormValue('DefaultDiningAreaId', d.area);
+            setTypeFormValue('DefaultMinGuests', d.min);
+            setTypeFormValue('DefaultMaxGuests', d.max);
+            setTypeFormValue('DefaultMinimumSpend', d.spend);
+            setTypeFormValue('Description', d.desc);
+            setTypeFormValue('IsActive', d.active);
+
+            tableTypePhotoInput.value = '';
+            originalTableTypePhoto = d.photo || defaultTableTypePhoto;
+            setTableTypePhotoPreview(originalTableTypePhoto);
+            typeFormTitle.textContent = 'Edit Table Type: ' + d.name;
+
+            createFirstSection.classList.add('d-none');
+            firstTableSection.classList.add('d-none');
+            bulkUpdateSection.classList.remove('d-none');
+        }
+
+        manageTypesModal.addEventListener('show.bs.modal', () => {
+            resetTableTypeForm();
+            showTableTypesList();
+        });
+
+        document.querySelectorAll('.yoru-edit-type').forEach(button => {
+            button.addEventListener('click', () => {
+                editTableType(button);
+
+                showTableTypeForm();
+            });
+        });
+        addNewTableTypeBtn.addEventListener('click', () => {
+            resetTableTypeForm();
+            showTableTypeForm();
+        });
+
+        backToTableTypesBtn.addEventListener('click', () => {
+            resetTableTypeForm();
+            showTableTypesList();
+        });
+
+        firstTableCheckbox.addEventListener('change', () => {
+            const isChecked = firstTableCheckbox.checked;
+            firstTableSection.classList.toggle( 'd-none', !isChecked);
+            if (isChecked) {
+                requestAnimationFrame(() => {
+                    const modalBody = manageTypesModal.querySelector('.modal-body');
+
+                    modalBody.scrollTo({
+                        top: modalBody.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                });
+            }
+        });
+
+        // Confirm bulk update before submitting the form.
+        tableTypeForm.addEventListener('submit', e => {
+            const isEditingType =
+                Number(tableTypeForm.querySelector('[name="TableTypeForm.Id"]').value) > 0;
+
+            if (isEditingType && bulkUpdateChoice.value === 'true') {
+                const confirmed = window.confirm(
+                    'Apply the new dining area, guest capacity and minimum spend ' +
+                    'to ALL existing tables of this type? ' +
+                    'This may affect existing reservations.'
+                );
+
+                if (!confirmed) {
+                    e.preventDefault();
+                }
+            }
+        });
         bindModal('areaModal', [['AreaForm.Id','id','0'], ['AreaForm.Name','name',''], ['AreaForm.Description','desc','']]);
-        bindModal('tableModal', [['TableForm.Id','id','0'], ['TableForm.TableNumber','number',''], ['TableForm.Type','type','2'],
+        bindModal('tableModal', [['TableForm.Id','id','0'], ['TableForm.TableNumber','number',''], ['TableForm.Type','type','2'], ['TableForm.TableTypeDefinitionId', 'dynamicType', ''],
             ['TableForm.DiningAreaId','area',''], ['TableForm.MinGuests','min','1'], ['TableForm.Capacity','max','2'],
             ['TableForm.MinimumSpend','spend','0'], ['TableForm.Description','desc',''], ['TableForm.IsActive','active','true']]);
         
         // Apply defaults when adding a table or changing its type. Existing table values remain intact on Edit.
         const tableModal = document.getElementById('tableModal');
-        const typeField = tableModal.querySelector('[name="TableForm.Type"]');
+        const dynamicTypeField = tableModal.querySelector('[name="TableForm.TableTypeDefinitionId"]');
+        const legacyTypeField = tableModal.querySelector('[name="TableForm.Type"]');
         const nameField = tableModal.querySelector('[name="TableForm.TableNumber"]');
         const areaField = tableModal.querySelector('[name="TableForm.DiningAreaId"]');
         const minField = tableModal.querySelector('[name="TableForm.MinGuests"]');
         const maxField = tableModal.querySelector('[name="TableForm.Capacity"]');
         const spendField = tableModal.querySelector('[name="TableForm.MinimumSpend"]');
         const activeField = tableModal.querySelector('[name="TableForm.IsActive"]');
-        const existingTables = Array.from(document.querySelectorAll('.yoru-table-row') ).map(row => row.dataset.name);
-        const defaults = {
-            '0': { prefix: 'C', area: 'Bar Counter', min: 1, max: 1, spend: 0 },
-            '1': { prefix: 'D', area: 'Main Hall', min: 1, max: 2, spend: 0 },
-            '2': { prefix: 'T', area: 'Main Hall', min: 3, max: 6, spend: 0 },
-            '3': { prefix: 'VIP', area: 'Private Rooms', min: 1, max: 10, spend: 500 },
-            '4': { prefix: 'VVIP', area: 'Private Rooms', min: 1, max: 20, spend: 1000 }
-        };
+        const descriptionField = tableModal.querySelector('[name="TableForm.Description"]');
+        const existingTables = Array.from(document.querySelectorAll('.yoru-table-row') ).map(row => row.dataset.name.toUpperCase());
         let isEditing = false;
-        function applyTypeDefaults() {
+        let nameWasEdited = false;
+        function nextLocalTableName(option) {
+            const prefix = option.dataset.prefix || '';
+            const start = Number(option.dataset.start || 1);
+            const padding = Number(option.dataset.padding || 1);
+
+            const used = new Set(existingTables);
+            let number = start;
+
+            while (used.has(
+                (prefix + String(number).padStart(padding, '0')).toUpperCase()
+            )) {
+                number++;
+            }
+
+            return prefix + String(number).padStart(padding, '0');
+        }
+        function applyDynamicTypeDefaults() {
             if (isEditing) return;
 
-            const config = defaults[typeField.value];
-            if (!config) return;
+            const option = dynamicTypeField.selectedOptions[0];
+            if (!option || !option.value) {
+                nameField.value = '';
+                return;
+            }
 
-            // Find the highest existing table number for this type.
-            const numbers = existingTables
-                .map(name => {
-                    if (!name || !name.startsWith(config.prefix)) {
-                        return null;
-                    }
-
-                    const suffix = name.slice(config.prefix.length);
-
-                    return /^\d+$/.test(suffix)
-                        ? Number(suffix)
-                        : null;
-                })
-                .filter(number => number !== null);
-
-            const nextNumber = numbers.length
-                ? Math.max(...numbers) + 1
-                : 1;
-
-            nameField.value = config.prefix + nextNumber;
-
-            minField.value = config.min;
-            maxField.value = config.max;
-            spendField.value = config.spend;
+            areaField.value = option.dataset.area || '';
+            minField.value = option.dataset.min || '1';
+            maxField.value = option.dataset.max || '2';
+            spendField.value = option.dataset.spend || '0';
+            descriptionField.value = '';
             activeField.checked = true;
 
-            const matchingArea = Array.from(areaField.options)
-                .find(option =>
-                    option.text.trim().toLowerCase() ===
-                    config.area.toLowerCase()
-                );
+            if (!nameWasEdited) {
+                nameField.value = nextLocalTableName(option);
+            }
 
-            areaField.value = matchingArea ? matchingArea.value : '';
+            // Legacy enum remains for backward compatibility.
+            // Dynamic TableTypeDefinitionId is the authoritative type.
+            legacyTypeField.value = '2';
         }
 
         tableModal.addEventListener('show.bs.modal', e => {
-            isEditing = !!(e.relatedTarget && e.relatedTarget.dataset.id);
+            const data = e.relatedTarget?.dataset || {};
+
+            isEditing = !!data.id;
+            nameWasEdited = isEditing;
 
             tableModal.classList.toggle('yoru-edit-mode', isEditing);
+
             tableModal.querySelectorAll('.yoru-advanced-field')
                 .forEach(field => {
                     field.classList.toggle('d-none', !isEditing);
                 });
 
-            // bindModal was registered first and has already populated inputs.
-            if (!isEditing) {
-                applyTypeDefaults();
+            if (isEditing) {
+                // An inactive type must still be visible for an existing table.
+                const selectedId = String(data.dynamicType || '');
+
+                if (selectedId && !Array.from(dynamicTypeField.options)
+                    .some(option => option.value === selectedId)) {
+
+                    const option = document.createElement('option');
+                    option.value = selectedId;
+                    option.textContent = 'Current inactive table type';
+                    dynamicTypeField.appendChild(option);
+                }
+
+                Array.from(dynamicTypeField.options).forEach(option => {
+                    option.disabled = option.dataset.inactive === 'true';
+                });
+                
+                const currentOption = Array.from(dynamicTypeField.options)
+                    .find(option => option.value === selectedId);
+
+                if (currentOption) {
+                    currentOption.disabled = false;
+                }
+                
+                dynamicTypeField.value = selectedId;
+            } else {
+                Array.from(dynamicTypeField.options).forEach(option => {
+                    option.disabled = option.dataset.inactive === 'true';
+                });
+
+                nameWasEdited = false;
+
+                const firstActiveOption = Array.from(dynamicTypeField.options)
+                    .find(option => option.value && !option.disabled);
+
+                dynamicTypeField.value = firstActiveOption
+                    ? firstActiveOption.value
+                    : '';
+
+                applyDynamicTypeDefaults();
             }
         });
 
-        typeField.addEventListener('change', applyTypeDefaults);
+        dynamicTypeField.addEventListener('change', () => {
+            if (!isEditing) {
+                nameWasEdited = false;
+                applyDynamicTypeDefaults();
+            }
+        });
+
+        nameField.addEventListener('input', () => {
+            if (!isEditing) {
+                nameWasEdited = true;
+            }
+        });
+
+        // Delete Table Type confirmation
+        document.getElementById('deleteTableTypeModal')
+            .addEventListener('show.bs.modal', e => {
+
+                const data = e.relatedTarget.dataset;
+                const hasTables = data.hasTables === 'true';
+
+                document.getElementById('deleteTableTypeId').value = data.id;
+
+                document.getElementById('deleteTableTypeName').textContent =
+                    data.name;
+
+                document.getElementById('deleteTableTypeBlocked')
+                    .classList.toggle('d-none', !hasTables);
+
+                document.getElementById('deleteTableTypeWarning')
+                    .classList.toggle('d-none', hasTables);
+
+                document.getElementById('confirmDeleteTableType').disabled =
+                    hasTables;
+            });
 
         document.getElementById('deleteTableModal')
             .addEventListener('show.bs.modal', e => {
