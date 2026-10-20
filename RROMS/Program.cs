@@ -53,6 +53,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();   // EN
 builder.Services.AddScoped<IOrderService, OrderService>();
 // Member 4: builder.Services.AddScoped<IPaymentService, PaymentService>();
 // Member 5: builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IAdminOverviewService, AdminOverviewService>();
 
 var app = builder.Build();
 

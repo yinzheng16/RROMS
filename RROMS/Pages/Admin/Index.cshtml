@@ -1,0 +1,223 @@
+@page
+@model RROMS.Pages.Admin.Index
+
+@{
+    ViewData["Title"] = "Admin Overview";
+}
+
+<div class="page-header">
+    <div>
+        <p class="eyebrow">Administration</p>
+        <h1>Today's Overview</h1>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Today's Reservations</p>
+                <h2 class="mb-0">@Model.Overview.TodayReservationCount</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Today's Orders</p>
+                <h2 class="mb-0">@Model.Overview.TodayOrderCount</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Today's Payments</p>
+                <h2 class="mb-0">@Model.Overview.TodayPaymentCount</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <p class="text-muted mb-1">Payment Total</p>
+                <h2 class="mb-0">RM @Model.Overview.TodayPaymentTotal.ToString("N2")</h2>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">Latest Reservations</h3>
+                    <a class="btn btn-outline-secondary btn-sm disabled"
+                       href="#"
+                       aria-disabled="true">
+                        View All
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Reference</th>
+                                <th>Time</th>
+                                <th>Guests</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.Overview.LatestReservations.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-muted">
+                                    No reservations found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var reservation in Model.Overview.LatestReservations)
+                            {
+                                <tr>
+                                    <td>@reservation.ReferenceNo</td>
+                                    <td>@reservation.ReservedAt.ToString("dd MMM, h:mm tt")</td>
+                                    <td>@reservation.Guests</td>
+                                    <td>
+                                        <span class="status-badge status-@reservation.Status">
+                                            @reservation.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">Latest Orders</h3>
+                    <a class="btn btn-outline-secondary btn-sm disabled"
+                       href="#"
+                       aria-disabled="true">
+                        View All
+                    </a>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Type</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @if (Model.Overview.LatestOrders.Count == 0)
+                        {
+                            <tr>
+                                <td colspan="4" class="text-muted">
+                                    No orders found.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var order in Model.Overview.LatestOrders)
+                            {
+                                <tr>
+                                    <td>@order.OrderNo</td>
+                                    <td>@order.OrderType</td>
+                                    <td>RM @order.TotalAmount.ToString("N2")</td>
+                                    <td>
+                                        <span class="status-badge status-@order.Status">
+                                            @order.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Latest Payments</h3>
+            <a class="btn btn-outline-secondary btn-sm disabled"
+               href="#"
+               aria-disabled="true">
+                View All
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Order</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th>Paid At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model.Overview.LatestPayments.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-muted">
+                            No payments found.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var payment in Model.Overview.LatestPayments)
+                    {
+                        <tr>
+                            <td>@payment.Order.OrderNo</td>
+                            <td>RM @payment.Amount.ToString("N2")</td>
+                            <td>@payment.Method</td>
+                            <td>
+                                <span class="status-badge status-@payment.Status">
+                                    @payment.Status
+                                </span>
+                            </td>
+                            <td>
+                                @(payment.PaidAt.HasValue
+                                    ? payment.PaidAt.Value.ToString("dd MMM yyyy, h:mm tt")
+                                    : "-")
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
