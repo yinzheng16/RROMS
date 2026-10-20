@@ -30,6 +30,15 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// ---------- Login cookie: auto logout (Member 1, US02) ----------
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);   // not ticked: logged out after 30 minutes of doing nothing
+    options.SlidingExpiration = true;                     // every visit/click restarts the 30 minutes
+    // "Keep me logged in" ticked: 7 days instead (set in AccountService.LoginAsync)
+});
+
+
 // ---------- Role-based access control (Member 1) ----------
 builder.Services.AddAuthorization(options =>
 {
