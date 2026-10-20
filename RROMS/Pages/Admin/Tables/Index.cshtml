@@ -8,11 +8,62 @@
 <div class="page-header yoru-tables-page">
     <div><p class="eyebrow">Restaurant Management</p><h1>Tables & Opening hours</h1><p class="text-muted mb-0">Manage table types, seating areas and opening hours.</p></div>
 </div>
+
 <div class="yoru-summary mb-4">
-    <div class="yoru-summary-item"> <strong>@Model.AllTables.Count</strong> <span>Total tables</span> </div>
-    <div class="yoru-summary-item"> <strong>@Model.TableTypes.Count</strong> <span>Table types</span> </div>
-    <div class="yoru-summary-item"> <strong>@Model.Areas.Count</strong> <span>Dining areas</span> </div>
+
+    <div class="yoru-summary-item yoru-summary-dark">
+        <div class="yoru-summary-label">
+            <i data-lucide="armchair"></i> THE COLLECTION
+        </div>
+
+        <div class="yoru-summary-number">
+            @Model.AllTables.Count
+        </div>
+
+        <div class="yoru-summary-title">Total tables</div>
+        <div class="yoru-summary-desc">
+            Seating across the restaurant.
+        </div>
+
+        <div class="yoru-summary-decoration"><i data-lucide="armchair"></i></div>
+    </div>
+
+    <div class="yoru-summary-item yoru-summary-red">
+        <div class="yoru-summary-label">
+            <i data-lucide="layers-3"></i> TABLE COLLECTION
+        </div>
+
+        <div class="yoru-summary-number">
+            @Model.TableTypes.Count
+        </div>
+
+        <div class="yoru-summary-title">Table types</div>
+        <div class="yoru-summary-desc">
+            Seating styles available.
+        </div>
+
+        <div class="yoru-summary-decoration"><i data-lucide="layers-3"></i></div>
+    </div>
+
+    <div class="yoru-summary-item yoru-summary-light">
+        <div class="yoru-summary-label">
+            <i data-lucide="door-open"></i> ROOM TO GATHER
+        </div>
+
+        <div class="yoru-summary-number">
+            @Model.Areas.Count
+        </div>
+
+        <div class="yoru-summary-title">Dining areas</div>
+        <div class="yoru-summary-desc">
+            Spaces for every occasion.
+        </div>
+
+        <div class="yoru-summary-decoration"><i data-lucide="door-open"></i></div>
+    </div>
+
 </div>
+
 
 @if (Model.Message != null)
 {
@@ -48,9 +99,28 @@
     .yoru-workspace {display:grid; gap:24px; }
     .yoru-workspace-heading {display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
     .yoru-summary {display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-    .yoru-summary-item {background: #fffdfa; border: 1px solid #e5d9c9; border-radius: 12px; padding: 18px; }
+    .yoru-summary-item {position: relative; overflow: hidden; min-height: 165px;  border-radius: 16px; padding: 22px; display: flex; flex-direction: column; justify-content: center; cursor: default; transition:transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; animation: yoruCardAppear 0.55s ease both;}
     .yoru-summary-item strong {display: block; font-size: 1.6rem; color: #342820; }
     .yoru-summary-item span {color: #796e62; font-size: .85rem; }
+    .yoru-summary-item:hover {transform: translateY(-8px); box-shadow: 0 16px 30px rgba(0, 0, 0, 0.16);}
+    .yoru-summary-dark {background: #1c1c1c; color: #ffffff; border: 1px solid #333333;}
+    .yoru-summary-red {background: #c43b2b; color: #ffffff; border: 1px solid #bd3425; }
+    .yoru-summary-light {background: #faf8f3;color: #241e19;border: 1px solid #e6ddd0; }
+    .yoru-summary-label {font-size: 11px; font-weight: 600; letter-spacing: 0.7px; text-transform: uppercase; opacity: 0.8; z-index: 1; display: flex; align-items: center; gap: 8px;}
+    .yoru-summary-label svg {display: inline-block; width: 20px; height: 20px; flex-shrink: 0; stroke-width: 1.2;}
+    .yoru-summary-label span {margin-right: 6px; }
+    .yoru-summary-number {font-family: Georgia, serif; font-size: 46px; line-height: 1.1; margin-top: 14px; z-index: 1; }
+    .yoru-summary-title {font-size: 15px; font-weight: 600; margin-top: 2px; z-index: 1; }
+    .yoru-summary-desc {font-size: 12px; opacity: 0.7; margin-top: 4px; z-index: 1;}
+    .yoru-summary-decoration {position: absolute; right: 22px; top: 50%; transform: translateY(-50%); opacity: 0.10; pointer-events: none; transition: transform 0.3s ease, opacity 0.3s ease;}
+    .yoru-summary-decoration svg {width: 90px; height: 90px; stroke-width: 1.2;}
+    .yoru-summary-item:hover .yoru-summary-decoration {transform: translateY(-50%) scale(1.15) rotate(-8deg); opacity: 0.05;}
+    @@keyframes yoruCardAppear {from { opacity: 0; transform: translateY(18px);} to {opacity: 1; transform: translateY(0);} }
+    .yoru-summary-item:nth-child(1) {animation-delay: 0.05s;}
+    .yoru-summary-item:nth-child(2) {animation-delay: 0.15s;}
+    .yoru-summary-item:nth-child(3) {animation-delay: 0.25s;}
+    @@media (max-width: 720px) {.yoru-summary {grid-template-columns: 1fr;} .yoru-summary-item {min-height: 145px;} }
+    @@media (prefers-reduced-motion: reduce) {.yoru-summary-item { animation: none; transition: none; } .yoru-summary-item:hover {transform: none;} .yoru-summary-decoration {transition: none;} } 
     .yoru-type-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
     .yoru-type-card { border:1px solid #e5d9c9; border-radius:12px; overflow:hidden; background:#fffdfa; display:flex; flex-direction:column; height:100%; transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
     .yoru-type-card:hover {transform: translateY(-3px); border-color: #a83228; box-shadow: 0 10px 24px rgba(0, 0, 0, .12); }
@@ -917,6 +987,7 @@
 </div>
 
 @section Scripts {
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script>
         // Fill the modals: "Edit" buttons carry data-* values, "Add" buttons carry none (so the form is cleared).
         function bindModal(modalId, fields) {
@@ -1429,6 +1500,12 @@
                 areaFilter.addEventListener('change', refreshAreas);
             }
         }
-
+    </script>
+    <script>
+        if (window.lucide) {
+            lucide.createIcons();
+        } else {
+            console.error("Lucide Icons failed to load.");
+        }
     </script>
 }
