@@ -25,6 +25,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.AllowedForNewUsers = true;
+        options.Password.RequiredLength = 8;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
@@ -48,7 +49,7 @@ builder.Services.AddRazorPages(options =>
 
 // ---------- Business logic tier (register each module's services here) ----------
 builder.Services.AddScoped<INotificationService, NotificationService>();   // EN06 / Member 4
-// Member 1: builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 // Member 2: builder.Services.AddScoped<IReservationService, ReservationService>();
 // Member 3: builder.Services.AddScoped<IOrderService, OrderService>();
 // Member 4: builder.Services.AddScoped<IPaymentService, PaymentService>();

@@ -132,6 +132,16 @@
     </header>
 
     <main role="main" class="site-main">
+        @if (TempData["SuccessMessage"] is string successMessage)
+        {
+            <div class="@containerClass pt-4">
+                <div class="alert alert-success alert-dismissible fade show flash" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>@successMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+
         @if (fullWidth)
         {
             @RenderBody()

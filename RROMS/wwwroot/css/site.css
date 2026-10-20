@@ -81,8 +81,8 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 .site-nav {
     background: var(--yoru-ink);
     border-bottom: 1px solid rgba(183, 155, 114, .25);
-    padding-top: .9rem;
-    padding-bottom: .9rem;
+    padding-top: .55rem;
+    padding-bottom: .55rem;
     --bs-navbar-color: rgba(245, 240, 231, .78);
     --bs-navbar-hover-color: var(--yoru-gold);
     --bs-navbar-active-color: var(--yoru-cream);
@@ -371,7 +371,7 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 }
 
 .brand-logo {
-    height: 4.2rem;
+    height: 3.1rem;
     width: auto;
     display: block;
 }
@@ -381,3 +381,768 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
         height: 3rem;
     }
 }
+
+
+
+
+
+
+
+/* ---------- Login / Register pages (US01, US02) ---------- */
+.auth-page {
+    position: relative;
+    overflow: hidden;
+    padding: 2.5rem 0 6rem;
+}
+
+.auth-wrap {
+    position: relative;
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+/* The card */
+.auth2 {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1.08fr;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 18px 44px rgba(25, 25, 25, .14);
+}
+
+/* Left: welcome panel */
+.auth2-side {
+    position: relative;
+    background: var(--yoru-ink);
+    color: var(--yoru-cream);
+    padding: 3.25rem 3rem 3rem; /* top matches the gold line on the right */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start; /* content starts at the top, level with the form */
+}
+
+    .auth2-side::after { /* faint gold waves at the bottom of the panel */
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 9rem;
+        pointer-events: none;
+        background-image: radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.14) 19% 21%, transparent 22% 38%, rgba(183,155,114,.14) 39% 41%, transparent 42% 58%, rgba(183,155,114,.14) 59% 61%, #191919 62%), radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.14) 19% 21%, transparent 22% 38%, rgba(183,155,114,.14) 39% 41%, transparent 42% 58%, rgba(183,155,114,.14) 59% 61%, #191919 62%);
+        background-size: 56px 28px;
+        background-position: 0 0, 28px 14px;
+        -webkit-mask-image: linear-gradient(to top, #000, transparent);
+        mask-image: linear-gradient(to top, #000, transparent);
+    }
+
+    .auth2-side > * {
+        position: relative;
+        z-index: 1;
+    }
+
+.auth2-logo {
+    width: 100%;
+    max-width: 290px;
+    margin-bottom: 1.75rem;
+}
+
+.auth2-jp {
+    font-family: var(--font-display);
+    color: var(--yoru-gold);
+    letter-spacing: .35em;
+    margin: 0 0 .4rem;
+}
+
+.auth2-headline {
+    color: var(--yoru-cream);
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+    line-height: 1.15;
+    margin: 0;
+}
+
+.auth2-bar {
+    display: block;
+    width: 3rem;
+    height: 3px;
+    background: var(--yoru-red);
+    margin: 1.1rem 0 1.25rem;
+}
+
+.auth2-lede {
+    color: rgba(245, 240, 231, .78);
+    max-width: 26rem;
+    margin-bottom: 2rem;
+}
+
+.auth2-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+    .auth2-features li {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .auth2-features b {
+        display: block;
+        font-weight: 500;
+        color: var(--yoru-cream);
+    }
+
+    .auth2-features small {
+        color: rgba(245, 240, 231, .6);
+    }
+
+.auth2-icon {
+    flex: none;
+    width: 3.1rem;
+    height: 3.1rem;
+    border-radius: 50%;
+    border: 1.5px solid var(--yoru-gold);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--yoru-gold);
+    font-size: 1.3rem;
+    line-height: 1;
+}
+    /* Bootstrap Icons sit a little low by default; this puts them dead centre in the circle */
+    .auth2-icon .bi, .auth2-icon .bi::before {
+        display: block;
+        line-height: 1;
+        vertical-align: 0;
+    }
+
+/* Right: the form */
+.auth2-form {
+    position: relative;
+    background: var(--yoru-paper);
+    padding: 2.5rem 3.25rem 2.25rem;
+}
+
+.auth2-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.auth2-rule {
+    display: block;
+    width: 3rem;
+    height: 3px;
+    background: var(--yoru-gold);
+}
+
+/* Input boxes: icon on the left, eye button on the right for passwords */
+.auth-field {
+    position: relative;
+}
+
+    .auth-field > .form-control {
+        height: 3.1rem;
+        padding-left: 2.85rem;
+    }
+
+        .auth-field > .form-control.has-eye {
+            padding-right: 3rem;
+        }
+
+        .auth-field > .form-control::placeholder {
+            color: #8A8478;
+        }
+
+.auth-field-icon {
+    position: absolute;
+    left: 1.05rem;
+    top: 1.55rem; /* middle of the box, even when an error shows below */
+    transform: translateY(-50%);
+    color: var(--yoru-ink);
+    font-size: 1.05rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+    .auth-field-icon::before {
+        vertical-align: 0;
+    }
+
+.auth-eye {
+    position: absolute;
+    right: .45rem;
+    top: 1.55rem;
+    transform: translateY(-50%);
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--yoru-olive-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+    .auth-eye .bi::before {
+        vertical-align: 0;
+    }
+
+    .auth-eye:hover {
+        color: var(--yoru-red);
+        background: rgba(183, 155, 114, .12);
+    }
+
+    .auth-eye:focus-visible {
+        outline: 2px solid var(--yoru-gold);
+        outline-offset: 1px;
+    }
+/* Phone: country code dropdown + number side by side */
+.auth-phone-row {
+    display: flex;
+    gap: .5rem;
+}
+
+.auth-phone-code {
+    position: relative;
+    flex: 0 0 9.75rem;
+}
+    /* fits the longest, "BD +880" */
+    .auth-phone-code > .form-select {
+        height: 3.1rem;
+        background-color: var(--yoru-paper);
+        border-color: #D8CDBB;
+    }
+
+.auth-phone-row > .form-control {
+    flex: 1;
+    min-width: 0;
+    height: 3.1rem;
+}
+
+/* Country picker (phone): button + search panel */
+.cc {
+    position: relative;
+}
+
+    .cc.cc-ready > .cc-native { /* keep the real select for the form, but out of sight */
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .cc:not(.cc-ready) > .cc-btn {
+        display: none;
+    }
+
+.cc-btn {
+    width: 100%;
+    height: 3.1rem;
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: 0 .85rem;
+    background: var(--yoru-paper);
+    border: 1px solid #D8CDBB;
+    border-radius: var(--bs-border-radius);
+    color: var(--yoru-ink);
+    transition: border-color .15s, box-shadow .15s;
+}
+
+    .cc-btn:hover {
+        border-color: var(--yoru-gold);
+    }
+
+    .cc-btn:focus-visible, .cc.is-open .cc-btn {
+        outline: 0;
+        border-color: var(--yoru-gold);
+        box-shadow: 0 0 0 .2rem rgba(183, 155, 114, .3);
+    }
+
+.cc-dial {
+    font-weight: 500;
+}
+
+.cc-caret {
+    margin-left: auto;
+    font-size: .8rem;
+    color: var(--yoru-olive-text);
+    transition: transform .2s;
+}
+
+    .cc-caret::before {
+        vertical-align: 0;
+    }
+
+.cc.is-open .cc-caret {
+    transform: rotate(180deg);
+}
+
+.cc .cc-flag { /* SVG flag from flag-icons, with a hairline edge so white flags still show */
+    flex: none;
+    width: 1.5rem;
+    height: 1.125rem;
+    border-radius: 3px;
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 0 0 1px rgba(25, 25, 25, .14);
+    line-height: 1;
+}
+
+.cc .cc-btn .cc-flag {
+    width: 1.6rem;
+    height: 1.2rem;
+}
+
+.cc-iso {
+    margin-left: .4rem;
+    font-size: .7rem;
+    letter-spacing: .06em;
+    color: var(--yoru-olive-text);
+}
+
+.cc-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + .4rem);
+    left: 0;
+    width: min(21rem, calc(100vw - 3rem));
+    background: var(--yoru-paper);
+    border: 1px solid rgba(183, 155, 114, .6);
+    border-radius: 12px;
+    box-shadow: 0 16px 36px rgba(25, 25, 25, .18);
+    overflow: hidden;
+    animation: cc-pop .14s ease-out;
+}
+
+    .cc-panel::before { /* thin red-to-gold line on top */
+        content: "";
+        display: block;
+        height: 3px;
+        background: linear-gradient(90deg, var(--yoru-red), var(--yoru-gold));
+    }
+
+@keyframes cc-pop {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.cc-search {
+    position: relative;
+    padding: .7rem .7rem .5rem;
+    border-bottom: 1px solid var(--yoru-line);
+}
+
+    .cc-search .bi {
+        position: absolute;
+        left: 1.45rem;
+        top: 50%;
+        transform: translateY(-40%);
+        color: var(--yoru-olive-text);
+        font-size: .9rem;
+    }
+
+        .cc-search .bi::before {
+            vertical-align: 0;
+        }
+
+.cc-input {
+    width: 100%;
+    height: 2.4rem;
+    padding: 0 .75rem 0 2.2rem;
+    border: 1px solid #D8CDBB;
+    border-radius: 8px;
+    background: #fff;
+    font-size: .9rem;
+}
+
+    .cc-input:focus {
+        outline: 0;
+        border-color: var(--yoru-gold);
+        box-shadow: 0 0 0 .18rem rgba(183, 155, 114, .25);
+    }
+
+.cc-list {
+    list-style: none;
+    margin: 0;
+    padding: .35rem;
+    max-height: 15.5rem;
+    overflow-y: auto;
+}
+
+.cc-item {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .5rem .6rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .92rem;
+}
+
+    .cc-item:hover, .cc-item.is-active {
+        background: rgba(183, 155, 114, .14);
+    }
+
+    .cc-item.is-selected {
+        background: rgba(200, 62, 45, .08);
+    }
+
+.cc .cc-item.is-selected .cc-flag {
+    box-shadow: 0 0 0 2px var(--yoru-paper), 0 0 0 3.5px var(--yoru-red);
+}
+/* thin red ring */
+.cc-name {
+    flex: 1;
+    min-width: 0;
+    color: var(--yoru-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cc-code {
+    color: #8A6A3D;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.cc-tick {
+    width: 1rem;
+    color: var(--yoru-red);
+    visibility: hidden;
+}
+
+    .cc-tick::before {
+        vertical-align: 0;
+    }
+
+.cc-item.is-selected .cc-tick {
+    visibility: visible;
+}
+
+.cc-empty {
+    margin: 0;
+    padding: 1.1rem;
+    text-align: center;
+    color: var(--yoru-olive-text);
+    font-size: .88rem;
+}
+
+.cc-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.cc-list::-webkit-scrollbar-thumb {
+    background: rgba(183, 155, 114, .45);
+    border-radius: 8px;
+}
+
+/* Error text under a box */
+.auth-field .text-danger {
+    display: block;
+    margin-top: .3rem;
+    font-size: .8rem;
+}
+
+    .auth-field .text-danger:empty {
+        display: none;
+    }
+
+/* Hide Edge's own eye button so there aren't two */
+.auth-field input::-ms-reveal, .auth-field input::-ms-clear {
+    display: none;
+}
+
+.auth2-title {
+    font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+    margin-bottom: .35rem;
+}
+
+.auth2-sub {
+    color: var(--yoru-olive-text);
+    margin-bottom: 1.75rem;
+}
+
+.auth2-hint {
+    font-size: .82rem;
+    color: var(--yoru-olive-text);
+    margin: .25rem 0 1.5rem;
+}
+
+.auth2-submit {
+    padding-top: .8rem;
+    padding-bottom: .8rem;
+    box-shadow: 0 8px 20px rgba(200, 62, 45, .25);
+}
+
+.auth2-divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--yoru-gold);
+    margin: 1.5rem 0 1rem;
+}
+
+    .auth2-divider::before, .auth2-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--yoru-line);
+    }
+
+.auth2-switch {
+    text-align: center;
+    margin: 0;
+}
+
+/* Decorations */
+/* Page background: warm glow behind the card + fine washi-paper grain */
+.auth-page {
+    background-color: var(--yoru-cream);
+    background-image: radial-gradient(ellipse 55% 60% at 55% 45%, rgba(255, 253, 248, .85), rgba(255, 253, 248, 0) 70%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .36  0 0 0 0 .22  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Loose sakura petals drifting down from the branch */
+.auth-petal {
+    position: absolute;
+    z-index: 1;
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23F7C5CB'/%3E%3Cstop offset='1' stop-color='%23E0605E'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M10 19C3.5 14 2.5 6.5 6.8 1.5L10 4.6 13.2 1.5C17.5 6.5 16.5 14 10 19Z' fill='url(%23g)'/%3E%3C/svg%3E") no-repeat center / contain;
+    opacity: .9;
+}
+
+    .auth-petal.p1 {
+        top: 12.5rem;
+        right: 8rem;
+        width: 26px;
+        height: 26px;
+        transform: rotate(-35deg);
+    }
+
+    .auth-petal.p2 {
+        top: 18rem;
+        right: 3rem;
+        width: 19px;
+        height: 19px;
+        transform: rotate(40deg);
+        opacity: .8;
+    }
+
+    .auth-petal.p3 {
+        top: 24.5rem;
+        right: 13.5rem;
+        width: 22px;
+        height: 22px;
+        transform: rotate(150deg);
+        opacity: .85;
+    }
+
+    .auth-petal.p4 {
+        top: 33rem;
+        right: 5.5rem;
+        width: 16px;
+        height: 16px;
+        transform: rotate(-110deg);
+        opacity: .65;
+    }
+
+/* Small gold mark instead of the cloud lines */
+.auth2-mark {
+    font-family: var(--font-display);
+    color: var(--yoru-gold);
+    font-size: 1.5rem;
+    line-height: 1;
+    opacity: .9;
+}
+
+.auth-art {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+}
+
+.auth-sakura {
+    top: -1rem;
+    right: -4rem;
+    width: 26rem;
+    transform: scaleX(-1) rotate(-6deg);
+    z-index: 1;
+}
+
+.auth-fuji {
+    left: -14.5rem;
+    bottom: -5rem;
+    width: 24rem;
+    z-index: 3;
+}
+/* in front of the card corner */
+
+/* ---------- Gentle motion (only for people who haven't turned motion off) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+    /* Branch sways slowly, like a light breeze */
+    .auth-sakura {
+        animation: yoru-sway 7s ease-in-out infinite alternate;
+    }
+
+    /* Fuji floats a few pixels and the sun glows softly */
+    .auth-fuji {
+        animation: yoru-float 8s ease-in-out infinite alternate;
+    }
+
+    /* Petals fall from the branch, drift sideways, spin and fade, then start again */
+    .auth-petal {
+        animation: yoru-fall var(--t, 11s) linear var(--d, 0s) infinite both;
+    }
+
+        .auth-petal.p1 {
+            --r: -35deg;
+            --o: .9;
+            --t: 11s;
+            --d: 0s;
+            --x: -90px;
+            --y: 380px;
+            top: 9rem;
+        }
+
+        .auth-petal.p2 {
+            --r: 40deg;
+            --o: .8;
+            --t: 13s;
+            --d: -4s;
+            --x: -60px;
+            --y: 420px;
+            top: 10rem;
+        }
+
+        .auth-petal.p3 {
+            --r: 150deg;
+            --o: .85;
+            --t: 12s;
+            --d: -8s;
+            --x: -110px;
+            --y: 360px;
+            top: 12rem;
+        }
+
+        .auth-petal.p4 {
+            --r: -110deg;
+            --o: .65;
+            --t: 14s;
+            --d: -2.5s;
+            --x: -70px;
+            --y: 440px;
+            top: 11rem;
+        }
+}
+
+@keyframes yoru-sway {
+    from {
+        transform: scaleX(-1) rotate(-6deg);
+    }
+
+    to {
+        transform: scaleX(-1) rotate(-3.5deg);
+    }
+}
+
+@keyframes yoru-float {
+    from {
+        transform: translateY(0);
+        filter: drop-shadow(0 0 0 rgba(200, 62, 45, 0));
+    }
+
+    to {
+        transform: translateY(-6px);
+        filter: drop-shadow(0 6px 16px rgba(200, 62, 45, .28));
+    }
+}
+
+@keyframes yoru-fall {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) rotate(var(--r));
+    }
+
+    10% {
+        opacity: var(--o);
+    }
+
+    50% {
+        transform: translate(calc(var(--x) * .4 + 22px), calc(var(--y) * .5)) rotate(calc(var(--r) + 110deg));
+    }
+
+    85% {
+        opacity: var(--o);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(var(--x), var(--y)) rotate(calc(var(--r) + 220deg));
+    }
+}
+
+/* Hide the empty error box until there is an error */
+.validation-summary-valid {
+    display: none;
+}
+
+/* Success / error message shown at the top of any page (TempData) */
+.flash {
+    margin-bottom: 0;
+}
+
+/* Smaller screens: decorations make room, then the welcome panel hides */
+@media (max-width: 1399.98px) {
+    .auth-fuji, .auth-petal {
+        display: none;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .auth2 {
+        grid-template-columns: 1fr;
+    }
+
+    .auth2-side {
+        display: none;
+    }
+
+    .auth2-form {
+        padding: 2.25rem 1.5rem;
+    }
+
+    .auth-sakura {
+        width: 16rem;
+        right: -4rem;
+        opacity: .7;
+    }
+}
+
+
+
+
+
+
+
