@@ -62,6 +62,8 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 // Member 2: builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 // Member 4: builder.Services.AddScoped<IPaymentService, PaymentService>();
+// Member 5: Feedback, Reports & Dashboard
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 // Member 5: builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
