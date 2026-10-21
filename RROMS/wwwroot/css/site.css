@@ -1478,5 +1478,287 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 
 
 
+/* ---------- Access denied page (US06) ---------- */
+.deny-page {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3rem 0 4.5rem;
+    text-align: center;
+}
+
+/* noren curtain */
+.noren {
+    width: min(34rem, 100%);
+    margin: 0 auto 2.2rem;
+}
+
+.noren-rod {
+    height: 14px;
+    margin: 0 -1rem;
+    border-radius: 7px;
+    background: linear-gradient(#a27b4c, #6e4f2c);
+    box-shadow: 0 3px 6px rgba(25, 25, 25, .25);
+}
+
+.noren-panels {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: -2px;
+}
+
+.noren-panel {
+    position: relative;
+    height: 13rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 2.4rem;
+    background: linear-gradient(180deg, #1f1f1f, var(--yoru-ink));
+    border-radius: 0 0 6px 6px;
+    box-shadow: inset 0 10px 14px -10px rgba(0, 0, 0, .6);
+    transform-origin: top center;
+}
+
+    .noren-panel::after { /* gold seigaiha waves at the hem, like the footer */
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 3.2rem;
+        border-radius: 0 0 6px 6px;
+        background: radial-gradient(circle at 50% 100%, transparent 18%, rgba(183, 155, 114, .3) 19% 22%, transparent 23% 40%, rgba(183, 155, 114, .3) 41% 44%, transparent 45%) 0 0 / 34px 17px;
+    }
+
+.noren-ch {
+    font-family: "Shippori Mincho", "Yu Mincho", "Noto Serif CJK JP", "Noto Serif JP", serif;
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--yoru-cream);
+}
+
+.noren-panel--red .noren-ch {
+    color: var(--yoru-red);
+}
+
+.noren-cap {
+    margin: .9rem 0 0;
+    font-size: .75rem;
+    letter-spacing: .3em;
+    color: #8A6A3D;
+}
+
+/* message */
+.deny-eyebrow {
+    font-family: var(--font-display);
+    color: var(--yoru-red);
+    letter-spacing: .2em;
+    font-size: .85rem;
+    margin-bottom: .5rem;
+}
+
+.deny-title {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin: 0 0 .6rem;
+}
+
+.deny-lede {
+    color: var(--yoru-olive-text);
+    max-width: 30rem;
+    margin: 0 auto 1.4rem;
+}
+
+/* details slip */
+.deny-slip {
+    position: relative;
+    display: inline-grid;
+    grid-auto-flow: column;
+    text-align: left;
+    margin-bottom: 1.6rem;
+    max-width: 100%;
+    background: #FFFDF8;
+    border: 1px solid rgba(183, 155, 114, .6);
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(25, 25, 25, .08);
+}
+
+.deny-slip-cell {
+    padding: .75rem 1.4rem;
+    min-width: 0;
+}
+
+    .deny-slip-cell + .deny-slip-cell {
+        border-left: 1px dashed rgba(183, 155, 114, .6);
+    }
+
+.deny-slip-label {
+    display: block;
+    font-size: .72rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: #8A6A3D;
+}
+
+.deny-slip-value {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .15rem;
+    font-weight: 600;
+    color: var(--yoru-ink);
+}
+
+.deny-slip-email {
+    font-weight: 500;
+    color: var(--yoru-olive-text);
+    overflow-wrap: anywhere;
+}
+
+.deny-slip-dot {
+    flex: none;
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    background: var(--yoru-red);
+}
+
+.deny-slip-stamp {
+    position: absolute;
+    top: -1.1rem;
+    right: -1.1rem;
+    width: 2.6rem;
+    height: 2.6rem;
+    border: 2px solid var(--yoru-red);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFFDF8;
+    color: var(--yoru-red);
+    font-family: "Shippori Mincho", "Yu Mincho", "Noto Serif CJK JP", serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    transform: rotate(-14deg);
+}
+
+/* buttons */
+.deny-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.deny-switch {
+    margin: 0;
+    font-size: .9rem;
+    color: var(--yoru-olive-text);
+}
+
+.deny-link {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--yoru-red);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* motion: the curtain sways, the stamp lands (off when the computer asks for less motion) */
+@media (prefers-reduced-motion: no-preference) {
+    .noren-panel {
+        animation: noren-sway 5s ease-in-out infinite alternate;
+    }
+
+        .noren-panel:nth-child(2) {
+            animation-delay: -1.6s;
+        }
+
+        .noren-panel:nth-child(3) {
+            animation-delay: -3.1s;
+        }
+
+        .noren-panel:nth-child(4) {
+            animation-delay: -4.2s;
+        }
+
+    .deny-slip-stamp {
+        animation: deny-stamp .5s cubic-bezier(.2, 1.6, .4, 1) .4s both;
+    }
+}
+
+@keyframes noren-sway {
+    from {
+        transform: skewX(-1.2deg);
+    }
+
+    to {
+        transform: skewX(1.2deg);
+    }
+}
+
+@keyframes deny-stamp {
+    from {
+        transform: rotate(-14deg) scale(2.3);
+        opacity: 0;
+    }
+
+    to {
+        transform: rotate(-14deg) scale(1);
+        opacity: 1;
+    }
+}
+
+/* phones */
+@media (max-width: 575.98px) {
+    .deny-page {
+        padding: 2rem 0 3rem;
+    }
+
+    .noren {
+        width: 100%;
+        padding: 0 .75rem;
+    }
+
+    .noren-rod {
+        margin: 0 -.5rem;
+    }
+
+    .noren-panel {
+        height: 9.5rem;
+        padding-top: 1.6rem;
+    }
+
+        .noren-panel::after {
+            height: 2.4rem;
+        }
+
+    .noren-ch {
+        font-size: 2.2rem;
+    }
+
+    .deny-title {
+        font-size: 1.6rem;
+    }
+
+    .deny-slip {
+        display: grid;
+        grid-auto-flow: row;
+        width: 100%;
+    }
+
+    .deny-slip-cell + .deny-slip-cell {
+        border-left: 0;
+        border-top: 1px dashed rgba(183, 155, 114, .6);
+    }
+
+    .deny-slip-stamp {
+        right: -.6rem;
+    }
+}
+
 
 
