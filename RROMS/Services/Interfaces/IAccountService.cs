@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 
 namespace RROMS.Services.Interfaces
@@ -13,7 +14,7 @@ namespace RROMS.Services.Interfaces
 
     // Owner: Member 1 (Identity, Access & AI Chatbot)
     // Business logic for user accounts. Pages call this service, never UserManager / SignInManager directly.
-    // US01 register, US02 login/logout. Later: US05 / US07 admin user management.
+    // US01 register, US02 login/logout, US51 starting page per role. Later: US05 / US07 admin user management.
     public interface IAccountService
     {
         // Creates a new account with the Customer role.
@@ -29,5 +30,12 @@ namespace RROMS.Services.Interfaces
 
         // US02: signs the user out and removes the login cookie.
         Task LogoutAsync();
+
+        // US51: each role's starting page. Admin -> "/Admin" (US41), Staff -> "/Staff" (US16), Customer -> "/" (US50).
+        // Use the email version right after login (the new login cookie is only read on the next request).
+        Task<string> GetStartPageAsync(string email);
+
+        // US51: same, for someone who is already logged in (e.g. opens the Login page again).
+        string GetStartPage(ClaimsPrincipal user);
     }
 }

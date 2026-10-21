@@ -71,10 +71,10 @@ namespace RROMS.Areas.Identity.Pages.Account
 
         public IActionResult OnGet(string? returnUrl = null)
         {
-            // Someone already logged in doesn't need to register.
+            // Someone already logged in doesn't need to register: go to their role's starting page (US51).
             if (User.Identity?.IsAuthenticated == true)
             {
-                return LocalRedirect("~/");
+                return LocalRedirect(_accounts.GetStartPage(User));
             }
 
             ReturnUrl = returnUrl;
