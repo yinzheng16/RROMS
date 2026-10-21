@@ -1,16 +1,14 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services.Interfaces;
 
 namespace RROMS.Services
 {
-    // US31: Payment transaction recording and retrieval.
     public class PaymentService : IPaymentService
     {
-        private readonly IRepository<Payment> _payments; // Saving and checking payment transactions
-        private readonly IRepository<Order> _orders; // Confirm that the order is exist
+        private readonly IRepository<Payment> _payments;
+        private readonly IRepository<Order> _orders;
 
         public PaymentService(
             IRepository<Payment> payments,
@@ -24,34 +22,18 @@ namespace RROMS.Services
             int orderId,
             decimal amount,
             PaymentMethod method,
-            PaymentStatus status,
             string? transactionRef = null)
         {
-            // Validate input values.
             if (orderId <= 0)
                 throw new ArgumentException("Invalid order ID.");
 
-            if (amount <= 0)
+            if (amount <= 0 || decimal.Round(amount, 2) != amount)
                 throw new ArgumentException(
-                    "Payment amount must be greater than zero.");
-
-            if (decimal.Round(amount, 2) != amount)
-                throw new ArgumentException(
-                    "Payment amount cannot exceed two decimal places.");
+                    "Payment amount must be positive and have at most two decimal places.");
 
             if (!Enum.IsDefined(method))
                 throw new ArgumentException("Invalid payment method.");
 
-            if (!Enum.IsDefined(status))
-                throw new ArgumentException("Invalid payment status.");
-
-            transactionRef = transactionRef?.Trim();
-
-            if (transactionRef?.Length > 100)
-                throw new ArgumentException(
-                    "Transaction reference cannot exceed 100 characters.");
-
-            // Verify that the order exists.
             var order = await _orders.GetByIdAsync(orderId);
 
             if (order == null)
@@ -60,34 +42,123 @@ namespace RROMS.Services
 
             if (order.Status == OrderStatus.Cancelled)
                 throw new InvalidOperationException(
-                    "Cannot record payment for a cancelled order.");
+                    "Cannot pay for a cancelled order.");
 
-            // Prevent recording another successful payment
-            // when the order has already been paid in full.
-            bool alreadyPaid = await _payments.Query()
+            // The bill must have a positive final total.
+            if (order.TotalAmount <= 0)
+                throw new InvalidOperationException(
+                    "Order total has not been finalized.");
+
+            // Full payment only; no partial payments.
+            if (amount != order.TotalAmount)
+                throw new InvalidOperationException(
+                    "Payment amount must match the order total.");
+
+            // Do not create another attempt while a payment
+            // is already pending or successfully paid.
+            bool existingActivePayment = await _payments.Query()
                 .AnyAsync(p =>
                     p.OrderId == orderId &&
-                    p.Status == PaymentStatus.Paid);
+                    (p.Status == PaymentStatus.Pending ||
+                     p.Status == PaymentStatus.Paid));
 
-            if (alreadyPaid && status == PaymentStatus.Paid)
+            if (existingActivePayment)
                 throw new InvalidOperationException(
-                    "This order already has a successful payment.");
+                    "This order already has a pending or paid transaction.");
 
-            // Create a new payment record.
+            transactionRef = transactionRef?.Trim();
+
+            if (string.IsNullOrWhiteSpace(transactionRef))
+                transactionRef = null;
+
+            if (transactionRef?.Length > 100)
+                throw new ArgumentException(
+                    "Transaction reference cannot exceed 100 characters.");
+
+            // Prevent reuse of a known external reference.
+            if (transactionRef != null)
+            {
+                bool referenceExists = await _payments.Query()
+                    .AnyAsync(p =>
+                        p.TransactionRef == transactionRef);
+
+                if (referenceExists)
+                    throw new InvalidOperationException(
+                        "Transaction reference already exists.");
+            }
+
             var payment = new Payment
             {
                 OrderId = orderId,
                 Amount = amount,
                 Method = method,
-                Status = status,
+                Status = PaymentStatus.Pending,
                 TransactionRef = transactionRef,
-                CreatedAt = DateTime.Now,
-                PaidAt = status == PaymentStatus.Paid
-                    ? DateTime.Now
-                    : null
+                CreatedAt = DateTime.UtcNow,
+                PaidAt = null
             };
 
             await _payments.AddAsync(payment);
+            await _payments.SaveChangesAsync();
+
+            return payment;
+        }
+
+        public async Task<Payment> ConfirmPaymentAsync(int paymentId)
+        {
+            var payment = await _payments.GetByIdAsync(paymentId);
+
+            if (payment == null)
+                throw new InvalidOperationException(
+                    "Payment does not exist.");
+
+            if (payment.Status != PaymentStatus.Pending)
+                throw new InvalidOperationException(
+                    "Only pending payments can be confirmed.");
+
+            var order = await _orders.GetByIdAsync(payment.OrderId);
+
+            if (order == null || order.Status == OrderStatus.Cancelled)
+                throw new InvalidOperationException(
+                    "The order is missing or cancelled.");
+
+            if (payment.Amount != order.TotalAmount)
+                throw new InvalidOperationException(
+                    "Payment amount no longer matches the order total.");
+
+            bool alreadyPaid = await _payments.Query()
+                .AnyAsync(p =>
+                    p.OrderId == payment.OrderId &&
+                    p.Id != payment.Id &&
+                    p.Status == PaymentStatus.Paid);
+
+            if (alreadyPaid)
+                throw new InvalidOperationException(
+                    "This order already has a successful payment.");
+
+            payment.Status = PaymentStatus.Paid;
+            payment.PaidAt = DateTime.UtcNow;
+
+            await _payments.SaveChangesAsync();
+
+            return payment;
+        }
+
+        public async Task<Payment> MarkPaymentFailedAsync(int paymentId)
+        {
+            var payment = await _payments.GetByIdAsync(paymentId);
+
+            if (payment == null)
+                throw new InvalidOperationException(
+                    "Payment does not exist.");
+
+            if (payment.Status != PaymentStatus.Pending)
+                throw new InvalidOperationException(
+                    "Only pending payments can be marked as failed.");
+
+            payment.Status = PaymentStatus.Failed;
+            payment.PaidAt = null;
+
             await _payments.SaveChangesAsync();
 
             return payment;
@@ -100,62 +171,14 @@ namespace RROMS.Services
                 .FirstOrDefaultAsync(p => p.Id == paymentId);
         }
 
-        public Task<List<Payment>> GetPaymentsByOrderIdAsync(
-            int orderId)
+        public Task<List<Payment>> GetPaymentsByOrderIdAsync(int orderId)
         {
             return _payments.Query()
                 .AsNoTracking()
                 .Where(p => p.OrderId == orderId)
                 .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
                 .ToListAsync();
-        }
-
-        public async Task<Payment> UpdatePaymentStatusAsync(
-            int paymentId,
-            PaymentStatus newStatus)
-        {
-            if (!Enum.IsDefined(newStatus))
-                throw new ArgumentException("Invalid payment status.");
-
-            var payment = await _payments.GetByIdAsync(paymentId);
-
-            if (payment == null)
-                throw new InvalidOperationException(
-                    "Payment does not exist.");
-
-            if (payment.Status == PaymentStatus.Refunded)
-                throw new InvalidOperationException(
-                    "A refunded payment cannot be changed.");
-
-            if (payment.Status == PaymentStatus.Paid &&
-                newStatus != PaymentStatus.Paid)
-                throw new InvalidOperationException(
-                    "A paid transaction requires a separate refund workflow.");
-
-            if (newStatus == PaymentStatus.Refunded)
-                throw new InvalidOperationException(
-                    "Refunds require a separate refund workflow.");
-
-            if (newStatus == PaymentStatus.Paid)
-            {
-                bool alreadyPaid = await _payments.Query()
-                    .AnyAsync(p =>
-                        p.OrderId == payment.OrderId &&
-                        p.Id != paymentId &&
-                        p.Status == PaymentStatus.Paid);
-
-                if (alreadyPaid)
-                    throw new InvalidOperationException(
-                        "This order already has a successful payment.");
-
-                payment.PaidAt ??= DateTime.Now;
-            }
-
-            payment.Status = newStatus;
-
-            await _payments.SaveChangesAsync();
-
-            return payment;
         }
     }
 }
