@@ -28,7 +28,7 @@ public class TableTypeDefinition
     public int DefaultMaxGuests { get; set; } = 2;
 
     [Precision(10, 2)]
-    public decimal DefaultMinimumSpend { get; set; }
+    public decimal? DefaultMinimumSpend { get; set; }
 
     [StringLength(200)]
     public string? PhotoPath { get; set; }

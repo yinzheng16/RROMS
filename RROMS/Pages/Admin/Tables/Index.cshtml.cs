@@ -55,7 +55,7 @@ public class IndexModel : PageModel
         public int DefaultMaxGuests { get; set; } = 2;
 
         [Range(0, 100000)]
-        public decimal DefaultMinimumSpend { get; set; }
+        public decimal? DefaultMinimumSpend { get; set; }
 
         [StringLength(300)]
         public string? Description { get; set; }
@@ -74,8 +74,16 @@ public class IndexModel : PageModel
     public class AreaInput
     {
         public int Id { get; set; }
-        [Required(ErrorMessage = "Area name is required."), StringLength(60)] public string Name { get; set; } = string.Empty;
-        [StringLength(200)] public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Area name is required.")]
+        [StringLength(50)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? Description { get; set; }
+
+        [StringLength(40)]
+        public string IconName { get; set; } = "layout-grid";
     }
 
     public class TableInput
@@ -197,8 +205,39 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostSaveAreaAsync()
     {
         KeepOnly(nameof(AreaForm));
-        if (!ModelState.IsValid) return InvalidInput();
-        var result = await _service.SaveAreaAsync(new DiningArea { Id = AreaForm.Id, Name = AreaForm.Name, Description = AreaForm.Description });
+
+        var allowedIcons = new HashSet<string>
+    {
+        "wine",
+        "utensils-crossed",
+        "door-closed",
+        "trees",
+        "sunset",
+        "coffee",
+        "sofa",
+        "layout-grid"
+    };
+
+        if (!allowedIcons.Contains(AreaForm.IconName))
+        {
+            ModelState.AddModelError(
+                "AreaForm.IconName",
+                "Please select a valid area icon.");
+        }
+
+        if (!ModelState.IsValid)
+            return InvalidInput();
+
+        var area = new DiningArea
+        {
+            Id = AreaForm.Id,
+            Name = AreaForm.Name,
+            Description = AreaForm.Description,
+            IconName = AreaForm.IconName
+        };
+
+        var result = await _service.SaveAreaAsync(area);
+
         return Done(result, "Dining area saved.");
     }
 

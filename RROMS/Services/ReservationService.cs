@@ -349,7 +349,7 @@ public class ReservationService : IReservationService
                     DiningAreaId = type.DefaultDiningAreaId,
                     MinGuests = type.DefaultMinGuests,
                     Capacity = type.DefaultMaxGuests,
-                    MinimumSpend = type.DefaultMinimumSpend,
+                    MinimumSpend = type.DefaultMinimumSpend ?? 0m,
                     Description = type.Description,
                     PhotoPath = type.PhotoPath,
                     IsActive = true,
@@ -365,7 +365,7 @@ public class ReservationService : IReservationService
                     table.DiningAreaId = type.DefaultDiningAreaId;
                     table.MinGuests = type.DefaultMinGuests;
                     table.Capacity = type.DefaultMaxGuests;
-                    table.MinimumSpend = type.DefaultMinimumSpend;
+                    table.MinimumSpend = type.DefaultMinimumSpend ?? 0m;
                 }
             }
 
@@ -397,7 +397,7 @@ public class ReservationService : IReservationService
 
         if (input.Id == 0)
         {
-            _db.DiningAreas.Add(new DiningArea { Name = name, Description = input.Description });
+            _db.DiningAreas.Add(new DiningArea { Name = name, Description = input.Description, IconName = input.IconName });
         }
         else
         {
@@ -405,6 +405,7 @@ public class ReservationService : IReservationService
             if (area is null) return ReservationResult.Fail("Dining area not found.");
             area.Name = name;
             area.Description = input.Description;
+            area.IconName = input.IconName;
         }
         await _db.SaveChangesAsync();
         return ReservationResult.Ok();

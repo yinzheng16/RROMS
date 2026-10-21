@@ -281,6 +281,11 @@ namespace RROMS.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("IconName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -809,7 +814,7 @@ namespace RROMS.Migrations
                     b.Property<int>("DefaultMinGuests")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("DefaultMinimumSpend")
+                    b.Property<decimal?>("DefaultMinimumSpend")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 

@@ -5,8 +5,55 @@
     ViewData["Title"] = "Tables and opening hours";
 }
 
-<div class="page-header yoru-tables-page">
-    <div><p class="eyebrow">Restaurant Management</p><h1>Tables & Opening hours</h1><p class="text-muted mb-0">Manage table types, seating areas and opening hours.</p></div>
+<!-- Tables & Opening Hours Hero Header -->
+<div class="yoru-tables-hero yoru-tables-page mb-4">
+
+    <div class="yoru-tables-hero-content">
+
+        <div class="yoru-tables-brand">
+            <strong>YORU IZAKAYA</strong>
+            <span class="yoru-brand-divider"></span>
+            <span>TABLE MANAGEMENT</span>
+        </div>
+
+        <div class="yoru-tables-eyebrow">
+            THE ART OF A PERFECT DINING SPACE
+        </div>
+
+        <h1 class="yoru-tables-hero-title">
+            Tables &amp; Opening hours.
+        </h1>
+
+        <p class="yoru-tables-hero-description">
+            Every table, every space. Curate the YORU dining experience.
+        </p>
+
+    </div>
+
+    <div class="yoru-tables-hero-japanese">
+        <span class="yoru-japanese-small">Y O R U</span>
+        <span class="yoru-japanese-character">夜</span>
+        <span class="yoru-japanese-line"></span>
+        <span class="yoru-japanese-caption">CRAFTED FOR THE NIGHT</span>
+    </div>
+
+    <div class="yoru-hero-navigation">
+        <div class="yoru-hero-nav-buttons">
+
+            <a href="#tables-section" class="yoru-hero-nav-link active">
+                Tables
+            </a>
+
+            <a href="#dining-areas-section" class="yoru-hero-nav-link">
+                Dining Areas
+            </a>
+
+            <a href="#opening-hours-section" class="yoru-hero-nav-link">
+                Opening Hours
+            </a>
+
+        </div>
+    </div>
 </div>
 
 <div class="yoru-summary mb-4">
@@ -93,6 +140,20 @@
     };
 }
 <style>
+    .yoru-tables-hero {position: relative; min-height: 310px; border-radius: 18px; overflow: hidden; padding: 52px 42px; display: flex; align-items: center; background:linear-gradient(90deg, rgba(10, 10, 10, 0.96) 0%, rgba(10, 10, 10, 0.86) 42%, rgba(10, 10, 10, 0.20) 100% ), url('/images/tables-hero.jpg') center / cover no-repeat; color: #fff; }
+    .yoru-tables-hero-content { position: relative; z-index: 2; max-width: 720px; }
+    .yoru-tables-brand {display: flex; align-items: center; gap: 14px; font-size: 11px; color: #b9b9b9; margin-bottom: 30px;}
+    .yoru-tables-brand strong {color: #fff; font-weight: 700;}
+    .yoru-brand-divider {width: 1px; height: 15px; background: #c43b2b;}
+    .yoru-tables-eyebrow {font-size: 11px; font-weight: 700; letter-spacing: 3px; color: #c6c6c6; margin-bottom: 12px;}
+    .yoru-tables-hero-title {font-family: Georgia, serif; font-size: clamp(32px, 3.4vw, 52px); font-weight: 500; line-height: 1.15; color: #fff; margin-bottom: 14px;}
+    .yoru-tables-hero-description {font-size: 14px; color: #c5c5c5; line-height: 1.7; margin: 0;}
+    .yoru-tables-hero-japanese {position: absolute; right: 55px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; z-index: 2;}
+    .yoru-japanese-small {font-size: 10px; letter-spacing: 5px; color: #ddd;}
+    .yoru-japanese-character {font-family: Georgia, serif; font-size: 80px; line-height: 1.2; color: #fff;}
+    .yoru-japanese-line {width: 35px; height: 3px; background: #c43b2b; margin: 8px 0 20px;}
+    .yoru-japanese-caption {font-size: 10px; color: #ddd; white-space: nowrap;}
+    @@media (max-width: 768px) {.yoru-tables-hero {padding: 35px 24px; min-height: 270px;} .yoru-tables-hero-japanese {display: none;} .yoru-tables-hero-title {font-size: 32px;}}
     body.back-office:has(.yoru-tables-page) .site-main > .container-wide {
         padding-top: 16px !important;
     }
@@ -184,15 +245,117 @@
     #manageTableTypesModal #tableTypesListView th:nth-child(2) { width: 17%; }
     #manageTableTypesModal #tableTypesListView th:nth-child(3) { width: 17%; }
     #manageTableTypesModal #tableTypesListView th:nth-child(4) { width: 17%; }
-    #manageTableTypesModal #tableTypesListView th:nth-child(5) { width: 21%; } {
-        text-align: center;}
+    #manageTableTypesModal #tableTypesListView th:nth-child(5) { width: 21%; text-align: center;}
     #manageTableTypesModal #tableTypesListView th:last-child,
     #manageTableTypesModal #tableTypesListView td:last-child {
         text-align: center;
         white-space: nowrap;
     }
+    .yoru-tables-hero {padding-bottom: 105px;}
+    .yoru-hero-navigation {position: absolute; bottom: 25px; left: 42px; right: 42px; z-index: 3; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);}
+    .yoru-hero-nav-buttons {display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid rgba(255,255,255,0.2); border-radius: 30px; background: rgba(10,10,10,0.65);}
+    .yoru-hero-nav-link {display: inline-flex; align-items: center; justify-content: center; padding: 9px 18px; border-radius: 25px; color: #ddd; text-decoration: none; font-size: 12px; font-weight: 600; transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;}
+    .yoru-hero-nav-link:hover {color: #fff; background: rgba(196,59,43,0.6); transform: translateY(-2px);}
+    .yoru-hero-nav-link.active {background: #c43b2b; color: #fff;}
+    html {scroll-behavior: smooth;}
+    #tables-section, #dining-areas-section, #opening-hours-section {scroll-margin-top: 90px;}
+    @@media (max-width: 768px) {.yoru-tables-hero {padding-bottom: 120px;} .yoru-hero-navigation {left: 24px; right: 24px; bottom: 20px;} .yoru-hero-nav-link {padding: 8px 12px; font-size: 11px;}}
+    @@media (prefers-reduced-motion: reduce) {html {scroll-behavior: auto;}}
+    .yoru-back-to-top {position: fixed; bottom: 60px; right: 30px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #c43b2b; color: #fff; border: 1px solid #a83228; border-radius: 50%; cursor: pointer; z-index: 1050; opacity: 0; visibility: hidden; transform: translateY(15px); transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background 0.3s ease; box-shadow: 0 6px 20px rgba(0,0,0,0.2);}
+    .yoru-back-to-top.show {opacity: 1; visibility: visible; transform: translateY(0);}
+    .yoru-back-to-top:hover {background: #a83228; transform: translateY(-5px);}
+    .yoru-back-to-top svg {width: 22px; height: 22px; stroke-width: 2;}
+    @@media (max-width: 768px) {.yoru-back-to-top {bottom: 20px; right: 20px; width: 42px; height: 42px;}}
+    @@media (prefers-reduced-motion: reduce) {.yoru-back-to-top {transition: none;}}
+
+    .yoru-luxury-card {height:100%; background:#fffdfa; border:1px solid #e7d9cc; border-radius:18px; padding:25px; box-shadow:0 5px 18px rgba(54,34,26,.035);}
+    .yoru-luxury-head {display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;}
+    .yoru-luxury-eyebrow {font-size:10px; font-weight:700; letter-spacing:2px; color:#a83228; margin-bottom:5px;}
+    .yoru-luxury-title {font-family:Georgia,serif; font-size:26px; font-weight:500; color:#30231d; margin:0;}
+    .yoru-luxury-subtitle {color:#89776d; font-size:12px; margin:5px 0 0;}
+    .yoru-luxury-btn {display:inline-flex; align-items:center; justify-content:center; gap:7px; background:#a83228; color:#fff; border:1px solid #a83228; border-radius:9px; padding:10px 13px; font-size:12px; font-weight:600; transition:transform .2s ease,box-shadow .2s ease,background .2s ease;}
+    .yoru-luxury-btn:hover {background:#8e281f; color:#fff; transform:translateY(-2px); box-shadow:0 8px 16px rgba(168,50,40,.22);}
+    .yoru-luxury-btn svg {width:15px; height:15px;}
+    .yoru-luxury-btn.secondary {background:#fffdfa; color:#715b51; border-color:#daccc0;}
+    .yoru-luxury-btn.secondary:hover {background:#f4e9e2;}
+    .yoru-area-list {display:grid; gap:11px;}
+    .yoru-area-item {display:flex; align-items:center; gap:12px; padding:13px; border:1px solid #eee3db; border-radius:12px; background:#fbf8f5; transition:transform .24s ease,background .24s ease,border-color .24s ease,box-shadow .24s ease;}
+    .yoru-area-item:hover {transform:translateY(-3px); background:#fff; border-color:#cfaa99; box-shadow:0 10px 24px rgba(67,40,30,.09);}
+    .yoru-area-icon {display:grid; place-items:center; width:52px; height:52px; flex-shrink:0; background:#f3e5df; color:#a83228; border-radius:12px; transition:transform .28s ease,background .28s ease;}
+    .yoru-area-icon svg {width:23px; height:23px;}
+    .yoru-area-item:hover .yoru-area-icon {transform:scale(1.09) rotate(-5deg); background:#ecd5cb;}
+    .yoru-area-info {flex:1; min-width:0;}
+    .yoru-area-name {font-weight:700; color:#382821; font-size:14px;}
+    .yoru-area-desc {color:#8b7c72; font-size:12px; margin:3px 0 0; overflow-wrap:anywhere;}
+    .yoru-area-count {white-space:nowrap; color:#765b4b; background:#f2e8e0; border-radius:25px; padding:6px 9px; font-size:11px;}
+    .yoru-area-actions {display:flex; gap:5px;}
+    .yoru-area-action {display:grid; place-items:center; width:33px; height:33px; border:1px solid transparent; background:transparent; color:#7c6d64; border-radius:8px; transition:background .2s ease,color .2s ease,transform .2s ease;}
+    .yoru-area-action:hover {background:#f1e0d7; color:#a83228; transform:translateY(-2px);}
+    .yoru-area-action.delete:hover {background:#fce4e1; color:#ba3225;}
+    .yoru-area-action svg {width:16px; height:16px;}
+    .yoru-area-empty {text-align:center; padding:35px 12px; color:#8b7c72; font-size:13px;}
+    .yoru-hours-summary {display:flex; align-items:center; gap:12px; background:#f5ebe2; color:#594337; border-radius:12px; padding:14px; margin-bottom:14px;}
+    .yoru-hours-summary svg {width:23px; height:23px; color:#a83228;}
+    .yoru-hours-summary strong {display:block; font-size:13px;}
+    .yoru-hours-summary span {display:block; color:#826c5f; font-size:12px; margin-top:2px;}
+    .yoru-hours-list {display:grid; gap:8px;}
+    .yoru-hours-row {display:grid; grid-template-columns:minmax(95px,1fr) minmax(190px,1.8fr) minmax(70px,.7fr); align-items:center; gap:10px; background:#fbf8f5; border:1px solid #eee6df; border-radius:10px; padding:12px; transition:transform .24s ease,background .24s ease,box-shadow .24s ease,border-color .24s ease;}
+    .yoru-hours-row:hover {transform:translateY(-2px); background:#fff; border-color:#d8b7a7; box-shadow:0 7px 18px rgba(65,40,29,.07);}
+    .yoru-hours-day {font-size:13px; font-weight:700; color:#382b25;}
+    .yoru-hours-time-group {display:flex; justify-content:center; align-items:center; gap:12px; min-width:0;}
+    .yoru-hours-time {display:flex; flex-direction:column; align-items:center; text-align:center; gap:2px; min-width:0;}
+    .yoru-hours-caption {font-size:10px; letter-spacing:.5px; color:#89776d;}
+    .yoru-hours-value {font-size:13px; font-weight:700; color:#332722; white-space:nowrap;}
+    .yoru-hours-arrow {color:#a99a91; font-size:16px;}
+    .yoru-hours-status {display:flex; grid-column:3; grid-row:1; align-items:center; justify-content:flex-end; font-size:11px; color:#79685e; white-space:nowrap;}
+    .yoru-hours-status.is-closed {color:#a83228;}
+    .yoru-hours-time-btn {border:1px solid #decac0; background:#fff; border-radius:8px; padding:7px 8px; color:#a83228; font-size:12px; font-weight:700; white-space:nowrap; transition:background .2s ease,transform .2s ease;}
+    .yoru-hours-time-btn:hover {background:#f5e9e2; transform:translateY(-2px);}
+    .yoru-hours-row .yoru-edit-only {display:none;}
+    .yoru-hours-editing .yoru-hours-row .yoru-edit-only {display:flex;}
+    .yoru-hours-editing .yoru-hours-row .yoru-view-only {display:none;}
+    .yoru-hours-editing .yoru-hours-row {border-color:#e7d5ca;}
+    .yoru-hours-closed-check {display:flex; align-items:center; gap:5px; font-size:11px; cursor:pointer;}
+    .yoru-hours-closed-check input {accent-color:#a83228;}
+    .yoru-hours-closed-message {display:none; grid-column:2; grid-row:1; align-items:center; justify-content:center; gap:7px; color:#b83228; font-size:11px; font-weight:700; letter-spacing:.5px; text-align:center;}
+    .yoru-hours-closed-message svg {width:16px; height:16px; flex-shrink:0; stroke-width:2;}
+    .yoru-hours-closed-message span {white-space:nowrap;}
+    .yoru-hours-row.yoru-day-closed .yoru-hours-time-group {visibility:hidden;}
+    .yoru-hours-row.yoru-day-closed .yoru-hours-closed-message {display:flex;}
+    .yoru-hours-row.yoru-day-closed .yoru-hours-status {color:#b83228;}
+    .yoru-hours-editing .yoru-hours-row.yoru-day-closed .yoru-hours-time-group {visibility:visible;}
+    .yoru-hours-editing .yoru-hours-row .yoru-hours-closed-message {display:none;}
+    .yoru-hours-editing .yoru-hours-row.yoru-day-closed .yoru-hours-time-btn {opacity:.55; pointer-events:none; cursor:not-allowed;}
+    .yoru-hours-editing .yoru-hours-closed-check {display:flex; align-items:center; gap:6px; opacity:1; cursor:pointer; white-space:nowrap;}
+    .yoru-hours-editing .yoru-hours-closed-check input {opacity:1; cursor:pointer; pointer-events:auto; accent-color:#a83228;}
+    .yoru-hours-editing .yoru-hours-row.yoru-day-closed .yoru-hours-closed-check {color:#a83228; font-weight:700;}
+    .yoru-hours-edit-actions {display:flex; gap:8px; flex-wrap:wrap;}
+    .yoru-icon-picker {display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px;}
+    .yoru-icon-choice {display:flex; flex-direction:column; align-items:center; gap:7px; padding:12px 4px; border:1px solid #e6d9d0; border-radius:10px; background:#fffdfa; color:#77645a; font-size:11px; transition:transform .2s ease,border-color .2s ease,background .2s ease;}
+    .yoru-icon-choice:hover {transform:translateY(-3px); border-color:#a83228;}
+    .yoru-icon-choice.selected {background:#f5e6df; border-color:#a83228; color:#a83228; box-shadow:0 0 0 1px #a83228 inset;}
+    .yoru-icon-choice svg {width:22px; height:22px;}
+    .yoru-wheel-overlay {position:fixed; inset:0; z-index:1100; background:rgba(31,22,19,.48); display:none; align-items:center; justify-content:center; padding:15px;}
+    .yoru-wheel-overlay.show {display:flex; animation:yoruFade .2s ease both;}
+    .yoru-wheel-dialog {width:min(100%,390px); background:#fffdfa; border:1px solid #e5d7cc; border-radius:18px; padding:22px; box-shadow:0 25px 65px rgba(0,0,0,.22); animation:yoruWheelEnter .24s ease both;}
+    .yoru-wheel-columns {display:grid; grid-template-columns:1fr 1fr .85fr; gap:9px; margin:15px 0;}
+    .yoru-wheel-col {height:180px; overflow-y:auto; scroll-snap-type:y mandatory; overscroll-behavior:contain; scrollbar-width:none; border-radius:9px; background:linear-gradient(#faf4ef,#fffdfa 45%,#fffdfa 55%,#faf4ef);}
+    .yoru-wheel-col::-webkit-scrollbar {display:none;}
+    .yoru-wheel-option {height:44px; display:flex; align-items:center; justify-content:center; scroll-snap-align:center; font-size:16px; color:#a99a92; cursor:pointer; user-select:none; transition:color .12s ease,font-size .12s ease;}
+    .yoru-wheel-option.selected {color:#a83228; font-size:21px; font-weight:700; background:#f6e7df; border-radius:8px;}
+    .yoru-wheel-spacer {height:68px;}
+    .yoru-wheel-preview {text-align:center; color:#5b4034; font-family:Georgia,serif; font-size:24px; margin:10px 0 15px;}
+    @@keyframes yoruFade {from {opacity:0;} to {opacity:1;}}
+    @@keyframes yoruWheelEnter {from {opacity:0; transform:translateY(16px) scale(.97);} to {opacity:1; transform:translateY(0) scale(1);}}
+    #areaModal.fade .modal-dialog, #deleteAreaModal.fade .modal-dialog {transform:translateY(14px) scale(.97); opacity:0; transition:transform .28s ease,opacity .28s ease;}
+    #areaModal.show .modal-dialog, #deleteAreaModal.show .modal-dialog {transform:translateY(0) scale(1); opacity:1;}
+    @@media (max-width:650px) {.yoru-luxury-card {padding:16px;} .yoru-hours-row {grid-template-columns:minmax(80px,1fr) minmax(155px,1.7fr); gap:6px; padding:10px 8px;} .yoru-hours-status {grid-column:1/-1; justify-content:flex-end;} .yoru-hours-time-group {gap:6px;} .yoru-hours-value {font-size:12px;} .yoru-area-item {flex-wrap:wrap;} .yoru-area-count {margin-left:auto;} }
+    @@media (prefers-reduced-motion:reduce) {.yoru-luxury-card,.yoru-area-item,.yoru-area-icon,.yoru-hours-row,.yoru-luxury-btn,.yoru-area-action,.yoru-hours-time-btn,.yoru-icon-choice,#areaModal.fade .modal-dialog,#deleteAreaModal.fade .modal-dialog {transition:none!important; animation:none!important;} .yoru-wheel-overlay.show,.yoru-wheel-dialog {animation:none!important;} }
+    .yoru-hours-day {grid-column:1; grid-row:1;}
+    .yoru-hours-time-group {grid-column:2; grid-row:1;}
+    .yoru-hours-status {grid-column:3; grid-row:1;}
 </style>
-<div class="card mb-4">
+<div class="card mb-4" id="tables-section">
     <div class="card-body">
 
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -265,7 +428,7 @@
                 {
                     <p class="yoru-type-spend">
                         Minimum spend:
-                        @TableTypeInfo.Rm(type.DefaultMinimumSpend)
+                        @TableTypeInfo.Rm(type.DefaultMinimumSpend.Value)
                     </p>
                 }
 
@@ -379,84 +542,100 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-lg-7">
-        <div class="card h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2 class="h5 mb-0">Dining areas</h2>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#areaModal">Add area</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead><tr><th>Area</th><th>Description</th><th>Tables</th><th></th></tr></thead>
-                        <tbody>
-                            @foreach (var a in Model.Areas)
-                            {
-                                <tr>
-                                    <td class="fw-semibold">@a.Name</td>
-                                    <td>@a.Description</td>
-                                    <td>@a.Tables.Count</td>
-                                    <td class="text-end text-nowrap">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#areaModal"
-                                                data-id="@a.Id" data-name="@a.Name" data-desc="@a.Description">
-                                            Edit
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                data-bs-toggle="modal" data-bs-target="#deleteAreaModal"
-                                                data-id="@a.Id" data-name="@a.Name" data-has-tables="@(a.Tables.Any() ? "true" : "false")">
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                            @if (!Model.Areas.Any())
-                            {
-                                <tr><td colspan="4">No dining areas yet. Add one first, then add tables to it.</td></tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+    <div class="col-xl-6">
+        <section class="yoru-luxury-card" id="dining-areas-section">
+            <div class="yoru-luxury-head">
+                <div><div class="yoru-luxury-eyebrow">THE DINING COLLECTION</div><h2 class="yoru-luxury-title">Dining Areas</h2><p class="yoru-luxury-subtitle">Curate every corner of the YORU experience.</p></div>
+                <button type="button" class="yoru-luxury-btn" data-bs-toggle="modal" data-bs-target="#areaModal"><i data-lucide="plus"></i> Add Area</button>
             </div>
-        </div>
+            <div class="yoru-area-list">
+                @foreach (var a in Model.Areas)
+                {
+                    var areaName = (a.Name ?? "").ToLowerInvariant();
+                    var autoIcon = areaName.Contains("bar") || areaName.Contains("counter") ? "wine" : areaName.Contains("private") || areaName.Contains("vip") || areaName.Contains("room") ? "door-closed" : areaName.Contains("outdoor") || areaName.Contains("garden") || areaName.Contains("terrace") ? "trees" : areaName.Contains("roof") ? "sunset" : areaName.Contains("cafe") || areaName.Contains("coffee") ? "coffee" : areaName.Contains("lounge") ? "sofa" : areaName.Contains("hall") || areaName.Contains("dining") ? "utensils-crossed" : "layout-grid";
+                    // After adding DiningArea.IconName to the model, replace autoIcon below with: !string.IsNullOrWhiteSpace(a.IconName) ? a.IconName : autoIcon
+                    <article class="yoru-area-item">
+                        <div class="yoru-area-icon"><i data-lucide="@(string.IsNullOrWhiteSpace(a.IconName) ? autoIcon : a.IconName)"></i></div>
+                        <div class="yoru-area-info"><div class="yoru-area-name">@a.Name</div><p class="yoru-area-desc">@a.Description</p></div>
+                        <span class="yoru-area-count">@a.Tables.Count Tables</span>
+                        <div class="yoru-area-actions">
+                            <button type="button" class="yoru-area-action" title="Edit area" aria-label="Edit @a.Name" data-bs-toggle="modal" data-bs-target="#areaModal" data-id="@a.Id" data-name="@a.Name" data-desc="@a.Description" data-icon="@(string.IsNullOrWhiteSpace(a.IconName) ? autoIcon : a.IconName)"><i data-lucide="pencil"></i></button>
+                            <button type="button" class="yoru-area-action delete" title="Delete area" aria-label="Delete @a.Name" data-bs-toggle="modal" data-bs-target="#deleteAreaModal" data-id="@a.Id" data-name="@a.Name" data-has-tables="@(a.Tables.Any() ? "true" : "false")"><i data-lucide="trash-2"></i></button>
+                        </div>
+                    </article>
+                }
+                @if (!Model.Areas.Any())
+                {
+                    <div class="yoru-area-empty">No dining areas yet. Add one to get started.</div>
+                }
+            </div>
+        </section>
     </div>
-
-    <div class="col-lg-5">
-        <div class="card h-100">
-            <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2 class="h5 mb-0">Opening hours</h2>
-
-                <button type="submit"
-                        form="hoursForm"
-                        class="btn btn-primary btn-sm">
-                    Save opening hours
-                </button>
+    <div class="col-xl-6">
+        <section class="yoru-luxury-card" id="opening-hours-section">
+            <div class="yoru-luxury-head">
+                <div><div class="yoru-luxury-eyebrow">YOUR DAILY RHYTHM</div><h2 class="yoru-luxury-title">Opening Hours</h2><p class="yoru-luxury-subtitle">Manage your weekly operating schedule.</p></div>
+                <div class="yoru-hours-edit-actions">
+                    <button type="button" id="yoruEditHours" class="yoru-luxury-btn"><i data-lucide="pencil"></i> Edit Schedule</button>
+                    <button type="button" id="yoruCancelHours" class="yoru-luxury-btn secondary d-none">Cancel</button>
+                    <button type="submit" form="hoursForm" id="yoruSaveHours" class="yoru-luxury-btn d-none"><i data-lucide="save"></i> Save Changes</button>
+                </div>
             </div>
-
+            <div class="yoru-hours-summary"><i data-lucide="clock-3"></i><div><strong>Weekly Operating Schedule</strong><span id="yoruHoursSummary"></span></div></div>
             <form id="hoursForm" method="post" asp-page-handler="SaveHours">
-                <div class="table-responsive">
-                        <table class="table align-middle mb-3">
-                            <thead><tr><th>Day</th><th>Opens</th><th>Closes</th><th>Closed</th></tr></thead>
-                            <tbody>
-                                @for (var i = 0; i < Model.Hours.Count; i++)
-                                {
-                                    <tr>
-                                        <td>
-                                            @Model.Hours[i].Day
-                                            <input type="hidden" asp-for="Hours[i].Id" />
-                                            <input type="hidden" asp-for="Hours[i].Day" />
-                                        </td>
-                                        <td><input asp-for="Hours[i].OpenTime" type="time" class="form-control form-control-sm" /></td>
-                                        <td><input asp-for="Hours[i].CloseTime" type="time" class="form-control form-control-sm" /></td>
-                                        <td><input asp-for="Hours[i].IsClosed" class="form-check-input" /></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                </form>
-            </div>
-        </div>
+                <div class="yoru-hours-list">
+                    @for (var i = 0; i < Model.Hours.Count; i++)
+                    {
+                        <div class="yoru-hours-row" data-hour-index="@i">
+                            <div class="yoru-hours-day">@Model.Hours[i].Day<input type="hidden" asp-for="Hours[i].Id" /><input type="hidden" asp-for="Hours[i].Day" /></div>
+                            <div class="yoru-hours-time-group">
+                                <div class="yoru-hours-time">
+                                    <span class="yoru-hours-caption">OPENS</span>
+                                    <span class="yoru-hours-value yoru-view-only" data-time-view="open"></span>
+                                    <button type="button" class="yoru-hours-time-btn yoru-edit-only" data-time-edit="open"></button>
+                                </div>
+
+                                <span class="yoru-hours-arrow">→</span>
+
+                                <div class="yoru-hours-time">
+                                    <span class="yoru-hours-caption">CLOSES</span>
+                                    <span class="yoru-hours-value yoru-view-only" data-time-view="close"></span>
+                                    <button type="button" class="yoru-hours-time-btn yoru-edit-only" data-time-edit="close"></button>
+                                </div>
+                            </div>
+
+                            <div class="yoru-hours-closed-message">
+                                <i data-lucide="calendar-x" aria-hidden="true"></i>
+                                <span>CLOSED FOR THE DAY</span>
+                            </div>
+
+                            <div class="yoru-hours-status">
+                                <span class="yoru-view-only" data-hours-status></span>
+
+                                <label class="yoru-hours-closed-check yoru-edit-only">
+                                    <input asp-for="Hours[i].IsClosed" class="form-check-input" />
+                                    Closed
+                                </label>
+                            </div>
+                            
+                            <input asp-for="Hours[i].OpenTime" type="time" class="yoru-hour-native" hidden />
+                            <input asp-for="Hours[i].CloseTime" type="time" class="yoru-hour-native" hidden />
+                        </div>
+                    }
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+
+<!-- Wheel Time Picker -->
+<div class="yoru-wheel-overlay" id="yoruWheelOverlay" aria-hidden="true">
+    <div class="yoru-wheel-dialog" role="dialog" aria-modal="true" aria-labelledby="yoruWheelTitle">
+        <div class="d-flex align-items-center justify-content-between"><h3 class="h5 mb-0" id="yoruWheelTitle">Choose Time</h3><button type="button" class="btn-close" id="yoruWheelClose" aria-label="Close"></button></div>
+        <p class="text-muted small mt-2 mb-0">Scroll to select hour, minute and AM/PM.</p>
+        <div class="yoru-wheel-columns"><div><div class="text-center small text-muted">HOUR</div><div class="yoru-wheel-col" id="yoruWheelHour"></div></div><div><div class="text-center small text-muted">MINUTE</div><div class="yoru-wheel-col" id="yoruWheelMinute"></div></div><div><div class="text-center small text-muted">AM / PM</div><div class="yoru-wheel-col" id="yoruWheelPeriod"></div></div></div>
+        <div class="yoru-wheel-preview" id="yoruWheelPreview">10:00 AM</div>
+        <div class="d-flex justify-content-end gap-2"><button type="button" class="yoru-luxury-btn secondary" id="yoruWheelCancel">Cancel</button><button type="button" class="yoru-luxury-btn" id="yoruWheelConfirm">Confirm Time</button></div>
     </div>
 </div>
 
@@ -473,14 +652,23 @@
                 <input asp-for="AreaForm.Name" class="form-control mb-3" required maxlength="60" />
                 <label asp-for="AreaForm.Description" class="form-label">Description (optional)</label>
                 <input asp-for="AreaForm.Description" class="form-control" maxlength="200" />
+                <div class="mt-3">
+                    <label class="form-label">Area Icon</label><input type="hidden" name="AreaForm.IconName" id="yoruAreaIconName" value="layout-grid" /><div class="yoru-icon-picker" id="yoruIconPicker">
+                    @foreach (var option in new[] { ("wine", "Bar"), ("utensils-crossed", "Dining"), ("door-closed", "Private"), ("trees", "Outdoor"), ("sunset", "Rooftop"), ("coffee", "Cafe"), ("sofa", "Lounge"), ("layout-grid", "General") })
+                    {
+                        <button type="button" class="yoru-icon-choice" data-icon-choice="@option.Item1"><i data-lucide="@option.Item1"></i><span>@option.Item2</span></button>
+                    }
+                </div><div class="form-text">An icon is suggested automatically. Select another if you prefer.</div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary">Save area</button>
-            </div>
-        </form>
-    </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary">Save area</button>
+        </div>
+    </form>
 </div>
+</div>
+
 
 <!-- Manage Table Types Modal -->
 <div class="modal fade"
@@ -546,8 +734,7 @@
                                                 data-area="@type.DefaultDiningAreaId"
                                                 data-min="@type.DefaultMinGuests"
                                                 data-max="@type.DefaultMaxGuests"
-                                                data-spend="@type.DefaultMinimumSpend.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                                                data-desc="@type.Description"
+                                                data-spend="@(type.DefaultMinimumSpend?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"                                                data-desc="@type.Description"
                                                 data-active="@type.IsActive.ToString().ToLowerInvariant()"
                                                 data-photo="@(type.PhotoPath ?? "/images/tables/standard.jpg")">
                                             Edit
@@ -684,7 +871,8 @@
                                    type="number"
                                    min="0"
                                    step="0.01"
-                                   class="form-control" />
+                                   class="form-control" 
+                                       placeholder="Optional — leave blank for no minimum spend" />
                         </div>
 
                         <div class="col-md-6 d-flex align-items-end">
@@ -826,7 +1014,7 @@
                             data-area="@type.DefaultDiningAreaId"
                             data-min="@type.DefaultMinGuests"
                             data-max="@type.DefaultMaxGuests"
-                            data-spend="@type.DefaultMinimumSpend.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                            data-spend="@(type.DefaultMinimumSpend?.ToString(System.Globalization.CultureInfo.InvariantCulture)?? "")">
                                 @type.Name @(type.IsActive ? "" : "(Inactive)")
                             </option>
                         }
@@ -986,6 +1174,10 @@
     </div>
 </div>
 
+<button type="button" id="backToTopBtn" class="yoru-back-to-top" aria-label="Back to top" title="Back to top">
+    <i data-lucide="arrow-up"></i>
+</button>
+
 @section Scripts {
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script>
@@ -1107,7 +1299,7 @@
             setTypeFormValue('DefaultDiningAreaId', '');
             setTypeFormValue('DefaultMinGuests', '1');
             setTypeFormValue('DefaultMaxGuests', '2');
-            setTypeFormValue('DefaultMinimumSpend', '0');
+            setTypeFormValue('DefaultMinimumSpend', '');
             setTypeFormValue('Description', '');
             setTypeFormValue('IsActive', 'true');
             setTypeFormValue('CreateFirstTable', 'false');
@@ -1206,6 +1398,161 @@
             }
         });
         bindModal('areaModal', [['AreaForm.Id','id','0'], ['AreaForm.Name','name',''], ['AreaForm.Description','desc','']]);
+        // Luxury area icon picker (requires IconName backend property to persist)
+        const yoruAreaModal = document.getElementById('areaModal');
+        const yoruAreaIconField = document.getElementById('yoruAreaIconName');
+        const yoruAreaNameField = yoruAreaModal.querySelector('[name="AreaForm.Name"]');
+        let yoruIconManuallyChosen = false;
+        function yoruSuggestIcon(name) {
+            name = (name || '').toLowerCase();
+            if (/bar|counter/.test(name)) return 'wine';
+            if (/private|vip|room/.test(name)) return 'door-closed';
+            if (/outdoor|garden|terrace/.test(name)) return 'trees';
+            if (/roof/.test(name)) return 'sunset';
+            if (/cafe|coffee/.test(name)) return 'coffee';
+            if (/lounge/.test(name)) return 'sofa';
+            if (/hall|dining/.test(name)) return 'utensils-crossed';
+            return 'layout-grid';
+        }
+        function yoruSelectIcon(icon, manual = false) {
+            yoruAreaIconField.value = icon;
+            if (manual) yoruIconManuallyChosen = true;
+            document.querySelectorAll('#yoruIconPicker [data-icon-choice]').forEach(btn => {
+                const selected = btn.dataset.iconChoice === icon;
+                btn.classList.toggle('selected', selected);
+                btn.setAttribute('aria-pressed', String(selected));
+            });
+        }
+        document.querySelectorAll('#yoruIconPicker [data-icon-choice]').forEach(btn => btn.addEventListener('click', () => yoruSelectIcon(btn.dataset.iconChoice, true)));
+        yoruAreaModal.addEventListener('show.bs.modal', e => {
+            const data = e.relatedTarget?.dataset || {};
+            document.getElementById('areaTitle').textContent = data.id ? 'Edit Dining Area' : 'Add Dining Area';
+            yoruIconManuallyChosen = !!data.id;
+            yoruSelectIcon(data.icon || yoruSuggestIcon(data.name || ''), false);
+        });
+        yoruAreaNameField.addEventListener('input', () => { if (!yoruIconManuallyChosen) yoruSelectIcon(yoruSuggestIcon(yoruAreaNameField.value)); });
+
+        // Weekly schedule: view/edit, rollback, wheel picker
+        const yoruHoursForm = document.getElementById('hoursForm');
+        const yoruHoursSection = document.getElementById('opening-hours-section');
+        const yoruHourRows = Array.from(yoruHoursForm.querySelectorAll('.yoru-hours-row'));
+        const yoruEditHours = document.getElementById('yoruEditHours');
+        const yoruCancelHours = document.getElementById('yoruCancelHours');
+        const yoruSaveHours = document.getElementById('yoruSaveHours');
+        const yoruWheelOverlay = document.getElementById('yoruWheelOverlay');
+        const yoruWheelHour = document.getElementById('yoruWheelHour');
+        const yoruWheelMinute = document.getElementById('yoruWheelMinute');
+        const yoruWheelPeriod = document.getElementById('yoruWheelPeriod');
+        let yoruOriginalHours = [];
+        let yoruActiveTimeInput = null;
+        let yoruLastFocus = null;
+        let yoruWheelValues = {hour:'10', minute:'00', period:'AM'};
+        const yoruPad = n => String(n).padStart(2, '0');
+        function yoruTimeText(value) {
+            if (!value) return '—';
+            const parts = value.split(':');
+            const h = Number(parts[0]);
+            if (!Number.isFinite(h)) return value;
+            return `${h % 12 || 12}:${parts[1] || '00'} ${h >= 12 ? 'PM' : 'AM'}`;
+        }
+        function yoruRefreshHours() {
+            let closed = 0;
+            yoruHourRows.forEach(row => {
+                const open = row.querySelector('[name$=".OpenTime"]');
+                const close = row.querySelector('[name$=".CloseTime"]');
+                const check = row.querySelector('[name$=".IsClosed"]');
+                const isClosed = check.checked;
+                if (isClosed) closed++;
+                row.classList.toggle('yoru-day-closed', isClosed);
+                row.querySelector('[data-time-view="open"]').textContent = yoruTimeText(open.value);
+                row.querySelector('[data-time-view="close"]').textContent = yoruTimeText(close.value);
+                row.querySelector('[data-time-edit="open"]').textContent = yoruTimeText(open.value);
+                row.querySelector('[data-time-edit="close"]').textContent = yoruTimeText(close.value);
+                row.querySelector('[data-hours-status]').textContent = isClosed ? 'Closed' : 'Open';
+                row.querySelector('.yoru-hours-status').classList.toggle('is-closed', isClosed);
+            });
+            document.getElementById('yoruHoursSummary').textContent = `${yoruHourRows.length - closed} operating days · ${closed} closed days`;
+        }
+        function yoruToggleEdit(on) {
+            yoruHoursSection.classList.toggle('yoru-hours-editing', on);
+            yoruEditHours.classList.toggle('d-none', on);
+            yoruCancelHours.classList.toggle('d-none', !on);
+            yoruSaveHours.classList.toggle('d-none', !on);
+        }
+        yoruEditHours.addEventListener('click', () => {
+            yoruOriginalHours = yoruHourRows.map(row => ({open:row.querySelector('[name$=".OpenTime"]').value, close:row.querySelector('[name$=".CloseTime"]').value, closed:row.querySelector('[name$=".IsClosed"]').checked}));
+            yoruToggleEdit(true);
+        });
+        yoruCancelHours.addEventListener('click', () => {
+            yoruHourRows.forEach((row, i) => {
+                row.querySelector('[name$=".OpenTime"]').value = yoruOriginalHours[i].open;
+                row.querySelector('[name$=".CloseTime"]').value = yoruOriginalHours[i].close;
+                row.querySelector('[name$=".IsClosed"]').checked = yoruOriginalHours[i].closed;
+            });
+            yoruCloseWheel(); yoruRefreshHours(); yoruToggleEdit(false);
+        });
+        yoruHourRows.forEach(row => {
+            row.querySelector('[name$=".IsClosed"]').addEventListener('change', yoruRefreshHours);
+            row.querySelectorAll('[data-time-edit]').forEach(button => button.addEventListener('click', () => {
+                const field = button.dataset.timeEdit === 'open' ? '.OpenTime' : '.CloseTime';
+                yoruOpenWheel(row.querySelector(`[name$="${field}"]`), button);
+            }));
+        });
+        function yoruBuildWheel(col, values, field) {
+            col.innerHTML = '';
+            const spacer1 = document.createElement('div'); spacer1.className = 'yoru-wheel-spacer'; col.appendChild(spacer1);
+            values.forEach(value => {
+                const item = document.createElement('div'); item.className = 'yoru-wheel-option'; item.dataset.value = value; item.textContent = value;
+                item.addEventListener('click', () => { col.scrollTo({top:values.indexOf(value) * 44, behavior:'smooth'}); });
+                col.appendChild(item);
+            });
+            const spacer2 = document.createElement('div'); spacer2.className = 'yoru-wheel-spacer'; col.appendChild(spacer2);
+            let raf = 0;
+            col.addEventListener('scroll', () => {
+                cancelAnimationFrame(raf);
+                raf = requestAnimationFrame(() => {
+                    const index = Math.max(0, Math.min(values.length-1, Math.round(col.scrollTop / 44)));
+                    yoruWheelValues[field] = values[index];
+                    col.querySelectorAll('.yoru-wheel-option').forEach((el,i) => el.classList.toggle('selected', i === index));
+                    yoruWheelPreview();
+                });
+            }, {passive:true});
+        }
+        function yoruWheelPreview() { document.getElementById('yoruWheelPreview').textContent = `${yoruWheelValues.hour}:${yoruWheelValues.minute} ${yoruWheelValues.period}`; }
+        function yoruSetWheel(col, value, field) {
+            const index = Array.from(col.querySelectorAll('.yoru-wheel-option')).findIndex(el => el.dataset.value === value);
+            col.scrollTop = Math.max(0,index) * 44;
+            yoruWheelValues[field] = value;
+            col.querySelectorAll('.yoru-wheel-option').forEach(el => el.classList.toggle('selected',el.dataset.value === value));
+        }
+        yoruBuildWheel(yoruWheelHour, Array.from({length:12},(_,i)=>yoruPad(i+1)), 'hour');
+        yoruBuildWheel(yoruWheelMinute, Array.from({length:60},(_,i)=>yoruPad(i)), 'minute');
+        yoruBuildWheel(yoruWheelPeriod, ['AM','PM'], 'period');
+        function yoruOpenWheel(input, trigger) {
+            yoruActiveTimeInput = input; yoruLastFocus = trigger;
+            const parts = (input.value || '10:00').split(':');
+            const h = Number(parts[0]);
+            yoruWheelOverlay.classList.add('show'); yoruWheelOverlay.setAttribute('aria-hidden','false');
+            document.getElementById('yoruWheelTitle').textContent = input.name.endsWith('.OpenTime') ? 'Opening Time' : 'Closing Time';
+            yoruSetWheel(yoruWheelHour, yoruPad(h % 12 || 12), 'hour');
+            yoruSetWheel(yoruWheelMinute, parts[1] || '00', 'minute');
+            yoruSetWheel(yoruWheelPeriod, h >= 12 ? 'PM' : 'AM', 'period');
+            yoruWheelPreview(); document.getElementById('yoruWheelClose').focus();
+        }
+        function yoruCloseWheel() { yoruWheelOverlay.classList.remove('show'); yoruWheelOverlay.setAttribute('aria-hidden','true'); yoruActiveTimeInput = null; if (yoruLastFocus) yoruLastFocus.focus(); }
+        document.getElementById('yoruWheelClose').addEventListener('click', yoruCloseWheel);
+        document.getElementById('yoruWheelCancel').addEventListener('click', yoruCloseWheel);
+        yoruWheelOverlay.addEventListener('click', e => { if (e.target === yoruWheelOverlay) yoruCloseWheel(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && yoruWheelOverlay.classList.contains('show')) { e.stopPropagation(); yoruCloseWheel(); } });
+        document.getElementById('yoruWheelConfirm').addEventListener('click', () => {
+            if (!yoruActiveTimeInput) return;
+            let h = Number(yoruWheelValues.hour) % 12;
+            if (yoruWheelValues.period === 'PM') h += 12;
+            yoruActiveTimeInput.value = `${yoruPad(h)}:${yoruWheelValues.minute}`;
+            yoruCloseWheel(); yoruRefreshHours();
+        });
+        yoruRefreshHours();
+        
         bindModal('tableModal', [['TableForm.Id','id','0'], ['TableForm.TableNumber','number',''], ['TableForm.Type','type','2'], ['TableForm.TableTypeDefinitionId', 'dynamicType', ''],
             ['TableForm.DiningAreaId','area',''], ['TableForm.MinGuests','min','1'], ['TableForm.Capacity','max','2'],
             ['TableForm.MinimumSpend','spend','0'], ['TableForm.Description','desc',''], ['TableForm.IsActive','active','true']]);
@@ -1507,5 +1854,37 @@
         } else {
             console.error("Lucide Icons failed to load.");
         }
+    </script>
+    <script>
+        document.querySelectorAll('.yoru-hero-nav-link')
+            .forEach(link => {
+                link.addEventListener('click', function () {
+
+                    document.querySelectorAll('.yoru-hero-nav-link')
+                        .forEach(item => item.classList.remove('active'));
+
+                    this.classList.add('active');
+
+                });
+            });
+    </script>
+    <script>
+        const backToTopBtn = document.getElementById('backToTopBtn');
+
+        function toggleBackToTop() {
+            backToTopBtn.classList.toggle('show', window.scrollY > 300);
+        }
+
+        window.addEventListener('scroll', toggleBackToTop, { passive: true });
+        toggleBackToTop();
+
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+            });
+        });
+
+        lucide.createIcons();
     </script>
 }

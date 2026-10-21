@@ -13,6 +13,8 @@ namespace RROMS.Models
 
         [StringLength(200)]
         public string? Description { get; set; }
+        [StringLength(40)]
+        public string IconName { get; set; } = "layout-grid";
 
         public ICollection<RestaurantTable> Tables { get; set; } = new List<RestaurantTable>();
     }
