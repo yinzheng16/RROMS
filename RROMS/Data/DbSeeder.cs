@@ -43,23 +43,8 @@ namespace RROMS.Data
 
             // ---------- Module sample data goes below this line ----------
 
-            // ---------- Member 3: sample menu item for US21 deletion testing ----------
-            var sampleCategory = await db.MenuCategories
-                .FirstOrDefaultAsync(c => c.Name == "Otsumami · Small Bites");
-
-            if (sampleCategory != null &&
-                !await db.MenuItems.AnyAsync(m =>
-                    m.CategoryId == sampleCategory.Id && m.Name == "Edamame"))
-            {
-                var menu = services.GetRequiredService<RROMS.Services.Interfaces.IOrderService>();
-                var result = await menu.SaveMenuItemAsync(null,
-                    new RROMS.Services.Interfaces.MenuItemWrite(sampleCategory.Id, "Edamame",
-                        "Lightly salted steamed soybeans.", 8.90m, true), null, false);
-                if (result != RROMS.Services.Interfaces.MenuItemOperationStatus.Success &&
-                    result != RROMS.Services.Interfaces.MenuItemOperationStatus.DuplicateName)
-                    throw new InvalidOperationException("Could not seed the sample menu item: " + result);
-            }
-
+            // ---------- Member 3: shared 80-item demo menu ----------
+            await MenuDemoSeeder.SeedAsync(services);
 
             await db.SaveChangesAsync();
         }
