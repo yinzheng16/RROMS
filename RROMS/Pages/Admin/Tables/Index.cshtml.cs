@@ -23,8 +23,8 @@ public class IndexModel : PageModel
     [BindProperty] public TableInput TableForm { get; set; } = new();
     [BindProperty] public List<OperatingHour> Hours { get; set; } = new();
 
-    [TempData] public string? Message { get; set; }
-    [TempData] public string? Error { get; set; }
+    [TempData] public string? SuccessMessage { get; set; }
+    [TempData] public string? ErrorMessage { get; set; }
 
     public class TableTypeInput
     {
@@ -98,6 +98,7 @@ public class IndexModel : PageModel
         [Range(0, 100000, ErrorMessage = "Minimum spend must be 0 or more.")] public decimal MinimumSpend { get; set; }
         [StringLength(300)] public string? Description { get; set; }
         public bool IsActive { get; set; } = true;
+        public TableStatus Status { get; set; } = TableStatus.Available;
     }
 
     public async Task OnGetAsync()
@@ -161,8 +162,8 @@ public class IndexModel : PageModel
 
             if (!photoResult.Success)
             {
-                Error = "Table type saved, but photo upload failed: "
-                        + photoResult.Error;
+                ErrorMessage = "Table type saved, but photo upload failed: "
+                                + photoResult.Error;
 
                 return RedirectToPage();
             }
@@ -251,6 +252,8 @@ public class IndexModel : PageModel
             ModelState.AddModelError("TableForm.Type", "Choose a valid table type.");
         if (TableForm.MinGuests > TableForm.Capacity)
             ModelState.AddModelError("TableForm.Capacity", "Maximum capacity must be at least the minimum booking guests.");
+        if (!Enum.IsDefined(TableForm.Status))
+            ModelState.AddModelError("TableForm.Status", "Choose a valid table status.");
         if (!ModelState.IsValid) return InvalidInput();
         var result = await _service.SaveTableAsync(new RestaurantTable
         {
@@ -263,7 +266,8 @@ public class IndexModel : PageModel
             Capacity = TableForm.Capacity,
             MinimumSpend = TableForm.MinimumSpend,
             Description = TableForm.Description,
-            IsActive = TableForm.IsActive
+            IsActive = TableForm.IsActive,
+            Status = TableForm.Status
         });
         return Done(result, "Table saved.");
     }
@@ -294,13 +298,21 @@ public class IndexModel : PageModel
 
     private IActionResult InvalidInput()
     {
-        Error = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+        ErrorMessage = string.Join(" ",
+            ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage));
+
         return RedirectToPage();
     }
 
     private IActionResult Done(RROMS.Services.ReservationResult result, string success)
     {
-        if (result.Success) Message = success; else Error = result.Error;
+        if (result.Success)
+            SuccessMessage = success;
+        else
+            ErrorMessage = result.Error;
+
         return RedirectToPage();
     }
 }

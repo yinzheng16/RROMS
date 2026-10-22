@@ -352,7 +352,7 @@ public class ReservationService : IReservationService
                     MinimumSpend = type.DefaultMinimumSpend ?? 0m,
                     Description = type.Description,
                     PhotoPath = type.PhotoPath,
-                    IsActive = true,
+                    IsActive = type.IsActive,
                     Status = TableStatus.Available
                 });
             }
@@ -366,6 +366,7 @@ public class ReservationService : IReservationService
                     table.MinGuests = type.DefaultMinGuests;
                     table.Capacity = type.DefaultMaxGuests;
                     table.MinimumSpend = type.DefaultMinimumSpend ?? 0m;
+                    table.IsActive = type.IsActive;
                 }
             }
 
@@ -453,7 +454,8 @@ public class ReservationService : IReservationService
             return ReservationResult.Fail("Please choose a dining area.");
         if (await _db.RestaurantTables.AnyAsync(t => t.TableNumber == number && t.Id != input.Id))
             return ReservationResult.Fail($"A table called '{number}' already exists.");
-
+        if (!Enum.IsDefined(input.Status))
+            return ReservationResult.Fail("Invalid table status.");
         if (input.Id == 0)
         {
             _db.RestaurantTables.Add(new RestaurantTable
@@ -500,6 +502,7 @@ public class ReservationService : IReservationService
             table.Description = input.Description;
             table.DiningAreaId = input.DiningAreaId;
             table.IsActive = input.IsActive;
+            table.Status = input.Status;
         }
         await _db.SaveChangesAsync();
         return ReservationResult.Ok();
