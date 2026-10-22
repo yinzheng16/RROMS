@@ -384,11 +384,36 @@ public class ReservationService : IReservationService
                 "Could not save the table type. Check for duplicate names or database conflicts.");
         }
     }
+
     public Task<List<DiningArea>> GetAreasWithTablesAsync() =>
-        _db.DiningAreas.Include(a => a.Tables).OrderBy(a => a.Name).ToListAsync();
+        _db.DiningAreas
+            .Include(a => a.Tables)
+                .ThenInclude(t => t.TableTypeDefinition)
+            .OrderBy(a => a.Name)
+            .ToListAsync();
 
     public async Task<ReservationResult> SaveAreaAsync(DiningArea input)
     {
+
+        if (!Enum.IsDefined(input.StatusMode))
+        {
+            return ReservationResult.Fail("Invalid dining area status mode.");
+        }
+
+        if (input.StatusMode == DiningAreaStatusMode.Manual)
+        {
+            if (!input.ManualStatus.HasValue ||
+                !Enum.IsDefined(input.ManualStatus.Value))
+            {
+                return ReservationResult.Fail(
+                    "Manual status must be Available or Occupied.");
+            }
+        }
+        else
+        {
+            input.ManualStatus = null;
+        }
+
         var name = input.Name?.Trim() ?? "";
         if (name.Length == 0) return ReservationResult.Fail("Dining area name is required.");
         if (name.Length > 50) return ReservationResult.Fail("Dining area name can be at most 50 characters.");
@@ -398,7 +423,7 @@ public class ReservationService : IReservationService
 
         if (input.Id == 0)
         {
-            _db.DiningAreas.Add(new DiningArea { Name = name, Description = input.Description, IconName = input.IconName });
+            _db.DiningAreas.Add(new DiningArea { Name = name, Description = input.Description, IconName = input.IconName, StatusMode = input.StatusMode, ManualStatus = input.ManualStatus });
         }
         else
         {
@@ -407,6 +432,8 @@ public class ReservationService : IReservationService
             area.Name = name;
             area.Description = input.Description;
             area.IconName = input.IconName;
+            area.StatusMode = input.StatusMode;
+            area.ManualStatus = input.ManualStatus;
         }
         await _db.SaveChangesAsync();
         return ReservationResult.Ok();
@@ -629,18 +656,105 @@ public class ReservationService : IReservationService
 
     public async Task<ReservationResult> SaveOperatingHoursAsync(List<OperatingHour> hours)
     {
-        var bad = hours.FirstOrDefault(h => !h.IsClosed && h.CloseTime <= h.OpenTime);
-        if (bad is not null) return ReservationResult.Fail($"{bad.Day}: closing time must be after opening time.");
+        // Same opening and closing time is not allowed.
+        var bad = hours.FirstOrDefault(h => !h.IsClosed && h.CloseTime == h.OpenTime);
+
+        if (bad is not null)
+            return ReservationResult.Fail($"{bad.Day}: opening and closing times cannot be the same.");
 
         foreach (var h in hours)
         {
             var row = await _db.OperatingHours.FindAsync(h.Id);
             if (row is null) continue;
+
             row.OpenTime = h.OpenTime;
             row.CloseTime = h.CloseTime;
             row.IsClosed = h.IsClosed;
         }
+
         await _db.SaveChangesAsync();
+        return ReservationResult.Ok();
+    }
+    // ================= US11: special dates =================
+
+    // Get all special dates, earliest first.
+    public Task<List<SpecialDate>> GetSpecialDatesAsync() =>
+        _db.SpecialDates
+            .AsNoTracking()
+            .OrderBy(s => s.Date)
+            .ToListAsync();
+
+    // Add or edit a special date.
+    public async Task<ReservationResult> SaveSpecialDateAsync(SpecialDate input)
+    {
+        var name = input.Name?.Trim() ?? "";
+
+        if (input.Date == default)
+            return ReservationResult.Fail("Please select a date.");
+
+        if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
+            return ReservationResult.Fail("Special date name must be 1–100 characters.");
+
+        if (!input.IsClosed)
+        {
+            if (!input.OpenTime.HasValue || !input.CloseTime.HasValue)
+                return ReservationResult.Fail("Please select opening and closing times.");
+
+            if (input.OpenTime == input.CloseTime)
+                return ReservationResult.Fail("Opening and closing times cannot be the same.");
+        }
+
+        if (await _db.SpecialDates.AnyAsync(s =>
+            s.Date == input.Date.Date && s.Id != input.Id))
+        {
+            return ReservationResult.Fail("A special date already exists for this date.");
+        }
+
+        SpecialDate row;
+
+        if (input.Id == 0)
+        {
+            row = new SpecialDate();
+            _db.SpecialDates.Add(row);
+        }
+        else
+        {
+            var existing = await _db.SpecialDates.FindAsync(input.Id);
+
+            if (existing is null)
+                return ReservationResult.Fail("Special date not found.");
+
+            row = existing;
+        }
+
+        row.Date = input.Date.Date;
+        row.Name = name;
+        row.IsClosed = input.IsClosed;
+        row.OpenTime = input.IsClosed ? null : input.OpenTime;
+        row.CloseTime = input.IsClosed ? null : input.CloseTime;
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            return ReservationResult.Ok();
+        }
+        catch (DbUpdateException)
+        {
+            return ReservationResult.Fail("Could not save the special date. Check for duplicate dates.");
+        }
+    }
+
+    // Delete a special date.
+    public async Task<ReservationResult> DeleteSpecialDateAsync(int id)
+    {
+        var row = await _db.SpecialDates.FindAsync(id);
+
+        if (row is null)
+            return ReservationResult.Fail("Special date not found.");
+
+        _db.SpecialDates.Remove(row);
+        await _db.SaveChangesAsync();
+
         return ReservationResult.Ok();
     }
 }

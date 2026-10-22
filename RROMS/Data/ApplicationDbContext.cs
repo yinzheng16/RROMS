@@ -19,6 +19,7 @@ namespace RROMS.Data
         public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
         public DbSet<TableTypeDefinition> TableTypeDefinitions => Set<TableTypeDefinition>();
         public DbSet<OperatingHour> OperatingHours => Set<OperatingHour>();
+        public DbSet<SpecialDate> SpecialDates => Set<SpecialDate>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
 
         // Member 3: Menu & Orders
@@ -84,6 +85,13 @@ namespace RROMS.Data
 
             builder.Entity<OperatingHour>()
                 .HasIndex(h => h.Day).IsUnique();
+
+            builder.Entity<SpecialDate>(e =>
+            {
+                e.HasIndex(s => s.Date).IsUnique();
+                e.Property(s => s.Name).HasMaxLength(100).IsRequired();
+                e.Property(s => s.Date).HasColumnType("date");
+            });
 
             builder.Entity<Reservation>(e =>
             {

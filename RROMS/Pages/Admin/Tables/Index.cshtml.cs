@@ -22,6 +22,14 @@ public class IndexModel : PageModel
     [BindProperty] public AreaInput AreaForm { get; set; } = new();
     [BindProperty] public TableInput TableForm { get; set; } = new();
     [BindProperty] public List<OperatingHour> Hours { get; set; } = new();
+    // Special Dates
+    public List<SpecialDate> SpecialDates { get; set; } = new();
+
+    [BindProperty]
+    public SpecialDate SpecialDateInput { get; set; } = new();
+
+    [BindProperty]
+    public int DeleteSpecialDateId { get; set; }
 
     [TempData] public string? SuccessMessage { get; set; }
     [TempData] public string? ErrorMessage { get; set; }
@@ -84,6 +92,9 @@ public class IndexModel : PageModel
 
         [StringLength(40)]
         public string IconName { get; set; } = "layout-grid";
+        public DiningAreaStatusMode StatusMode { get; set; }
+        = DiningAreaStatusMode.Auto;
+        public DiningAreaManualStatus? ManualStatus { get; set; }
     }
 
     public class TableInput
@@ -106,6 +117,7 @@ public class IndexModel : PageModel
         Areas = await _service.GetAreasWithTablesAsync();
         TableTypes = await _service.GetTableTypesAsync();
         Hours = await _service.GetOperatingHoursAsync();
+        SpecialDates = await _service.GetSpecialDatesAsync();
     }
 
     public async Task<IActionResult> OnPostSaveTableTypeAsync()
@@ -206,6 +218,27 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostSaveAreaAsync()
     {
         KeepOnly(nameof(AreaForm));
+        if (!Enum.IsDefined(AreaForm.StatusMode))
+        {
+            ModelState.AddModelError(
+                "AreaForm.StatusMode",
+                "Please select a valid status mode.");
+        }
+
+        if (AreaForm.StatusMode == DiningAreaStatusMode.Manual)
+        {
+            if (!AreaForm.ManualStatus.HasValue ||
+                !Enum.IsDefined(AreaForm.ManualStatus.Value))
+            {
+                ModelState.AddModelError(
+                    "AreaForm.ManualStatus",
+                    "Please select Available or Occupied.");
+            }
+        }
+        else
+        {
+            AreaForm.ManualStatus = null;
+        }
 
         var allowedIcons = new HashSet<string>
     {
@@ -234,7 +267,9 @@ public class IndexModel : PageModel
             Id = AreaForm.Id,
             Name = AreaForm.Name,
             Description = AreaForm.Description,
-            IconName = AreaForm.IconName
+            IconName = AreaForm.IconName,
+            StatusMode = AreaForm.StatusMode,
+            ManualStatus = AreaForm.StatusMode == DiningAreaStatusMode.Manual ? AreaForm.ManualStatus : null
         };
 
         var result = await _service.SaveAreaAsync(area);
@@ -288,6 +323,28 @@ public class IndexModel : PageModel
     {
         KeepOnly(nameof(Hours));
         return Done(await _service.SaveOperatingHoursAsync(Hours), "Opening hours saved.");
+    }
+    // Add or edit a special date.
+    public async Task<IActionResult> OnPostSaveSpecialDateAsync()
+    {
+        KeepOnly(nameof(SpecialDateInput));
+
+        if (!ModelState.IsValid)
+            return InvalidInput();
+
+        return Done(
+            await _service.SaveSpecialDateAsync(SpecialDateInput),
+            "Special date saved successfully.");
+    }
+
+    // Delete a special date.
+    public async Task<IActionResult> OnPostDeleteSpecialDateAsync()
+    {
+        KeepOnly(nameof(DeleteSpecialDateId));
+
+        return Done(
+            await _service.DeleteSpecialDateAsync(DeleteSpecialDateId),
+            "Special date deleted successfully.");
     }
 
     // The three forms share one page, so ignore validation errors that belong to the other forms.

@@ -48,6 +48,10 @@ public interface IReservationService
     /// <summary>Always returns 7 rows (Monday to Sunday).</summary>
     Task<List<OperatingHour>> GetOperatingHoursAsync();
     Task<ReservationResult> SaveOperatingHoursAsync(List<OperatingHour> hours);
+    // ---- Special Dates ----
+    Task<List<SpecialDate>> GetSpecialDatesAsync();
+    Task<ReservationResult> SaveSpecialDateAsync(SpecialDate input);
+    Task<ReservationResult> DeleteSpecialDateAsync(int id);
 
     // US12, US13, US14... will be added here in the next branches.
 }
