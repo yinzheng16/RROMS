@@ -151,6 +151,16 @@ namespace RROMS.Services
             return CustomerStartPage;
         }
 
+        // US50: full name for "Welcome back, ..." on the Home page.
+        // Full name, not the first word, because Malaysian names often start with the surname.
+        public async Task<string?> GetDisplayNameAsync(ClaimsPrincipal user)
+        {
+            if (user.Identity?.IsAuthenticated != true) return null;
+            var appUser = await _userManager.GetUserAsync(user);
+            var fullName = appUser?.FullName?.Trim();
+            return string.IsNullOrEmpty(fullName) ? null : fullName;
+        }
+
         public string GetStartPage(ClaimsPrincipal user)
         {
             if (user.IsInRole(Roles.Admin)) return AdminStartPage;
