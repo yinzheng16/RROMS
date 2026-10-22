@@ -51,14 +51,13 @@ namespace RROMS.Data
                 !await db.MenuItems.AnyAsync(m =>
                     m.CategoryId == sampleCategory.Id && m.Name == "Edamame"))
             {
-                db.MenuItems.Add(new MenuItem
-                {
-                    CategoryId = sampleCategory.Id,
-                    Name = "Edamame",
-                    Description = "Lightly salted steamed soybeans.",
-                    Price = 8.90m,
-                    IsAvailable = true
-                });
+                var menu = services.GetRequiredService<RROMS.Services.Interfaces.IOrderService>();
+                var result = await menu.SaveMenuItemAsync(null,
+                    new RROMS.Services.Interfaces.MenuItemWrite(sampleCategory.Id, "Edamame",
+                        "Lightly salted steamed soybeans.", 8.90m, true), null, false);
+                if (result != RROMS.Services.Interfaces.MenuItemOperationStatus.Success &&
+                    result != RROMS.Services.Interfaces.MenuItemOperationStatus.DuplicateName)
+                    throw new InvalidOperationException("Could not seed the sample menu item: " + result);
             }
 
 

@@ -12,7 +12,7 @@ namespace RROMS.Pages.Admin.Menu
 {
     // Owner: Member 3. Pages call services only.
     [Authorize(Policy = "AdminOnly")]
-    public class IndexModel : PageModel
+    public partial class IndexModel : PageModel
     {
         private readonly IOrderService _orderService;
 
@@ -24,6 +24,17 @@ namespace RROMS.Pages.Admin.Menu
         public IReadOnlyList<MenuCategorySummary> Categories { get; private set; }
             = Array.Empty<MenuCategorySummary>();
 
+        [BindProperty(SupportsGet = true)]
+        public bool Reorder { get; set; }
+
+        [BindProperty]
+        public List<int> OrderIds { get; set; } = new();
+
+        [BindProperty]
+        public string? OrderStamp { get; set; }
+
+        public bool CategoryEditorHasErrors { get; private set; }
+        public string? CategoryEditorCode { get; private set; }
         public const int CategoryPageSize = 5;
         public int TotalCategories { get; private set; }
         public int ListedItemCount { get; private set; }
@@ -40,7 +51,7 @@ namespace RROMS.Pages.Admin.Menu
         [BindProperty(SupportsGet = true)]
         public bool ShowAll { get; set; }
 
-        [BindProperty]
+        [BindProperty(Name = "Input")]
         public CategoryInputModel Input { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
@@ -56,14 +67,18 @@ namespace RROMS.Pages.Admin.Menu
             "display-desc" => "Display order: high to low",
             "name" => "Name: A to Z",
             "name-desc" => "Name: Z to A",
-            "items" => "Items: fewest first",
-            "items-desc" => "Items: most first",
+            "items" => "Dishes: fewest first",
+            "items-desc" => "Dishes: most first",
             _ => "Display order: low to high"
         };
 
         public async Task<IActionResult> OnGetAsync(
-            int? editId, CancellationToken cancellationToken)
+            int? editId, int? itemEditId, CancellationToken cancellationToken)
         {
+            if (MenuView == "items")
+                return await GetItemsAsync(itemEditId, cancellationToken);
+
+            MenuView = "categories";
             NormalizeTableOptions();
 
             if (editId.HasValue)
@@ -73,7 +88,7 @@ namespace RROMS.Pages.Admin.Menu
 
                 if (category is null)
                 {
-                    TempData["MenuCategoryError"] = "That category no longer exists.";
+                    TempData["ErrorMessage"] = "That category no longer exists.";
                     return RedirectToCategoryList();
                 }
 
@@ -90,10 +105,13 @@ namespace RROMS.Pages.Admin.Menu
 
         public async Task<IActionResult> OnPostSaveAsync(CancellationToken cancellationToken)
         {
+            KeepFormValidation(nameof(Input));
+            MenuView = "categories";
             NormalizeTableOptions();
 
             if (!ModelState.IsValid)
             {
+                CategoryEditorHasErrors = true;
                 await LoadCategoriesAsync(cancellationToken);
                 return Page();
             }
@@ -106,7 +124,7 @@ namespace RROMS.Pages.Admin.Menu
 
             if (result == CategoryOperationStatus.Success)
             {
-                TempData["MenuCategorySuccess"] = Input.Id.HasValue
+                TempData["SuccessMessage"] = Input.Id.HasValue
                     ? "Category updated successfully."
                     : "Category created successfully.";
                 return RedirectToCategoryList();
@@ -114,11 +132,14 @@ namespace RROMS.Pages.Admin.Menu
 
             string key = result switch
             {
+                CategoryOperationStatus.InvalidOrder => "The submitted order is incomplete or invalid. Please arrange the refreshed list and try again.",
+                CategoryOperationStatus.OrderChanged => "The category list changed while you were arranging it. Please review the refreshed list and try again.",
                 CategoryOperationStatus.InvalidName => "Input.Name",
                 CategoryOperationStatus.DuplicateName => "Input.Name",
                 _ => string.Empty
             };
 
+            CategoryEditorHasErrors = true;
             ModelState.AddModelError(key, GetErrorMessage(result));
             await LoadCategoriesAsync(cancellationToken);
             return Page();
@@ -136,11 +157,27 @@ namespace RROMS.Pages.Admin.Menu
             var result = await _orderService.DeleteCategoryAsync(id, cancellationToken);
 
             if (result == CategoryOperationStatus.Success)
-                TempData["MenuCategorySuccess"] = "Category deleted successfully.";
+                TempData["SuccessMessage"] = "Category deleted successfully.";
             else
-                TempData["MenuCategoryError"] = GetErrorMessage(result);
+                TempData["ErrorMessage"] = GetErrorMessage(result);
 
             return RedirectToCategoryList();
+        }
+
+        public async Task<IActionResult> OnPostReorderAsync(CancellationToken cancellationToken)
+        {
+            KeepFormValidation(nameof(OrderIds), nameof(OrderStamp));
+            MenuView = "categories";
+            var result = ModelState.IsValid
+                ? await _orderService.ReorderCategoriesAsync(OrderIds, OrderStamp, cancellationToken)
+                : CategoryOperationStatus.InvalidOrder;
+            if (result == CategoryOperationStatus.Success)
+            {
+                TempData["SuccessMessage"] = "Category order saved successfully.";
+                return RedirectToPage("./Index", new { ShowAll = true });
+            }
+            TempData["ErrorMessage"] = GetErrorMessage(result);
+            return RedirectToPage("./Index", new { Reorder = true });
         }
 
         private async Task LoadCategoriesAsync(CancellationToken cancellationToken)
@@ -153,10 +190,22 @@ namespace RROMS.Pages.Admin.Menu
             EmptyCategoryCount = result.EmptyCategoryCount;
             TotalPages = result.TotalPages;
             PageNumber = result.PageNumber;
+            OrderStamp = result.OrderStamp;
+            // Display stored codes only; never accept a code from the submitted form.
+            CategoryEditorCode = Input.Id.HasValue
+                ? (await _orderService.GetCategoryAsync(Input.Id.Value, cancellationToken))?.Code
+                : null;
         }
 
         private void NormalizeTableOptions()
         {
+            if (Reorder)
+            {
+                SearchTerm = null;
+                SortOrder = MenuCategorySorting.Default;
+                ShowAll = true;
+                PageNumber = 1;
+            }
             SearchTerm = string.IsNullOrWhiteSpace(SearchTerm) ? null : SearchTerm.Trim();
             SortOrder = MenuCategorySorting.Normalize(SortOrder);
             PageNumber = ShowAll ? 1 : Math.Max(1, PageNumber);
@@ -172,6 +221,9 @@ namespace RROMS.Pages.Admin.Menu
         {
             return status switch
             {
+                CategoryOperationStatus.InvalidOrder => "The submitted order is incomplete or invalid. Please arrange the refreshed list and try again.",
+                CategoryOperationStatus.OrderChanged => "The category list changed while you were arranging it. Please review the refreshed list and try again.",
+                CategoryOperationStatus.CodeLimitReached => "No additional menu codes can be assigned. Please contact the administrator.",
                 CategoryOperationStatus.InvalidName => "Enter a category name of 1 to 50 characters.",
                 CategoryOperationStatus.DisplayOrderLimitReached => "A new category could not be assigned a position. Please contact the administrator.",
                 CategoryOperationStatus.Busy => "Another category is being saved. Please try again.",
