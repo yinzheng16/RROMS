@@ -1,0 +1,38 @@
+@model RROMS.Pages.Admin.Menu.IndexModel
+<div class="d-flex align-items-center justify-content-between gap-3 flex-wrap position-relative z-1 mt-4 pt-3 border-top border-secondary" data-menu-hero-controls>
+    <nav class="d-inline-flex align-items-center gap-1 border border-light border-opacity-25 rounded-pill p-1" aria-label="Menu management sections">
+        <a id="menu-nav-categories" asp-page="./Index"
+           class="btn @(Model.MenuView == "items" ? "btn-outline-light" : "btn-primary") border-0 rounded-pill px-3 px-md-4 fw-semibold"
+           aria-current="@(Model.MenuView != "items" ? "page" : null)" data-category-keep-scroll>Categories</a>
+        <a id="menu-nav-items" asp-page="./Index" asp-route-MenuView="items"
+           class="btn @(Model.MenuView == "items" ? "btn-primary" : "btn-outline-light") border-0 rounded-pill px-3 px-md-4 fw-semibold"
+           aria-current="@(Model.MenuView == "items" ? "page" : null)" data-category-keep-scroll>Menu items</a>
+    </nav>
+    @if (Model.MenuView == "items")
+    {
+        <a id="menu-create" href="@Model.ItemListUrl().Replace("#category-collection", "#menu-item-drawer")"
+           class="btn btn-primary rounded-pill px-3 px-md-4 d-inline-flex align-items-center justify-content-center flex-shrink-0 ms-auto position-relative"
+           data-menu-new-item data-category-keep-scroll data-category-shortcut>
+            <span class="d-inline-flex align-items-center gap-2 invisible text-nowrap" aria-hidden="true" data-menu-create-sizer>
+                <span>＋</span><span>New menu item</span>
+            </span>
+            <span class="position-absolute top-50 start-50 translate-middle d-inline-flex align-items-center gap-2 text-nowrap" data-menu-create-caption>
+                <span aria-hidden="true">＋</span><span>New menu item</span>
+            </span>
+        </a>
+    }
+    else
+    {
+        <a id="menu-create" asp-page="./Index" asp-route-ShowAll="@Model.ShowAll" asp-route-SearchTerm="@Model.SearchTerm"
+           asp-route-SortOrder="@Model.SortOrder" asp-route-PageNumber="@Model.PageNumber" asp-fragment="category-editor"
+           class="btn btn-primary rounded-pill px-3 px-md-4 d-inline-flex align-items-center justify-content-center flex-shrink-0 ms-auto position-relative"
+           data-category-jump data-category-shortcut data-category-keep-scroll>
+            <span class="d-inline-flex align-items-center gap-2 invisible text-nowrap" aria-hidden="true" data-menu-create-sizer>
+                <span>＋</span><span>New menu item</span>
+            </span>
+            <span class="position-absolute top-50 start-50 translate-middle d-inline-flex align-items-center gap-2 text-nowrap" data-menu-create-caption>
+                <span aria-hidden="true">＋</span><span>New category</span>
+            </span>
+        </a>
+    }
+</div>

@@ -1,0 +1,55 @@
+@model RROMS.Pages.Admin.Menu.IndexModel
+@{
+    bool editing = Model.Input.Id.HasValue;
+    string preview = string.IsNullOrWhiteSpace(Model.Input.Name) ? "Your category name" : Model.Input.Name.Trim();
+    int separator = preview.IndexOf('·');
+    bool hasEnglish = separator > 0 && !string.IsNullOrWhiteSpace(preview[(separator + 1)..]);
+    string previewPrimary = hasEnglish ? preview[..separator].Trim() : preview;
+    string previewEnglish = hasEnglish ? preview[(separator + 1)..].Trim() : string.Empty;
+    bool summaryErrors = ViewData.ModelState.TryGetValue(string.Empty, out var summary) && summary is not null && summary.Errors.Count > 0;
+}
+<div data-category-drawer-slot>
+    <section id="category-editor" class="card border-0 rounded-4 shadow-sm yoru-item-drawer yoru-category-drawer" aria-labelledby="editor-title" data-category-drawer data-saved-code="@Model.CategoryEditorCode" data-category-errors="@Model.CategoryEditorHasErrors.ToString().ToLowerInvariant()">
+        <header class="px-4 py-3 border-bottom" data-menu-drawer-header>
+            <div class="d-flex align-items-start justify-content-between gap-3">
+                <div><p class="eyebrow mb-1">Shape your menu</p><h2 id="editor-title" class="h4 mb-1">@(editing ? "Edit category" : "New category")</h2><p class="small text-body-secondary mb-0" data-category-drawer-description>@(editing ? "Update the name of this menu section." : "Name the next section of your menu.")</p></div>
+                <button type="button" class="btn-close flex-shrink-0" aria-label="Close category editor" data-category-drawer-close hidden></button>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap mt-3" aria-label="Category code">
+                <span class="small text-body-secondary">Category code</span>
+                <span class="badge rounded-pill bg-body-tertiary text-body border yoru-menu-code" data-editor-code>@(editing ? Model.CategoryEditorCode : "Assigned when saved")</span>
+            </div>
+            <p class="small text-body-secondary mt-2 mb-0" role="status" aria-live="polite" data-category-drawer-state></p>
+        </header>
+        <div class="px-4 py-4 yoru-item-drawer-body">
+            <form id="category-form" method="post" asp-page="./Index" asp-page-handler="Save" data-category-editor data-category-keep-scroll asp-fragment="category-editor">
+                <input type="hidden" asp-for="Input.Id" />
+                <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" /><input type="hidden" name="SortOrder" value="@Model.SortOrder" />
+                <input type="hidden" name="PageNumber" value="@Model.PageNumber" /><input type="hidden" name="ShowAll" value="@Model.ShowAll.ToString().ToLowerInvariant()" />
+                <div asp-validation-summary="ModelOnly" data-valmsg-summary="false" class="text-danger mb-3" role="alert" hidden="@(!summaryErrors)"></div>
+                <div class="mb-4">
+                    <label asp-for="Input.Name" class="form-label fw-semibold"></label>
+                    <input asp-for="Input.Name" class="form-control form-control-lg" maxlength="50" placeholder="e.g. Sarada · Salads" required data-category-name aria-describedby="category-name-error category-name-help" />
+                    <div class="d-flex justify-content-between gap-2 mt-2"><span id="category-name-help" class="small text-body-secondary">Keep it clear and memorable.</span><span class="small text-body-secondary"><span data-category-name-count>@(Model.Input.Name?.Length ?? 0)</span>/50</span></div>
+                    <span asp-validation-for="Input.Name" id="category-name-error" class="text-danger small"></span>
+                </div>
+                <section class="yoru-category-preview rounded-4 p-3 p-md-4 mb-4" aria-label="Category title preview">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap border-bottom pb-3 mb-3">
+                        <span class="small text-body-secondary text-uppercase">YORU / Menu</span>
+                        <span class="yoru-category-preview-label rounded-pill">Live preview</span>
+                    </div>
+                    <div class="yoru-category-preview-copy border-start border-3 border-primary ps-3">
+                        <h3 class="h4 fw-normal text-break mb-1" data-category-preview-name>@previewPrimary</h3>
+                        <p class="small text-body-secondary text-break mb-0" data-category-preview-english hidden="@(!hasEnglish)">@previewEnglish</p>
+                    </div>
+                </section>
+                <p class="small text-body-secondary border rounded-3 p-3 mb-4">Display order is assigned automatically. Use Reorder to change the sequence.</p>
+                <p class="small text-body-secondary mb-0">A category is the start. Add its dishes next in menu-item management.</p>
+            </form>
+        </div>
+        <footer class="d-flex gap-2 p-3 border-top yoru-item-drawer-footer">
+            <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill" data-category-drawer-discard hidden>Discard draft</button>
+            <button type="submit" form="category-form" class="btn btn-primary rounded-pill flex-fill" data-category-save>@(editing ? "Save changes" : "Create category")</button>
+        </footer>
+    </section>
+</div>
