@@ -25,6 +25,7 @@ namespace RROMS.Data
         // Member 3: Menu & Orders
         public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
         public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+        public DbSet<MenuCodeSequence> MenuCodeSequences => Set<MenuCodeSequence>();
         public DbSet<Promotion> Promotions => Set<Promotion>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
@@ -108,12 +109,16 @@ namespace RROMS.Data
             });
 
             // ---------- Menu & Orders ----------
-            builder.Entity<MenuCategory>()
-                .HasIndex(c => c.Name).IsUnique();
+            builder.Entity<MenuCategory>(e =>
+            {
+                e.HasIndex(c => c.Name).IsUnique();
+                e.HasIndex(c => c.Code).IsUnique();
+            });
 
             builder.Entity<MenuItem>(e =>
             {
                 e.Property(m => m.Price).HasPrecision(10, 2);
+                e.HasIndex(m => m.Code).IsUnique();
                 e.HasOne(m => m.Category)
                  .WithMany(c => c.MenuItems)
                  .HasForeignKey(m => m.CategoryId)

@@ -44,24 +44,8 @@ namespace RROMS.Data
             // ---------- Module sample data goes below this line ----------
             ReservationSeed.Seed(db);
 
-            // ---------- Member 3: sample menu item for US21 deletion testing ----------
-            var sampleCategory = await db.MenuCategories
-                .FirstOrDefaultAsync(c => c.Name == "Otsumami · Small Bites");
-
-            if (sampleCategory != null &&
-                !await db.MenuItems.AnyAsync(m =>
-                    m.CategoryId == sampleCategory.Id && m.Name == "Edamame"))
-            {
-                db.MenuItems.Add(new MenuItem
-                {
-                    CategoryId = sampleCategory.Id,
-                    Name = "Edamame",
-                    Description = "Lightly salted steamed soybeans.",
-                    Price = 8.90m,
-                    IsAvailable = true
-                });
-            }
-
+            // ---------- Member 3: shared 80-item demo menu ----------
+            await MenuDemoSeeder.SeedAsync(services);
 
         }
 

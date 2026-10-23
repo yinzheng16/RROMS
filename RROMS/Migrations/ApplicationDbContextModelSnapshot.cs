@@ -351,12 +351,34 @@ namespace RROMS.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("MenuCategories");
+                });
+
+            modelBuilder.Entity("RROMS.Models.MenuCodeSequence", b =>
+                {
+                    b.Property<string>("Prefix")
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
+                    b.Property<int>("LastItemNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("Prefix");
+
+                    b.ToTable("MenuCodeSequences");
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuItem", b =>
@@ -393,7 +415,15 @@ namespace RROMS.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("nvarchar(24)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("CategoryId");
 

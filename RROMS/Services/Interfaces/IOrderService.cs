@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace RROMS.Services.Interfaces
 {
     // Owner: Member 3. Extend this interface for later menu/order stories.
-    public interface IOrderService
+    public partial interface IOrderService
     {
         Task<IReadOnlyList<MenuCategorySummary>> GetCategoriesAsync(
             CancellationToken cancellationToken = default,
@@ -26,20 +26,24 @@ namespace RROMS.Services.Interfaces
         Task<CategoryOperationStatus> UpdateCategoryAsync(
             int id, string name, CancellationToken cancellationToken = default);
 
+        Task<CategoryOperationStatus> ReorderCategoriesAsync(
+            IReadOnlyList<int> orderedIds, string? expectedStamp,
+            CancellationToken cancellationToken = default);
+
         Task<CategoryOperationStatus> DeleteCategoryAsync(
             int id, CancellationToken cancellationToken = default);
     }
 
     // Service output only: these types are NOT database entities.
     public sealed record MenuCategorySummary(
-        int Id, string Name, int DisplayOrder, int ItemCount);
+        int Id, string Name, int DisplayOrder, int ItemCount, string Code = "");
 
     // Page rows plus totals for the entire filtered view, not just this page.
     // This is a service result, not an EF entity or a new database table.
     public sealed record MenuCategoryPage(
         IReadOnlyList<MenuCategorySummary> Items,
         int TotalCount, int TotalItemCount, int EmptyCategoryCount,
-        int PageNumber, int PageSize)
+        int PageNumber, int PageSize, string OrderStamp = "")
     {
         public int TotalPages => TotalCount == 0 ? 1 : (TotalCount - 1) / PageSize + 1;
     }
@@ -72,6 +76,9 @@ namespace RROMS.Services.Interfaces
         DuplicateName,
         HasMenuItems,
         DisplayOrderLimitReached,
-        Busy
+        Busy,
+        InvalidOrder,
+        OrderChanged,
+        CodeLimitReached
     }
 }

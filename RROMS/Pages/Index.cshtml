@@ -1,10 +1,388 @@
-﻿@page
+@page
 @model IndexModel
+@using System.Text.Json
 @{
-    ViewData["Title"] = "Home page";
+    // US50 (Owner: Member 1): public Home page.
+    ViewData["Title"] = "Home";
+    ViewData["FullWidth"] = true;   // sections go edge to edge
+
+    // A kanji for each card, picked from the category name (shown until the dish has a photo).
+    // Checks Japanese and English words, e.g. "Sashimi · Raw Seafood" -> 刺 (from 刺身, sashimi).
+    string Kanji(string category)
+    {
+        var c = category.ToLowerInvariant();
+        bool Has(params string[] words) => words.Any(c.Contains);
+
+        if (Has("non-alcoholic", "soft", "dorinku", "tea", "juice", "coffee")) return "茶";   // soft drinks, tea
+        if (Has("sake", "beer", "biru", "whisky", "highball", "shochu", "cocktail", "wine", "alcohol")) return "酒";   // alcohol
+        if (Has("sashimi", "raw")) return "刺";                       // sashimi
+        if (Has("sushi", "nigiri", "maki")) return "寿";              // sushi
+        if (Has("menmono", "noodle", "ramen", "udon", "soba")) return "麺";   // noodles
+        if (Has("yakimono", "yakitori", "kushi", "grill", "skewer")) return "焼";   // grilled
+        if (Has("agemono", "fried", "karaage", "tempura")) return "揚";       // deep-fried
+        if (Has("nimono", "simmer", "stew")) return "煮";              // simmered
+        if (Has("nabe", "hot pot", "hotpot")) return "鍋";             // hot pot
+        if (Has("gohan", "donburi", "rice", "don ")) return "飯";      // rice dishes
+        if (Has("soup", "shiru", "miso")) return "汁";                 // soup
+        if (Has("sarada", "salad", "vegetable", "yasai")) return "菜";  // salads, vegetables
+        if (Has("otsumami", "small bite", "appetiser", "appetizer", "starter", "snack")) return "肴";   // bites to go with drinks
+        if (Has("dessert", "amami", "sweet")) return "甘";             // desserts
+        if (Has("drink", "beverage", "nomimono")) return "飲";         // other drinks
+        return "食";                                                   // anything else: "food"
+    }
+    string[] colours = { "#E07A5F", "#C2553A", "#A8763E", "#7C8F5A" };
+
+    string Price(decimal price, decimal? off) =>
+        off is decimal p ? (price * (100 - p) / 100).ToString("0.00") : price.ToString("0.00");
+
+    string EndsText(DateTime end)
+    {
+        var days = (end.Date - DateTime.Today).Days;
+        return days <= 0 ? "Last day today" : days == 1 ? "Ends tomorrow" : $"Until {end:d MMM}";
+    }
+
+    // Hero words for each mood (the mood comes from today's opening hours).
+    var (eyebrow, title) = Model.Info.Mood switch
+    {
+        "before" => ("夕暮れ · Opening soon", "Tokyo wakes up<br />at <em>five.</em>"),
+        "last" => ("ラストオーダー · Last orders", "One more<br /><em>round?</em>"),
+        "closed" => ("お休み · Resting tonight", "Resting tonight,<br />back <em>tomorrow.</em>"),
+        _ => ("居酒屋 · YORU Izakaya", "Where Tokyo<br />comes <em>alive.</em>")
+    };
+    if (Model.CustomerName is not null && Model.Info.Mood is "open" or "last")
+    {
+        eyebrow = $"おかえりなさい · Welcome back, {Model.CustomerName}";
+    }
+
+    var mapsUrl = "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString("YORU IZAKAYA " + Model.Info.Address);
+    var telLink = "tel:" + new string(Model.Info.Phone.Where(ch => char.IsDigit(ch) || ch == '+').ToArray());
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="hm">
+
+@* ---------- 1. Hero (the mood follows today's opening hours) ---------- *@
+<section class="hm-hero" data-mood="@Model.Info.Mood">
+    <div class="hm-photo" aria-hidden="true"><span class="hm-lamp"></span></div>
+    <span class="hm-petal p1" aria-hidden="true"></span><span class="hm-petal p2" aria-hidden="true"></span>
+    <span class="hm-petal p3" aria-hidden="true"></span><span class="hm-petal p4" aria-hidden="true"></span>
+    <span class="hm-petal p5" aria-hidden="true"></span><span class="hm-petal p6" aria-hidden="true"></span>
+    <span class="hm-vert jp" aria-hidden="true">ようこそ、夜の東京へ</span>
+
+    <div class="container-xl hm-inner">
+        <div class="hm-hero-copy">
+            <span class="hm-eyebrow jp">@eyebrow</span>
+            <h1 class="hm-title">@Html.Raw(title)</h1>
+            <p class="hm-lede">Good food, great drinks and unforgettable nights. YORU brings the spirit of a Tokyo izakaya to the heart of Bukit Bintang.</p>
+            <div class="hm-cta">
+                <a class="btn btn-primary btn-lg px-4" href="/Customer/Reservations/Create">
+                    Book a table <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                </a>
+                <a class="hm-play" href="#story"><span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v11M3.5 9 8 13.5 12.5 9" /></svg></span><b class="jp">物語</b>Our story</a>
+            </div>
+            <p class="hm-chip"><i aria-hidden="true"></i>@Model.Info.MoodText</p>
+        </div>
+    </div>
+    <div class="hm-scroll" aria-hidden="true"><b>SCROLL</b></div>
+</section>
+
+@* ---------- 2. Signature menu (Member 3's menu, most ordered first) ---------- *@
+<section class="hm-sig hm-paper">
+    <div class="container-xl hm-sig-grid">
+        <div>
+            <span class="hm-eyebrow">Our signature menu · 名物</span>
+            <h2 class="hm-h2">Taste the authentic<br />flavours of <em>Japan.</em></h2>
+            <span class="hm-rule" aria-hidden="true"></span>
+            <p class="hm-text mb-4">From fresh sashimi to flame-grilled favourites, these are the dishes our guests order again and again.</p>
+            <a class="hm-link" href="/Menu">View full menu <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+        </div>
+
+        <div class="hm-dishes count-@Model.Dishes.Count">
+            @for (var i = 0; i < Model.Dishes.Count; i++)
+            {
+                var d = Model.Dishes[i];
+                var hasPhoto = !string.IsNullOrEmpty(d.ImageUrl);
+                <a class="hm-card hm-dish" href="/Menu" style="--pc:@(colours[i % colours.Length])">
+                    @* Kanji first; the photo (if Member 3 added one) covers it. If the photo file is missing, it removes itself. *@
+                    <span class="hm-card-kanji jp" aria-hidden="true">@Kanji(d.CategoryName)</span>
+                    @if (hasPhoto)
+                    {
+                        <img class="hm-card-img" src="@d.ImageUrl" alt="@d.Name" loading="lazy" onerror="this.remove()" />
+                    }
+                    @if (d.DiscountPercent is decimal off)
+                    {
+                        <span class="hm-tag">@off.ToString("0.#")% off</span>
+                    }
+                    else if (d.IsPopular)
+                    {
+                        <span class="hm-tag">Popular</span>
+                    }
+                    <span class="hm-arrow" aria-hidden="true"><i class="bi bi-arrow-right"></i></span>
+                    <div class="hm-card-foot">
+                        <div><h3>@d.Name</h3><small>@d.CategoryName</small></div>
+                        <span class="hm-price">
+                            @if (d.DiscountPercent is not null)
+                            {
+                                <s>RM @d.Price.ToString("0.00")</s>
+                            }
+                            RM @Price(d.Price, d.DiscountPercent)
+                        </span>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+</section>
+
+@* ---------- 3. Our story + numbers ---------- *@
+<section class="hm-story hm-dark" id="story">
+    <div class="hm-story-photo" role="img" aria-label="Inside YORU Izakaya"></div>
+    <div class="hm-story-copy">
+        <span class="hm-eyebrow">Our story · 物語</span>
+        <h2 class="hm-h2">A little Tokyo<br /><em>after dark.</em></h2>
+        <p class="hm-text">YORU means "night". We bring the warm, lively izakaya feeling of Tokyo to Kuala Lumpur: small plates to share, good drinks, and nobody rushing you home.</p>
+
+        @* Numbers come from the database (menu, categories, opening hours) *@
+        <div class="hm-stats">
+            @if (Model.Info.DishCount > 0)
+            {
+                <div class="hm-stat"><b>@Model.Info.DishCount</b><span>Dishes</span></div>
+            }
+            @if (Model.Info.CategoryCount > 0)
+            {
+                <div class="hm-stat"><b>@Model.Info.CategoryCount</b><span>Categories</span></div>
+            }
+            <div class="hm-stat"><b>@Model.Info.OpenDays</b><span>Nights a week</span></div>
+            <div class="hm-stat"><b>@Model.Info.LastOrders</b><span>We close</span></div>
+        </div>
+
+        <a class="btn btn-outline-gold px-4" href="/About">Learn more about us <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+    </div>
+    <span class="hm-vert jp" aria-hidden="true">夜は、まだ終わらない</span>
+    <span class="hm-waves" aria-hidden="true"></span>
+</section>
+
+@* ---------- 4. The YORU experience + omikuji ---------- *@
+<section class="hm-exp hm-paper">
+    <div class="container-xl">
+        <div class="hm-center">
+            <span class="hm-eyebrow">The YORU experience</span>
+            <h2 class="hm-h2">More than just a meal</h2>
+        </div>
+        <div class="hm-feats">
+            <div class="hm-feat">
+                <div class="hm-feat-icon"><i class="bi bi-water" aria-hidden="true"></i></div>
+                <h3>Fresh ingredients</h3><p>Fish delivered every morning, sliced to order.</p>
+            </div>
+            <div class="hm-feat">
+                <div class="hm-feat-icon"><i class="bi bi-fire" aria-hidden="true"></i></div>
+                <h3>Authentic taste</h3><p>Traditional recipes, grilled over real charcoal.</p>
+            </div>
+            <div class="hm-feat">
+                <div class="hm-feat-icon"><i class="bi bi-cup-straw" aria-hidden="true"></i></div>
+                <h3>Crafted drinks</h3><p>Sake, Japanese whisky and crisp highballs.</p>
+            </div>
+            <div class="hm-feat">
+                <div class="hm-feat-icon"><i class="bi bi-people" aria-hidden="true"></i></div>
+                <h3>Warm atmosphere</h3><p>A cosy space for friends, family and late nights.</p>
+            </div>
+        </div>
+
+        <div class="hm-omikuji">
+            <div>
+                <span class="hm-eyebrow">Omikuji · おみくじ</span>
+                <h2 class="hm-h2">Can't decide?<br />Ask the <em>gods.</em></h2>
+                <span class="hm-rule" aria-hidden="true"></span>
+                <p class="hm-text">Shake the box and let fortune pick your dish for tonight, from what's on our menu right now.</p>
+            </div>
+            <div class="hm-omi-left">
+                <button type="button" class="hm-omi-box" id="omiBox" aria-label="Shake the omikuji box">
+                    <span class="hm-omi-shadow" aria-hidden="true"></span>
+                    <span class="hm-omi-wrap" aria-hidden="true">
+                        <span class="hm-omi-sticks"><i></i><i></i><i></i></span>
+                        <span class="hm-omi-stick"><b class="jp" id="omiNo">七番</b></span>
+                        <span class="hm-omi-body">
+                            <span class="hm-omi-rope"></span>
+                            <span class="hm-omi-shide l"></span><span class="hm-omi-shide r"></span>
+                            <span class="hm-omi-label jp">御神籤</span>
+                            <i class="hm-omi-seal jp">夜</i>
+                        </span>
+                    </span>
+                </button>
+                <button type="button" class="btn btn-primary px-4" id="omiShake">振る · Shake the box</button>
+                <p class="hm-omi-hint">Tap the box or the button</p>
+            </div>
+            <div class="hm-slip is-empty" id="omiSlip" aria-live="polite">
+                <div><span class="hm-slip-big jp" aria-hidden="true">運</span>Your fortune will appear here.</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ---------- 5. Limited time only (active promotions; hidden when there are none) ---------- *@
+@if (Model.Offers.Count > 0)
+{
+    <section class="hm-specials hm-dark">
+        <div class="container-xl hm-specials-grid">
+            <div>
+                <span class="hm-eyebrow">Right now at YORU · 今だけ</span>
+                <h2 class="hm-h2">Limited time<br /><em>only.</em></h2>
+                <p class="hm-text mb-4">Our current deals, straight from the kitchen. Catch them before they're gone.</p>
+                <a class="btn btn-outline-gold px-4" href="/Menu">Explore the menu <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+            </div>
+            <div class="hm-offers count-@Model.Offers.Count">
+                @for (var i = 0; i < Model.Offers.Count; i++)
+                {
+                    var o = Model.Offers[i];
+                    var hasPhoto = !string.IsNullOrEmpty(o.ImageUrl);
+                    <a class="hm-card" href="/Menu" style="--pc:@(colours[i % colours.Length])">
+                        <span class="hm-card-kanji jp" aria-hidden="true">@Kanji(o.CategoryName + " " + o.DishName)</span>
+                        @if (hasPhoto)
+                        {
+                            <img class="hm-card-img" src="@o.ImageUrl" alt="@o.DishName" loading="lazy" onerror="this.remove()" />
+                        }
+                        @if (i == 0)
+                        {
+                            <span class="hm-offer-badge"><b>@o.DiscountPercent.ToString("0.#")%</b><span>OFF</span></span>
+                        }
+                        <span class="hm-ends">@EndsText(o.EndDate)</span>
+                        <div class="hm-card-foot">
+                            <div><h3>@o.Title</h3><small>@o.DishName</small></div>
+                            <span class="hm-price"><s>RM @o.Price.ToString("0.00")</s>RM @Price(o.Price, o.DiscountPercent)</span>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+        <span class="hm-waves" aria-hidden="true"></span>
+    </section>
+}
+
+@* ---------- 6. Visit us (Member 5's settings + Member 2's hours) + quick booking ---------- *@
+<section class="hm-visit hm-paper" id="visit">
+    <img class="hm-torii" src="~/images/home/torii.webp" alt="" aria-hidden="true" />
+    <div class="container-xl hm-visit-grid">
+        <img class="hm-ink" src="~/images/home/ink-landscape.webp" alt="" aria-hidden="true" />
+
+        <div>
+            <span class="hm-eyebrow">Visit us · ご来店</span>
+            <h2 class="hm-h2">Find your seat<br />at <em>YORU.</em></h2>
+            <div class="hm-info-row">
+                <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                <div>
+                    <b>Address</b>@Model.Info.Address<br />
+                    <a class="hm-link mt-1" href="@mapsUrl" target="_blank" rel="noopener">Open in Google Maps <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+            <div class="hm-info-row">
+                <i class="bi bi-telephone" aria-hidden="true"></i>
+                <div><b>Phone</b><a href="@telLink">@Model.Info.Phone</a></div>
+            </div>
+            <div class="hm-info-row">
+                <i class="bi bi-clock" aria-hidden="true"></i>
+                <div>
+                    <b>Opening hours</b>
+                    <table class="hm-hours">
+                        @foreach (var row in Model.Hours)
+                        {
+                            <tr class="@(row.IsClosed ? "closed" : "")"><td>@row.Days</td><td>@row.Hours</td></tr>
+                        }
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @* Saves nothing: it only opens Member 2's booking page with date, time and guests filled in. *@
+        <form class="hm-book" method="get" action="/Customer/Reservations/Create">
+            <h3>Make a reservation</h3>
+            <div class="mb-3">
+                <label class="form-label" for="bkDate">Date</label>
+                <input class="form-control" type="date" id="bkDate" name="date" value="@Model.Today" min="@Model.Today" required />
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label" for="bkTime">Time</label>
+                    <select class="form-select" id="bkTime" name="time">
+                        @foreach (var t in Model.BookingTimes)
+                        {
+                            <option value="@t.Value" selected="@(t.Value == "19:00")">@t.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-6">
+                    <label class="form-label" for="bkGuests">Guests</label>
+                    <select class="form-select" id="bkGuests" name="guests">
+                        @for (var g = 1; g <= 10; g++)
+                        {
+                            <option value="@g" selected="@(g == 2)">@g @(g == 1 ? "person" : "people")</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Book now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+            <small>You'll confirm the details on the next page.</small>
+        </form>
+    </div>
+</section>
+
 </div>
+
+@* Dishes for the omikuji box (JsonSerializer escapes < > & so this is safe inside a script tag) *@
+<script type="application/json" id="omiData">@Html.Raw(JsonSerializer.Serialize(Model.OmikujiDishes))</script>
+
+@section Scripts {
+    <script>
+        // US50 omikuji: shake the box, pick a random dish and a fortune.
+        (function () {
+            var box = document.getElementById('omiBox'), slip = document.getElementById('omiSlip');
+            var dishes = JSON.parse(document.getElementById('omiData').textContent || '[]');
+            if (!box || !slip || dishes.length === 0) return;
+
+            var fortunes = [
+                ['大吉', 'Great luck', "A great night is coming. Order a second round, you've earned it."],
+                ['中吉', 'Good luck', 'Good company and good food. Share this one with a friend.'],
+                ['吉', 'Luck', 'Simple and satisfying. Pair it with a cold highball.'],
+                ['小吉', 'Small luck', "Small luck, big flavour. Don't skip dessert."],
+                ['末吉', 'Future luck', 'Your luck grows as the night goes on. Try something new next time.']
+            ];
+            function el(tag, cls, text) {
+                var e = document.createElement(tag);
+                if (cls) e.className = cls;
+                if (text) e.textContent = text;   // textContent: dish names are never treated as HTML
+                return e;
+            }
+            function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
+
+            var numbers = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+            var stickNo = document.getElementById('omiNo');
+
+            function draw() {
+                box.classList.remove('drawn', 'shake');
+                void box.offsetWidth;                // restart the shake animation
+                box.classList.add('shake');
+                setTimeout(function () {
+                    if (stickNo) stickNo.textContent = pick(numbers) + '番';   // number on the stick
+                    box.classList.add('drawn');
+                    var d = pick(dishes), f = pick(fortunes);
+
+                    var rank = el('div', 'hm-rank');
+                    rank.append(el('b', 'jp', f[0]), el('small', null, f[1]));
+                    var meta = el('p', 'meta', d.Category + ' · ');
+                    meta.append(el('b', null, 'RM ' + Number(d.Price).toFixed(2)));
+                    var btns = el('div', 'btns');
+                    var menu = el('a', 'btn btn-primary btn-sm px-3', 'See it on the menu');
+                    menu.href = '/Menu';
+                    var again = el('button', 'btn btn-outline-secondary btn-sm px-3', 'Shake again');
+                    again.type = 'button';
+                    again.addEventListener('click', draw);
+                    btns.append(menu, again);
+
+                    slip.className = 'hm-slip reveal';
+                    slip.replaceChildren(rank, el('span', 'kicker', 'Tonight the gods say you eat'),
+                        el('h3', null, d.Name), meta, el('p', 'luck', '“' + f[2] + '”'), btns);
+                }, 900);
+            }
+            box.addEventListener('click', draw);
+            document.getElementById('omiShake').addEventListener('click', draw);
+        })();
+    </script>
+}

@@ -1,25 +1,30 @@
+using Microsoft.Build.Framework;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using RROMS.Data;
+using RROMS.Models;
+using RROMS.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using RROMS.Data;
-using RROMS.Models;
-using RROMS.Services.Interfaces;
 
 namespace RROMS.Services
 {
     // Owner: Member 3. Database operations stay here, per the team instructions.
-    public class OrderService : IOrderService
+    public partial class OrderService : IOrderService
     {
         private readonly ApplicationDbContext _context;
 
-        public OrderService(ApplicationDbContext context)
+        public OrderService(ApplicationDbContext context,
+            Microsoft.AspNetCore.Hosting.IWebHostEnvironment environment,
+            Microsoft.Extensions.Logging.ILogger<OrderService> logger)
         {
             _context = context;
+            _imageDirectory = System.IO.Path.Combine(environment.ContentRootPath, "App_Data", "MenuImages");
+            _logger = logger;
         }
 
         public async Task<IReadOnlyList<MenuCategorySummary>> GetCategoriesAsync(
@@ -29,7 +34,7 @@ namespace RROMS.Services
             return await OrderCategories(FilterCategories(searchTerm), sortOrder)
                 .Select(category => new MenuCategorySummary(
                     category.Id, category.Name, category.DisplayOrder,
-                    category.MenuItems.Count))
+                    category.MenuItems.Count, category.Code))
                 .ToListAsync(cancellationToken);
         }
 
@@ -63,11 +68,13 @@ namespace RROMS.Services
             var items = await rows
                 .Select(category => new MenuCategorySummary(
                     category.Id, category.Name, category.DisplayOrder,
-                    category.MenuItems.Count))
+                    category.MenuItems.Count, category.Code))
                 .ToListAsync(cancellationToken);
 
             return new MenuCategoryPage(items, totalCount, totalItemCount,
-                emptyCategoryCount, pageNumber, pageSize);
+                emptyCategoryCount, pageNumber, pageSize,
+                showAll && string.IsNullOrWhiteSpace(searchTerm) && MenuCategorySorting.Normalize(sortOrder) == "display"
+                    ? MenuCategoryOrderRules.Stamp(items.Select(row => (row.Id, row.DisplayOrder))) : "");
         }
 
         private IQueryable<MenuCategory> FilterCategories(string? searchTerm)
@@ -76,7 +83,7 @@ namespace RROMS.Services
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 string term = searchTerm.Trim();
-                query = query.Where(category => category.Name.Contains(term));
+                query = query.Where(category => category.Name.Contains(term) || category.Code.Contains(term));
             }
             return query;
         }
@@ -111,7 +118,7 @@ namespace RROMS.Services
                 .Where(category => category.Id == id)
                 .Select(category => new MenuCategorySummary(
                     category.Id, category.Name, category.DisplayOrder,
-                    category.MenuItems.Count))
+                    category.MenuItems.Count, category.Code))
                 .SingleOrDefaultAsync(cancellationToken);
         }
 
@@ -122,60 +129,16 @@ namespace RROMS.Services
             if (normalizedName.Length == 0 || normalizedName.Length > 50)
                 return CategoryOperationStatus.InvalidName;
 
-            var strategy = _context.Database.CreateExecutionStrategy();
-            return await strategy.ExecuteAsync(async () =>
+            return await WriteCategoryOrderAsync(async rows =>
             {
-                // Protect max + 1 from concurrent category creation. A deadlock
-                // retries the whole short transaction, not only the failed query.
-                for (int attempt = 0; attempt < 3; attempt++)
-                {
-                    var category = new MenuCategory { Name = normalizedName };
-                    try
-                    {
-                        await using var transaction = await _context.Database
-                            .BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
-
-                        bool duplicateExists = await _context.MenuCategories.AnyAsync(
-                            item => item.Name == normalizedName, cancellationToken);
-                        if (duplicateExists)
-                            return CategoryOperationStatus.DuplicateName;
-
-                        int highestOrder = await _context.MenuCategories
-                            .MaxAsync(item => (int?)item.DisplayOrder, cancellationToken) ?? 0;
-                        if (highestOrder == int.MaxValue)
-                            return CategoryOperationStatus.DisplayOrderLimitReached;
-
-                        category.DisplayOrder = Math.Max(0, highestOrder) + 1;
-                        _context.MenuCategories.Add(category);
-                        await _context.SaveChangesAsync(cancellationToken);
-                        await transaction.CommitAsync(cancellationToken);
-                        return CategoryOperationStatus.Success;
-                    }
-                    catch (DbUpdateException exception) when (IsDuplicateName(exception))
-                    {
-                        _context.Entry(category).State = EntityState.Detached;
-                        return CategoryOperationStatus.DuplicateName;
-                    }
-                    catch (Exception exception) when (
-                        exception.GetBaseException() is SqlException sql && sql.Number == 1205)
-                    {
-                        _context.Entry(category).State = EntityState.Detached;
-                        if (attempt == 2)
-                            return CategoryOperationStatus.Busy;
-
-                        await Task.Delay(50 * (attempt + 1), cancellationToken);
-                    }
-                    catch
-                    {
-                        // A configured execution strategy may retry another transient
-                        // failure. Do not carry the failed entity into its next attempt.
-                        _context.Entry(category).State = EntityState.Detached;
-                        throw;
-                    }
-                }
-
-                return CategoryOperationStatus.Busy;
-            });
+                // Database equality matches the unique name index/collation.
+                if (await _context.MenuCategories.AnyAsync(row => row.Name == normalizedName, cancellationToken))
+                    return CategoryOperationStatus.DuplicateName;
+                MenuCategoryOrderRules.Compact(rows);
+                string code = await AllocateCategoryCodeAsync(normalizedName, cancellationToken);
+                _context.MenuCategories.Add(new MenuCategory { Name = normalizedName, Code = code, DisplayOrder = checked(rows.Count + 1) });
+                return CategoryOperationStatus.Success;
+            }, cancellationToken);
         }
 
         public async Task<CategoryOperationStatus> UpdateCategoryAsync(
@@ -226,37 +189,87 @@ namespace RROMS.Services
         public async Task<CategoryOperationStatus> DeleteCategoryAsync(
             int id, CancellationToken cancellationToken = default)
         {
-            var category = await _context.MenuCategories
-                .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
-
-            if (category is null)
-                return CategoryOperationStatus.NotFound;
-
-            // Includes unavailable dishes: the category is still in use.
-            if (await _context.MenuItems.AnyAsync(
-                item => item.CategoryId == id, cancellationToken))
-                return CategoryOperationStatus.HasMenuItems;
-
-            _context.MenuCategories.Remove(category);
-
-            try
+            return await WriteCategoryOrderAsync(async rows =>
             {
-                await _context.SaveChangesAsync(cancellationToken);
+                var category = rows.SingleOrDefault(row => row.Id == id);
+                if (category is null) return CategoryOperationStatus.NotFound;
+                if (await _context.MenuItems.AnyAsync(item => item.CategoryId == id, cancellationToken))
+                    return CategoryOperationStatus.HasMenuItems;
+                _context.MenuCategories.Remove(category);
+                rows.Remove(category);
+                MenuCategoryOrderRules.Compact(rows);
                 return CategoryOperationStatus.Success;
-            }
-            catch (DbUpdateConcurrencyException)
+            }, cancellationToken);
+        }
+
+        public async Task<CategoryOperationStatus> ReorderCategoriesAsync(
+            IReadOnlyList<int> orderedIds, string? expectedStamp,
+            CancellationToken cancellationToken = default)
+        {
+            // Materialize request data before a possible execution-strategy retry.
+            int[] requested = orderedIds?.ToArray() ?? Array.Empty<int>();
+            return await WriteCategoryOrderAsync(rows =>
             {
-                _context.Entry(category).State = EntityState.Detached;
-                return CategoryOperationStatus.NotFound;
-            }
-            catch (DbUpdateException exception) when (
-                exception.GetBaseException() is SqlException sql && sql.Number == 547)
+                string currentStamp = MenuCategoryOrderRules.Stamp(rows.Select(row => (row.Id, row.DisplayOrder)));
+                if (string.IsNullOrEmpty(expectedStamp) || !string.Equals(currentStamp, expectedStamp, StringComparison.Ordinal))
+                    return Task.FromResult(CategoryOperationStatus.OrderChanged);
+                if (!MenuCategoryOrderRules.IsCompletePermutation(requested, rows.Select(row => row.Id)))
+                    return Task.FromResult(CategoryOperationStatus.InvalidOrder);
+                var byId = rows.ToDictionary(row => row.Id);
+                MenuCategoryOrderRules.Compact(requested.Select(id => byId[id]));
+                return Task.FromResult(CategoryOperationStatus.Success);
+            }, cancellationToken);
+        }
+
+        // All changes to positions share one serializable transaction. Holding a
+        // range lock on the complete list prevents concurrent create/delete/reorder
+        // from assigning overlapping positions. Retry the whole operation on deadlock.
+        private async Task<CategoryOperationStatus> WriteCategoryOrderAsync(
+            Func<List<MenuCategory>, Task<CategoryOperationStatus>> change,
+            CancellationToken cancellationToken)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                // A dish may have been assigned after the first check.
-                // The existing foreign key prevents accidental cascade deletion.
-                _context.Entry(category).State = EntityState.Detached;
-                return CategoryOperationStatus.HasMenuItems;
-            }
+                for (int attempt = 0; attempt < 3; attempt++)
+                {
+                    var trackedBefore = _context.ChangeTracker.Entries<MenuCategory>().Select(entry => entry.Entity).ToHashSet();
+                    try
+                    {
+                        await using var transaction = await _context.Database.BeginTransactionAsync(
+                            IsolationLevel.Serializable, cancellationToken);
+                        var rows = await _context.MenuCategories.OrderBy(row => row.DisplayOrder)
+                            .ThenBy(row => row.Id).ToListAsync(cancellationToken);
+                        var result = await change(rows);
+                        if (result != CategoryOperationStatus.Success) return result;
+                        await _context.SaveChangesAsync(cancellationToken);
+                        await transaction.CommitAsync(cancellationToken);
+                        return CategoryOperationStatus.Success;
+                    }
+                    catch (DbUpdateException exception) when (IsDuplicateName(exception))
+                    { return CategoryOperationStatus.DuplicateName; }
+                    catch (OverflowException)
+                    { return CategoryOperationStatus.CodeLimitReached; }
+                    catch (DbUpdateConcurrencyException)
+                    { return CategoryOperationStatus.OrderChanged; }
+                    catch (DbUpdateException exception) when (exception.GetBaseException() is SqlException sql && sql.Number == 547)
+                    { return CategoryOperationStatus.HasMenuItems; }
+                    catch (Exception exception) when (exception.GetBaseException() is SqlException sql && sql.Number == 1205)
+                    {
+                        if (attempt == 2) return CategoryOperationStatus.Busy;
+                        await Task.Delay(50 * (attempt + 1), cancellationToken);
+                    }
+                    finally
+                    {
+                        // Do not carry failed or already committed category entities
+                        // into a retry. Leave unrelated tracked entities untouched.
+                        DetachMenuCodeSequences();
+                        foreach (var entry in _context.ChangeTracker.Entries<MenuCategory>().ToList())
+                            if (!trackedBefore.Contains(entry.Entity)) entry.State = EntityState.Detached;
+                    }
+                }
+                return CategoryOperationStatus.Busy;
+            });
         }
 
         private static bool IsDuplicateName(DbUpdateException exception)

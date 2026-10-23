@@ -60,6 +60,7 @@ builder.Services.AddRazorPages(options =>
 builder.Services.AddScoped<INotificationService, NotificationService>();   // EN06 / Member 4
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 // Member 4: builder.Services.AddScoped<IPaymentService, PaymentService>();
 // Member 5: builder.Services.AddScoped<IReportService, ReportService>();
