@@ -25,9 +25,19 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.AllowedForNewUsers = true;
+        options.Password.RequiredLength = 8;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// ---------- Login cookie: auto logout (Member 1, US02) ----------
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);   // not ticked: logged out after 30 minutes of doing nothing
+    options.SlidingExpiration = true;                     // every visit/click restarts the 30 minutes
+    // "Keep me logged in" ticked: 7 days instead (set in AccountService.LoginAsync)
+});
+
 
 // ---------- Role-based access control (Member 1) ----------
 builder.Services.AddAuthorization(options =>
@@ -48,9 +58,10 @@ builder.Services.AddRazorPages(options =>
 
 // ---------- Business logic tier (register each module's services here) ----------
 builder.Services.AddScoped<INotificationService, NotificationService>();   // EN06 / Member 4
-// Member 1: builder.Services.AddScoped<IAccountService, AccountService>();
-// Member 2: builder.Services.AddScoped<IReservationService, ReservationService>();
-// Member 3: builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IHomeService, HomeService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 // Member 5: builder.Services.AddScoped<IReportService, ReportService>();
 

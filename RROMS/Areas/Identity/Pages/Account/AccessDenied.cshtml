@@ -1,0 +1,63 @@
+@page
+@model RROMS.Areas.Identity.Pages.Account.AccessDeniedModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    // US06 (Owner: Member 1): access denied page in the YORU design (noren curtain).
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Access denied";
+}
+
+<section class="deny-page">
+    @* Noren curtain: 立入禁止 ("no entry"), read right to left like a real noren (decoration only) *@
+    <div class="noren" aria-hidden="true">
+        <div class="noren-rod"></div>
+        <div class="noren-panels">
+            <div class="noren-panel"><span class="noren-ch">止</span></div>
+            <div class="noren-panel noren-panel--red"><span class="noren-ch">禁</span></div>
+            <div class="noren-panel"><span class="noren-ch">入</span></div>
+            <div class="noren-panel"><span class="noren-ch">立</span></div>
+        </div>
+        <p class="noren-cap">STAFF ONLY · 関係者以外</p>
+    </div>
+
+    <p class="deny-eyebrow">403 · 立入禁止 · No entry</p>
+    <h1 class="deny-title">Behind this curtain is another team's space.</h1>
+    <p class="deny-lede">Your account can't open this page. Let's get you back to where you belong.</p>
+
+    @* Details slip: which area, your role, your account *@
+    <div class="deny-slip">
+        <div class="deny-slip-cell">
+            <span class="deny-slip-label">Area</span>
+            <span class="deny-slip-value"><span class="deny-slip-dot" aria-hidden="true"></span>@Model.AreaName</span>
+        </div>
+        <div class="deny-slip-cell">
+            <span class="deny-slip-label">Your role</span>
+            <span class="deny-slip-value">@Model.RoleName</span>
+        </div>
+        @if (!string.IsNullOrEmpty(Model.Email))
+        {
+            <div class="deny-slip-cell">
+                <span class="deny-slip-label">Logged in as</span>
+                <span class="deny-slip-value deny-slip-email">@Model.Email</span>
+            </div>
+        }
+        <span class="deny-slip-stamp" aria-hidden="true">禁</span>
+    </div>
+
+    <div class="deny-actions">
+        @* Your own role's home: Admin -> /Admin, Staff -> /Staff, Customer -> Home *@
+        <a class="btn btn-primary btn-lg" href="@Model.StartPage">
+            <i class="bi bi-house-door me-1" aria-hidden="true"></i>Go to my starting page
+        </a>
+        @* The page you were on just before (like the browser's Back button) *@
+        <button type="button" class="btn btn-outline-secondary btn-lg" onclick="history.back()">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Go back
+        </button>
+    </div>
+
+    @* Need a different role? Log out first, then log in with the other account. *@
+    <form class="deny-switch" asp-area="Identity" asp-page="/Account/Logout" method="post">
+        Need a different account?
+        <button type="submit" class="deny-link">Log out and switch</button>
+    </form>
+</section>

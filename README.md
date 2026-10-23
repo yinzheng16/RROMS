@@ -8,7 +8,7 @@ Web-Based Restaurant Reservation and Order Management System
 1. Clone `https://github.com/yinzheng16/RROMS.git` in Visual Studio 2026 and open `RROMS/RROMS.slnx`.
 2. Switch to the `develop` branch and Pull.
 3. Package Manager Console: `Update-Database`
-4. Press F5. Test accounts (password `Test@123`):
+4. Press F5. NuGet packages (e.g. `libphonenumber-csharp`) download automatically on the first build. Test accounts (password `Test@123`):
 
 | Role | Email |
 | --- | --- |
@@ -30,7 +30,7 @@ Pages in `Pages/Admin`, `Pages/Staff` and `Pages/Customer` are protected by role
 
 | Member | Name (GitHub) | Module | Main files |
 | --- | --- | --- | --- |
-| Member 1 | Chan Yin Zheng ([@yinzheng16](https://github.com/yinzheng16)), Scrum Master | Identity, Access & AI Chatbot | `ApplicationUser.cs`, `ChatFaq.cs`, `Roles.cs` |
+| Member 1 | Chan Yin Zheng ([@yinzheng16](https://github.com/yinzheng16)), Scrum Master | Identity, Access & AI Chatbot | `ApplicationUser.cs`, `ChatFaq.cs`, `Roles.cs`, `PhoneCountries.cs`, `AccountService.cs`, `Areas/Identity/Pages/Account/` (Register, Login, Logout) |
 | Member 2 | Teh Cheryl ([@cheryl415-o](https://github.com/cheryl415-o)) | Tables & Reservations | `DiningArea.cs`, `RestaurantTable.cs`, `OperatingHour.cs`, `Reservation.cs`, `ReservationStatus.cs` |
 | Member 3 | Tan Khai Wern ([@KhaiWern0525](https://github.com/KhaiWern0525)) | Menu, Orders & Recommendations | `MenuCategory.cs`, `MenuItem.cs`, `Promotion.cs`, `Order.cs`, `OrderItem.cs`, `OrderStatus.cs`, `OrderType.cs` |
 | Member 4 | Kung Xuan Yu ([@ckxy0758](https://github.com/ckxy0758)) | Payments, Billing & Notifications | `Payment.cs`, `PaymentMethod.cs`, `PaymentStatus.cs`, `Notification.cs`, `NotificationType.cs`, `NotificationService.cs` |
@@ -54,6 +54,8 @@ The navbar already links to these addresses. Create your page at exactly this pa
 
 | Address | File | Owner | Story |
 | --- | --- | --- | --- |
+| `/Identity/Account/Register` (public) | `Areas/Identity/Pages/Account/Register.cshtml` | Member 1 | US01 |
+| `/Identity/Account/Login` (public) | `Areas/Identity/Pages/Account/Login.cshtml` | Member 1 | US02 |
 | `/Menu` (public) | `Pages/Menu/Index.cshtml` | Member 3 | US23 |
 | `/Customer/Reservations/Create` | `Pages/Customer/Reservations/Create.cshtml` | Member 2 | US12 |
 | `/Customer/Reservations` | `Pages/Customer/Reservations/Index.cshtml` | Member 2 | US18 |
@@ -81,6 +83,12 @@ The navbar already links to these addresses. Create your page at exactly this pa
 
 Need a page that isn't listed? Tell Member 1, who adds the link to the navbar.
 
+## Using accounts in your pages
+
+- Logged-in user's ID: `UserManager.GetUserId(User)`. Check a role: `User.IsInRole(Roles.Staff)`.
+- Phone numbers are saved as `+60123456789`. To check one in your page, call `IAccountService.FormatPhoneNumber("MY", number)`: it returns the formatted number, or `null` if it isn't valid.
+- Only customers can register. Staff and Admin accounts are created by an Admin (US05), so don't add other sign-up pages.
+
 ## Design (YORU IZAKAYA theme)
 
 Shared layout files (Member 1, don't edit): `Pages/Shared/_Layout.cshtml`, `Pages/Shared/_LoginPartial.cshtml`, `wwwroot/css/site.css`.
@@ -107,6 +115,12 @@ In your pages, use normal Bootstrap classes; `site.css` already restyles them. D
 - Layout: use the Bootstrap grid (`row`, `col-md-6`, `col-lg-4`) and `rem` sizes. Never set fixed pixel widths like `width: 1200px`; the layout already keeps the same width on every screen.
 - Status (same look in every module): `<span class="status-badge status-@item.Status">@item.Status</span>`
 - Full-width page (e.g. a hero): set `ViewData["FullWidth"] = true;` and use `<section class="section-dark">`.
+- Messages after saving: set one line before `return RedirectToPage(...)`. A popup appears under the navbar and closes by itself after 5 seconds. Don't make your own alert boxes.
+  ```csharp
+  TempData["SuccessMessage"] = "Reservation confirmed!";        // green  ✓ 完了 All set
+  TempData["ErrorMessage"]   = "That table is already booked."; // red    ! 注意 Oops
+  TempData["InfoMessage"]    = "Online payment is coming soon."; // gold   i お知らせ Notice
+  ```
 
 ## Team rules
 
@@ -136,3 +150,5 @@ In your pages, use normal Bootstrap classes; `site.css` already restyles them. D
 - `Add-Migration` or `Update-Database` stops with warning **NU1902**: run `$ErrorActionPreference = "Continue"` in the Package Manager Console, then run the command again.
 - Page shows "not found": check your file path matches the table in "Page addresses".
 - "Access denied": you're logged in with the wrong role. Use the test account for that role.
+- Test account locked ("Too many failed attempts"): wait 15 minutes, or in SSMS open `dbo.AspNetUsers` and set `LockoutEnd` to NULL and `AccessFailedCount` to 0 for that user.
+- Still logged in after closing the browser: another Chrome window is still open (Chrome only ends the login when every window is closed). Close all windows or test in Incognito.

@@ -1,0 +1,42 @@
+@model RROMS.Pages.Admin.Menu.IndexModel
+@using System
+@{
+    string dishBadgeSizer = new string('8', Math.Max(0, Model.ListedItemCount).ToString().Length) + " dishes";
+}
+<form method="post" asp-page="./Index" asp-page-handler="Reorder" asp-fragment="category-collection" data-category-keep-scroll data-category-order-form>
+    <input type="hidden" name="OrderStamp" value="@Model.OrderStamp" />
+    <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap mb-3">
+        <div><p class="fw-semibold mb-1">Reorder categories</p><p class="small text-body-secondary mb-0">All @Model.TotalCategories categories · Display order</p></div>
+        <div class="d-flex gap-2"><a asp-page="./Index" asp-route-ShowAll="true" asp-fragment="category-collection" class="btn btn-outline-secondary rounded-pill" data-category-keep-scroll data-category-order-cancel>Cancel</a><button type="submit" class="btn btn-primary rounded-pill" data-category-order-save>Save order</button></div>
+    </div>
+    <p class="small text-body-secondary" role="status" aria-live="polite" data-category-order-status>Changes are saved only when you select Save order.</p>
+    <div class="table-responsive rounded-3">
+        <table class="table align-middle mb-0 yoru-category-table yoru-category-order-table" aria-label="Reorder the complete category list">
+            <colgroup><col class="yoru-category-order-column" /><col class="yoru-category-code-column" /><col class="yoru-category-name-column" /><col class="yoru-category-count-column" /><col class="yoru-category-actions-column" /></colgroup>
+            <thead><tr>
+                <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Order</th>
+                <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Code</th>
+                <th scope="col" class="small text-body-secondary fw-normal py-3 text-start">Category</th>
+                <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Dishes</th>
+                <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Move</th>
+            </tr></thead>
+            <tbody data-category-order-list>
+                @foreach (var category in Model.Categories)
+                {
+                    <tr data-category-order-row="@category.Id">
+                        <td class="py-2 text-center"><span class="d-inline-flex align-items-center justify-content-center rounded-3 border px-2 py-1 font-monospace small" data-category-position>@category.DisplayOrder.ToString("D2")</span><input type="hidden" name="OrderIds" value="@category.Id" /></td>
+                        <td class="py-2 text-center"><span class="font-monospace small yoru-menu-code">@category.Code</span></td>
+                        <td class="py-2 fw-semibold text-break" data-category-order-name>@category.Name</td>
+                        <td class="py-2 text-center"><span class="badge rounded-pill border text-body px-3 py-2 fw-normal text-nowrap position-relative"><span class="invisible" aria-hidden="true">@dishBadgeSizer</span><span class="position-absolute top-50 start-50 translate-middle">@category.ItemCount @(category.ItemCount == 1 ? "dish" : "dishes")</span></span></td>
+                        <td class="py-2 text-center"><div class="d-flex align-items-center justify-content-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3 yoru-category-drag" data-category-drag draggable="true" aria-label="Drag @category.Name to reorder; arrow keys also move the row" title="Drag to reorder" hidden><svg width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.6" /><circle cx="15" cy="5" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="19" r="1.6" /><circle cx="15" cy="19" r="1.6" /></svg></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3" data-category-move="up" aria-label="Move @category.Name up" hidden><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-3" data-category-move="down" aria-label="Move @category.Name down" hidden><svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 5v14m-6-6 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg></button>
+                        </div></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <noscript><p class="small text-body-secondary mt-3">Enable JavaScript to drag rows or use the move buttons.</p></noscript>
+</form>
