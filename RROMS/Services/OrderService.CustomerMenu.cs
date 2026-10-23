@@ -1,20 +1,39 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
 using System.Threading;
 using System.Threading.Tasks;
 using RROMS.Services.Interfaces;
+using RROMS.Data;
 
 namespace RROMS.Services
 {
     public partial class OrderService
     {
         public async Task<CustomerMenuPage> GetCustomerMenuPageAsync(string? search = null,
-            int? categoryId = null, string? sortOrder = null, int limit = 12,
+            int? categoryId = null, string? sortOrder = null, int limit = CustomerMenuBrowsing.PageSize,
             CancellationToken cancellationToken = default)
         {
-            var all = await GetOrderableMenuItemsAsync(cancellationToken);
-            return CustomerMenuBrowseRules.Build(all, search, categoryId, sortOrder, limit);
+            var all = await GetBrowsableCustomerMenuItemsAsync(cancellationToken);
+            var page = CustomerMenuBrowseRules.Build(all, search, categoryId, sortOrder, limit);
+            if (!string.IsNullOrWhiteSpace(search) || categoryId.HasValue || page.SortOrder != "menu")
+                return page;
+            return page with
+            {
+                RecentItems = CustomerMenuBrowseRules.SelectRecent(all, DateTime.Now,
+                    MenuDemoCatalogue.Items.Select(entry => entry.Name))
+            };
         }
+
+        // Browsing includes unavailable dishes. Cart/order accessors remain availability-filtered.
+        private async Task<IReadOnlyList<MenuItemSummary>> GetBrowsableCustomerMenuItemsAsync(
+            CancellationToken cancellationToken)
+            => await ItemSummaries(_context.MenuItems.AsNoTracking()
+                .Where(item => item.Price > 0)
+                .OrderBy(item => item.Category.DisplayOrder).ThenBy(item => item.Category.Name)
+                .ThenBy(item => item.CategoryId).ThenBy(item => item.Name).ThenBy(item => item.Id))
+                .ToListAsync(cancellationToken);
 
         public async Task<CustomerMenuView> GetCustomerMenuAsync(string? search = null,
             int? categoryId = null, CancellationToken cancellationToken = default)

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -42,6 +43,14 @@ namespace RROMS.Pages.Menu
                 SelectedItem = await _menu.GetOrderableMenuItemAsync(ItemId.Value, cancellationToken);
                 if (SelectedItem is null) DetailNotice = "That dish is no longer available. Explore another favourite below.";
             }
+        }
+
+        public async Task<IActionResult> OnGetLiveAsync(CancellationToken cancellationToken)
+        {
+            // Read-only public GET. Like the page itself, this handler calls only the service.
+            var page = await _menu.GetCustomerMenuPageAsync(Search, CategoryId, Sort,
+                CustomerMenuBrowsing.PageSize, cancellationToken);
+            return new JsonResult(page.LiveState, new JsonSerializerOptions(JsonSerializerDefaults.Web));
         }
 
         public static (string Primary, string Secondary) CategoryLabel(string name)
