@@ -6,8 +6,6 @@
     root.dataset.enhanced = 'true';
     const status = root.querySelector('[data-menu-status]');
     const dialog = root.querySelector('[data-dish-dialog]');
-    const filterShortcut = root.querySelector('[data-menu-back-filters]');
-    let filterShortcutFrame = null;
     let request = null;
     let opener = null;
     let live = null;
@@ -43,7 +41,6 @@
         document.documentElement.classList.remove('menu-category-open');
         if (categoryDialog?.open) categoryDialog.close();
         syncCategoryNavigation();
-        updateFilterShortcut();
         if (wasOpen && categoryReturnFocus) categoryToggle()?.focus({ preventScroll: true });
         if (wasOpen && categoryReturnFocus) live?.notify();
     }
@@ -362,37 +359,6 @@
         if (field) field.value = '';
     }
 
-    function updateFilterShortcut() {
-        if (!filterShortcut) return;
-        const form = browser()?.querySelector('[data-menu-form]');
-        const threshold = Math.min(window.innerHeight * .5, 240);
-        filterShortcut.hidden = !form || Boolean(dialog?.open) || Boolean(categoryDialog?.open)
-            || form.getBoundingClientRect().bottom >= -threshold;
-    }
-
-    function scheduleFilterShortcut() {
-        if (!filterShortcut || filterShortcutFrame !== null) return;
-        filterShortcutFrame = requestAnimationFrame(() => {
-            filterShortcutFrame = null;
-            updateFilterShortcut();
-        });
-    }
-
-    function returnToFilters() {
-        const form = browser()?.querySelector('[data-menu-form]');
-        if (!form) return;
-        closeSort();
-        // Returning only scrolls/focuses; it never resets filters or reloads cards.
-        form.querySelector('#menu-search')?.focus({ preventScroll: true });
-        // Anchor to the heading, not the form: the category toolbar can change
-        // the distance between them. Keep the same comfortable gap in both layouts.
-        const heading = browser()?.querySelector('.menu-explorer__heading') || form;
-        const gap = Number.parseFloat(getComputedStyle(root).fontSize) || 16;
-        const scrollPadding = Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-        const top = Math.max(0, window.scrollY + heading.getBoundingClientRect().top - Math.max(gap, scrollPadding));
-        window.scrollTo({ top, left: window.scrollX, behavior: reducedMotion() ? 'instant' : 'smooth' });
-    }
-
     function closeSort(restoreFocus = false) {
         const picker = browser()?.querySelector('[data-menu-sort-picker]');
         if (!picker) return;
@@ -438,13 +404,13 @@
         trigger.setAttribute('aria-haspopup', 'listbox');
         trigger.setAttribute('aria-expanded', 'false');
         trigger.setAttribute('aria-controls', 'menu-sort-options');
-        trigger.setAttribute('aria-label', 'Arrange dishes by: ' + cleanLabel(selected));
-        // Only a fixed decorative SVG is HTML; all dynamic labels use textContent.
-        trigger.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18M8 3v6M16 9v6M9 15v6" /></svg>';
+        trigger.setAttribute('aria-label', 'Sort dishes by: ' + cleanLabel(selected));
+        trigger.title = 'Sort: ' + cleanLabel(selected);
         const text = document.createElement('span');
         text.className = 'menu-sort-trigger__text';
-        const label = document.createElement('small');
-        label.textContent = 'ARRANGE BY';
+        const label = document.createElement('span');
+        label.className = 'menu-sort-trigger__label';
+        label.textContent = 'Sort:';
         const value = document.createElement('span');
         value.className = 'menu-sort-trigger__value';
         value.textContent = cleanLabel(selected);
@@ -576,7 +542,6 @@
         dialog.querySelector('[data-dish-dialog-content]').replaceChildren(template.content.cloneNode(true));
         upgradePhotos(dialog);
         dialog.showModal();
-        updateFilterShortcut();
         document.documentElement.classList.add('menu-detail-open');
         dialog.querySelector('button').focus({ preventScroll: true });
         return true;
@@ -672,7 +637,6 @@
             prepareSearchHint();
             prepareSortPicker();
             prepareRecentCarousel(savedRecent);
-            updateFilterShortcut();
             live?.reset();
             const count = browser().querySelector('.menu-results__heading p')?.textContent.trim() || 'Menu updated.';
             announce(count);
@@ -930,17 +894,11 @@
             event.preventDefault();
             if (!smallCategoryScreen() && !categoriesCollapsed) collapseCategoryPanel();
             else openCategoryDrawer();
-            updateFilterShortcut();
             return;
         }
         if (event.target.closest('[data-menu-category-close]')) {
             event.preventDefault();
             collapseCategoryPanel();
-            return;
-        }
-        if (event.target.closest('[data-menu-back-filters]')) {
-            event.preventDefault();
-            returnToFilters();
             return;
         }
         const sortTrigger = event.target.closest('[data-menu-sort-trigger]');
@@ -996,7 +954,8 @@
             if (picker && option) {
                 const label = option.textContent.replace(/^Sort by:\s*/i, '').trim();
                 picker.querySelector('.menu-sort-trigger__value').textContent = label;
-                picker.querySelector('[data-menu-sort-trigger]').setAttribute('aria-label', 'Arrange dishes by: ' + label);
+                picker.querySelector('[data-menu-sort-trigger]').setAttribute('aria-label', 'Sort dishes by: ' + label);
+                picker.querySelector('[data-menu-sort-trigger]').title = 'Sort: ' + label;
                 picker.querySelectorAll('[data-menu-sort-value]').forEach(button => button.setAttribute('aria-selected', String(button.dataset.menuSortValue === option.value)));
             }
         }
@@ -1037,7 +996,6 @@
     if (dialog && typeof dialog.showModal === 'function') {
         dialog.addEventListener('close', () => {
             document.documentElement.classList.remove('menu-detail-open');
-            updateFilterShortcut();
             if (opener?.isConnected && !opener.closest('[data-menu-unavailable="true"]')) opener.focus({ preventScroll: true });
             else browser()?.querySelector('#menu-results-title')?.focus({ preventScroll: true });
             opener = null;
@@ -1056,11 +1014,9 @@
             document.documentElement.classList.add('menu-detail-open');
         }
     }
-    window.addEventListener('scroll', scheduleFilterShortcut, { passive: true });
     window.addEventListener('resize', () => {
         syncCategoryNavigation();
         fitCategoryBook();
-        scheduleFilterShortcut();
     });
     syncCategoryNavigation();
     clearReloadSearchDraft();
@@ -1072,7 +1028,6 @@
     prepareSortPicker();
     prepareRecentCarousel();
     upgradePhotos(root);
-    updateFilterShortcut();
     live = setupLiveMenu();
     live.reset();
 })();
