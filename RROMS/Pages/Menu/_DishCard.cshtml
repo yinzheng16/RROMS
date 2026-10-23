@@ -1,0 +1,36 @@
+@model RROMS.Services.Interfaces.MenuItemSummary
+@using System.Globalization
+@{
+    var categoryLabel = RROMS.Pages.Menu.IndexModel.CategoryLabel(Model.CategoryName);
+    var detailUrl = ViewData["MenuDetailUrl"] as string
+        ?? Url.Page("/Menu/Index", new { ItemId = Model.Id })!;
+}
+<article class="tasting-card @(Model.IsAvailable ? "" : "is-unavailable")" data-dish-id="@Model.Id" data-menu-unavailable="@(!Model.IsAvailable ? "true" : "false")">
+    <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="tasting-card__photo" data-dish-open="@Model.Id" aria-label="View @Model.Name details">
+        @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+        {
+            <img src="@Url.Content(Model.ImageUrl)" alt="@Model.Name" loading="lazy" decoding="async" width="640" height="400" data-dish-photo />
+        }
+        else
+        {
+            <div class="menu-photo-placeholder"><span aria-hidden="true">夜</span><span>Photo coming soon</span></div>
+        }
+    </a>
+    <div class="tasting-card__body">
+        <div class="tasting-card__meta">
+            <p class="tasting-card__category" title="@categoryLabel.Primary">@categoryLabel.Primary</p>
+            <span class="tasting-card__code"><span class="visually-hidden">Item code </span>@Model.Code</span>
+        </div>
+        <h4><a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" data-dish-open="@Model.Id">@Model.Name</a></h4>
+        <p class="tasting-card__description">@(string.IsNullOrWhiteSpace(Model.Description) ? "Discover this dish in the details." : Model.Description)</p>
+        <p class="menu-availability tasting-card__availability"><span class="@(Model.IsAvailable ? "bg-success" : "bg-secondary")" aria-hidden="true"></span>@(Model.IsAvailable ? "Available" : "Unavailable")</p>
+        <div class="tasting-card__footer">
+            <span class="tasting-card__price">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+            @* US23 keeps one visible details button. US24 will place cart controls here
+               and move View details to a small link below the description. *@
+            <div class="tasting-card__actions" data-menu-actions>
+                <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="btn btn-outline-secondary tasting-card__details" data-dish-open="@Model.Id" aria-label="View @Model.Name details">View details <span aria-hidden="true">→</span></a>
+            </div>
+        </div>
+    </div>
+</article>
