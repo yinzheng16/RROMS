@@ -1,73 +1,186 @@
 @page
 @model RROMS.Pages.Menu.IndexModel
 @using System.Globalization
+@using System.Linq
+@using RROMS.Services.Interfaces
 @{
-    ViewData["Title"] = "Menu";
+    ViewData["Title"] = "Our menu";
+    ViewData["FullWidth"] = true;
+    string MenuUrl(int? category, string? search, string? sort, int? limit = null, int? itemId = null)
+        => Url.Page("/Menu/Index", null, new { CategoryId = category, Search = search, Sort = sort == "menu" ? null : sort, Limit = limit, ItemId = itemId }, null, null, itemId.HasValue ? "dish-details" : "menu-browser")!;
+    var resetUrl = MenuUrl(null, null, null);
 }
-
-<div class="d-flex align-items-end justify-content-between gap-3 flex-wrap mb-4">
-    <div>
-        <p class="eyebrow mb-2">YORU IZAKAYA</p>
-        <h1 class="display-5 mb-2">Something for the table.</h1>
-        <p class="text-body-secondary mb-0">Discover your next favourite, one dish at a time.</p>
-    </div>
-</div>
-
-<form method="get" class="row g-2 align-items-end mb-4" role="search" aria-label="Search the menu">
-    <div class="col-12 col-md-6">
-        <label asp-for="Search" class="form-label">Find a dish</label>
-        <input asp-for="Search" type="search" maxlength="100" class="form-control" placeholder="Search by name or item code" />
-    </div>
-    <div class="col-12 col-md-4">
-        <label asp-for="CategoryId" class="form-label">Category</label>
-        <select asp-for="CategoryId" class="form-select">
-            <option value="">All categories</option>
-            @foreach (var category in Model.Menu.Categories)
-            {
-                <option value="@category.Id">@category.Name</option>
-            }
-        </select>
-    </div>
-    <div class="col-12 col-md-2 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Search</button>
-        <a asp-page="./Index" class="btn btn-outline-secondary">Reset</a>
-    </div>
-</form>
-
-@if (Model.Menu.Sections.Count == 0)
-{
-    <div class="card rounded-4 p-4 text-center">
-        <h2 class="h4">No dishes found</h2>
-        <p class="text-body-secondary mb-0">Try another search or check back for more dishes.</p>
-    </div>
-}
-@foreach (var menuSection in Model.Menu.Sections)
-{
-    <section class="mb-5" aria-labelledby="menu-category-@menuSection.Category.Id">
-        <div class="d-flex align-items-center gap-3 mb-3">
-            <span class="badge rounded-pill border text-body font-monospace">@menuSection.Category.Code</span>
-            <h2 id="menu-category-@menuSection.Category.Id" class="h3 mb-0">@menuSection.Category.Name</h2>
+<link rel="stylesheet" href="~/css/customer-menu.css" asp-append-version="true" />
+<div class="customer-menu" data-customer-menu>
+    <section class="customer-menu-hero" aria-labelledby="menu-hero-title">
+        <img class="customer-menu-hero__art" src="~/images/menu/yoru-customer-menu-evening.png" alt="" fetchpriority="high" width="2172" height="724" />
+        <div class="customer-menu-container customer-menu-hero__content">
+            <p class="eyebrow">YORU IZAKAYA · THE MENU</p>
+            <h1 id="menu-hero-title">Your evening<br />starts here.</h1>
+            <p class="customer-menu-hero__subtitle">Small plates, comforting favourites, and drinks worth lingering over.</p>
         </div>
-        <div class="row g-4">
-            @foreach (var item in menuSection.Items)
-            {
-                <div class="col-12 col-sm-6 col-xl-4">
-                    <article class="card h-100 rounded-4 overflow-hidden">
-                        @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+    </section>
+
+    <div class="customer-menu-container customer-menu-browser" id="menu-browser" data-menu-browser>
+        <aside class="menu-book" aria-label="Menu categories">
+            <div class="menu-book__heading">
+                <span class="menu-book__seal" aria-hidden="true">夜</span>
+                <div><p>THE MENU</p><span lang="ja">お品書き</span></div>
+            </div>
+            <nav class="menu-book__list" aria-label="Browse by category">
+                <a href="@MenuUrl(null, Model.Search, Model.Sort)" class="menu-book__category @(Model.CategoryId is null ? "is-active" : "")" aria-current="@(Model.CategoryId is null ? "true" : null)" data-menu-link>
+                    <span class="menu-book__label">All dishes</span><span class="menu-book__count">@Model.Menu.CatalogueCount</span>
+                </a>
+                @foreach (var category in Model.Menu.Categories)
+                {
+                    var label = RROMS.Pages.Menu.IndexModel.CategoryLabel(category.Name);
+                    <a href="@MenuUrl(category.Id, Model.Search, Model.Sort)" class="menu-book__category @(Model.CategoryId == category.Id ? "is-active" : "")" aria-current="@(Model.CategoryId == category.Id ? "true" : null)" data-menu-link>
+                        <span class="menu-book__label">
+                            @label.Primary
+                            @if (label.Secondary.Length > 0) { <small>@label.Secondary</small> }
+                        </span>
+                        <span class="menu-book__count">@category.ItemCount</span>
+                    </a>
+                }
+            </nav>
+        </aside>
+
+        <div class="menu-explorer">
+            <header class="menu-explorer__heading">
+                <div><p class="eyebrow">EXPLORE OUR MENU</p><h2>What are you craving?</h2></div>
+                <p class="menu-explorer__total">@Model.Menu.CatalogueCount @(Model.Menu.CatalogueCount == 1 ? "dish" : "dishes") <span aria-hidden="true">·</span> @Model.Menu.Categories.Count @(Model.Menu.Categories.Count == 1 ? "category" : "categories")</p>
+            </header>
+
+            <form method="get" action="@Url.Page("/Menu/Index")#menu-browser" role="search" aria-label="Search and filter the menu" class="menu-search" data-menu-form>
+                <div class="menu-search__category-mobile">
+                    <label for="menu-category" class="form-label">Category</label>
+                    <select class="form-select" name="CategoryId" id="menu-category">
+                        <option value="">All dishes (@Model.Menu.CatalogueCount)</option>
+                        @foreach (var category in Model.Menu.Categories)
                         {
-                            <div class="ratio ratio-4x3">
-                                <img src="@Url.Content(item.ImageUrl)" alt="@item.Name" class="w-100 h-100 object-fit-cover" loading="lazy" />
-                            </div>
+                            <option value="@category.Id" selected="@(Model.CategoryId == category.Id)">@category.Name (@category.ItemCount)</option>
                         }
-                        <div class="card-body d-flex flex-column">
-                            <p class="small text-body-secondary font-monospace mb-2">@item.Code</p>
-                            <h3 class="h5">@item.Name</h3>
-                            <p class="small text-body-secondary text-break">@item.Description</p>
-                            <p class="fw-semibold mt-auto mb-0">RM @item.Price.ToString("F2", CultureInfo.InvariantCulture)</p>
-                        </div>
-                    </article>
+                        @if (Model.CategoryId.HasValue && !Model.Menu.Categories.Any(c => c.Id == Model.CategoryId))
+                        {
+                            <option value="@Model.CategoryId" selected>Selected category (0)</option>
+                        }
+                    </select>
+                </div>
+                <div class="menu-search__entry">
+                    <label for="menu-search" class="visually-hidden">Find a dish by name, category or code</label>
+                    <div class="menu-search__field">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
+                        <input class="form-control" type="search" id="menu-search" name="Search" value="@Model.Search" maxlength="100" placeholder="Search dishes, categories or codes" />
+                    </div>
+                    <button class="btn btn-primary menu-search__submit" type="submit">Search</button>
+                </div>
+                <div class="menu-search__sort">
+                    <label for="menu-sort" class="visually-hidden">Sort dishes by</label>
+                    <select class="form-select" name="Sort" id="menu-sort">
+                        <option value="menu" selected="@(Model.Sort == "menu")">Sort by: Menu order</option>
+                        <option value="name" selected="@(Model.Sort == "name")">Name: A to Z</option>
+                        <option value="name-desc" selected="@(Model.Sort == "name-desc")">Name: Z to A</option>
+                        <option value="price" selected="@(Model.Sort == "price")">Price: Low to high</option>
+                        <option value="price-desc" selected="@(Model.Sort == "price-desc")">Price: High to low</option>
+                    </select>
+                </div>
+            </form>
+
+            @if (Model.DetailNotice is not null) { <p class="text-body-secondary">@Model.DetailNotice</p> }
+            @if (Model.HasFilters)
+            {
+                <div class="menu-current-view" aria-label="Current filters">
+                    @if (Model.Search is not null)
+                    {
+                        <a class="menu-filter-chip" href="@MenuUrl(Model.CategoryId, null, Model.Sort)" data-menu-link title="Remove search: @Model.Search"><span>Search: @Model.Search</span><span aria-hidden="true">×</span><span class="visually-hidden">Remove search</span></a>
+                    }
+                    @if (Model.CategoryId.HasValue)
+                    {
+                        <a class="menu-filter-chip" href="@MenuUrl(null, Model.Search, Model.Sort)" data-menu-link title="Remove category: @Model.CurrentCategory"><span>@Model.CurrentCategory</span><span aria-hidden="true">×</span><span class="visually-hidden">Remove category</span></a>
+                    }
+                    @if (Model.Sort != "menu") { <span class="menu-filter-chip menu-filter-chip--static">@(Model.Sort switch { "name" => "Name: A to Z", "name-desc" => "Name: Z to A", "price" => "Price: Low to high", _ => "Price: High to low" })</span> }
+                </div>
+            }
+            <div class="menu-results__heading">
+                <div class="menu-results__main">
+                    <div class="menu-results__intro">
+                        <span class="menu-results__eyebrow">@(Model.CategoryId.HasValue ? "CATEGORY COLLECTION" : "THE COLLECTION")</span>
+                        <h3 id="menu-results-title" tabindex="-1">@Model.CurrentCategory</h3>
+                    </div>
+                    <p class="menu-results__count">@Model.Menu.TotalCount @(Model.Menu.TotalCount == 1 ? "dish" : "dishes")@(Model.Search is not null || Model.CategoryId.HasValue ? " found" : " to explore")</p>
+                </div>
+                <span class="menu-results__rule" aria-hidden="true"></span>
+                @if (Model.HasFilters)
+                {
+                    <a href="@resetUrl" class="menu-reset" data-menu-link><span aria-hidden="true">↺</span> Clear filters</a>
+                }
+            </div>
+
+            @if (Model.Menu.TotalCount == 0)
+            {
+                <div class="menu-empty">
+                    <span lang="ja" aria-hidden="true">夜</span>
+                    <h4>@(Model.HasFilters ? "No dishes found this time." : "Something good is on its way.")</h4>
+                    <p>@(Model.HasFilters ? "Try a different dish, category or code, or clear your filters." : "Our menu is being prepared. Please check back soon.")</p>
+                    @if (Model.HasFilters) { <a href="@resetUrl" class="btn btn-outline-secondary" data-menu-link>Explore all dishes</a> }
+                </div>
+            }
+            else
+            {
+                <div class="menu-dish-grid" data-dish-grid>
+                    @foreach (var item in Model.Menu.Items)
+                    {
+                        var categoryLabel = RROMS.Pages.Menu.IndexModel.CategoryLabel(item.CategoryName);
+                        var detailUrl = MenuUrl(Model.CategoryId, Model.Search, Model.Sort, Model.Limit, item.Id);
+                        <article class="tasting-card" data-dish-id="@item.Id">
+                            <div class="tasting-card__photo">
+                                @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                                {
+                                    <img src="@Url.Content(item.ImageUrl)" alt="@item.Name" loading="lazy" decoding="async" width="640" height="400" data-dish-photo />
+                                }
+                                else { <div class="menu-photo-placeholder"><span aria-hidden="true">夜</span><span>Photo coming soon</span></div> }
+                                <span class="tasting-card__code">@item.Code</span>
+                                <a href="@detailUrl" class="tasting-card__expand" data-dish-open="@item.Id" aria-label="View @item.Name details">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7" /></svg>
+                                </a>
+                            </div>
+                            <div class="tasting-card__body">
+                                <p class="tasting-card__category">@categoryLabel.Primary</p>
+                                <h4><a href="@detailUrl" data-dish-open="@item.Id">@item.Name</a></h4>
+                                <p class="tasting-card__description">@(string.IsNullOrWhiteSpace(item.Description) ? "Discover this dish in the details." : item.Description)</p>
+                                <p class="menu-availability tasting-card__availability"><span class="bg-success" aria-hidden="true"></span>Available</p>
+                                <div class="tasting-card__footer">
+                                    <span class="tasting-card__price">RM @item.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+                                    @* US24 will extend this action area with cart controls on this same menu. *@
+                                    <div class="tasting-card__actions" data-menu-actions>
+                                        <a href="@detailUrl" class="btn btn-outline-secondary tasting-card__details" data-dish-open="@item.Id" aria-label="View @item.Name details">View details <span aria-hidden="true">↗</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                        <template id="dish-template-@item.Id"><partial name="_DishDetails" model="item" /></template>
+                    }
+                </div>
+                <div class="menu-load-more">
+                    @if (Model.Menu.HasMore)
+                    {
+                        <a href="@MenuUrl(Model.CategoryId, Model.Search, Model.Sort, Model.Menu.NextLimit)" class="btn btn-outline-secondary" data-menu-link data-menu-more>Load more dishes <span aria-hidden="true">↓</span></a>
+                    }
+                    <p>Showing @Model.Menu.Items.Count of @Model.Menu.TotalCount @(Model.Menu.TotalCount == 1 ? "dish" : "dishes")</p>
                 </div>
             }
         </div>
-    </section>
+        @* Future US24 cart-drawer host. Hidden: no blank column or inactive cart UI in US23. *@
+        <div data-menu-cart-host hidden></div>
+    </div>
+    <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-menu-status></p>
+    <dialog class="menu-dish-dialog" id="dish-details" aria-labelledby="dish-detail-title" open="@(Model.SelectedItem is not null)" data-dish-dialog>
+        <form method="dialog" class="menu-dish-dialog__close"><button type="submit" aria-label="Close dish details">×</button></form>
+        <div data-dish-dialog-content>
+            @if (Model.SelectedItem is not null) { <partial name="_DishDetails" model="Model.SelectedItem" /> }
+        </div>
+    </dialog>
+</div>
+@section Scripts {
+    <script src="~/js/customer-menu.js" asp-append-version="true" defer></script>
 }
