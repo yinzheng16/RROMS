@@ -3,184 +3,906 @@
 
 @{
     ViewData["Title"] = "Restaurant Settings";
+    ViewData["FullWidth"] = true;
+
+    var isFullBrandImage =
+        Model.RestaurantSetting.BrandingMode == "FullBrandImage";
 }
+<style>
+    .settings-page {
+        position: relative;
+        padding: 28px 0 48px;
+    }
 
-<div class="page-header">
-    <div>
-        <p class="eyebrow">ADMINISTRATION</p>
-        <h1>Restaurant Settings</h1>
-    </div>
-</div>
+    .settings-container {
+        position: relative;
+        z-index: 1;
+        width: 94vw;
+        max-width: none;
+        margin-left: calc(50% - 47vw);
+        margin-right: calc(50% - 47vw);
+    }
 
-<div class="card">
-    <div class="card-body">
+    /* =========================
+       PAGE TYPOGRAPHY
+       ========================= */
 
-        <form method="post" enctype="multipart/form-data">
+    .settings-eyebrow {
+        margin: 0 0 6px;
+        color: #b63a2c;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+    }
 
-            <input type="hidden" asp-for="RestaurantSetting.Id" />
-            <input type="hidden" asp-for="RestaurantSetting.LogoPath" />
+    .settings-title {
+        margin: 0;
+        font-family: Georgia, serif;
+        font-size: 46px;
+        line-height: 1.1;
+        font-weight: 700;
+        color: #2b211d;
+    }
 
-            <div asp-validation-summary="ModelOnly"
-                 class="text-danger mb-3"></div>
+    .settings-description {
+        margin-top: 8px;
+        margin-bottom: 26px;
+        color: #84776d;
+        font-size: 16px;
+        line-height: 1.6;
+    }
 
-            <div class="row">
+    /* =========================
+       MAIN CARD
+       ========================= */
 
-                <!-- LEFT COLUMN -->
-                <div class="col-md-6">
+    .settings-card {
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 251, 245, 0.94);
+        border: 1px solid #ddc9b3;
+        border-radius: 10px;
+        padding: 28px;
+        box-shadow: 0 12px 35px rgba(74, 43, 28, 0.06);
+    }
 
-                    <div class="mb-3">
-                        <label asp-for="RestaurantSetting.RestaurantName"
-                               class="form-label">
+    .settings-card::before {
+        content: "設定";
+        position: absolute;
+        right: 45px;
+        top: 35px;
+
+        font-family: "Shippori Mincho", Georgia, serif;
+        font-size: 90px;
+        font-weight: 700;
+        line-height: 1;
+
+        color: rgba(177, 55, 40, 0.045);
+
+        pointer-events: none;
+        user-select: none;
+        z-index: 0;
+    }
+
+    .settings-card > form {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* =========================
+       BRANDING SECTION
+       ========================= */
+
+    .branding-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+
+    .branding-title {
+        margin: 0;
+        font-family: Georgia, serif;
+        font-size: 28px;
+        line-height: 1.2;
+        font-weight: 700;
+        color: #2b211d;
+    }
+
+    .branding-subtitle {
+        margin: 5px 0 0;
+        color: #8a7d72;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .branding-label {
+        color: #8a7d72;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1px;
+    }
+
+    /* =========================
+       BRANDING OPTIONS
+       ========================= */
+
+    .branding-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .branding-option {
+        position: relative;
+        display: block;
+        min-height: 82px;
+        padding: 16px;
+        border: 1px solid #d9c3aa;
+        border-radius: 8px;
+        background: #fffdf9;
+        cursor: pointer;
+        transition: 0.15s ease;
+    }
+
+    .branding-option:hover {
+        border-color: #bd806d;
+    }
+
+    .branding-option.selected {
+        border-color: #d44232;
+        box-shadow: 0 0 0 1px #d44232;
+    }
+
+    .branding-option input {
+        margin-right: 5px;
+    }
+
+    .branding-option-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #302824;
+    }
+
+    .branding-option-description {
+        display: block;
+        margin-top: 7px;
+        color: #887b72;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    /* =========================
+       FORM GRID
+       ========================= */
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 22px;
+        row-gap: 16px;
+    }
+
+    .settings-field label {
+        display: block;
+        margin-bottom: 6px;
+        color: #332b27;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .settings-input {
+        width: 100%;
+        height: 40px;
+        padding: 8px 11px;
+        border: 1px solid #d9c3aa;
+        border-radius: 6px;
+        background: #fffdf9;
+        color: #352d28;
+        font-size: 14px;
+    }
+
+    .settings-input:focus {
+        outline: none;
+        border-color: #b95a47;
+        box-shadow: 0 0 0 2px rgba(185, 90, 71, 0.1);
+    }
+
+    .settings-input:disabled {
+        background: #f2eee8;
+        color: #a99e95;
+        cursor: not-allowed;
+    }
+
+    .field-help {
+        margin-top: 5px;
+        color: #92867c;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    /* =========================
+       IMAGE UPLOAD
+       ========================= */
+
+    .upload-box,
+    .current-brand-box {
+        height: 82px;
+        min-height: 82px;
+        border: 1px solid #d7b997;
+        border-radius: 8px;
+        background: #fffdf9;
+    }
+
+    .upload-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        border-style: dashed;
+    }
+
+    .upload-icon {
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 7px;
+        background: #251c18;
+        color: #d5ae72;
+        font-family: Georgia, serif;
+        font-size: 18px;
+    }
+
+    .upload-copy {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .upload-title {
+        margin: 0 0 2px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #332a25;
+    }
+
+    .upload-description {
+        margin: 0;
+        color: #8c7f75;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .browse-button {
+        flex: 0 0 auto;
+        padding: 8px 13px;
+        border: 1px solid #c89f76;
+        border-radius: 6px;
+        background: #fffaf3;
+        color: #3b3029;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .browse-button:hover {
+        background: #f8eee3;
+    }
+
+    .hidden-file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    /* =========================
+       CURRENT BRAND IMAGE
+       ========================= */
+
+    .current-brand-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px;
+    }
+
+    .current-logo-preview {
+        flex: 0 0 52px;
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e3d3c1;
+        border-radius: 6px;
+        background: #f8f2ea;
+        overflow: hidden;
+    }
+
+    .current-logo-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .current-brand-copy {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .current-brand-title {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+        color: #302824;
+    }
+
+    .current-brand-description {
+        margin: 3px 0 0;
+        color: #93877d;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .view-logo-button {
+        flex: 0 0 auto;
+        padding: 8px 13px;
+        border: 1px solid #c89f76;
+        border-radius: 6px;
+        background: #fffaf3;
+        color: #302824;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    /* =========================
+       BRAND PREVIEW
+       ========================= */
+
+    .brand-preview-section {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid #dfcdb8;
+    }
+
+    .brand-preview-title {
+        margin: 0;
+        font-family: Georgia, serif;
+        font-size: 24px;
+        line-height: 1.2;
+        font-weight: 700;
+        color: #2b211d;
+    }
+
+    .brand-preview-description {
+        margin: 4px 0 10px;
+        color: #91847a;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .brand-preview-bar {
+        position: relative;
+        min-height: 68px;
+        display: flex;
+        align-items: center;
+        padding: 12px 18px;
+        border-radius: 6px;
+        background: linear-gradient(90deg, #15110f, #211713);
+        overflow: hidden;
+    }
+
+    .brand-preview-bar::after {
+        content: "夜";
+        position: absolute;
+        right: 28px;
+        top: 50%;
+        transform: translateY(-50%);
+
+        font-family: "Shippori Mincho", Georgia, serif;
+        font-size: 64px;
+        font-weight: 700;
+        line-height: 1;
+
+        color: rgba(177, 55, 40, 0.22);
+
+        pointer-events: none;
+        user-select: none;
+        z-index: 0;
+    }
+
+    .preview-brand {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .preview-logo {
+        max-width: 145px;
+        height: 42px;
+        object-fit: contain;
+        background: white;
+        border-radius: 3px;
+        padding: 3px;
+    }
+
+    .preview-name {
+        color: #fff8ee;
+        font-family: Georgia, serif;
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: 2px;
+    }
+
+    /* =========================
+       SAVE AREA
+       ========================= */
+
+    .settings-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+        margin-top: 18px;
+    }
+
+    .save-settings-button {
+        padding: 10px 18px;
+        border: 0;
+        border-radius: 5px;
+        background: #d43c2c;
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .save-settings-button:hover {
+        background: #b83225;
+    }
+
+    .settings-note {
+        color: #9a8d82;
+        font-size: 11px;
+        line-height: 1.4;
+        text-align: right;
+    }
+
+    /* =========================
+       MOBILE
+       ========================= */
+
+    @@media (max-width: 768px) {
+        .settings-container {
+            width: calc(100vw - 32px);
+            margin-left: calc(50% - 50vw + 16px);
+            margin-right: 0;
+        }
+
+        .settings-title {
+            font-size: 36px;
+        }
+
+        .settings-description {
+            font-size: 14px;
+        }
+
+        .branding-title {
+            font-size: 24px;
+        }
+
+        .branding-options,
+        .settings-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .settings-card {
+            padding: 20px;
+        }
+
+        .settings-actions {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .settings-note {
+            text-align: left;
+        }
+    }
+</style>
+<div class="settings-page">
+    <div class="settings-container">
+
+        <p class="settings-eyebrow">
+            ADMINISTRATION · 店舗設定
+        </p>
+
+        <h1 class="settings-title">
+            Restaurant Settings
+        </h1>
+
+        <p class="settings-description">
+            Manage the restaurant identity, contact details and billing rates used across YORU IZAKAYA.
+        </p>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <div class="settings-card">
+
+            <form method="post"
+                  enctype="multipart/form-data">
+
+                <input type="hidden"
+                       asp-for="RestaurantSetting.Id" />
+
+                <input type="hidden"
+                       asp-for="RestaurantSetting.LogoPath" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <!-- RESTAURANT BRANDING -->
+
+                <div class="branding-header">
+                    <div>
+                        <h2 class="branding-title">
+                            Restaurant Branding
+                        </h2>
+
+                        <p class="branding-subtitle">
+                            Choose how the brand appears in the navigation bar and footer.
+                        </p>
+                    </div>
+
+                    <span class="branding-label">
+                        BRAND · 看板
+                    </span>
+                </div>
+
+                <div class="branding-options">
+
+                    <label class="branding-option @(isFullBrandImage ? "" : "selected")"
+                           id="logoWithNameOption">
+
+                        <input type="radio"
+                               asp-for="RestaurantSetting.BrandingMode"
+                               value="LogoWithName"
+                               id="brandingLogoWithName" />
+
+                        <span class="branding-option-title">
+                            Logo + Restaurant Name
+                        </span>
+
+                        <span class="branding-option-description">
+                            Upload a logo image and display the restaurant name as text beside it.
+                        </span>
+                    </label>
+
+                    <label class="branding-option @(isFullBrandImage ? "selected" : "")"
+                           id="fullBrandOption">
+
+                        <input type="radio"
+                               asp-for="RestaurantSetting.BrandingMode"
+                               value="FullBrandImage"
+                               id="brandingFullBrand" />
+
+                        <span class="branding-option-title">
+                            Full Brand Image
+                        </span>
+
+                        <span class="branding-option-description">
+                            Upload one image that already contains both the logo and restaurant name.
+                        </span>
+                    </label>
+
+                </div>
+
+                <div class="settings-grid">
+
+                    <!-- Restaurant Name -->
+
+                    <div class="settings-field">
+                        <label asp-for="RestaurantSetting.RestaurantName">
                             Restaurant Name
                         </label>
 
                         <input asp-for="RestaurantSetting.RestaurantName"
-                               class="form-control" />
+                               id="restaurantNameInput"
+                               class="settings-input"
+                               disabled="@isFullBrandImage" />
+
+                        <div class="field-help"
+                             id="restaurantNameHelp">
+
+                            @if (isFullBrandImage)
+                            {
+                                <text>
+                                    The name is already part of the full brand image, so separate name text is hidden.
+                                </text>
+                            }
+                            else
+                            {
+                                <text>
+                                    Displayed beside the logo when Logo + Restaurant Name is selected.
+                                </text>
+                            }
+
+                        </div>
 
                         <span asp-validation-for="RestaurantSetting.RestaurantName"
-                              class="text-danger"></span>
+                              class="text-danger">
+                        </span>
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="RestaurantSetting.Email"
-                               class="form-label">
+                    <!-- Phone -->
+
+                    <div class="settings-field">
+                        <label asp-for="RestaurantSetting.Phone">
+                            Phone
+                        </label>
+
+                        <input asp-for="RestaurantSetting.Phone"
+                               class="settings-input" />
+
+                        <span asp-validation-for="RestaurantSetting.Phone"
+                              class="text-danger">
+                        </span>
+                    </div>
+
+                    <!-- Email -->
+
+                    <div class="settings-field">
+                        <label asp-for="RestaurantSetting.Email">
                             Email
                         </label>
 
                         <input asp-for="RestaurantSetting.Email"
-                               class="form-control" />
+                               class="settings-input" />
 
                         <span asp-validation-for="RestaurantSetting.Email"
-                              class="text-danger"></span>
+                              class="text-danger">
+                        </span>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Restaurant Logo
+                    <!-- Address -->
+
+                    <div class="settings-field">
+                        <label asp-for="RestaurantSetting.Address">
+                            Address
                         </label>
 
-                        <input asp-for="LogoFile"
-                               type="file"
-                               class="form-control"
-                               accept=".jpg,.jpeg,.png" />
+                        <input asp-for="RestaurantSetting.Address"
+                               class="settings-input" />
 
-                        <div class="form-text">
-                            JPG, JPEG or PNG only. Maximum file size: 2 MB.
-                        </div>
-                        
-                        <span asp-validation-for="LogoFile"
-                              class="text-danger"></span>
+                        <span asp-validation-for="RestaurantSetting.Address"
+                              class="text-danger">
+                        </span>
                     </div>
 
-                    <div class="mb-3">
-                        <label asp-for="RestaurantSetting.TaxRatePercent"
-                               class="form-label">
+                    <!-- Upload -->
+
+                    <div class="settings-field">
+
+                        <label id="uploadFieldLabel">
+                            @(isFullBrandImage ? "Full Brand Image" : "Restaurant Logo")
+                        </label>
+
+                        <div class="upload-box">
+
+                            <div class="upload-icon">
+                                画
+                            </div>
+
+                            <div class="upload-copy">
+
+                                <p class="upload-title"
+                                   id="uploadTitle">
+                                    @(isFullBrandImage
+                                        ? "Upload full brand image"
+                                        : "Upload restaurant logo")
+                                </p>
+
+                                <p class="upload-description"
+                                   id="uploadDescription">
+
+                                    @if (isFullBrandImage)
+                                    {
+                                        <text>
+                                            Choose one image containing both the logo and restaurant name.<br />
+                                        </text>
+                                    }
+                                    else
+                                    {
+                                        <text>
+                                            Choose a clean logo image for your restaurant branding.<br />
+                                        </text>
+                                    }
+
+                                    JPG, JPEG or PNG · Maximum 2 MB
+                                </p>
+
+                            </div>
+
+                            <label for="LogoFile"
+                                   class="browse-button">
+                                Browse
+                            </label>
+
+                            <input asp-for="LogoFile"
+                                   id="LogoFile"
+                                   type="file"
+                                   class="hidden-file-input"
+                                   accept=".jpg,.jpeg,.png" />
+
+                        </div>
+
+                        <span asp-validation-for="LogoFile"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <!-- Current Brand -->
+
+                    <div class="settings-field">
+
+                        <label>
+                            Current Logo
+                        </label>
+
+                        <div class="current-brand-box">
+
+                            <div class="current-logo-preview">
+
+                                @if (!string.IsNullOrWhiteSpace(Model.RestaurantSetting.LogoPath))
+                                {
+                                    <img src="@Model.RestaurantSetting.LogoPath"
+                                         alt="Current restaurant branding" />
+                                }
+                                else
+                                {
+                                    <span>夜</span>
+                                }
+
+                            </div>
+
+                            <div class="current-brand-copy">
+
+                                <p class="current-brand-title"
+                                   id="currentBrandTitle">
+                                    @(isFullBrandImage
+                                        ? "Current brand image"
+                                        : "Current restaurant logo")
+                                </p>
+
+                                <p class="current-brand-description">
+                                    Saved restaurant branding
+                                </p>
+
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.RestaurantSetting.LogoPath))
+                            {
+                                <button type="button"
+                                        class="view-logo-button"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#logoPreviewModal">
+                                    View
+                                </button>
+                            }
+
+                        </div>
+
+                    </div>
+
+                    <!-- Tax -->
+
+                    <div class="settings-field">
+                        <label asp-for="RestaurantSetting.TaxRatePercent">
                             Tax Rate (%)
                         </label>
 
                         <input asp-for="RestaurantSetting.TaxRatePercent"
-                               class="form-control"
+                               class="settings-input"
                                type="number"
                                step="0.01"
                                min="0"
                                max="100" />
 
                         <span asp-validation-for="RestaurantSetting.TaxRatePercent"
-                              class="text-danger"></span>
+                              class="text-danger">
+                        </span>
                     </div>
 
-                </div>
+                    <!-- Service Charge -->
 
-                <!-- RIGHT COLUMN -->
-                <div class="col-md-6">
-
-                    <div class="mb-3">
-                        <label asp-for="RestaurantSetting.Phone"
-                               class="form-label">
-                            Phone
-                        </label>
-
-                        <input asp-for="RestaurantSetting.Phone"
-                               class="form-control" />
-
-                        <span asp-validation-for="RestaurantSetting.Phone"
-                              class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="RestaurantSetting.Address"
-                               class="form-label">
-                            Address
-                        </label>
-
-                        <input asp-for="RestaurantSetting.Address"
-                               class="form-control" />
-
-                        <span asp-validation-for="RestaurantSetting.Address"
-                              class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">
-                            Current Logo
-                        </label>
-
-                        @if (!string.IsNullOrWhiteSpace(Model.RestaurantSetting.LogoPath))
-                        {
-                            <button type="button"
-                                    class="form-control text-start"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#logoPreviewModal">
-
-                                <img src="@Model.RestaurantSetting.LogoPath"
-                                     alt="Current restaurant logo"
-                                     style="width: 24px; height: 24px; object-fit: contain; margin-right: 8px;" />
-
-                                View current logo
-                            </button>
-
-                            <div class="form-text">
-                                Click the logo to view a larger preview.
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="form-control text-muted">
-                                No logo uploaded
-                            </div>
-
-                            <div class="form-text">
-                                Upload a JPG, JPEG or PNG restaurant logo.
-                            </div>
-                        }
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="RestaurantSetting.ServiceChargePercent"
-                               class="form-label">
+                    <div class="settings-field">
+                        <label asp-for="RestaurantSetting.ServiceChargePercent">
                             Service Charge (%)
                         </label>
 
                         <input asp-for="RestaurantSetting.ServiceChargePercent"
-                               class="form-control"
+                               class="settings-input"
                                type="number"
                                step="0.01"
                                min="0"
                                max="100" />
 
                         <span asp-validation-for="RestaurantSetting.ServiceChargePercent"
-                              class="text-danger"></span>
+                              class="text-danger">
+                        </span>
                     </div>
 
                 </div>
 
-            </div>
+                <!-- BRAND PREVIEW -->
 
-            <button type="submit" class="btn btn-primary">
-                Save Changes
-            </button>
+                <div class="brand-preview-section">
 
-        </form>
+                    <h3 class="brand-preview-title">
+                        Brand Preview
+                    </h3>
+
+                    <p class="brand-preview-description">
+                        This is how your selected branding style can appear across the shared layout.
+                    </p>
+
+                    <div class="brand-preview-bar">
+
+                        <div class="preview-brand">
+
+                            @if (!string.IsNullOrWhiteSpace(Model.RestaurantSetting.LogoPath))
+                            {
+                                <img src="@Model.RestaurantSetting.LogoPath"
+                                     id="brandPreviewImage"
+                                     class="preview-logo"
+                                     alt="Brand preview" />
+                            }
+
+                            <span class="preview-name"
+                                  id="brandPreviewName"
+                                  style="display:@(isFullBrandImage ? "none" : "inline");">
+
+                                @Model.RestaurantSetting.RestaurantName
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="settings-actions">
+
+                    <button type="submit"
+                            class="save-settings-button">
+                        Save Changes
+                    </button>
+
+                    <span class="settings-note">
+                        Settings are shared with Home, billing and the site layout.
+                    </span>
+
+                </div>
+
+            </form>
+
+        </div>
 
     </div>
 </div>
@@ -193,31 +915,182 @@
          aria-hidden="true">
 
         <div class="modal-dialog modal-dialog-centered">
+
             <div class="modal-content">
 
                 <div class="modal-header">
-                    <h5 class="modal-title">Restaurant Logo</h5>
+
+                    <h5 class="modal-title">
+                        Restaurant Branding
+                    </h5>
 
                     <button type="button"
                             class="btn-close"
                             data-bs-dismiss="modal"
                             aria-label="Close">
                     </button>
+
                 </div>
 
                 <div class="modal-body text-center">
 
                     <img src="@Model.RestaurantSetting.LogoPath"
-                         alt="Restaurant logo"
+                         alt="Restaurant branding"
                          class="img-fluid" />
 
                 </div>
 
             </div>
+
         </div>
     </div>
 }
 
 @section Scripts {
+
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const logoWithNameRadio =
+                document.getElementById("brandingLogoWithName");
+
+            const fullBrandRadio =
+                document.getElementById("brandingFullBrand");
+
+            const logoWithNameOption =
+                document.getElementById("logoWithNameOption");
+
+            const fullBrandOption =
+                document.getElementById("fullBrandOption");
+
+            const restaurantName =
+                document.getElementById("restaurantNameInput");
+
+            const restaurantNameHelp =
+                document.getElementById("restaurantNameHelp");
+
+            const uploadFieldLabel =
+                document.getElementById("uploadFieldLabel");
+
+            const uploadTitle =
+                document.getElementById("uploadTitle");
+
+            const uploadDescription =
+                document.getElementById("uploadDescription");
+
+            const currentBrandTitle =
+                document.getElementById("currentBrandTitle");
+
+            const previewName =
+                document.getElementById("brandPreviewName");
+
+            const logoFile =
+                document.getElementById("LogoFile");
+
+            const previewImage =
+                document.getElementById("brandPreviewImage");
+
+            function renderBrandingMode() {
+
+                const fullBrand =
+                    fullBrandRadio.checked;
+
+                logoWithNameOption.classList.toggle(
+                    "selected",
+                    !fullBrand
+                );
+
+                fullBrandOption.classList.toggle(
+                    "selected",
+                    fullBrand
+                );
+
+                restaurantName.disabled = fullBrand;
+
+                if (fullBrand) {
+
+                    restaurantNameHelp.textContent =
+                        "The name is already part of the full brand image, so separate name text is hidden.";
+
+                    uploadFieldLabel.textContent =
+                        "Full Brand Image";
+
+                    uploadTitle.textContent =
+                        "Upload full brand image";
+
+                    uploadDescription.innerHTML =
+                        "Choose one image containing both the logo and restaurant name.<br>JPG, JPEG or PNG · Maximum 2 MB";
+
+                    currentBrandTitle.textContent =
+                        "Current brand image";
+
+                    previewName.style.display =
+                        "none";
+
+                } else {
+
+                    restaurantNameHelp.textContent =
+                        "Displayed beside the logo when Logo + Restaurant Name is selected.";
+
+                    uploadFieldLabel.textContent =
+                        "Restaurant Logo";
+
+                    uploadTitle.textContent =
+                        "Upload restaurant logo";
+
+                    uploadDescription.innerHTML =
+                        "Choose a clean logo image for your restaurant branding.<br>JPG, JPEG or PNG · Maximum 2 MB";
+
+                    currentBrandTitle.textContent =
+                        "Current restaurant logo";
+
+                    previewName.style.display =
+                        "inline";
+
+                }
+            }
+
+            logoWithNameRadio.addEventListener(
+                "change",
+                renderBrandingMode
+            );
+
+            fullBrandRadio.addEventListener(
+                "change",
+                renderBrandingMode
+            );
+
+            restaurantName.addEventListener(
+                "input",
+                function () {
+                    previewName.textContent =
+                        restaurantName.value;
+                }
+            );
+
+            logoFile.addEventListener(
+                "change",
+                function () {
+
+                    const file =
+                        logoFile.files[0];
+
+                    if (!file) {
+                        return;
+                    }
+
+                    if (previewImage) {
+                        previewImage.src =
+                            URL.createObjectURL(file);
+                    }
+
+                }
+            );
+
+            renderBrandingMode();
+
+        });
+    </script>
 }

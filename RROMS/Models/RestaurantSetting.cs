@@ -29,5 +29,8 @@ namespace RROMS.Models
 
         [StringLength(300)]
         public string? LogoPath { get; set; }
+
+        [Required, StringLength(30)]
+        public string BrandingMode { get; set; } = "LogoWithName";
     }
 }

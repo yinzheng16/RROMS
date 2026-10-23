@@ -1,6 +1,9 @@
 @using Microsoft.AspNetCore.Identity
 @using RROMS.Models
+@using RROMS.Services.Interfaces
+
 @inject SignInManager<ApplicationUser> SignInManager
+@inject IReportService ReportService
 @{
     // EN04 Shared layout (Owner: Member 1). Ask Member 1 before changing this file.
     // Brand name: change it here only.
@@ -8,6 +11,19 @@
     const string BrandSub = "IZAKAYA";
     const string TaglineJp = "夜はこれから";
     const string Tagline = "The night is still young.";
+    // US49: restaurant branding saved by the administrator.
+    var restaurantSettings = await ReportService.GetRestaurantSettingsAsync();
+
+    var restaurantName = string.IsNullOrWhiteSpace(restaurantSettings.RestaurantName)
+        ? $"{BrandName} {BrandSub}"
+        : restaurantSettings.RestaurantName;
+
+    var restaurantLogo = string.IsNullOrWhiteSpace(restaurantSettings.LogoPath)
+        ? "/images/yoru-logo-dark.png"
+        : restaurantSettings.LogoPath;
+
+    var useFullBrandImage =
+        restaurantSettings.BrandingMode == "FullBrandImage";
 
     var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
     var signedIn = SignInManager.IsSignedIn(User);
@@ -57,7 +73,24 @@
         <nav class="navbar navbar-expand-lg site-nav" data-bs-theme="dark">
             <div class="@containerClass">
                 <a class="navbar-brand brand" href="@brandHref">
-                    <img class="brand-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
+
+                    @if (useFullBrandImage)
+                    {
+                        <img class="brand-logo"
+                             src="@restaurantLogo"
+                             alt="@restaurantName" />
+                    }
+                    else
+                    {
+                        <img class="brand-logo"
+                             src="@restaurantLogo"
+                             alt="@restaurantName" />
+
+                        <span class="brand-restaurant-name">
+                            @restaurantName
+                        </span>
+                    }
+
                     @if (isAdmin)
                     {
                         <span class="role-pill">Admin</span>
@@ -212,8 +245,20 @@
                     <div class="col-6 col-md-3">
                         <h2 class="footer-heading">Visit</h2>
                         @* Placeholder: Member 5 can read this from RestaurantSetting (US49). *@
-                        <p>12 Jalan Bukit Bintang<br />Kuala Lumpur</p>
-                        <p>+60 3-1234 5678</p>
+                        <p>
+                            @restaurantSettings.Address
+                        </p>
+
+                        <p>
+                            @restaurantSettings.Phone
+                        </p>
+
+                        @if (!string.IsNullOrWhiteSpace(restaurantSettings.Email))
+                        {
+                            <p>
+                                @restaurantSettings.Email
+                            </p>
+                        }
                     </div>
                     <div class="col-6 col-md-4">
                         <h2 class="footer-heading">Hours</h2>
