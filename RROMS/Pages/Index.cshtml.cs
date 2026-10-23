@@ -21,7 +21,7 @@ namespace RROMS.Pages
         public List<HomeOffer> Offers { get; private set; } = new();
         public List<HomeHoursRow> Hours { get; private set; } = new();
         public List<OmikujiDish> OmikujiDishes { get; private set; } = new();
-        public List<BookingTime> BookingTimes { get; private set; } = new();
+        public BookingSetup Booking { get; private set; } = null!;
         public HomeInfo Info { get; private set; } = null!;
 
         // "Welcome back, Tan Mei Ling" for a logged-in customer; null for visitors.
@@ -37,7 +37,7 @@ namespace RROMS.Pages
             Hours = await _home.GetOpeningHoursAsync();
             Info = await _home.GetInfoAsync();
             OmikujiDishes = await _home.GetOmikujiDishesAsync();
-            BookingTimes = await _home.GetBookingTimesAsync();
+            Booking = await _home.GetBookingSetupAsync();
             Today = DateTime.Today.ToString("yyyy-MM-dd");
 
             if (User.IsInRole(Roles.Customer))

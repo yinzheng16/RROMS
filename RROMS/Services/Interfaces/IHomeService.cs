@@ -5,7 +5,15 @@ namespace RROMS.Services.Interfaces
     public record HomeOffer(string Title, string DishName, decimal Price, decimal DiscountPercent, string? ImageUrl, string CategoryName, DateTime EndDate);
     public record HomeHoursRow(string Days, string Hours, bool IsClosed);
     public record OmikujiDish(string Name, string Category, decimal Price);
-    public record BookingTime(string Value, string Label);   // Value "19:00", Label "7:00 PM"
+    // Everything the quick booking box needs (sent to the browser as JSON).
+    // Hours: key = day of week (0 = Sunday), value = [open, close] in minutes from midnight, or null when closed.
+    public record BookingSetup(
+        Dictionary<int, int[]?> Hours,
+        int MaxGuests,           // biggest active table / room (Member 2) - grows when the admin adds bigger rooms
+        int DaysAhead,           // how far ahead customers can book
+        int LastBookingMinutes,  // last booking slot = closing time minus this
+        int StepMinutes,         // time slots every 30 minutes
+        string Now);             // restaurant time now, "2026-10-23T19:43" (so the box uses the server clock, not the visitor's)
 
     // Mood of the hero, worked out from today's opening hours:
     // "before" (not open yet), "open", "last" (last hour) or "closed".
@@ -35,7 +43,7 @@ namespace RROMS.Services.Interfaces
         // Every available dish, for the omikuji box to pick from at random.
         Task<List<OmikujiDish>> GetOmikujiDishesAsync();
 
-        // Half-hour times for the quick booking box, from opening time to one hour before closing.
-        Task<List<BookingTime>> GetBookingTimesAsync();
+        // Opening hours, guest limit and rules for the quick booking box.
+        Task<BookingSetup> GetBookingSetupAsync();
     }
 }
