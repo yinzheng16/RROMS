@@ -36,7 +36,8 @@
         int MenuItemId,
         int Quantity,
         decimal UnitPrice,
-        decimal LineTotal
+        decimal LineTotal,
+        string MenuItemName = ""
     );
 
     // Represents the complete bill displayed to staff.

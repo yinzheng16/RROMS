@@ -5,7 +5,7 @@
     ViewData["Title"] = "Billing Management";
 }
 
-<div class="container py-4">
+<div class="container py-4 us32-billing">
 
     <div class="mb-4">
         <h2 class="mb-1">Billing Management</h2>
@@ -14,9 +14,9 @@
         </p>
     </div>
 
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 billing-card">
         <div class="card-body">
-            <h5 class="card-title mb-3">Find Order</h5>
+            <h5 class="card-title billing-card-title mb-3">Find Order</h5>
 
             <form method="get">
                 <div class="row g-3 align-items-end">
@@ -60,26 +60,47 @@
 
     @if (Model.Bill != null)
     {
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4 billing-card" id="printableBill">
             <div class="card-body">
+                <div class="yoru-print-header">
+                    <div class="yoru-print-brand">
+                        <img src="~/images/yoru-icon.png"
+                             asp-append-version="true"
+                             alt="YORU IZAKAYA Logo"
+                             class="yoru-print-logo" />
+
+                        <h1>YORU</h1>
+                        <div class="yoru-print-subtitle">I Z A K A Y A</div>
+                    </div>
+
+                    <div class="yoru-print-divider"></div>
+
+                    <h2>
+                        @(Model.IsPreview ? "BILL PREVIEW" : "BILL DETAILS")
+                    </h2>
+
+                    <p>Japanese Dining</p>
+                </div>
+
+
 
                 <div class="d-flex flex-wrap
                     justify-content-between
-                    align-items-center gap-2 mb-3">
+                    align-items-center gap-2 bill-preview-heading">
 
-                    <h5 class="mb-0">
-                        @(Model.IsPreview
-                            ? "Bill Preview"
-                            : "Bill Details")
+                    <h5 class="card-title billing-card-title mb-0">
+                        @(Model.IsPreview ? "Bill Preview" : "Bill Details")
                     </h5>
                 </div>
 
-                <p class="mb-3">
+                <p class="bill-order-number">
                     <strong>Order Number:</strong>
                     @Model.Bill.OrderNo
                 </p>
 
                 <h6>Ordered Items</h6>
+
+
 
                 <div class="table-responsive">
                     <table class="table table-bordered
@@ -87,7 +108,7 @@
 
                         <thead class="table-light">
                             <tr>
-                                <th>Menu Item ID</th>
+                                <th>Menu Item</th>
                                 <th class="text-center">Quantity</th>
                                 <th class="text-end">
                                     Unit Price (RM)
@@ -102,7 +123,7 @@
                             @foreach (var item in Model.Bill.Items)
                             {
                                 <tr>
-                                    <td>@item.MenuItemId</td>
+                                    <td>@item.MenuItemName</td>
                                     <td class="text-center">
                                         @item.Quantity
                                     </td>
@@ -148,50 +169,83 @@
                             </span>
                         </div>
 
-                        <hr />
+
+                        <hr class="billing-total-divider" />
 
                         <div class="d-flex justify-content-between
-                            align-items-center">
+                            align-items-center billing-final-total">
                             <strong>Final Total</strong>
                             <h4 class="mb-0">
                                 RM @Model.Bill.TotalAmount.ToString("F2")
                             </h4>
                         </div>
+
+                        <hr class="billing-actions-divider" />
+
                     </div>
                 </div>
 
-                @if (Model.IsPreview && Model.CanGenerateBill)
-                {
-                    <hr class="mt-4" />
 
-                    <p class="text-muted small">
-                        Please review the calculated amounts
-                        before confirming the bill.
+                <div class="d-flex flex-wrap align-items-center gap-2 billing-actions">
+
+                    @if (Model.IsPreview && Model.CanGenerateBill)
+                    {
+                        <form method="post"
+                              asp-page-handler="Generate"
+                              class="mb-0">
+
+                            <input type="hidden"
+                                   name="orderNo"
+                                   value="@Model.OrderNo" />
+
+                            <button type="submit" class="btn btn-dark">
+                                Confirm Bill
+                            </button>
+                        </form>
+                    }
+
+                    <button type="button"
+                            class="btn btn-outline-dark"
+                            onclick="window.print()">
+                        Print Bill
+                    </button>
+
+                </div>
+
+                <div class="yoru-print-footer">
+                    <div class="yoru-print-divider"></div>
+
+                    <p class="yoru-japanese">
+                        ありがとうございます
                     </p>
 
-                    <form method="post"
-                          asp-page-handler="Generate">
+                    <p>Thank you for dining with us.</p>
 
-                        <input type="hidden"
-                               name="orderNo"
-                               value="@Model.OrderNo" />
+                    <strong>YORU IZAKAYA</strong>
 
-                        <button type="submit"
-                                class="btn btn-dark">
-                            Confirm Bill
-                        </button>
-                    </form>
-                }
+                    @if (Model.IsPreview)
+                    {
+                        <p class="yoru-print-notice">
+                            Preview only — not a payment receipt.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="yoru-print-notice">
+                            This bill is not proof of payment.
+                        </p>
+                    }
+                </div>
 
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4">
+        <div class="card shadow-sm mb-4 billing-card">
             <div class="card-body">
 
                 <div class="d-flex justify-content-between
                     align-items-center mb-3">
-                    <h5 class="mb-0">Payment Management</h5>
+                    <h5 class="card-title billing-card-title mb-0">Payment Management</h5>
 
                     <span class="badge bg-secondary">
                         Integration Pending
@@ -243,8 +297,8 @@
     else if (string.IsNullOrWhiteSpace(Model.OrderNo))
     {
         <div class="card shadow-sm">
-            <div class="card-body text-center py-5">
-                <h5>Bill Details</h5>
+            <div class="card-body text-center py-4">
+                <h5 class="mb-1">Bill Details</h5>
                 <p class="text-muted mb-0">
                     Search for an order to view its bill.
                 </p>
@@ -253,3 +307,400 @@
     }
 
 </div>
+
+
+<style>
+    /* US32 Luxury Editorial: screen-only layout and typography. */
+    @@media screen {
+
+        .us32-billing .billing-card {
+            margin-bottom: 24px !important;
+            border-radius: 8px;
+        }
+
+            .us32-billing .billing-card > .card-body {
+                padding: 24px;
+            }
+
+            .us32-billing .billing-card .billing-card-title {
+                font-family: var(--font-display);
+                font-size: 20px;
+                font-weight: 600;
+                line-height: 1.4;
+                letter-spacing: 0;
+                margin-bottom: 8px !important;
+            }
+
+
+            .us32-billing .billing-card h6 {
+                font-family: var(--font-body);
+                font-size: 15px;
+                font-weight: 500;
+                line-height: 1.5;
+                letter-spacing: 0;
+                margin-bottom: 12px;
+            }
+
+
+            .us32-billing .billing-card .form-label {
+                font-family: var(--font-body);
+                font-size: 14px;
+                font-weight: 500;
+                line-height: 1.5;
+                margin-bottom: 8px;
+            }
+
+            .us32-billing .billing-card .form-control {
+                font-family: var(--font-body);
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 1.5;
+                min-height: 42px;
+            }
+
+            .us32-billing .billing-card p {
+                font-family: var(--font-body);
+                font-size: 13px;
+                font-weight: 400;
+                line-height: 1.65;
+            }
+
+                .us32-billing .billing-card p strong {
+                    font-weight: 600;
+                }
+
+            .us32-billing .billing-card table {
+                font-family: var(--font-body);
+            }
+
+                .us32-billing .billing-card table th {
+                    font-size: 11px;
+                    font-weight: 600;
+                    line-height: 1.5;
+                    letter-spacing: 0.7px;
+                    padding: 12px;
+                }
+
+                .us32-billing .billing-card table td {
+                    font-size: 13px;
+                    font-weight: 400;
+                    line-height: 1.5;
+                    padding: 13px 12px;
+                }
+
+            .us32-billing .billing-card .row.justify-content-end span {
+                font-family: var(--font-body);
+                font-size: 13px;
+                line-height: 1.6;
+            }
+
+        .us32-billing #printableBill h4 {
+            font-family: var(--font-body);
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .us32-billing .billing-card .btn {
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.5;
+            padding: 10px 18px;
+        }
+
+        .us32-billing .billing-card .badge {
+            font-family: var(--font-body);
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+        /* Bill Preview: same title spacing as Find Order */
+        .us32-billing #printableBill .bill-preview-heading {
+            margin-bottom: 8px !important;
+        }
+            /* Bill Preview title: same style as Find Order */
+            .us32-billing #printableBill .bill-preview-heading .billing-card-title {
+                font-family: var(--font-display);
+                font-size: 20px;
+                font-weight: 600;
+                line-height: 1.4;
+                margin-bottom: 0 !important;
+            }
+        /* Order Number: same typography as Find Order label */
+        .us32-billing #printableBill .bill-order-number {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.5;
+            margin-bottom: 22px !important;
+        }
+            /* Keep the label and order value consistent */
+            .us32-billing #printableBill .bill-order-number strong {
+                font-weight: 500;
+            }
+        /* Final Total: balanced screen dividers */
+        .us32-billing #printableBill .billing-total-divider {
+            margin-top: 12px !important;
+            margin-bottom: 12px !important;
+        }
+
+        .us32-billing #printableBill .billing-final-total {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .us32-billing #printableBill .billing-actions-divider {
+            margin-top: 12px !important;
+            margin-bottom: 12px !important;
+        }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .us32-billing .billing-card > .card-body {
+            padding: 18px;
+        }
+    }
+
+    /* Hidden on the normal staff billing screen */
+    .yoru-print-header,
+    .yoru-print-footer {
+        display: none;
+    }
+
+    
+    @@media print {
+        @@page {
+            size: A4 portrait;
+            margin: 18mm;
+        }
+        /* Use the existing YORU font system */
+        #printableBill {
+            font-family: var(--font-body) !important;
+            font-weight: 400;
+        }
+
+            #printableBill .yoru-print-brand h1,
+            #printableBill .yoru-print-header h2 {
+                font-family: var(--font-display) !important;
+                font-weight: 700;
+            }
+
+            #printableBill .yoru-print-subtitle,
+            #printableBill p,
+            #printableBill span,
+            #printableBill td,
+            #printableBill th,
+            #printableBill h4,
+            #printableBill h5,
+            #printableBill h6,
+            #printableBill strong {
+                font-family: var(--font-body) !important;
+            }
+
+            #printableBill .yoru-japanese {
+                font-family: var(--font-display) !important;
+            }
+
+
+        html, body {
+            background: #fff !important;
+            color: #24201c !important;
+        }
+
+            body * {
+                visibility: hidden !important;
+            }
+
+        #printableBill,
+        #printableBill * {
+            visibility: visible !important;
+        }
+
+        #printableBill {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+        }
+
+            #printableBill .card-body {
+                padding: 0 !important;
+            }
+
+            #printableBill .billing-actions,
+            #printableBill .billing-actions-divider {
+                display: none !important;
+            }
+            /* Restaurant branding */
+            #printableBill .yoru-print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 28px;
+            }
+
+        .yoru-print-symbol {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 10px;
+            background: #a94736 !important;
+            color: white !important;
+            border-radius: 50%;
+            font-size: 28px;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .yoru-print-brand h1 {
+            margin: 0;
+            font-size: 34px;
+            letter-spacing: 3px;
+            font-weight: 700;
+        }
+
+        .yoru-print-subtitle {
+            margin-top: 3px;
+            color: #9b8062 !important;
+            font-size: 11px;
+            letter-spacing: 5px;
+        }
+
+        .yoru-print-divider {
+            width: 100%;
+            height: 1px;
+            background: #b49a76 !important;
+            margin: 20px 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .yoru-print-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin: 14px 0 5px;
+        }
+
+        .yoru-print-header p {
+            color: #77716b !important;
+            font-size: 11px;
+            margin: 0;
+        }
+        /* Avoid duplicated headings */
+        #printableBill .card-body > .yoru-print-header + .d-flex {
+            display: none !important;
+        }
+        /* Item table */
+        #printableBill .table-responsive {
+            overflow: visible !important;
+        }
+
+        #printableBill table {
+            width: 100% !important;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        #printableBill th {
+            background: #f7f3ed !important;
+            color: #6f5b47 !important;
+            font-size: 10px;
+            letter-spacing: 0.7px;
+            padding: 12px 8px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        #printableBill td {
+            padding: 12px 8px !important;
+            border-color: #e8e2d9 !important;
+        }
+
+        #printableBill tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        /* Totals */
+        #printableBill .row.justify-content-end {
+            margin-top: 24px !important;
+        }
+
+            #printableBill .row.justify-content-end > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+            }
+
+        #printableBill h4 {
+            color: var(--yoru-red-text) !important;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        /* Footer */
+
+        #printableBill .yoru-print-footer {
+            display: block !important;
+            text-align: center;
+            margin-top: 0 !important;
+        }
+        /* Equal spacing around printed Final Total */
+        #printableBill .billing-total-divider {
+            margin-top: 12px !important;
+            margin-bottom: 12px !important;
+        }
+
+        #printableBill .billing-final-total {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        #printableBill .yoru-print-footer .yoru-print-divider {
+            margin-top: 12px !important;
+            margin-bottom: 20px !important;
+        }
+
+
+        .yoru-print-footer p {
+            font-size: 11px;
+            color: #77716b !important;
+            margin: 5px 0;
+        }
+
+        .yoru-print-footer .yoru-japanese {
+            font-size: 17px;
+            color: #9b8062 !important;
+        }
+
+        .yoru-print-footer strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #a94736 !important;
+        }
+
+        .yoru-print-footer .yoru-print-notice {
+            margin-top: 16px;
+            font-size: 10px;
+            font-style: italic;
+        }
+    }
+
+
+    
+    .yoru-print-logo {
+        display: block;
+        width: 100px;
+        max-height: 85px;
+        object-fit: contain;
+        margin: 0 auto 12px;
+    }
+</style>

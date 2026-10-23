@@ -136,6 +136,7 @@ namespace RROMS.Services
             var order = await _orders.Query()
                 .AsNoTracking()
                 .Include(o => o.Items)
+                    .ThenInclude(item => item.MenuItem)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -173,6 +174,7 @@ namespace RROMS.Services
             var order = await _orders.Query()
                 .AsNoTracking()
                 .Include(o => o.Items)
+                    .ThenInclude(item => item.MenuItem)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -204,6 +206,7 @@ namespace RROMS.Services
 
             var order = await _orders.Query()
                 .Include(o => o.Items)
+                    .ThenInclude(item => item.MenuItem)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
@@ -370,7 +373,9 @@ namespace RROMS.Services
                     item.Quantity,
                     item.UnitPrice,
                     RoundMoney(
-                        item.Quantity * item.UnitPrice)))
+                        item.Quantity * item.UnitPrice),
+                    item.MenuItem?.Name
+                        ?? $"Menu Item #{item.MenuItemId}"))
                 .ToList();
 
             return new BillSummary(
