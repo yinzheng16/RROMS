@@ -243,9 +243,6 @@
         @* Future US24 cart-drawer host. Hidden: no blank column or inactive cart UI in US23. *@
         <div data-menu-cart-host hidden></div>
     </div>
-    <button type="button" class="menu-back-filters" data-menu-back-filters aria-controls="menu-filters" aria-label="Back to menu filters" title="Back to menu filters" hidden>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
-    </button>
     <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-menu-status></p>
     <dialog class="menu-dish-dialog" id="dish-details" aria-labelledby="dish-detail-title" open="@(Model.SelectedItem is not null)" data-dish-dialog data-menu-dish-id="@(Model.SelectedItem?.Id)">
         <form method="dialog" class="menu-dish-dialog__close"><button type="submit" aria-label="Close dish details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></form>
