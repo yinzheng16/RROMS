@@ -1,0 +1,255 @@
+﻿@page
+@model RROMS.Pages.Staff.Billing.IndexModel
+
+@{
+    ViewData["Title"] = "Billing Management";
+}
+
+<div class="container py-4">
+
+    <div class="mb-4">
+        <h2 class="mb-1">Billing Management</h2>
+        <p class="text-muted mb-0">
+            YORU IZAKAYA - Staff Billing
+        </p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">Find Order</h5>
+
+            <form method="get">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label asp-for="OrderNo"
+                               class="form-label">
+                            Order Number
+                        </label>
+
+                        <input asp-for="OrderNo"
+                               class="form-control"
+                               placeholder="Enter Order Number"
+                               maxlength="20"
+                               required />
+                    </div>
+
+                    <div class="col-md-4">
+                        <button type="submit"
+                                class="btn btn-dark w-100">
+                            Search Order
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="alert alert-warning" role="alert">
+            @Model.ErrorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+    {
+        <div class="alert alert-success" role="alert">
+            @Model.SuccessMessage
+        </div>
+    }
+
+    @if (Model.Bill != null)
+    {
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <div class="d-flex flex-wrap
+                    justify-content-between
+                    align-items-center gap-2 mb-3">
+
+                    <h5 class="mb-0">
+                        @(Model.IsPreview
+                            ? "Bill Preview"
+                            : "Bill Details")
+                    </h5>
+                </div>
+
+                <p class="mb-3">
+                    <strong>Order Number:</strong>
+                    @Model.Bill.OrderNo
+                </p>
+
+                <h6>Ordered Items</h6>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered
+                        table-hover align-middle">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th>Menu Item ID</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">
+                                    Unit Price (RM)
+                                </th>
+                                <th class="text-end">
+                                    Line Total (RM)
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var item in Model.Bill.Items)
+                            {
+                                <tr>
+                                    <td>@item.MenuItemId</td>
+                                    <td class="text-center">
+                                        @item.Quantity
+                                    </td>
+                                    <td class="text-end">
+                                        @item.UnitPrice.ToString("F2")
+                                    </td>
+                                    <td class="text-end">
+                                        @item.LineTotal.ToString("F2")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row justify-content-end mt-4">
+                    <div class="col-md-6 col-lg-5">
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal</span>
+                            <span>
+                                RM @Model.Bill.Subtotal.ToString("F2")
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>
+                                SST
+                                (@Model.Bill.TaxRatePercent.ToString("0.##")%)
+                            </span>
+                            <span>
+                                RM @Model.Bill.TaxAmount.ToString("F2")
+                            </span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>
+                                Service Charge
+                                (@Model.Bill.ServiceChargePercent.ToString("0.##")%)
+                            </span>
+                            <span>
+                                RM @Model.Bill.ServiceCharge.ToString("F2")
+                            </span>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between
+                            align-items-center">
+                            <strong>Final Total</strong>
+                            <h4 class="mb-0">
+                                RM @Model.Bill.TotalAmount.ToString("F2")
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.IsPreview && Model.CanGenerateBill)
+                {
+                    <hr class="mt-4" />
+
+                    <p class="text-muted small">
+                        Please review the calculated amounts
+                        before confirming the bill.
+                    </p>
+
+                    <form method="post"
+                          asp-page-handler="Generate">
+
+                        <input type="hidden"
+                               name="orderNo"
+                               value="@Model.OrderNo" />
+
+                        <button type="submit"
+                                class="btn btn-dark">
+                            Confirm Bill
+                        </button>
+                    </form>
+                }
+
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between
+                    align-items-center mb-3">
+                    <h5 class="mb-0">Payment Management</h5>
+
+                    <span class="badge bg-secondary">
+                        Integration Pending
+                    </span>
+                </div>
+
+                <p class="text-muted mb-3">
+                    Payment method, payment status and
+                    transaction history will be displayed
+                    after US31 integration.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Payment Method
+                        </label>
+                        <input class="form-control"
+                               value="Not available yet"
+                               disabled />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Payment Status
+                        </label>
+                        <input class="form-control"
+                               value="Not available yet"
+                               disabled />
+                    </div>
+                </div>
+
+                <hr />
+
+                <button type="button"
+                        class="btn btn-outline-dark"
+                        disabled>
+                    Record Payment
+                </button>
+
+                <p class="text-muted small mt-2 mb-0">
+                    Payment actions will be enabled
+                    after PaymentService integration.
+                </p>
+
+            </div>
+        </div>
+    }
+    else if (string.IsNullOrWhiteSpace(Model.OrderNo))
+    {
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <h5>Bill Details</h5>
+                <p class="text-muted mb-0">
+                    Search for an order to view its bill.
+                </p>
+            </div>
+        </div>
+    }
+
+</div>
