@@ -14,6 +14,8 @@
     var isAdmin = signedIn && User.IsInRole(Roles.Admin);
     var isStaff = signedIn && User.IsInRole(Roles.Staff);
     var isBackOffice = isAdmin || isStaff;
+    // US51: clicking the logo goes to your role's starting page.
+    var brandHref = isAdmin ? "/Admin" : isStaff ? "/Staff" : "/";
 
     // A page can set ViewData["FullWidth"] = true to draw edge to edge (e.g. the home page hero).
     var fullWidth = ViewData["FullWidth"] as bool? ?? false;
@@ -39,6 +41,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] · @BrandName @BrandSub</title>
+    <link rel="icon" type="image/png" href="~/images/yoru-icon.png" />
+    <link rel="apple-touch-icon" href="~/images/yoru-icon-180.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -52,12 +56,8 @@
     <header>
         <nav class="navbar navbar-expand-lg site-nav" data-bs-theme="dark">
             <div class="@containerClass">
-                <a class="navbar-brand brand" href="/">
-                    <span class="brand-mark" aria-hidden="true">夜</span>
-                    <span class="brand-text">
-                        <span class="brand-name">@BrandName</span>
-                        <span class="brand-sub">@BrandSub</span>
-                    </span>
+                <a class="navbar-brand brand" href="@brandHref">
+                    <img class="brand-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
                     @if (isAdmin)
                     {
                         <span class="role-pill">Admin</span>
@@ -123,6 +123,7 @@
                             @* Visitor and customer menu (US51) *@
                             <li class="nav-item"><a class="nav-link @Active("/", true)" href="/">Home</a></li>
                             <li class="nav-item"><a class="nav-link @Active("/Menu")" href="/Menu">Our Menu</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/About")" href="/About">About Us</a></li>
                             <li class="nav-item"><a class="nav-link @Active("/Customer/Reservations/Create")" href="/Customer/Reservations/Create">Reserve</a></li>
                         }
                     </ul>
@@ -134,6 +135,48 @@
     </header>
 
     <main role="main" class="site-main">
+        @* ---------- Toast notification (all pages) ----------
+           Any page can show one by setting, before a redirect:
+             TempData["SuccessMessage"] = "...";   (green tick, 完了)
+             TempData["ErrorMessage"]   = "...";   (red !, 注意)
+             TempData["InfoMessage"]    = "...";   (gold i, お知らせ)
+           It floats at the top right, closes itself after 5 seconds, and waits while the mouse is over it. *@
+        @{
+            string? toastText = null, toastKind = null, toastTitle = null, toastJp = null, toastIcon = null;
+            if (TempData["SuccessMessage"] is string ok) { toastText = ok; toastKind = "success"; toastTitle = "All set"; toastJp = "完了"; toastIcon = "bi-check-lg"; }
+            else if (TempData["ErrorMessage"] is string bad) { toastText = bad; toastKind = "error"; toastTitle = "Oops"; toastJp = "注意"; toastIcon = "bi-exclamation-lg"; }
+            else if (TempData["InfoMessage"] is string info) { toastText = info; toastKind = "info"; toastTitle = "Notice"; toastJp = "お知らせ"; toastIcon = "bi-info-lg"; }
+        }
+        @if (toastText is not null)
+        {
+            <div class="yoru-toast-wrap">
+                <div class="yoru-toast yoru-toast--@toastKind" role="@(toastKind == "error" ? "alert" : "status")" aria-live="polite" data-toast>
+                    <span class="yoru-toast-seal" aria-hidden="true"><i class="bi @toastIcon"></i></span>
+                    <div class="yoru-toast-body">
+                        <p class="yoru-toast-title"><span class="yoru-toast-jp">@toastJp</span>@toastTitle</p>
+                        <p class="yoru-toast-msg">@toastText</p>
+                    </div>
+                    <button type="button" class="yoru-toast-close" aria-label="Close notification"><i class="bi bi-x-lg"></i></button>
+                    <span class="yoru-toast-bar" aria-hidden="true"></span>
+                </div>
+            </div>
+            <script>
+                        // Close the toast: when its gold line runs out (5 s, paused on hover) or when × is clicked.
+                        (function () {
+                            var toast = document.querySelector('[data-toast]');
+                            if (!toast) return;
+                            function hide() {
+                                if (toast.classList.contains('is-leaving')) return;
+                                toast.classList.add('is-leaving');
+                                setTimeout(function () { toast.parentNode && toast.parentNode.remove(); }, 400);
+                            }
+                            toast.querySelector('.yoru-toast-bar').addEventListener('animationend', hide);
+                            toast.querySelector('.yoru-toast-close').addEventListener('click', hide);
+                        })();
+            </script>
+        }
+
+
         @if (fullWidth)
         {
             @RenderBody()
@@ -162,13 +205,7 @@
             <div class="container-xl">
                 <div class="row gy-4">
                     <div class="col-md-5">
-                        <div class="brand brand-footer">
-                            <span class="brand-mark" aria-hidden="true">夜</span>
-                            <span class="brand-text">
-                                <span class="brand-name">@BrandName</span>
-                                <span class="brand-sub">@BrandSub</span>
-                            </span>
-                        </div>
+                        <img class="footer-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
                         <p class="footer-tagline-jp">@TaglineJp</p>
                         <p class="footer-tagline">@Tagline</p>
                     </div>

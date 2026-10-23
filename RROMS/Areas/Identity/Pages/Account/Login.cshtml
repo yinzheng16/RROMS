@@ -1,0 +1,128 @@
+@page
+@model RROMS.Areas.Identity.Pages.Account.LoginModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    // US02 (Owner: Member 1): login page. Same design as Register (US01).
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Log in";
+    ViewData["FullWidth"] = true;   // lets the decorations reach the page edges
+}
+
+<section class="auth-page auth-login">
+    @* Decoration: sakura branch at the top right (hidden on small screens) *@
+    <img class="auth-art auth-sakura" src="~/images/sakura-branch.png" alt="" aria-hidden="true" />
+
+    @* Decoration: a few loose petals drifting down from the branch (hidden on small screens) *@
+    <span class="auth-petal p1" aria-hidden="true"></span>
+    <span class="auth-petal p2" aria-hidden="true"></span>
+    <span class="auth-petal p3" aria-hidden="true"></span>
+    <span class="auth-petal p4" aria-hidden="true"></span>
+
+    <div class="container-xl">
+        <div class="auth-wrap">
+            @* Decoration: Fuji and the red sun at the card's bottom-left corner *@
+            <img class="auth-art auth-fuji" src="~/images/fuji-sun.png" alt="" aria-hidden="true" />
+
+            <div class="auth2">
+                @* Left: welcome panel (hidden on small screens) *@
+                <div class="auth2-side">
+                    <img src="~/images/yoru-logo-dark.png" alt="YORU IZAKAYA" class="auth2-logo" />
+                    <p class="auth2-jp">おかえりなさい</p>
+                    <h2 class="auth2-headline">Welcome<br />back.</h2>
+                    <span class="auth2-bar" aria-hidden="true"></span>
+                    <p class="auth2-lede">Your table, your orders and your bookings are right where you left them.</p>
+
+                    <ul class="auth2-features">
+                        <li>
+                            <span class="auth2-icon"><i class="bi bi-shop"></i></span>
+                            <span><b>Reserve your table</b><small>Skip the wait, enjoy the night.</small></span>
+                        </li>
+                        <li>
+                            <span class="auth2-icon"><i class="bi bi-cup-hot"></i></span>
+                            <span><b>Order your favourites</b><small>Tasty dishes, just a tap away.</small></span>
+                        </li>
+                        <li>
+                            <span class="auth2-icon"><i class="bi bi-calendar-check"></i></span>
+                            <span><b>Keep track of bookings</b><small>Your plans, always in sight.</small></span>
+                        </li>
+                    </ul>
+                </div>
+
+                @* Right: the form *@
+                <div class="auth2-form">
+                    <div class="auth2-head" aria-hidden="true">
+                        <span class="auth2-rule"></span>
+                        <span class="auth2-mark">夜</span>
+                    </div>
+                    <h1 class="auth2-title">Welcome back</h1>
+                    <p class="auth2-sub">Log in to continue your night.</p>
+
+                    <form id="loginForm" method="post" asp-route-returnUrl="@Model.ReturnUrl">
+                        @* The fields sit in the middle of the space; "New to YORU?" stays at the bottom *@
+                        <div class="auth-login-main">
+                            @* Wrong password, locked out, deactivated: shown here *@
+                            <div asp-validation-summary="ModelOnly" class="alert alert-danger auth-alert" role="alert"></div>
+
+                            <div class="auth-field mb-3">
+                                <label asp-for="Input.Email" class="visually-hidden"></label>
+                                <i class="bi bi-envelope auth-field-icon" aria-hidden="true"></i>
+                                <input asp-for="Input.Email" class="form-control" autocomplete="username" placeholder="Email address" autofocus />
+                                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                            </div>
+
+                            <div class="auth-field mb-3">
+                                <label asp-for="Input.Password" class="visually-hidden"></label>
+                                <i class="bi bi-lock auth-field-icon" aria-hidden="true"></i>
+                                <input asp-for="Input.Password" class="form-control has-eye" autocomplete="current-password" placeholder="Password" />
+                                <button type="button" class="auth-eye" data-eye-for="Input_Password" aria-label="Show password">
+                                    <i class="bi bi-eye-slash"></i>
+                                </button>
+                                <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                            </div>
+
+                            @* Keep me logged in (left) and Forgot password? (right) *@
+                            <div class="auth-login-row mb-4">
+                                <div class="form-check auth-remember">
+                                    <input asp-for="Input.RememberMe" class="form-check-input" />
+                                    <label asp-for="Input.RememberMe" class="form-check-label">Keep me logged in</label>
+                                </div>
+                                @* US52 (later): will open the reset-by-email page once Member 4's email sender (US38) is ready *@
+                                <button type="button" class="auth-forgot" data-bs-toggle="collapse" data-bs-target="#forgotHint"
+                                        aria-expanded="false" aria-controls="forgotHint">Forgot password?</button>
+                            </div>
+                            <div class="collapse" id="forgotHint">
+                                <p class="auth-forgot-hint"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Please contact the restaurant and our staff will reset your password for you. Reset by email is coming soon.</p>
+                            </div>
+
+                            <button id="loginSubmit" type="submit" class="btn btn-primary btn-lg w-100 auth2-submit">
+                                Log in <i class="bi bi-arrow-right ms-1"></i>
+                            </button>
+
+                        </div>
+
+                        <div class="auth2-foot">
+                            <div class="auth2-divider" aria-hidden="true"><span>✦</span></div>
+                            <p class="auth2-switch">New to YORU? <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Create an account</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Eye button: closed eye = password hidden, open eye = password shown.
+        document.querySelectorAll('[data-eye-for]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var input = document.getElementById(btn.dataset.eyeFor);
+                var show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                btn.querySelector('i').className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
+                btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            });
+        });
+    </script>
+}
