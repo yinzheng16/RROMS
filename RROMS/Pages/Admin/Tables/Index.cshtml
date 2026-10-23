@@ -4,7 +4,54 @@
 @{
     ViewData["Title"] = "Tables and opening hours";
 }
+<style>
+    html.yoru-restoring-view {visibility:hidden;}
+</style>
 
+<script>
+    (() => {
+        const key = 'yoruTablesView:' + location.pathname;
+
+        try {
+            const raw = sessionStorage.getItem(key);
+
+            sessionStorage.removeItem(key);
+
+            if (!raw) {
+                return;
+            }
+
+            const state = JSON.parse(raw);
+
+            if (!state ||
+                !Number.isFinite(state.savedAt) ||
+                Date.now() - state.savedAt > 60000) {
+                return;
+            }
+
+            window.yoruPendingView = state;
+
+            if (['tables', 'areas', 'hours'].includes(state.tab)) {
+                sessionStorage.setItem('yoruActiveTab', state.tab);
+            }
+
+            document.documentElement.classList.add(
+                'yoru-restoring-view'
+            );
+
+            // Avoid leaving the page hidden if another script fails.
+            setTimeout(() => {
+                document.documentElement.classList.remove(
+                    'yoru-restoring-view'
+                );
+            }, 4000);
+        } catch {
+            document.documentElement.classList.remove(
+                'yoru-restoring-view'
+            );
+        }
+    })();
+</script>
 <!-- Tables & Opening Hours Hero Header -->
 <div class="yoru-tables-hero yoru-tables-page mb-4">
 
@@ -114,6 +161,7 @@
     };
 }
 <style>
+    .yoru-type-card .yoru-type-badge {display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:72px; padding:0 12px; box-sizing:border-box; font-size:14px; line-height:1; text-align:center;}
     /* Weekly Timeline — Compact Layout */
     #yoruWeeklyTimeline {display:grid; gap:5px;}
     .yoru-timeline-scale {display:flex; justify-content:space-between; margin:0 5px 2px 52px; color:#a39488; font-size:10px;}
@@ -230,12 +278,6 @@
     html {scroll-behavior: smooth;}
     #tables-section, #dining-areas-section, #opening-hours-section {scroll-margin-top: 0;}
     @@media (prefers-reduced-motion: reduce) {html {scroll-behavior: auto;}}
-    .yoru-back-to-top {position: fixed; bottom: 60px; right: 30px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #c43b2b; color: #fff; border: 1px solid #a83228; border-radius: 50%; cursor: pointer; z-index: 1050; opacity: 0; visibility: hidden; transform: translateY(15px); transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease, background 0.3s ease; box-shadow: 0 6px 20px rgba(0,0,0,0.2);}
-    .yoru-back-to-top.show {opacity: 1; visibility: visible; transform: translateY(0);}
-    .yoru-back-to-top:hover {background: #a83228; transform: translateY(-5px);}
-    .yoru-back-to-top svg {width: 22px; height: 22px; stroke-width: 2;}
-    @@media (max-width: 768px) {.yoru-back-to-top {bottom: 20px; right: 20px; width: 42px; height: 42px;}}
-    @@media (prefers-reduced-motion: reduce) {.yoru-back-to-top {transition: none;}}
 
     .yoru-luxury-card {height:100%; background:#fffdfa; border:1px solid #e7d9cc; border-radius:18px; padding:25px; box-shadow:0 5px 18px rgba(54,34,26,.035);}
     .yoru-luxury-head {display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;}
@@ -514,17 +556,14 @@
     @@keyframes yoruTableListExit { from {opacity:1; transform:translateY(0);} to {opacity:0; transform:translateY(15px);}}
     @@media (prefers-reduced-motion:reduce) { .yoru-inline-table-panel.yoru-list-closing {animation:none;} }
     .yoru-table-drawer label[for="TableForm_MinimumSpend"] {white-space:nowrap;}
-    .yoru-table-drawer .yoru-edit-status-field select.form-select {appearance:none; -webkit-appearance:none; padding-right:42px; background-color:#fffdfa; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23665d55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; background-size:16px;}
-    /* Hide Back to Top when a drawer is open */
-    body:has(.yoru-type-workspace.table-drawer-open) .yoru-back-to-top,
-    body:has(.yoru-type-workspace.drawer-open) .yoru-back-to-top {opacity:0!important; visibility:hidden!important; pointer-events:none!important;}  
+    .yoru-table-drawer .yoru-edit-status-field select.form-select {appearance:none; -webkit-appearance:none; padding-right:42px; background-color:#fffdfa; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23665d55' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; background-size:16px;} 
     @@media(max-width:1200px) {.yoru-type-workspace .yoru-type-grid {grid-template-columns:repeat(3,minmax(0,1fr));}}
     @@media(max-width:720px) {.yoru-type-workspace .yoru-type-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
     @@media(max-width:450px) {.yoru-type-workspace .yoru-type-grid {grid-template-columns:1fr;}}    
     #tableTypePagination[hidden] {display:none!important;}
     .yoru-type-workspace.managing-tables #tableTypePagination {display:none!important;}
     .yoru-type-workspace.table-drawer-open #tableTypePagination {display:none!important;}
-    .yoru-type-workspace.drawer-open #tableTypePagination {display:none!important;}
+    .yoru-type-workspace.drawer-open #tableTypePagination:not([hidden]) {display:flex!important;}
     /* Compact Table Type Cards */
     .yoru-type-body {padding:14px 16px 15px;}
     .yoru-type-title {margin-bottom:10px;}
@@ -713,6 +752,134 @@
     #yoruSpecialAdd span {display:block; width:0; opacity:0; overflow:hidden; font-size:12px; font-weight:600; transition:width .25s ease,opacity .2s ease;}
     #yoruSpecialAdd:hover,#yoruSpecialAdd:focus-visible {width:175px!important; background:#92271f!important;}
     #yoruSpecialAdd:hover span,#yoruSpecialAdd:focus-visible span {width:125px; opacity:1;}
+    /* Closed drawers should not take up page space */
+    #yoruTypeWorkspace:not(.drawer-open) #yoruTypeDrawer,
+    #yoruTypeWorkspace:not(.table-drawer-open) #tableModal {
+        display: none;
+    }
+    @@media (min-width:761px) {
+        #yoruTypeWorkspace.drawer-open {position:relative; height:auto!important; grid-template-rows:auto; align-items:start;}
+        #yoruTypeWorkspace.drawer-open #tables-section {height:auto!important; min-height:0; margin-bottom:0!important;}
+        #yoruTypeWorkspace.drawer-open #tables-section > .card-body {overflow:visible;}
+        #yoruTypeWorkspace.drawer-open #tableModal {display:none!important;}
+        #yoruTypeWorkspace.drawer-open #yoruTypeDrawer {position:absolute!important; grid-column:2; grid-row:1; align-self:stretch; top:0!important; bottom:0; width:100%; height:auto!important; min-height:0; max-height:none!important;}        #yoruTypeWorkspace.drawer-open .yoru-type-drawer-body {flex:1; min-height:0; overflow-y:auto;}
+        #yoruTypeWorkspace.drawer-open .yoru-type-drawer-header,
+        #yoruTypeWorkspace.drawer-open .yoru-type-drawer-footer {flex-shrink:0;}
+    }
+    .yoru-table-drawer-body .col-4 > .form-label {display:flex; align-items:center; min-height:24px; margin-bottom:8px; font-size:13px; white-space:nowrap;}
+    .yoru-table-drawer-body .col-4 > .form-control {height:44px; border-radius:8px;}
+    #tableTypeForm .col-md-3 > .form-label {display:block; min-height:20px; margin-bottom:8px; font-size:16px; white-space:nowrap;}
+    .yoru-photo-preview-button {display:inline-flex; flex-direction:column; gap:8px; padding:8px; border:1px solid #dfd3c6; border-radius:12px; background:#fffaf4; cursor:zoom-in; text-align:center;}
+    .yoru-photo-preview-button img {display:block; width:180px; height:120px; object-fit:cover; border-radius:8px;}
+    .yoru-photo-preview-button span {color:#806454; font-size:12px;}
+    .yoru-photo-preview-button:hover {border-color:#b72f25; background:#fff5eb;}
+    .yoru-photo-preview-button:focus-visible {outline:3px solid #b72f25; outline-offset:3px;}
+    .yoru-photo-dialog {position:fixed; inset:0; margin:auto; width:fit-content; max-width:94vw; max-height:92vh; padding:48px 16px 16px; border:0; border-radius:16px; background:#fffaf4; box-shadow:0 20px 70px rgba(0,0,0,.35);}
+    .yoru-photo-dialog::backdrop {background:rgba(25,18,15,.78);}
+    .yoru-photo-dialog img {display:block; max-width:calc(94vw - 32px); max-height:calc(92vh - 64px); object-fit:contain; border-radius:8px;}
+    .yoru-photo-close {position:absolute; top:6px; right:10px; display:flex; align-items:center; justify-content:center; width:36px; height:36px; padding:0; border:0; border-radius:50%; background:transparent; color:#6d4636; font-size:30px; cursor:pointer;}
+    .yoru-photo-close:hover {background:#f0e4d8;}
+    .yoru-custom-filter {position:relative; flex:1 1 140px; min-width:145px;}
+    .yoru-custom-filter-button {display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; height:44px; padding:0 15px; border:1px solid #dfd2c3; border-radius:12px; background:#fffaf4; color:#624a3d; font-family:inherit; font-size:13px; text-align:left; cursor:pointer; transition:border-color .2s, box-shadow .2s;}
+    .yoru-custom-filter-button::after {content:""; width:8px; height:8px; flex-shrink:0; border-right:2px solid #815443; border-bottom:2px solid #815443; transform:rotate(45deg); margin-top:-4px;}
+    .yoru-custom-filter-button:hover {border-color:#bd9580;}
+    .yoru-custom-filter-button:focus-visible,.yoru-custom-filter-button.show {outline:none; border-color:#b72f25; box-shadow:0 0 0 3px rgba(183,47,37,.12);}
+    .yoru-custom-filter .dropdown-menu {width:100%; min-width:100%; max-height:280px; overflow-y:auto; padding:6px; margin-top:6px!important; border:1px solid #e5d9ca; border-radius:12px; background:#fffaf4; box-shadow:0 10px 28px rgba(75,45,28,.14);}
+    .yoru-custom-filter .dropdown-item {display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; border-radius:7px; color:#624a3d; font-size:13px; white-space:normal;}
+    .yoru-custom-filter .dropdown-item:hover,.yoru-custom-filter .dropdown-item:focus {background:#f4e7dc; color:#923b2e;}
+    .yoru-custom-filter .dropdown-item.active {background:#f4e0d6; color:#a83228; font-weight:600;}
+    .yoru-custom-filter .dropdown-item.active::after {content:"✓";}
+    :is(#yoruTypeDrawer, #tableModal, #areaModal) .yoru-custom-filter {width:100%; min-width:0; flex:none;}
+    :is(#yoruTypeDrawer, #tableModal, #areaModal) .yoru-custom-filter-button {font-size:14px;}
+    .yoru-custom-filter-button.is-invalid {border-color:#dc3545;}
+    .yoru-custom-filter-error {margin-top:5px; color:#dc3545; font-size:12px;}
+    .yoru-type-facts {display:flex; flex-direction:column; gap:8px; margin:12px 0;}
+    .yoru-type-facts > div {display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:start; gap:8px;}
+    .yoru-type-facts > div > span {color:#8a7566; font-size:12px; line-height:1.5;}
+    .yoru-type-facts > div > strong {color:#513c30; font-size:12px; font-weight:600; line-height:1.5; text-align:right; overflow-wrap:anywhere;}
+    .yoru-type-description {margin:0 0 14px; padding-top:10px; border-top:1px solid #eadfd2;}
+    .yoru-type-description > span {display:block; margin-bottom:5px; color:#8a7566; font-size:12px;}
+    .yoru-type-description > p {margin:0; color:#655044; font-size:12px; line-height:1.6; white-space:pre-line; overflow-wrap:anywhere;}
+    .yoru-inline-table-panel .table {min-width:1050px;}
+    .yoru-inline-table-panel .table thead th {padding:14px 12px; color:#806454; font-size:12px; font-weight:600; white-space:nowrap;}
+    .yoru-inline-table-panel .table tbody td {padding:14px 12px; color:#513c30; font-size:13px; vertical-align:middle;}
+    .yoru-table-name-cell {min-width:190px; max-width:280px;}
+    .yoru-table-name-cell > strong {display:block; font-size:14px; overflow-wrap:anywhere;}
+    .yoru-table-description {margin:5px 0 0; color:#8a7566; font-size:12px; line-height:1.5; white-space:pre-line; overflow-wrap:anywhere;}
+    .yoru-table-active-badge {display:inline-flex; align-items:center; padding:5px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap;}
+    .yoru-table-active-badge.is-active {background:#e8f1e5; color:#527342;}
+    .yoru-table-active-badge.is-inactive {background:#eee7e1; color:#8a7566;}
+    .yoru-special-month-nav:not([hidden]) {display:flex; align-items:center; justify-content:space-between; gap:12px; margin:16px 0 8px; padding:10px 0; border-bottom:1px solid #e8dbcf;}
+    .yoru-special-month-nav > div {display:flex; flex-direction:column; gap:3px; text-align:center;}
+    .yoru-special-month-nav strong {color:#624536; font-size:15px; font-weight:600;}
+    .yoru-special-month-nav small {color:#947c6b; font-size:11px;}
+    .yoru-special-month-nav > button {display:flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0; border:1px solid #e3d4c5; border-radius:50%; background:#fffaf4; color:#a83228; font-size:24px; cursor:pointer;}
+    .yoru-special-month-nav > button:hover:not(:disabled) {background:#f4e7dc; border-color:#bd9580;}
+    .yoru-special-month-nav > button:disabled {opacity:.3; cursor:default;}
+    .yoru-special-list {display:block; max-height:340px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#cbb39f transparent;}
+    .yoru-special-list .yoru-special-item {display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0; padding:14px 4px; border:0; border-bottom:1px solid #eee3d9; border-radius:0; background:transparent; box-shadow:none;}
+    .yoru-special-list .yoru-special-item[hidden] {display:none!important;}
+    .yoru-special-list .yoru-special-info {min-width:0;}
+    .yoru-special-list .yoru-special-date {margin-bottom:4px; color:#9a7661; font-size:12px;}
+    .yoru-special-list .yoru-special-name {color:#513c30; font-size:14px; overflow-wrap:anywhere;}
+    .yoru-special-list .yoru-special-actions {flex-shrink:0;}
+    #yoruSpecialDatesCard {padding:16px!important; align-self:start;}
+    #yoruSpecialDatesCard .yoru-special-header {min-height:38px; margin-bottom:4px;}
+    #yoruSpecialDatesCard > p {margin:0 0 8px; font-size:13px; line-height:1.5;}
+    #yoruSpecialDatesCard .yoru-special-month-nav {margin:0 0 10px; padding:6px 0;}
+    #yoruSpecialDatesCard .yoru-special-list {display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,180px)); align-content:start; gap:10px; max-height:380px; overflow-y:auto; padding:0;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {display:flex!important; flex-direction:column!important; align-items:stretch!important; justify-content:flex-start!important; width:100%; aspect-ratio:1; min-height:0; box-sizing:border-box; margin:0; padding:12px!important; gap:8px; border:1px solid #eadfd4!important; border-radius:12px!important;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item[hidden] {display:none!important;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {flex:1; min-height:0; gap:5px; overflow:auto;}
+    #yoruSpecialDatesCard .yoru-special-date {margin:0; font-size:12px;}
+    #yoruSpecialDatesCard .yoru-special-name {margin:0; font-size:14px; line-height:1.4; overflow-wrap:anywhere;}
+    #yoruSpecialDatesCard .yoru-special-status {font-size:11px; padding:4px 8px;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-actions {width:100%; justify-content:flex-end; gap:6px; margin-top:auto;}
+    #yoruSpecialDatesCard .yoru-special-icon-btn {display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; padding:0;}
+    #yoruSpecialDatesCard .yoru-special-icon-btn svg {width:15px; height:15px;}
+    #yoruSpecialDatesCard .yoru-special-list {grid-template-columns:repeat(auto-fill,minmax(110px,140px));}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {align-items:center!important; justify-content:center!important; text-align:center; cursor:pointer;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {flex:none; align-items:center; width:100%;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-actions {display:none!important;}
+    #yoruSpecialDatesCard .yoru-special-item .yoru-special-status {display:none;}
+    #yoruSpecialDatesCard .yoru-special-item:focus-visible {outline:2px solid #b72f25; outline-offset:2px;}
+    #yoruSpecialDatesCard .yoru-special-month-nav > button {display:grid; place-items:center; width:34px; height:34px; padding:0; line-height:1;}
+    #yoruSpecialDatesCard .yoru-special-month-nav > button svg {display:block; width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
+    #yoruSpecialDatesCard .yoru-special-list {grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {aspect-ratio:auto; min-height:80px; padding:12px 16px!important; align-items:flex-start!important; text-align:left;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {align-items:flex-start; gap:5px;}
+    #yoruSpecialDatesCard .yoru-special-list {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:92px; align-content:start; gap:10px; max-height:92px; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:#c7a48d transparent;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {height:92px; min-height:0; aspect-ratio:auto; box-sizing:border-box;}
+    #yoruSpecialDatesCard .yoru-special-list::-webkit-scrollbar {width:5px;}
+    #yoruSpecialDatesCard .yoru-special-list::-webkit-scrollbar-track {background:transparent;}
+    #yoruSpecialDatesCard .yoru-special-list::-webkit-scrollbar-thumb {background:#c7a48d; border-radius:10px;}
+    .yoru-type-card .yoru-type-badge.is-active {background:rgba(240,250,240,.8); border:1px solid rgba(82,115,66,.45);}
+    .yoru-type-card .yoru-type-badge.is-inactive {background:rgba(183,47,37,.8); border:1px solid rgba(255,255,255,.5);}
+    .yoru-type-card .yoru-type-badge-text {display:block; line-height:1; transform:translateY(-1px);}
+    .yoru-type-view-details {display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; margin:0 0 14px; padding:9px 0; border:0; border-top:1px solid #eadfd2; background:transparent; color:#a83228; font-family:inherit; font-size:12px; font-weight:600; text-align:left; cursor:pointer;}
+    .yoru-type-view-details:hover {color:#78251c; text-decoration:underline;}
+    #yoruTypeDetailsModal .modal-dialog {perspective:1200px; transform:none!important; transition:none;}
+    #yoruTypeDetailsModal .modal-content {border:1px solid #e7d9cc; border-radius:16px; background:#fffaf4;}
+    #yoruTypeDetailsModal.show .modal-content {animation:yoruTypeDetailsFlip .4s ease-out both;}
+    #yoruTypeDetailsModal .modal-title {font-family:Georgia,serif; color:#513c30;}
+    #yoruTypeDetailsModal .modal-header,#yoruTypeDetailsModal .modal-footer {border-color:#eadfd2;}
+    .yoru-type-details-photo {display:block; width:100%; height:180px; margin-bottom:18px; border-radius:10px; object-fit:cover;}
+    .yoru-type-details-fields {display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:11px 16px; margin:0;}
+    .yoru-type-details-fields dt {color:#8a7566; font-size:13px; font-weight:400;}
+    .yoru-type-details-fields dd {margin:0; color:#513c30; font-size:13px; font-weight:600; text-align:right; overflow-wrap:anywhere;}
+    .yoru-type-details-description {margin-top:18px; padding-top:14px; border-top:1px solid #eadfd2;}
+    .yoru-type-details-description strong {color:#8a7566; font-size:13px; font-weight:400;}
+    .yoru-type-details-description p {margin:8px 0 0; color:#513c30; font-size:13px; line-height:1.6; white-space:pre-line; overflow-wrap:anywhere;}
+    @@keyframes yoruTypeDetailsFlip {from {opacity:0; transform:rotateY(-65deg) scale(.94);} to {opacity:1; transform:rotateY(0) scale(1);}}
+    @@media (prefers-reduced-motion:reduce) {#yoruTypeDetailsModal.show .modal-content {animation:none;}}
+    .yoru-type-details-fields {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 20px;}
+    .yoru-type-details-fields > div {min-width:0; padding-bottom:10px; border-bottom:1px solid #eadfd2;}
+    .yoru-type-details-fields dt {margin:0 0 5px; color:#8a7566; font-size:12px; font-weight:400;}
+    .yoru-type-details-fields dd {margin:0; color:#513c30; font-size:14px; font-weight:600; text-align:left; overflow-wrap:anywhere;}
+    .yoru-inline-table-panel {overflow:visible;}
+    .yoru-inline-table-panel .yoru-inline-table-body {overflow:visible;}
+    .yoru-inline-table-panel .yoru-search-toolbar {position:relative; z-index:20; overflow:visible;}
+    .yoru-inline-table-panel .table-responsive {position:relative; z-index:1;}
 </style>
 <div id="yoruTypeWorkspace" class="yoru-type-workspace">
     <div class="card mb-4 yoru-tab-panel" id="tables-section" role="tabpanel" aria-label="Table Types">
@@ -828,7 +995,9 @@
                      alt="@type.Name" />
 
                 <span class="yoru-type-badge @(type.IsActive ? "is-active" : "is-inactive")">
-                    @(type.IsActive ? "Active" : "Inactive")
+                    <span class="yoru-type-badge-text">
+                        @(type.IsActive ? "Active" : "Inactive")
+                    </span>
                 </span>
             </div>
 
@@ -843,24 +1012,38 @@
                     </div>
 
                     <div>
-                        <i data-lucide="users"></i>
-                        <span>@guestText</span>
+                        <i data-lucide="map-pin"></i>
+                        <span>
+                            @(type.DefaultDiningArea?.Name ?? "Not assigned")
+                        </span>
                     </div>
 
                     <div>
-                        <i data-lucide="map-pin"></i>
-                        <span>@(type.DefaultDiningArea?.Name ?? "No dining area")</span>
+                        <i data-lucide="users"></i>
+                        <span>
+                            @type.DefaultMinGuests–@type.DefaultMaxGuests guests
+                        </span>
                     </div>
 
-                    @if (type.DefaultMinimumSpend.HasValue && type.DefaultMinimumSpend.Value > 0)
-                    {
-                        <div>
-                            <i data-lucide="wallet"></i>
-                            <span>Min. @TableTypeInfo.Rm(type.DefaultMinimumSpend.Value)</span>
-                        </div>
-                    }
+                    <div>
+                        <i data-lucide="wallet"></i>
+                        <span>
+                            @(type.DefaultMinimumSpend.GetValueOrDefault() > 0
+                                ? "Min. " + TableTypeInfo.Rm(type.DefaultMinimumSpend.GetValueOrDefault())
+                                : "No minimum spend")
+                        </span>
+                    </div>
                 </div>
-           
+
+                <button type="button"
+                        class="yoru-type-view-details"
+                        data-type-details
+                        data-count="@tables.Count"
+                        data-area-name="@(type.DefaultDiningArea?.Name ?? "Not assigned")"
+                        aria-haspopup="dialog">
+                    View more details
+                    <span aria-hidden="true">↗</span>
+                </button>
                 <div class="yoru-type-actions">
 
                     <!-- Edit Icon -->
@@ -920,6 +1103,7 @@
 <div id="tableTypePagination" class="yoru-pagination" hidden>
     <span id="tableTypePageInfo" class="text-muted"></span>
     <div class="d-flex gap-2">
+        <button type="button" id="tableTypeShowAll" class="btn btn-outline-secondary btn-sm" aria-pressed="false">Show all</button>
         <button type="button" id="tableTypePrevPage" class="btn btn-outline-secondary btn-sm">Previous</button>
         <button type="button" id="tableTypeNextPage" class="btn btn-outline-secondary btn-sm">Next</button>
     </div>
@@ -954,9 +1138,13 @@
                             <table class="table table-hover align-middle">
                                 <thead>
                                     <tr>
-                                        <th>Name</th>
-                                        <th>Seats</th>
-                                        <th>Status</th>
+                                        <th>Table / Description</th>
+                                        <th>Dining Area</th>
+                                        <th>Min Guests</th>
+                                        <th>Capacity</th>
+                                        <th>Minimum Spend</th>
+                                        <th>Active</th>
+                                        <th>Live Status</th>
                                         <th class="text-center">Edit</th>
                                         <th class="text-center">Delete</th>
                                     </tr>
@@ -969,12 +1157,35 @@
                                             data-status="@t.Status"
                                             data-active="@t.IsActive.ToString().ToLowerInvariant()">
 
-                                            <td class="fw-semibold">@t.TableNumber</td>
+                                            <td class="yoru-table-name-cell">
+                                                <strong>@t.TableNumber</strong>
+
+                                                <p class="yoru-table-description">
+                                                    @(string.IsNullOrWhiteSpace(t.Description)
+                                                        ? "No description."
+                                                        : t.Description)
+                                                </p>
+                                            </td>
 
                                             <td>
-                                                @(t.MinGuests == t.Capacity
-                                                    ? t.Capacity.ToString()
-                                                    : $"{t.MinGuests}–{t.Capacity}")
+                                                @(Model.Areas.FirstOrDefault(a => a.Id == t.DiningAreaId)?.Name
+                                                    ?? "Not assigned")
+                                            </td>
+
+                                            <td>@t.MinGuests</td>
+
+                                            <td>@t.Capacity</td>
+
+                                            <td class="text-nowrap">
+                                                @(t.MinimumSpend > 0
+                                                    ? TableTypeInfo.Rm(t.MinimumSpend)
+                                                    : "None")
+                                            </td>
+
+                                            <td>
+                                                <span class="yoru-table-active-badge @(t.IsActive ? "is-active" : "is-inactive")">
+                                                    @(t.IsActive ? "Active" : "Inactive")
+                                                </span>
                                             </td>
 
                                             <td>
@@ -1025,7 +1236,7 @@
                                     @if (!tables.Any())
                                     {
                                         <tr>
-                                            <td colspan="5" class="text-center text-muted">
+                                            <td colspan="9" class="text-center text-muted">
                                                 No tables of this type yet.
                                             </td>
                                         </tr>
@@ -1086,6 +1297,11 @@
               method="post"
               asp-page-handler="SaveTableType"
               enctype="multipart/form-data">
+              <div id="tableTypeSaveError"
+                 class="alert alert-danger py-2"
+                 role="alert"
+                 hidden>
+            </div>
 
             <input type="hidden" asp-for="TableTypeForm.Id" />
 
@@ -1140,7 +1356,7 @@
                 <div class="col-md-6">
                     <label asp-for="TableTypeForm.DefaultDiningAreaId"
                            class="form-label">
-                        Default Dining Area
+                        Dining Area
                     </label>
                     <select asp-for="TableTypeForm.DefaultDiningAreaId"
                             asp-items="@(new SelectList(Model.Areas, "Id", "Name"))"
@@ -1163,8 +1379,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label asp-for="TableTypeForm.DefaultMaxGuests" class="form-label">
-                        Max Guests
+                    <label asp-for="TableTypeForm.DefaultMaxGuests"
+                           class="form-label"
+                           title="Default maximum number of guests per table">
+                        Capacity
                     </label>
                     <input asp-for="TableTypeForm.DefaultMaxGuests"
                            type="number"
@@ -1172,12 +1390,19 @@
                            max="20"
                            class="form-control"
                            required />
+
+                           <div id="tableTypeCapacityError"
+                                 class="text-danger small mt-1"
+                                 aria-live="polite"
+                                 hidden>
+                                Capacity must be at least the minimum guests.
+                            </div>
                 </div>
 
                 <div class="col-md-6">
                     <label asp-for="TableTypeForm.DefaultMinimumSpend"
                            class="form-label">
-                        Default Minimum Spend (RM)
+                        Minimum Spend (RM)
                     </label>
                     <input asp-for="TableTypeForm.DefaultMinimumSpend"
                            type="number"
@@ -1224,11 +1449,16 @@
                         Leave empty to keep the existing photo.
                     </div>
 
-                    <img id="tableTypePhotoPreview"
-                         src="/images/tables/standard.jpg"
-                         alt="Table type photo preview"
-                         class="img-fluid rounded border mt-2"
-                         style="width:180px; height:120px; object-fit:cover;" />
+                    <button type="button"
+                            class="yoru-photo-preview-button mt-2"
+                            id="tableTypePhotoZoomButton"
+                            aria-label="Enlarge table type photo">
+                        <img id="tableTypePhotoPreview"
+                             src="/images/tables/standard.jpg"
+                             alt="Table type photo preview" />
+
+                        <span>Click to enlarge</span>
+                    </button>
                 </div>
 
                 <div class="col-12" id="createFirstTableSection">
@@ -1265,8 +1495,7 @@
                         <option value="true">All Existing Tables</option>
                     </select>
                     <small class="text-muted">
-                        Updating existing tables changes their dining area,
-                        guest capacity and minimum spend.
+                            Apply these settings to all new created tables of this type.
                     </small>
                 </div>
 
@@ -1292,13 +1521,20 @@
 </div>
 </aside>
     <aside id="tableModal" class="yoru-table-drawer" tabindex="-1" aria-label="Table editor" aria-hidden="true">
-        <form method="post" asp-page-handler="SaveTable" class="yoru-table-drawer-form">
+        <form id="tableForm" method="post" asp-page-handler="SaveTable" class="yoru-table-drawer-form">
             <div class="yoru-table-drawer-header">
                 <h2 class="modal-title h5" id="tableTitle">Add New Table</h2>
                 <button type="button" class="btn-close" data-close-table-drawer aria-label="Close"></button>
             </div>
 
             <div class="yoru-table-drawer-body row g-3">
+                <div class="col-12">
+                    <div id="tableSaveError"
+                         class="alert alert-danger py-2 mb-0"
+                         role="alert"
+                         hidden>
+                    </div>
+                </div>
                 <input type="hidden" asp-for="TableForm.Id" />
                 <div class="col-12">
                     <label asp-for="TableForm.TableTypeDefinitionId"
@@ -1351,8 +1587,9 @@
                 </div>
 
                 <div class="col-4 yoru-advanced-field">
-                    <label asp-for="TableForm.Capacity" class="form-label"> Max Guests </label>
+                    <label asp-for="TableForm.Capacity" class="form-label" title="Maximum number of guests this table can accommodate"> Capacity </label>
                     <input asp-for="TableForm.Capacity" type="number" min="1" max="20" class="form-control" required />
+                    <div id="tableCapacityError" class="text-danger small mt-1" aria-live="polite" hidden> Capacity must be at least the minimum guests. </div>
                 </div>
 
                 <div class="col-4 yoru-advanced-field">
@@ -1473,8 +1710,13 @@
                     var iconName = string.IsNullOrWhiteSpace(a.IconName)
                         ? autoIcon : a.IconName;
 
-                    var tableTypes = a.Tables
-                        .Select(t => t.TableTypeDefinition?.Name ?? t.Type.ToString())
+                    var tableTypes = Model.TableTypes
+                        .Where(type => type.DefaultDiningAreaId == a.Id)
+                        .Select(type => type.Name)
+                        .Concat(
+                            a.Tables.Select(t =>
+                                t.TableTypeDefinition?.Name ?? t.Type.ToString())
+                        )
                         .Where(name => !string.IsNullOrWhiteSpace(name))
                         .Distinct()
                         .OrderBy(name => name)
@@ -1532,9 +1774,12 @@
                         </div>
 
                         <div class="yoru-area-card-footer">
-                            <span class="yoru-area-mode">
+                            <span class="yoru-area-mode"
+                                  title="@(a.StatusMode == DiningAreaStatusMode.Auto
+                                      ? "Automatically calculated from active tables in this area."
+                                      : "Status is set manually by an administrator.")">
                                 <i data-lucide="@(a.StatusMode == DiningAreaStatusMode.Auto ? "refresh-cw" : "hand")"></i>
-                                @(a.StatusMode == DiningAreaStatusMode.Auto ? "Auto" : "Manual")
+                                @(a.StatusMode == DiningAreaStatusMode.Auto ? "Auto status" : "Manual status")
                             </span>
 
                             <div class="yoru-area-actions">
@@ -1577,6 +1822,7 @@
             <div class="yoru-area-pagination" id="yoruAreaPagination" hidden>
                 <span id="yoruAreaPageInfo"></span>
                 <div class="yoru-area-page-buttons">
+                    <button type="button" id="yoruAreaShowAll" aria-pressed="false">Show all</button>
                     <button type="button" id="yoruAreaPrev">Previous</button>
                     <button type="button" id="yoruAreaNext">Next</button>
                 </div>
@@ -1775,7 +2021,7 @@
             </div>
         </div>
 
-            <div class="yoru-hours-side-card" style="padding:22px; background:#fffdfa; border:1px solid #e7d9cc; border-radius:14px;">
+            <div id="yoruSpecialDatesCard" class="yoru-hours-side-card" style="padding:22px; background:#fffdfa; border:1px solid #e7d9cc; border-radius:14px;">
                 <div class="yoru-special-header">
                 <div class="yoru-hours-side-heading">
                     <i data-lucide="calendar-days"></i>
@@ -1789,6 +2035,27 @@
             </div>
 
             <p>Manage holiday closures and special opening hours.</p>
+            <div id="yoruSpecialMonthNav"
+                 class="yoru-special-month-nav"
+                 hidden>
+                <button type="button"
+                        id="yoruSpecialMonthPrev"
+                        aria-label="Previous month with special dates">
+                    &#8249;
+                </button>
+
+                <div>
+                    <strong id="yoruSpecialMonthLabel"></strong>
+                    <small id="yoruSpecialMonthCount"
+                           aria-live="polite"></small>
+                </div>
+
+                <button type="button"
+                        id="yoruSpecialMonthNext"
+                        aria-label="Next month with special dates">
+                    &#8250;
+                </button>
+            </div>
 
             @if (!Model.SpecialDates.Any())
             {
@@ -1801,9 +2068,22 @@
                 <div class="yoru-special-list">
                     @foreach (var special in Model.SpecialDates)
                     {
-                        <div class="yoru-special-item">
+                        <div class="yoru-special-item" data-special-month="@special.Date.ToString("yyyy-MM")">
                             <div class="yoru-special-info">
-                                <div class="yoru-special-date">@special.Date.ToString("dd MMM yyyy")</div>
+                                <div class="yoru-special-date">
+                                    @if ((special.EndDate ?? special.Date).Date == special.Date.Date)
+                                    {
+                                        @special.Date.ToString("dd MMM yyyy")
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @special.Date.ToString("dd MMM yyyy")
+                                            –
+                                            @special.EndDate?.ToString("dd MMM yyyy")
+                                        </span>
+                                    }
+                                </div>
                                 <div class="yoru-special-name">@special.Name</div>
 
                                 @if (special.IsClosed)
@@ -1826,6 +2106,7 @@
                                         data-special-edit
                                         data-id="@special.Id"
                                         data-date="@special.Date.ToString("yyyy-MM-dd")"
+                                        data-end-date="@((special.EndDate ?? special.Date).ToString("yyyy-MM-dd"))"
                                         data-name="@special.Name"
                                         data-closed="@special.IsClosed.ToString().ToLowerInvariant()"
                                         data-open="@special.OpenTime?.ToString(@"hh\:mm")"
@@ -1862,9 +2143,36 @@
             <div class="modal-body">
                 <input type="hidden" name="SpecialDateInput.Id" id="yoruSpecialId" value="0" />
 
-                <div class="mb-3">
-                    <label for="yoruSpecialDate" class="form-label">Date</label>
-                    <input type="date" class="form-control" name="SpecialDateInput.Date" id="yoruSpecialDate" required />
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label for="yoruSpecialDate" class="form-label">
+                            Start Date
+                        </label>
+
+                        <input type="date"
+                               class="form-control"
+                               name="SpecialDateInput.Date"
+                               id="yoruSpecialDate"
+                               required />
+                    </div>
+
+                    <div class="col-6">
+                        <label for="yoruSpecialEndDate" class="form-label">
+                            End Date
+                        </label>
+
+                        <input type="date"
+                               class="form-control"
+                               name="SpecialDateInput.EndDate"
+                               id="yoruSpecialEndDate"
+                               required />
+                    </div>
+
+                    <div class="col-12">
+                        <small class="text-muted">
+                            For one day, select the same start and end date.
+                        </small>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -2017,10 +2325,102 @@
     </div>
 </div>
 
-<button type="button" id="backToTopBtn" class="yoru-back-to-top" aria-label="Back to top" title="Back to top">
-    <i data-lucide="arrow-up"></i>
-</button>
+<dialog id="yoruPhotoDialog"
+        class="yoru-photo-dialog"
+        aria-label="Enlarged table type photo">
 
+    <button type="button"
+            id="yoruPhotoClose"
+            class="yoru-photo-close"
+            aria-label="Close photo preview">
+        &times;
+    </button>
+
+    <img id="yoruPhotoLarge"
+         alt="Enlarged table type photo" />
+</dialog>
+
+<div class="modal fade"
+     id="yoruSpecialDetailsModal"
+     tabindex="-1"
+     aria-labelledby="yoruSpecialDetailsTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content yoru-special-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="yoruSpecialDetailsTitle">
+                    Special Date
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <p id="yoruSpecialDetailsDate"></p>
+                <strong id="yoruSpecialDetailsStatus"></strong>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        id="yoruSpecialDetailsDelete"
+                        class="btn btn-outline-danger">
+                    Delete
+                </button>
+
+                <button type="button"
+                        id="yoruSpecialDetailsEdit"
+                        class="btn btn-primary">
+                    Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade"
+     id="yoruTypeDetailsModal"
+     tabindex="-1"
+     aria-labelledby="yoruTypeDetailsTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="yoruTypeDetailsTitle">
+                    Table Type Details
+                </h5>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <img id="yoruTypeDetailsPhoto"
+                     class="yoru-type-details-photo"
+                     alt="" />
+
+                <dl id="yoruTypeDetailsFields"
+                    class="yoru-type-details-fields"></dl>
+
+                <div class="yoru-type-details-description">
+                    <strong>Description</strong>
+                    <p id="yoruTypeDetailsDescription"></p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
     <script>
@@ -2282,9 +2682,11 @@
 
             if (isEditingType && bulkUpdateChoice.value === 'true') {
                 const confirmed = window.confirm(
-                    'Apply the new dining area, guest capacity and minimum spend ' +
+                    'Apply the prefix, number padding, dining area, minimum guests, ' +
+                    'capacity, minimum spend, description and active status ' +
                     'to ALL existing tables of this type? ' +
-                    'This may affect existing reservations.'
+                    'Existing table numbers will keep their numeric values. ' +
+                    'Starting number is used for new table names.'
                 );
 
                 if (!confirmed) {
@@ -2831,6 +3233,13 @@
                 nameField.value = '';
                 return;
             }
+            // Show the table list belonging to the selected type.
+            const panelId = 'modal-tables-type-' + option.value;
+
+            if (document.getElementById(panelId)) {
+                showTablePanel(panelId);
+                previousTablePanelId = panelId;
+            }
 
             areaField.value = option.dataset.area || '';
             minField.value = option.dataset.min || '1';
@@ -3103,6 +3512,8 @@
             const pageInfo = document.getElementById('tableTypePageInfo');
             const prevButton = document.getElementById('tableTypePrevPage');
             const nextButton = document.getElementById('tableTypeNextPage');
+            const showAllButton = document.getElementById('tableTypeShowAll');
+                let showAll = false;
 
             const cards = Array.from(
                 document.querySelectorAll('#tables-section .yoru-type-grid > .yoru-type-card')
@@ -3146,19 +3557,33 @@
 
                 const start = (currentPage - 1) * pageSize;
 
-                filteredCards.slice(start, start + pageSize).forEach(card => {
+                const visibleCards = showAll
+                    ? filteredCards
+                    : filteredCards.slice(start, start + pageSize);
+
+                visibleCards.forEach(card => {
                     card.hidden = false;
                 });
 
                 resultCount.textContent =
-                    `Showing ${filteredCards.length} of ${cards.length} table types`;
+                    `Showing ${visibleCards.length} of ${filteredCards.length} matching table types`;
 
                 noResults.hidden = filteredCards.length !== 0;
 
                 pagination.hidden = filteredCards.length <= pageSize;
 
-                pageInfo.textContent =
-                    `Page ${currentPage} of ${totalPages} · ${filteredCards.length} results`;
+                pageInfo.textContent = showAll
+                    ? `All ${filteredCards.length} table types`
+                    : `Page ${currentPage} of ${totalPages} · ${filteredCards.length} results`;
+
+                prevButton.hidden = showAll;
+                nextButton.hidden = showAll;
+
+                showAllButton.textContent = showAll
+                    ? 'Show less'
+                    : 'Show all';
+
+                showAllButton.setAttribute('aria-pressed', String(showAll));
 
                 prevButton.disabled = currentPage === 1;
                 nextButton.disabled = currentPage === totalPages;
@@ -3185,6 +3610,12 @@
 
             nextButton.addEventListener('click', () => {
                 currentPage++;
+                applyTableTypeFilters();
+            });
+
+            showAllButton.addEventListener('click', () => {
+                showAll = !showAll;
+                currentPage = 1;
                 applyTableTypeFilters();
             });
 
@@ -3243,23 +3674,7 @@
                     window.scrollTo({
                         top: Math.max(0, top),
                         behavior: 'smooth'
-                    });
-                    const startTime = performance.now();
-
-                    function animateScroll(currentTime) {
-                        const elapsed = currentTime - startTime;
-                        const progress = Math.min(elapsed / duration, 1);
-
-                        const eased = 1 - Math.pow(1 - progress, 3);
-
-                        window.scrollTo(0, start + (end - start) * eased);
-
-                        if (progress < 1) {
-                            requestAnimationFrame(animateScroll);
-                        }
-                    }
-
-                    requestAnimationFrame(animateScroll);
+                    });                  
                 });
             });
 
@@ -3267,25 +3682,6 @@
             activateTab(panels[savedTab] ? savedTab : 'tables');
         });
 
-    </script>
-    <script>
-        const backToTopBtn = document.getElementById('backToTopBtn');
-
-        function toggleBackToTop() {
-            backToTopBtn.classList.toggle('show', window.scrollY > 300);
-        }
-
-        window.addEventListener('scroll', toggleBackToTop, { passive: true });
-        toggleBackToTop();
-
-        backToTopBtn.addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-            });
-        });
-
-        lucide.createIcons();
     </script>
     
     <script>
@@ -3303,6 +3699,8 @@
         const pageInfo = document.getElementById('yoruAreaPageInfo');
         const prev = document.getElementById('yoruAreaPrev');
         const next = document.getElementById('yoruAreaNext');
+        const showAllButton = document.getElementById('yoruAreaShowAll');
+        let showAllAreas = false;
 
         const pageSize = 5;
         let currentPage = 1;
@@ -3327,16 +3725,30 @@
 
             const start = (currentPage - 1) * pageSize;
 
-            matching.slice(start, start + pageSize).forEach(card => {
+            const visibleAreas = showAllAreas
+                ? matching
+                : matching.slice(start, start + pageSize);
+
+            visibleAreas.forEach(card => {
                 card.hidden = false;
             });
 
-            count.textContent = matching.length + ' dining area(s) found';
+            count.textContent =`Showing ${visibleAreas.length} of ${matching.length} dining areas`;
             empty.hidden = matching.length !== 0;
             pagination.hidden = matching.length <= pageSize;
 
-            pageInfo.textContent = 'Page ' + currentPage +
-                ' of ' + totalPages + ' · ' + matching.length + ' results';
+            pageInfo.textContent = showAllAreas
+                ? `All ${matching.length} dining areas`
+                : `Page ${currentPage} of ${totalPages} · ${matching.length} results`;
+
+            prev.hidden = showAllAreas;
+            next.hidden = showAllAreas;
+
+            showAllButton.textContent = showAllAreas
+                ? 'Show less'
+                : 'Show all';
+
+            showAllButton.setAttribute('aria-pressed', String(showAllAreas));
 
             prev.disabled = currentPage <= 1;
             next.disabled = currentPage >= totalPages;
@@ -3368,6 +3780,12 @@
 
         next.addEventListener('click', () => {
             currentPage++;
+            renderAreas();
+        });
+
+        showAllButton.addEventListener('click', () => {
+            showAllAreas = !showAllAreas;
+            currentPage = 1;
             renderAreas();
         });
 
@@ -3463,6 +3881,7 @@
         const addButton = document.getElementById('yoruSpecialAdd');
         const idInput = document.getElementById('yoruSpecialId');
         const dateInput = document.getElementById('yoruSpecialDate');
+        const endInput = document.getElementById('yoruSpecialEndDate');
         const nameInput = document.getElementById('yoruSpecialName');
         const closedInput = document.getElementById('yoruSpecialClosed');
         const openInput = document.getElementById('yoruSpecialOpen');
@@ -3482,6 +3901,8 @@
         addButton.addEventListener('click', function () {
             idInput.value = '0';
             dateInput.value = '';
+            endInput.value = '';
+            endInput.min = '';
             nameInput.value = '';
             closedInput.checked = false;
             openInput.value = '11:00';
@@ -3495,6 +3916,10 @@
             button.addEventListener('click', function () {
                 idInput.value = button.dataset.id;
                 dateInput.value = button.dataset.date;
+                endInput.value =
+                    button.dataset.endDate || button.dataset.date;
+
+                endInput.min = dateInput.value;
                 nameInput.value = button.dataset.name;
                 closedInput.checked = button.dataset.closed === 'true';
                 openInput.value = button.dataset.open || '11:00';
@@ -3505,8 +3930,1047 @@
             });
         });
 
+        dateInput.addEventListener('input', () => {
+            endInput.min = dateInput.value;
+
+            if (dateInput.value && !endInput.value) {
+                endInput.value = dateInput.value;
+            }
+        });
         closedInput.addEventListener('change', updateTimeFields);
         updateTimeFields();
     });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('tableTypeForm');
+
+        const minInput = form.querySelector(
+            '[name="TableTypeForm.DefaultMinGuests"]'
+        );
+
+        const capacityInput = form.querySelector(
+            '[name="TableTypeForm.DefaultMaxGuests"]'
+        );
+
+        const error = document.getElementById('tableTypeCapacityError');
+
+        capacityInput.setAttribute(
+            'aria-describedby',
+            'tableTypeCapacityError'
+        );
+
+        function validateGuestRange() {
+            const invalid =
+                minInput.value !== '' &&
+                capacityInput.value !== '' &&
+                Number(minInput.value) > Number(capacityInput.value);
+
+            const message = invalid
+                ? 'Capacity must be at least the minimum guests.'
+                : '';
+
+            capacityInput.setCustomValidity(message);
+            capacityInput.classList.toggle('is-invalid', invalid);
+            capacityInput.setAttribute('aria-invalid', String(invalid));
+
+            error.hidden = !invalid;
+        }
+
+        minInput.addEventListener('input', validateGuestRange);
+        capacityInput.addEventListener('input', validateGuestRange);
+
+        form.addEventListener('reset', () => {
+            setTimeout(validateGuestRange, 0);
+        });
+
+        form.addEventListener('submit', event => {
+            validateGuestRange();
+
+            if (capacityInput.validity.customError) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                capacityInput.focus();
+                capacityInput.reportValidity();
+            }
+        }, true);
+
+        validateGuestRange();
+    });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('tableTypeForm');
+            const saveButton = document.getElementById('saveTableTypeBtn');
+            const errorBox = document.getElementById('tableTypeSaveError');
+
+            if (!form || !saveButton || !errorBox) {
+                return;
+            }
+
+            let saving = false;
+
+            form.addEventListener('reset', () => {
+                errorBox.hidden = true;
+                errorBox.textContent = '';
+            });
+
+            form.addEventListener('submit', async event => {
+                // Respect the existing validation and bulk-update confirmation.
+                if (event.defaultPrevented) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                if (saving || !form.reportValidity()) {
+                    return;
+                }
+
+                const formData = new FormData(form);
+
+                saving = true;
+                saveButton.disabled = true;
+                errorBox.hidden = true;
+                errorBox.textContent = '';
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const contentType =
+                        response.headers.get('content-type') || '';
+
+                    if (!contentType.includes('application/json')) {
+                        throw new Error(
+                            'The server returned an unexpected response. ' +
+                            'Your entries are still here.'
+                        );
+                    }
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        window.yoruRememberView({
+                            tab: 'tables',
+                            panelId: null
+                        });
+
+                        window.location.reload();
+                        return;
+                    }
+
+                    // The type was saved, but its photo upload failed.
+                    if (result.savedId) {
+                        form.querySelector(
+                            '[name="TableTypeForm.Id"]'
+                        ).value = result.savedId;
+
+                        const createFirstTable = form.querySelector(
+                            'input[type="checkbox"]' +
+                            '[name="TableTypeForm.CreateFirstTable"]'
+                        );
+
+                        if (createFirstTable) {
+                            createFirstTable.checked = false;
+                        }
+
+                        const bulkChoice =
+                            document.getElementById('bulkUpdateChoice');
+
+                        if (bulkChoice) {
+                            bulkChoice.value = 'false';
+                        }
+
+                        [
+                            'createFirstTableSection',
+                            'firstTableNameSection'
+                        ].forEach(id => {
+                            const section = document.getElementById(id);
+
+                            if (section) {
+                                section.style.display = 'none';
+                            }
+                        });
+                    }
+
+                    errorBox.textContent =
+                        result.message ||
+                        'Unable to save. Please check your entries.';
+
+                    errorBox.hidden = false;
+                    errorBox.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                    });
+                } catch (error) {
+                    errorBox.textContent =
+                        error.message ||
+                        'Unable to connect. Your entries are still here.';
+
+                    errorBox.hidden = false;
+                } finally {
+                    saving = false;
+                    saveButton.disabled = false;
+                }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const zoomButton =
+                document.getElementById('tableTypePhotoZoomButton');
+
+            const preview =
+                document.getElementById('tableTypePhotoPreview');
+
+            const dialog =
+                document.getElementById('yoruPhotoDialog');
+
+            const largePhoto =
+                document.getElementById('yoruPhotoLarge');
+
+            const closeButton =
+                document.getElementById('yoruPhotoClose');
+
+            zoomButton.addEventListener('click', () => {
+                largePhoto.src = preview.currentSrc || preview.src;
+                dialog.showModal();
+            });
+
+            closeButton.addEventListener('click', () => {
+                dialog.close();
+            });
+
+            // Click outside the photo window to close.
+            dialog.addEventListener('click', event => {
+                if (event.target !== dialog) {
+                    return;
+                }
+
+                const bounds = dialog.getBoundingClientRect();
+
+                const outside =
+                    event.clientX < bounds.left ||
+                    event.clientX > bounds.right ||
+                    event.clientY < bounds.top ||
+                    event.clientY > bounds.bottom;
+
+                if (outside) {
+                    dialog.close();
+                }
+            });
+
+            // Escape closes the photo without reaching drawer shortcuts.
+            dialog.addEventListener('keydown', event => {
+                if (event.key === 'Escape') {
+                    event.stopPropagation();
+                }
+            });
+
+            dialog.addEventListener('close', () => {
+                largePhoto.removeAttribute('src');
+            });
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const selectors = [
+                'select.yoru-type-filter',
+                'select.yoru-area-filter',
+                'select.yoru-table-status-filter',
+                'select.yoru-table-active-filter',
+                '#yoruTypeDrawer select',
+                '#tableModal select',
+                '#areaModal select'
+            ].join(',');
+
+            const filters = [];
+
+            document.querySelectorAll(selectors).forEach(select => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'dropdown yoru-custom-filter';
+
+                const trigger = document.createElement('button');
+                trigger.type = 'button';
+                trigger.className = 'yoru-custom-filter-button';
+                trigger.dataset.bsToggle = 'dropdown';
+                trigger.setAttribute('aria-expanded', 'false');
+
+                const label =
+                    select.getAttribute('aria-label') ||
+                    select.labels?.[0]?.textContent.trim();
+
+                if (label) {
+                    trigger.setAttribute('aria-label', label);
+                }
+
+                const menu = document.createElement('ul');
+                menu.className = 'dropdown-menu';
+
+                const error = document.createElement('div');
+                error.className = 'yoru-custom-filter-error';
+                error.setAttribute('aria-live', 'polite');
+                error.hidden = true;
+
+                select.before(wrapper);
+
+                wrapper.appendChild(trigger);
+                wrapper.appendChild(menu);
+                wrapper.appendChild(select);
+                wrapper.appendChild(error);
+
+                select.style.display = 'none';
+
+                let choices = [];
+
+                function buildOptions() {
+                    menu.replaceChildren();
+                    choices = [];
+
+                    Array.from(select.options).forEach(option => {
+                        const item = document.createElement('li');
+                        const button = document.createElement('button');
+
+                        button.type = 'button';
+                        button.className = 'dropdown-item';
+                        button.textContent = option.textContent;
+
+                        button.addEventListener('click', () => {
+                            select.value = option.value;
+
+                            select.dispatchEvent(
+                                new Event('change', { bubbles: true })
+                            );
+
+                            sync();
+                        });
+
+                        item.appendChild(button);
+                        menu.appendChild(item);
+
+                        choices.push({ option, button });
+                    });
+
+                    sync();
+                }
+
+                function sync() {
+                    const selected = select.selectedOptions[0];
+
+                    trigger.textContent = selected
+                        ? selected.textContent
+                        : 'Choose an option';
+
+                    trigger.disabled = select.disabled;
+
+                    choices.forEach(({ option, button }) => {
+                        button.classList.toggle(
+                            'active',
+                            option.selected
+                        );
+
+                        button.disabled =
+                            option.disabled ||
+                            (
+                                option.parentElement.tagName === 'OPTGROUP' &&
+                                option.parentElement.disabled
+                            );
+
+                        button.hidden = option.hidden;
+
+                        button.setAttribute(
+                            'aria-current',
+                            String(option.selected)
+                        );
+                    });
+
+                    if (select.validity.valid || select.disabled) {
+                        trigger.classList.remove('is-invalid');
+                        trigger.removeAttribute('aria-invalid');
+                        error.hidden = true;
+                    } else if (!error.hidden) {
+                        error.textContent = select.validationMessage;
+                    }
+                }
+
+                select.addEventListener('change', sync);
+
+                // Keep required-field validation working.
+                select.addEventListener('invalid', event => {
+                    event.preventDefault();
+
+                    trigger.classList.add('is-invalid');
+                    trigger.setAttribute('aria-invalid', 'true');
+
+                    error.textContent = select.validationMessage;
+                    error.hidden = false;
+
+                    const firstInvalid = select.form
+                        ? Array.from(select.form.elements).find(
+                            field => field.willValidate &&
+                                !field.validity.valid
+                        )
+                        : select;
+
+                    if (firstInvalid === select) {
+                        trigger.focus();
+                    }
+                });
+
+                // Refresh when Add/Edit changes the available options.
+                const observer = new MutationObserver(buildOptions);
+
+                observer.observe(select, {
+                    childList: true,
+                    subtree: true,
+                    characterData: true,
+                    attributes: true,
+                    attributeFilter: [
+                        'disabled',
+                        'hidden',
+                        'label',
+                        'value',
+                        'selected',
+                        'required'
+                    ]
+                });
+
+                filters.push(sync);
+
+                buildOptions();
+            });
+
+            function syncAll() {
+                filters.forEach(sync => sync());
+            }
+
+            // Sync values assigned by Add, Edit and Clear Filters.
+            document.addEventListener('click', () => {
+                queueMicrotask(syncAll);
+            });
+
+            document.addEventListener('change', () => {
+                queueMicrotask(syncAll);
+            });
+
+            document.addEventListener('reset', () => {
+                setTimeout(syncAll, 0);
+            }, true);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('tableForm');
+
+            const minInput = form.querySelector(
+                '[name="TableForm.MinGuests"]'
+            );
+
+            const capacityInput = form.querySelector(
+                '[name="TableForm.Capacity"]'
+            );
+
+            const capacityError =
+                document.getElementById('tableCapacityError');
+
+            const saveError =
+                document.getElementById('tableSaveError');
+
+            const saveButton =
+                form.querySelector('button[type="submit"]');
+
+            let saving = false;
+
+            capacityInput.setAttribute(
+                'aria-describedby',
+                'tableCapacityError'
+            );
+
+            function validateGuestRange() {
+                const invalid =
+                    minInput.value !== '' &&
+                    capacityInput.value !== '' &&
+                    Number(minInput.value) > Number(capacityInput.value);
+
+                capacityInput.classList.toggle('is-invalid', invalid);
+                capacityInput.setAttribute('aria-invalid', String(invalid));
+                capacityError.hidden = !invalid;
+
+                return !invalid;
+            }
+
+            minInput.addEventListener('input', validateGuestRange);
+            capacityInput.addEventListener('input', validateGuestRange);
+
+            // Refresh validation after Add/Edit assigns field values.
+            document.addEventListener('click', () => {
+                queueMicrotask(validateGuestRange);
+            });
+
+            form.addEventListener('reset', () => {
+                saveError.hidden = true;
+                saveError.textContent = '';
+
+                setTimeout(validateGuestRange, 0);
+            });
+
+            form.addEventListener('submit', async event => {
+                if (event.defaultPrevented) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                if (saving) {
+                    return;
+                }
+
+                saveError.hidden = true;
+                saveError.textContent = '';
+
+                if (!validateGuestRange()) {
+                    saveError.textContent =
+                        'Capacity must be at least the minimum guests.';
+
+                    saveError.hidden = false;
+
+                    if (capacityInput.getClientRects().length) {
+                        capacityInput.focus();
+                    }
+
+                    return;
+                }
+
+                if (!form.reportValidity()) {
+                    return;
+                }
+
+                const formData = new FormData(form);
+
+                saving = true;
+                saveButton.disabled = true;
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const contentType =
+                        response.headers.get('content-type') || '';
+
+                    if (!contentType.includes('application/json')) {
+                        throw new Error(
+                            'The server returned an unexpected response. ' +
+                            'Your entries are still here.'
+                        );
+                    }
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        const tableTypeId = form.querySelector(
+                            '[name="TableForm.TableTypeDefinitionId"]'
+                        ).value;
+
+                        window.yoruRememberView({
+                            tab: 'tables',
+                            panelId: 'modal-tables-type-' + tableTypeId
+                        });
+
+                        window.location.reload();
+                        return;
+                    }
+
+                    saveError.textContent =
+                        result.message ||
+                        'Unable to save. Please check your entries.';
+
+                    saveError.hidden = false;
+
+                    saveError.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                    });
+                } catch (error) {
+                    saveError.textContent =
+                        error.message ||
+                        'Unable to connect. Your entries are still here.';
+
+                    saveError.hidden = false;
+                } finally {
+                    saving = false;
+                    saveButton.disabled = false;
+                }
+            });
+        });
+    </script>
+    <script>
+        window.yoruRememberView = function (overrides = {}) {
+            const activeTab = document.querySelector(
+                '[data-yoru-tab].active'
+            );
+
+            const openPanel = document.querySelector(
+                '.yoru-inline-table-panel:not([hidden])'
+            );
+
+            const state = {
+                tab: activeTab?.dataset.yoruTab || 'tables',
+                panelId: openPanel?.id || null,
+                scrollY: window.scrollY,
+                savedAt: Date.now(),
+                ...overrides
+            };
+
+            try {
+                sessionStorage.setItem(
+                    'yoruTablesView:' + location.pathname,
+                    JSON.stringify(state)
+                );
+            } catch {
+                // Saving still works when browser storage is unavailable.
+            }
+        };
+
+        // Ordinary POST forms: delete, dining areas, hours and special dates.
+        document.addEventListener('submit', event => {
+            const form = event.target;
+
+            if (!(form instanceof HTMLFormElement) ||
+                event.defaultPrevented ||
+                form.method.toLowerCase() !== 'post') {
+                return;
+            }
+
+            const submitter = event.submitter;
+
+            const actionUrl = submitter?.hasAttribute('formaction')
+                ? submitter.formAction
+                : form.action;
+
+            const action = new URL(actionUrl, location.href);
+
+            if (action.origin !== location.origin ||
+                action.pathname !== location.pathname ||
+                !action.searchParams.has('handler')) {
+                return;
+            }
+
+            window.yoruRememberView();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const state = window.yoruPendingView;
+
+            if (!state) {
+                return;
+            }
+
+            delete window.yoruPendingView;
+
+            try {
+                const panel = typeof state.panelId === 'string'
+                    ? document.getElementById(state.panelId)
+                    : null;
+
+                if (panel?.hidden) {
+                    const button = Array.from(
+                        document.querySelectorAll(
+                            '.yoru-type-manage-btn[data-manage-panel]'
+                        )
+                    ).find(button =>
+                        button.dataset.managePanel === state.panelId
+                    );
+
+                    button?.click();
+                }
+            } catch (error) {
+                console.error('Unable to restore table list.', error);
+            }
+
+            function finishRestore() {
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        try {
+                            window.scrollTo({
+                                top: Number.isFinite(state.scrollY)
+                                    ? state.scrollY
+                                    : 0,
+                                behavior: 'instant'
+                            });
+                        } finally {
+                            document.documentElement.classList.remove(
+                                'yoru-restoring-view'
+                            );
+                        }
+                    });
+                });
+            }
+
+            if (document.readyState === 'complete') {
+                finishRestore();
+            } else {
+                window.addEventListener('load', finishRestore, {
+                    once: true
+                });
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const list = document.querySelector('.yoru-special-list');
+
+            if (!list) {
+                return;
+            }
+
+            const items = Array.from(
+                list.querySelectorAll('.yoru-special-item')
+            );
+
+            if (!items.length) {
+                return;
+            }
+
+            const nav = document.getElementById('yoruSpecialMonthNav');
+            const label = document.getElementById('yoruSpecialMonthLabel');
+            const count = document.getElementById('yoruSpecialMonthCount');
+            const prev = document.getElementById('yoruSpecialMonthPrev');
+            const next = document.getElementById('yoruSpecialMonthNext');
+
+            const ranges = items.map(item => {
+                const data = item.querySelector('[data-special-edit]').dataset;
+
+                return {
+                    item,
+                    startMonth: data.date.slice(0, 7),
+                    endMonth: (data.endDate || data.date).slice(0, 7)
+                };
+            });
+
+            const monthSet = new Set();
+
+            ranges.forEach(range => {
+                const [startYear, startMonth] =
+                    range.startMonth.split('-').map(Number);
+
+                const [endYear, endMonth] =
+                    range.endMonth.split('-').map(Number);
+
+                const first = startYear * 12 + startMonth - 1;
+                const last = endYear * 12 + endMonth - 1;
+
+                for (let value = first; value <= last; value++) {
+                    const year = Math.floor(value / 12);
+                    const month = value % 12 + 1;
+
+                    monthSet.add(
+                        String(year).padStart(4, '0') + '-' +
+                        String(month).padStart(2, '0')
+                    );
+                }
+            });
+
+            const months = Array.from(monthSet).sort();
+
+            const today = new Date();
+
+            const currentMonth =
+                today.getFullYear() + '-' +
+                String(today.getMonth() + 1).padStart(2, '0');
+
+            // Start with this month or the next month containing entries.
+            let index = months.findIndex(month => month >= currentMonth);
+
+            if (index === -1) {
+                index = months.length - 1;
+            }
+
+            function render() {
+                const month = months[index];
+                const [year, monthNumber] = month.split('-').map(Number);
+
+                label.textContent = new Date(
+                    year, monthNumber - 1, 1
+                ).toLocaleDateString('en-MY', {
+                    month: 'long',
+                    year: 'numeric'
+                });
+
+                let total = 0;
+
+                ranges.forEach(({ item, startMonth, endMonth }) => {
+                    const visible =
+                        startMonth <= month &&
+                        endMonth >= month;
+
+                    item.hidden = !visible;
+
+                    item.style.setProperty(
+                        'display',
+                        visible ? 'flex' : 'none',
+                        'important'
+                    );
+
+                    if (visible) total++;
+                });
+
+                count.textContent =
+                    total + ' special date' + (total === 1 ? '' : 's');
+
+                prev.disabled = index === 0;
+                next.disabled = index === months.length - 1;
+
+                list.scrollTop = 0;
+            }
+
+            prev.addEventListener('click', () => {
+                if (index > 0) {
+                    index--;
+                    render();
+                }
+            });
+
+            next.addEventListener('click', () => {
+                if (index < months.length - 1) {
+                    index++;
+                    render();
+                }
+            });
+
+            nav.hidden = false;
+
+            render();
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modalElement = document.getElementById(
+                'yoruSpecialDetailsModal'
+            );
+
+            const modal = bootstrap.Modal.getOrCreateInstance(
+                modalElement
+            );
+
+            let selectedCard = null;
+
+            document.querySelectorAll(
+                '#yoruSpecialDatesCard .yoru-special-item'
+            ).forEach(card => {
+                const originalEdit = card.querySelector(
+                    '[data-special-edit]'
+                );
+
+                if (!originalEdit) return;
+
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('aria-haspopup', 'dialog');
+                card.setAttribute(
+                    'aria-label',
+                    'View ' + originalEdit.dataset.name + ' details'
+                );
+
+                function openDetails() {
+                    selectedCard = card;
+
+                    const data = originalEdit.dataset;
+                    function formatDate(value) {
+                        const [year, month, day] = value.split('-').map(Number);
+
+                        return new Date(
+                            year, month - 1, day
+                        ).toLocaleDateString('en-MY', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                        });
+                    }
+
+                    const endDate = data.endDate || data.date;
+
+                    document.getElementById(
+                        'yoruSpecialDetailsDate'
+                    ).textContent = endDate === data.date
+                        ? formatDate(data.date)
+                        : formatDate(data.date) + ' – ' + formatDate(endDate);
+
+                    document.getElementById(
+                        'yoruSpecialDetailsTitle'
+                    ).textContent = data.name;
+
+                    document.getElementById(
+                        'yoruSpecialDetailsStatus'
+                    ).textContent = data.closed === 'true'
+                        ? 'Closed for the whole day'
+                        : 'Opening hours: ' + data.open + ' – ' +
+                          data.close +
+                          (data.close <= data.open ? ' (next day)' : '');
+
+                    modal.show();
+                }
+
+                card.addEventListener('click', event => {
+                    // Ignore the original buttons when called by the modal.
+                    if (event.target.closest('.yoru-special-actions')) {
+                        return;
+                    }
+
+                    openDetails();
+                });
+
+                card.addEventListener('keydown', event => {
+                    if (event.target !== card) return;
+
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openDetails();
+                    }
+                });
+            });
+
+            document.getElementById(
+                'yoruSpecialDetailsEdit'
+            ).addEventListener('click', () => {
+                const originalEdit = selectedCard?.querySelector(
+                    '[data-special-edit]'
+                );
+
+                if (!originalEdit) return;
+
+                modalElement.addEventListener('hidden.bs.modal', () => {
+                    originalEdit.click();
+                }, { once: true });
+
+                modal.hide();
+            });
+
+            document.getElementById(
+                'yoruSpecialDetailsDelete'
+            ).addEventListener('click', () => {
+                const form = selectedCard?.querySelector(
+                    '.yoru-special-actions form'
+                );
+
+                form?.requestSubmit();
+            });
+
+            modalElement.addEventListener('hidden.bs.modal', () => {
+                selectedCard?.focus({ preventScroll: true });
+            });
+
+            // Replace text arrows with centered SVG icons.
+            const prev = document.getElementById('yoruSpecialMonthPrev');
+            const next = document.getElementById('yoruSpecialMonthNext');
+
+            if (prev) {
+                prev.innerHTML =
+                    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                    '<path d="m14 6-6 6 6 6"/></svg>';
+            }
+
+            if (next) {
+                next.innerHTML =
+                    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+                    '<path d="m10 6 6 6-6 6"/></svg>';
+            }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modalElement = document.getElementById(
+                'yoruTypeDetailsModal'
+            );
+
+            const modal = bootstrap.Modal.getOrCreateInstance(
+                modalElement
+            );
+
+            const fields = document.getElementById(
+                'yoruTypeDetailsFields'
+            );
+
+            document.querySelectorAll('[data-type-details]')
+                .forEach(button => {
+                    button.addEventListener('click', () => {
+                        const card = button.closest('.yoru-type-card');
+                        const editButton = card.querySelector('.yoru-edit-type');
+
+                        if (!editButton) return;
+
+                        const data = editButton.dataset;
+
+                        document.getElementById(
+                            'yoruTypeDetailsTitle'
+                        ).textContent = data.name;
+
+                        const photo = document.getElementById(
+                            'yoruTypeDetailsPhoto'
+                        );
+
+                        photo.src = data.photo || '/images/tables/standard.jpg';
+                        photo.alt = data.name;
+
+                        const amount = Number(data.spend || 0);
+
+                        const spend = amount > 0
+                            ? 'RM ' + amount.toLocaleString('en-MY', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })
+                            : 'None';
+
+                        const rows = [
+                            ['Status', data.active === 'true'
+                                ? 'Active' : 'Inactive'],
+                            ['Tables / Rooms', button.dataset.count],
+                            ['Default Dining Area', button.dataset.areaName],
+                            ['Minimum Guests', data.min],
+                            ['Capacity', data.max],
+                            ['Minimum Spend', spend],
+                            ['Table Prefix', data.prefix],
+                            ['Starting Number', data.start],
+                            ['Number Padding', data.padding + ' digits']
+                        ];
+
+                        fields.replaceChildren();
+
+                        rows.forEach(([label, value]) => {
+                            const group = document.createElement('div');
+                            const term = document.createElement('dt');
+                            const detail = document.createElement('dd');
+
+                            term.textContent = label;
+                            detail.textContent = value;
+
+                            group.append(term, detail);
+                            fields.appendChild(group);
+                        });
+
+                        document.getElementById(
+                            'yoruTypeDetailsDescription'
+                        ).textContent = data.desc?.trim() || 'No description.';
+
+                        modal.show();
+                    });
+                });
+        });
     </script>
 }

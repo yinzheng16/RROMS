@@ -164,16 +164,6 @@ public class ReservationService : IReservationService
 
         type.PhotoPath = newPhotoPath;
 
-        // Update the shared image for tables belonging to this dynamic type.
-        var tables = await _db.RestaurantTables
-            .Where(t => t.TableTypeDefinitionId == tableTypeId)
-            .ToListAsync();
-
-        foreach (var table in tables)
-        {
-            table.PhotoPath = newPhotoPath;
-        }
-
         try
         {
             await _db.SaveChangesAsync();
@@ -309,6 +299,81 @@ public class ReservationService : IReservationService
             }
         }
 
+        // Prepare and validate table names before saving any changes.
+        var updatedTableNames = new Dictionary<int, string>();
+
+        if (existing is not null &&
+            applyToExistingTables &&
+            (existing.Prefix != prefix ||
+             existing.NumberPadding != input.NumberPadding))
+        {
+            var allTables = await _db.RestaurantTables
+                .AsNoTracking()
+                .Select(t => new
+                {
+                    t.Id,
+                    t.TableNumber
+                })
+                .ToListAsync();
+
+            var plannedNames = new HashSet<string>(
+                StringComparer.OrdinalIgnoreCase);
+
+            foreach (var table in existing.Tables.OrderBy(t => t.Id))
+            {
+                var match = System.Text.RegularExpressions.Regex.Match(
+                    table.TableNumber,
+                    @"^([A-Za-z]+)([0-9]+)$");
+
+                if (!match.Success)
+                {
+                    return ReservationResult.Fail(
+                        $"Cannot rename {table.TableNumber}. " +
+                        "Its name must contain letters followed by numbers.");
+                }
+
+                // Keep the numeric value and apply the new padding.
+                var digits = match.Groups[2].Value.TrimStart('0');
+
+                if (digits.Length == 0)
+                {
+                    digits = "0";
+                }
+
+                var newName =
+                    prefix + digits.PadLeft(input.NumberPadding, '0');
+
+                if (newName.Length > 10)
+                {
+                    return ReservationResult.Fail(
+                        $"Generated table name {newName} exceeds 10 characters.");
+                }
+
+                if (!plannedNames.Add(newName))
+                {
+                    return ReservationResult.Fail(
+                        $"More than one table would become {newName}. " +
+                        "Please give those tables different numbers first.");
+                }
+
+                // Check other tables, including their current names.
+                var nameExists = allTables.Any(t =>
+                    t.Id != table.Id &&
+                    string.Equals(
+                        t.TableNumber,
+                        newName,
+                        StringComparison.OrdinalIgnoreCase));
+
+                if (nameExists)
+                {
+                    return ReservationResult.Fail(
+                        $"Cannot rename {table.TableNumber} to {newName}. " +
+                        "That table name is already in use.");
+                }
+
+                updatedTableNames[table.Id] = newName;
+            }
+        }
         // 4. Save everything in one transaction
         await using var transaction = await _db.Database.BeginTransactionAsync();
 
@@ -362,10 +427,18 @@ public class ReservationService : IReservationService
             {
                 foreach (var table in existing.Tables)
                 {
+                    if (updatedTableNames.TryGetValue(
+                        table.Id,
+                        out var newTableName))
+                    {
+                        table.TableNumber = newTableName;
+                    }
+
                     table.DiningAreaId = type.DefaultDiningAreaId;
                     table.MinGuests = type.DefaultMinGuests;
                     table.Capacity = type.DefaultMaxGuests;
                     table.MinimumSpend = type.DefaultMinimumSpend ?? 0m;
+                    table.Description = type.Description;
                     table.IsActive = type.IsActive;
                 }
             }
@@ -685,29 +758,83 @@ public class ReservationService : IReservationService
             .ToListAsync();
 
     // Add or edit a special date.
-    public async Task<ReservationResult> SaveSpecialDateAsync(SpecialDate input)
+    public async Task<ReservationResult> SaveSpecialDateAsync(
+    SpecialDate input)
     {
         var name = input.Name?.Trim() ?? "";
 
         if (input.Date == default)
-            return ReservationResult.Fail("Please select a date.");
+            return ReservationResult.Fail("Please select a start date.");
+
+        var startDate = input.Date.Date;
+        var endDate = (input.EndDate ?? input.Date).Date;
+
+        if (endDate < startDate)
+        {
+            return ReservationResult.Fail(
+                "End date must be on or after start date.");
+        }
 
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
-            return ReservationResult.Fail("Special date name must be 1–100 characters.");
+        {
+            return ReservationResult.Fail(
+                "Special date name must be 1–100 characters.");
+        }
 
         if (!input.IsClosed)
         {
-            if (!input.OpenTime.HasValue || !input.CloseTime.HasValue)
-                return ReservationResult.Fail("Please select opening and closing times.");
+            if (!input.OpenTime.HasValue ||
+                !input.CloseTime.HasValue)
+            {
+                return ReservationResult.Fail(
+                    "Please select opening and closing times.");
+            }
+
+            if (input.OpenTime.Value < TimeSpan.Zero ||
+                input.OpenTime.Value >= TimeSpan.FromDays(1) ||
+                input.CloseTime.Value < TimeSpan.Zero ||
+                input.CloseTime.Value >= TimeSpan.FromDays(1))
+            {
+                return ReservationResult.Fail(
+                    "Please enter valid opening and closing times.");
+            }
 
             if (input.OpenTime == input.CloseTime)
-                return ReservationResult.Fail("Opening and closing times cannot be the same.");
+            {
+                return ReservationResult.Fail(
+                    "Opening and closing times cannot be the same.");
+            }
         }
 
-        if (await _db.SpecialDates.AnyAsync(s =>
-            s.Date == input.Date.Date && s.Id != input.Id))
+        // Exclude this record when editing.
+        // A missing EndDate means the existing record covers one day.
+        var conflict = await _db.SpecialDates
+            .AsNoTracking()
+            .Where(s =>
+                s.Id != input.Id &&
+                s.Date <= endDate &&
+                (s.EndDate ?? s.Date) >= startDate)
+            .OrderBy(s => s.Date)
+            .Select(s => new
+            {
+                s.Name,
+                s.Date,
+                s.EndDate
+            })
+            .FirstOrDefaultAsync();
+
+        if (conflict is not null)
         {
-            return ReservationResult.Fail("A special date already exists for this date.");
+            var conflictEnd = (conflict.EndDate ?? conflict.Date).Date;
+
+            var dateText = conflict.Date.Date == conflictEnd
+                ? conflict.Date.ToString("dd MMM yyyy")
+                : $"{conflict.Date:dd MMM yyyy} – " +
+                  $"{conflictEnd:dd MMM yyyy}";
+
+            return ReservationResult.Fail(
+                $"Date range overlaps with {conflict.Name} " +
+                $"({dateText}). Please choose different dates.");
         }
 
         SpecialDate row;
@@ -727,7 +854,8 @@ public class ReservationService : IReservationService
             row = existing;
         }
 
-        row.Date = input.Date.Date;
+        row.Date = startDate;
+        row.EndDate = endDate;
         row.Name = name;
         row.IsClosed = input.IsClosed;
         row.OpenTime = input.IsClosed ? null : input.OpenTime;
@@ -740,7 +868,9 @@ public class ReservationService : IReservationService
         }
         catch (DbUpdateException)
         {
-            return ReservationResult.Fail("Could not save the special date. Check for duplicate dates.");
+            return ReservationResult.Fail(
+                "Could not save the special date. " +
+                "Please check for database conflicts.");
         }
     }
 

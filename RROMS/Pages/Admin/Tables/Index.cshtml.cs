@@ -171,11 +171,26 @@ public class IndexModel : PageModel
             var photoResult = await _service.SetTableTypePhotoAsync(
                 input.Id,
                 TableTypeForm.Photo);
-
             if (!photoResult.Success)
             {
-                ErrorMessage = "Table type saved, but photo upload failed: "
-                                + photoResult.Error;
+                var message =
+                    "Table type saved, but photo upload failed: " +
+                    photoResult.Error;
+
+                if (IsAjaxRequest)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message,
+                        savedId = input.Id
+                    })
+                    {
+                        StatusCode = 400
+                    };
+                }
+
+                ErrorMessage = message;
 
                 return RedirectToPage();
             }
@@ -353,22 +368,64 @@ public class IndexModel : PageModel
         foreach (var key in ModelState.Keys.Where(k => !k.StartsWith(prefix)).ToList()) ModelState.Remove(key);
     }
 
+    private bool IsAjaxRequest =>
+    Request.Headers["X-Requested-With"].ToString() == "XMLHttpRequest";
+
     private IActionResult InvalidInput()
     {
-        ErrorMessage = string.Join(" ",
+        var message = string.Join(" ",
             ModelState.Values
                 .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage));
+                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage)
+                    ? "Please check the values entered."
+                    : e.ErrorMessage));
+
+        if (IsAjaxRequest)
+        {
+            return new JsonResult(new
+            {
+                success = false,
+                message
+            })
+            {
+                StatusCode = 400
+            };
+        }
+
+        ErrorMessage = message;
 
         return RedirectToPage();
     }
 
-    private IActionResult Done(RROMS.Services.ReservationResult result, string success)
+    private IActionResult Done(
+        RROMS.Services.ReservationResult result,
+        string success)
     {
+        if (IsAjaxRequest)
+        {
+            if (result.Success)
+            {
+                SuccessMessage = success;
+            }
+
+            return new JsonResult(new
+            {
+                success = result.Success,
+                message = result.Success ? success : result.Error
+            })
+            {
+                StatusCode = result.Success ? 200 : 400
+            };
+        }
+
         if (result.Success)
+        {
             SuccessMessage = success;
+        }
         else
+        {
             ErrorMessage = result.Error;
+        }
 
         return RedirectToPage();
     }
