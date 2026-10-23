@@ -26,5 +26,8 @@ namespace RROMS.Models
 
         [Range(0, 100)]
         public decimal ServiceChargePercent { get; set; }
+
+        [StringLength(300)]
+        public string? LogoPath { get; set; }
     }
 }
