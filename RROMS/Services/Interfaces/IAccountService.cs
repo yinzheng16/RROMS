@@ -37,5 +37,7 @@ namespace RROMS.Services.Interfaces
 
         // US51: same, for someone who is already logged in (e.g. opens the Login page again).
         string GetStartPage(ClaimsPrincipal user);
+
+        Task<string?> GetDisplayNameAsync(ClaimsPrincipal user);
     }
 }

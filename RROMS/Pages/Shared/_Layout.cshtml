@@ -1,6 +1,7 @@
 @using Microsoft.AspNetCore.Identity
 @using RROMS.Models
 @inject SignInManager<ApplicationUser> SignInManager
+@inject RROMS.Services.Interfaces.IHomeService HomeData
 @{
     // EN04 Shared layout (Owner: Member 1). Ask Member 1 before changing this file.
     // Brand name: change it here only.
@@ -123,6 +124,7 @@
                             @* Visitor and customer menu (US51) *@
                             <li class="nav-item"><a class="nav-link @Active("/", true)" href="/">Home</a></li>
                             <li class="nav-item"><a class="nav-link @Active("/Menu")" href="/Menu">Our Menu</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/About")" href="/About">About Us</a></li>
                             <li class="nav-item"><a class="nav-link @Active("/Customer/Reservations/Create")" href="/Customer/Reservations/Create">Reserve</a></li>
                         }
                     </ul>
@@ -208,16 +210,24 @@
                         <p class="footer-tagline-jp">@TaglineJp</p>
                         <p class="footer-tagline">@Tagline</p>
                     </div>
+                    @{
+                        // Same data as the Home page: Member 5's settings + Member 2's opening hours.
+                        var footerInfo = await HomeData.GetInfoAsync();
+                        var footerHours = await HomeData.GetOpeningHoursAsync();
+                    }
                     <div class="col-6 col-md-3">
                         <h2 class="footer-heading">Visit</h2>
-                        @* Placeholder: Member 5 can read this from RestaurantSetting (US49). *@
-                        <p>12 Jalan Bukit Bintang<br />Kuala Lumpur</p>
-                        <p>+60 3-1234 5678</p>
+                        <p>@footerInfo.Address</p>
+                        <p>@footerInfo.Phone</p>
                     </div>
                     <div class="col-6 col-md-4">
                         <h2 class="footer-heading">Hours</h2>
-                        @* Placeholder: Member 2 can read this from OperatingHours (US11). *@
-                        <p>Tue – Sun · 5:00 PM – 12:00 AM<br />Closed on Mondays</p>
+                        <p>
+                            @foreach (var row in footerHours)
+                            {
+                                <span class="d-block">@row.Days · @row.Hours</span>
+                            }
+                        </p>
                         <a class="btn btn-primary btn-sm mt-1" href="/Customer/Reservations/Create">Book a table</a>
                     </div>
                 </div>
@@ -228,6 +238,38 @@
             </div>
         </footer>
     }
+
+    @* Back to top (EN04): appears after scrolling down; the gold ring shows how far down the page you are *@
+    <button type="button" class="to-top" id="toTop" aria-label="Back to top" hidden>
+        <svg class="to-top-ring" viewBox="0 0 48 48" aria-hidden="true">
+            <circle cx="24" cy="24" r="22" class="to-top-track" />
+            <circle cx="24" cy="24" r="22" class="to-top-bar" id="toTopBar" />
+        </svg>
+        <svg class="to-top-arrow" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
+        </svg>
+    </button>
+    <script>
+            (function () {
+                var btn = document.getElementById('toTop'), bar = document.getElementById('toTopBar');
+                if (!btn) return;
+                var len = 2 * Math.PI * 22;
+                bar.style.strokeDasharray = len;
+                function onScroll() {
+                    var max = document.documentElement.scrollHeight - window.innerHeight;
+                    var y = window.scrollY;
+                    btn.hidden = false;
+                    btn.classList.toggle('is-shown', y > window.innerHeight * 0.8);
+                    bar.style.strokeDashoffset = len * (1 - (max > 0 ? Math.min(1, y / max) : 0));
+                }
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+                btn.addEventListener('click', function () {
+                    var smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+                });
+            })();
+    </script>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

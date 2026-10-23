@@ -1,0 +1,40 @@
+@page
+@model AboutModel
+@{
+    // US53 (Owner: Member 1): About us. Starter version; the full page comes in Sprint 4.
+    ViewData["Title"] = "About us";
+    ViewData["FullWidth"] = true;
+}
+
+<div class="hm">
+    <section class="hm-story hm-dark">
+        <div class="hm-story-photo" role="img" aria-label="Inside YORU Izakaya"></div>
+        <div class="hm-story-copy">
+            <span class="hm-eyebrow">About us · 私たちについて</span>
+            <h1 class="hm-h2">A little Tokyo<br /><em>after dark.</em></h1>
+            <p class="hm-text">YORU means "night". We bring the warm, lively izakaya feeling of Tokyo to Kuala Lumpur: small plates to share, good drinks, and nobody rushing you home.</p>
+            <p class="hm-text">Our chefs grill over real charcoal, our fish arrives every morning, and our bar pours sake, Japanese whisky and crisp highballs until late.</p>
+            <a class="btn btn-primary px-4 mt-2" href="/Customer/Reservations/Create">Book a table <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+        </div>
+        <span class="hm-vert jp" aria-hidden="true">夜は、まだ終わらない</span>
+        <span class="hm-waves" aria-hidden="true"></span>
+    </section>
+
+    <section class="hm-exp hm-paper">
+        <div class="container-xl">
+            <div class="hm-center">
+                <span class="hm-eyebrow">The YORU experience</span>
+                <h2 class="hm-h2">What we care about</h2>
+            </div>
+            <div class="hm-feats">
+                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-water" aria-hidden="true"></i></div><h3>Fresh ingredients</h3><p>Fish delivered every morning, sliced to order.</p></div>
+                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-fire" aria-hidden="true"></i></div><h3>Authentic taste</h3><p>Traditional recipes, grilled over real charcoal.</p></div>
+                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-cup-straw" aria-hidden="true"></i></div><h3>Crafted drinks</h3><p>Sake, Japanese whisky and crisp highballs.</p></div>
+                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-people" aria-hidden="true"></i></div><h3>Warm atmosphere</h3><p>A cosy space for friends, family and late nights.</p></div>
+            </div>
+            <div class="text-center mt-5">
+                <a class="hm-link" href="/#visit">Find us and opening hours <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            </div>
+        </div>
+    </section>
+</div>
