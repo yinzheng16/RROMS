@@ -2,15 +2,15 @@
 @model RROMS.Pages.Staff.Billing.IndexModel
 
 @{
-    ViewData["Title"] = "Billing Management";
+    ViewData["Title"] = "Billing & Payment Management";
 }
 
 <div class="container py-4 us32-billing">
 
     <div class="mb-4">
-        <h2 class="mb-1">Billing Management</h2>
+        <h2 class="mb-1">Billing & Payment Management</h2>
         <p class="text-muted mb-0">
-            YORU IZAKAYA - Staff Billing
+            YORU IZAKAYA — Staff Billing & Payments
         </p>
     </div>
 
@@ -22,7 +22,7 @@
                 <div class="row g-3 align-items-end">
                     <div class="col-md-8">
                         <label asp-for="OrderNo"
-                               class="form-label">
+                               class="form-label billing-order-label">
                             Order Number
                         </label>
 
@@ -94,8 +94,7 @@
                 </div>
 
                 <p class="bill-order-number">
-                    <strong>Order Number:</strong>
-                    @Model.Bill.OrderNo
+                    Order Number: @Model.Bill.OrderNo
                 </p>
 
                 <h6>Ordered Items</h6>
@@ -348,6 +347,30 @@
                 font-weight: 500;
                 line-height: 1.5;
                 margin-bottom: 8px;
+            }
+            /* All form labels */
+            .us32-billing .billing-card .form-label {
+                font-family: var(--font-body);
+                font-size: 14px;
+                font-weight: 500;
+                line-height: 1.5;
+                margin-bottom: 8px;
+            }
+            /* Find Order - Order Number label */
+            .us32-billing .billing-card .billing-order-label {
+                font-family: var(--font-body);
+                font-size: 15px;
+                font-weight: 500;
+                line-height: 1.5;
+                letter-spacing: 0;
+            }
+            /* Form input */
+            .us32-billing .billing-card .form-control {
+                font-family: var(--font-body);
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 1.5;
+                min-height: 42px;
             }
 
             .us32-billing .billing-card .form-control {
