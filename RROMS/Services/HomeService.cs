@@ -98,7 +98,8 @@ namespace RROMS.Services
                     discounts.TryGetValue(m.Id, out var pct) ? pct : null,
                     m.ImageUrl,
                     m.Category.Name,
-                    m.Id == mostOrderedId))
+                    m.Id == mostOrderedId,
+                    m.Id))
                 .ToList();
         }
 
@@ -126,7 +127,8 @@ namespace RROMS.Services
                     p.DiscountPercent,
                     p.MenuItem.ImageUrl,
                     p.MenuItem.Category?.Name ?? "",
-                    p.EndDate))
+                    p.EndDate,
+                    p.MenuItem.Id))
                 .ToList();
         }
 
@@ -147,7 +149,8 @@ namespace RROMS.Services
             return items.Select(m => new OmikujiDish(
                     m.Name,
                     m.Category.Name,
-                    discounts.TryGetValue(m.Id, out var pct) ? m.Price * (100 - pct) / 100 : m.Price))
+                    discounts.TryGetValue(m.Id, out var pct) ? m.Price * (100 - pct) / 100 : m.Price,
+                    m.Id))
                 .ToList();
         }
 
