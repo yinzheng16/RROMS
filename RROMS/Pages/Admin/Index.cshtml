@@ -7,45 +7,121 @@
 
 <div class="page-header">
     <div>
-        <p class="eyebrow">Administration</p>
+        <p class="eyebrow">Admin Overview ・ 管理</p>
         <h1>Today's Overview</h1>
+        <p class="text-muted mb-0 mt-2">
+            Here's what's happening at YORU IZAKAYA today.
+        </p>
+    </div>
+
+    <div class="text-md-end">
+        <p class="text-muted mb-1 small">Today's Date</p>
+        <strong>@DateTime.Today.ToString("dddd, dd MMMM yyyy")</strong>
     </div>
 </div>
 
 <div class="row g-3 mb-4">
 
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <p class="text-muted mb-1">Today's Reservations</p>
-                <h2 class="mb-0">@Model.Overview.TodayReservationCount</h2>
+    <!-- Reservations -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">予約 ・ Reservations</p>
+                        <p class="text-muted mb-0 small">Today's Reservations</p>
+                    </div>
+
+                    <span class="fs-4 text-secondary">
+                        <i class="bi bi-calendar-check"></i>
+                    </span>
+                </div>
+
+                <h2 class="display-6 mb-1">
+                    @Model.Overview.TodayReservationCount
+                </h2>
+
+                <p class="text-muted small mb-0">
+                    Reservations scheduled today
+                </p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <p class="text-muted mb-1">Today's Orders</p>
-                <h2 class="mb-0">@Model.Overview.TodayOrderCount</h2>
+    <!-- Orders -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">注文 ・ Orders</p>
+                        <p class="text-muted mb-0 small">Today's Orders</p>
+                    </div>
+
+                    <span class="fs-4 text-secondary">
+                        <i class="bi bi-receipt"></i>
+                    </span>
+                </div>
+
+                <h2 class="display-6 mb-1">
+                    @Model.Overview.TodayOrderCount
+                </h2>
+
+                <p class="text-muted small mb-0">
+                    Orders created today
+                </p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <p class="text-muted mb-1">Today's Payments</p>
-                <h2 class="mb-0">@Model.Overview.TodayPaymentCount</h2>
+    <!-- Payments -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">支払 ・ Payments</p>
+                        <p class="text-muted mb-0 small">Today's Payments</p>
+                    </div>
+
+                    <span class="fs-4 text-secondary">
+                        <i class="bi bi-credit-card"></i>
+                    </span>
+                </div>
+
+                <h2 class="display-6 mb-1">
+                    @Model.Overview.TodayPaymentCount
+                </h2>
+
+                <p class="text-muted small mb-0">
+                    Payments received today
+                </p>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <p class="text-muted mb-1">Payment Total</p>
-                <h2 class="mb-0">RM @Model.Overview.TodayPaymentTotal.ToString("N2")</h2>
+    <!-- Revenue -->
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <p class="eyebrow mb-1">売上 ・ Revenue</p>
+                        <p class="text-muted mb-0 small">Today's Revenue</p>
+                    </div>
+
+                    <span class="fs-4 text-secondary">
+                        <i class="bi bi-cash-stack"></i>
+                    </span>
+                </div>
+
+                <h2 class="display-6 mb-1">
+                    RM @Model.Overview.TodayPaymentTotal.ToString("N2")
+                </h2>
+
+                <p class="text-muted small mb-0">
+                    Total collected today
+                </p>
             </div>
         </div>
     </div>
