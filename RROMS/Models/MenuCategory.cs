@@ -11,6 +11,10 @@ namespace RROMS.Models
         [Required, StringLength(50)]
         public string Name { get; set; } = string.Empty;
 
+        // Assigned by the service once; renaming/reordering does not change it.
+        [Required, StringLength(12)]
+        public string Code { get; set; } = string.Empty;
+
         public int DisplayOrder { get; set; }
 
         public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();

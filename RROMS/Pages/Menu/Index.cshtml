@@ -1,0 +1,260 @@
+@page
+@model RROMS.Pages.Menu.IndexModel
+@using System.Globalization
+@using System.Linq
+@using RROMS.Services.Interfaces
+@using Microsoft.AspNetCore.Mvc.ViewFeatures
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Our menu";
+    ViewData["FullWidth"] = true;
+    string MenuUrl(int? category, string? search, string? sort, int? limit = null, int? itemId = null)
+        => Url.Page("/Menu/Index", null, new { CategoryId = category, Search = search, Sort = sort == "menu" ? null : sort, Limit = limit, ItemId = itemId }, null, null, itemId.HasValue ? "dish-details" : "menu-browser")!;
+    var resetUrl = MenuUrl(null, null, null);
+}
+<script>
+    // A native browser refresh starts a clean menu. Normal links and AJAX updates
+    // keep their query state. Run before the customer-menu content is rendered.
+    (() => {
+        const navigation = window.performance?.getEntriesByType?.('navigation')?.[0];
+        if (navigation?.type !== 'reload') return;
+        const url = new URL(window.location.href);
+        const menuKeys = new Set(['search', 'categoryid', 'sort', 'limit', 'itemid']);
+        let changed = false;
+        for (const key of Array.from(url.searchParams.keys())) {
+            if (menuKeys.has(key.toLowerCase())) {
+                url.searchParams.delete(key);
+                changed = true;
+            }
+        }
+        if (changed) {
+            url.hash = '';
+            window.location.replace(url.href);
+        }
+    })();
+
+</script>
+<link rel="stylesheet" href="~/css/customer-menu.css" asp-append-version="true" />
+<div class="customer-menu" data-customer-menu>
+    <section class="customer-menu-hero" aria-labelledby="menu-hero-title">
+        <img class="customer-menu-hero__art" src="~/images/menu/yoru-customer-menu-evening.png" alt="" fetchpriority="high" width="2172" height="724" />
+        <div class="customer-menu-container customer-menu-hero__content">
+            <p class="eyebrow">YORU IZAKAYA · THE MENU</p>
+            <h1 id="menu-hero-title">Your evening<br />starts here.</h1>
+            <p class="customer-menu-hero__subtitle">Small plates, comforting favourites, and drinks worth lingering over.</p>
+        </div>
+    </section>
+
+    <div class="customer-menu-container customer-menu-browser" id="menu-browser" data-menu-browser>
+        <div class="menu-book-slot" data-menu-category-slot>
+            <aside class="menu-book" id="menu-category-panel" aria-labelledby="menu-category-title" data-menu-category-panel>
+                <div class="menu-book__heading">
+                    <span class="menu-book__seal" aria-hidden="true">夜</span>
+                    <div><p id="menu-category-title">THE MENU</p><span lang="ja">お品書き</span></div>
+                    <button type="button" class="menu-category-close" data-menu-category-close aria-label="Collapse categories" title="Collapse categories" hidden>
+                        <svg class="menu-category-close__desktop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
+                        <svg class="menu-category-close__mobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+                    </button>
+                </div>
+                <nav class="menu-book__list" aria-label="Browse by category">
+                    <a href="@MenuUrl(null, Model.Search, Model.Sort)" class="menu-book__category @(Model.CategoryId is null ? "is-active" : "")" aria-current="@(Model.CategoryId is null ? "true" : null)" data-menu-link>
+                        <span class="menu-book__label">All dishes</span><span class="menu-book__count" data-menu-catalogue-count>@Model.Menu.CatalogueCount</span>
+                    </a>
+                    @foreach (var category in Model.Menu.Categories)
+                    {
+                        var label = RROMS.Pages.Menu.IndexModel.CategoryLabel(category.Name);
+                        <a href="@MenuUrl(category.Id, Model.Search, Model.Sort)" class="menu-book__category @(Model.CategoryId == category.Id ? "is-active" : "")" aria-current="@(Model.CategoryId == category.Id ? "true" : null)" data-menu-link>
+                            <span class="menu-book__label">
+                                @label.Primary
+                                @if (label.Secondary.Length > 0)
+                                {
+                                    <small>@label.Secondary</small>
+                                }
+                            </span>
+                            <span class="menu-book__count" data-menu-category-count="@category.Id">@category.ItemCount</span>
+                        </a>
+                    }
+                </nav>
+            </aside>
+        </div>
+
+        <div class="menu-explorer">
+            <header class="menu-explorer__heading">
+                <div><p class="eyebrow">EXPLORE OUR MENU</p><h2>What are you craving?</h2></div>
+                <p class="menu-explorer__total"><span data-menu-catalogue-total>@Model.Menu.CatalogueCount @(Model.Menu.CatalogueCount == 1 ? "dish" : "dishes")</span> <span aria-hidden="true">·</span> @Model.Menu.Categories.Count @(Model.Menu.Categories.Count == 1 ? "category" : "categories")</p>
+            </header>
+
+            <div class="menu-category-toolbar" data-menu-category-toolbar hidden>
+                <button type="button" class="menu-categories-toggle" data-menu-categories-toggle aria-controls="menu-category-panel" aria-expanded="true" aria-haspopup="dialog">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    <span>Categories</span>
+                </button>
+            </div>
+            <form method="get" action="@Url.Page("/Menu/Index")#menu-browser" role="search" autocomplete="off" aria-label="Search and filter the menu" class="menu-search" id="menu-filters" data-menu-form>
+                <div class="menu-search__category-mobile">
+                    <label for="menu-category" class="form-label">Category</label>
+                    <select class="form-select" name="CategoryId" id="menu-category">
+                        <option value="" data-menu-category-option="All dishes">All dishes (@Model.Menu.CatalogueCount)</option>
+                        @foreach (var category in Model.Menu.Categories)
+                        {
+                            <option value="@category.Id" data-menu-category-option="@category.Name" selected="@(Model.CategoryId == category.Id)">@category.Name (@category.ItemCount)</option>
+                        }
+                        @if (Model.CategoryId.HasValue && !Model.Menu.Categories.Any(c => c.Id == Model.CategoryId))
+                        {
+                            <option value="@Model.CategoryId" selected>Selected category (0)</option>
+                        }
+                    </select>
+                </div>
+                <div class="menu-search__entry">
+                    <label for="menu-search" class="visually-hidden">Find a dish by name, category or code</label>
+                    <div class="menu-search__field">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
+                        <input class="form-control" type="search" id="menu-search" name="Search" value="@Model.Search" maxlength="100" placeholder="Search dishes, categories or codes" />
+                    </div>
+                    <button class="btn btn-primary menu-search__submit" type="submit">Search</button>
+                </div>
+                <div class="menu-search__sort">
+                    <label for="menu-sort" class="visually-hidden">Sort dishes by</label>
+                    <select class="form-select" name="Sort" id="menu-sort">
+                        <option value="menu" selected="@(Model.Sort == "menu")">Sort by: Menu order</option>
+                        <option value="name" selected="@(Model.Sort == "name")">Name: A to Z</option>
+                        <option value="name-desc" selected="@(Model.Sort == "name-desc")">Name: Z to A</option>
+                        <option value="price" selected="@(Model.Sort == "price")">Price: Low to high</option>
+                        <option value="price-desc" selected="@(Model.Sort == "price-desc")">Price: High to low</option>
+                    </select>
+                </div>
+            </form>
+
+            @if (Model.DetailNotice is not null)
+            {
+                <p class="text-body-secondary">@Model.DetailNotice</p>
+            }
+            <div class="menu-filter-bar" role="group" aria-label="Current menu view">
+                <div class="menu-current-view">
+                    @if (Model.HasFilters)
+                    {
+                        if (Model.Search is not null)
+                        {
+                            <a class="menu-filter-chip" href="@MenuUrl(Model.CategoryId, null, Model.Sort)" data-menu-link title="Remove search: @Model.Search"><span>Search: @Model.Search</span><span aria-hidden="true">×</span><span class="visually-hidden">Remove search</span></a>
+                        }
+                        if (Model.CategoryId.HasValue)
+                        {
+                            <a class="menu-filter-chip" href="@MenuUrl(null, Model.Search, Model.Sort)" data-menu-link title="Remove category: @Model.CurrentCategory"><span>@Model.CurrentCategory</span><span aria-hidden="true">×</span><span class="visually-hidden">Remove category</span></a>
+                        }
+                        if (Model.Sort != "menu")
+                        {
+                            var sortLabel = Model.Sort switch { "name" => "Name: A to Z", "name-desc" => "Name: Z to A", "price" => "Price: Low to high", _ => "Price: High to low" };
+                            <span class="menu-filter-chip menu-filter-chip--static" title="@sortLabel"><span>@sortLabel</span></span>
+                        }
+                    }
+                    else
+                    {
+                        <p class="menu-current-view__default">Showing full menu</p>
+                    }
+                </div>
+                @if (Model.HasFilters)
+                {
+                    <a href="@resetUrl" class="menu-reset" data-menu-link><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 10a9 9 0 1 1 2.6 8.4M3 4v6h6" /></svg><span>Clear filters</span></a>
+                }
+                else
+                {
+                    <button type="button" class="menu-reset" disabled title="No filters to clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 10a9 9 0 1 1 2.6 8.4M3 4v6h6" /></svg><span>Clear filters</span></button>
+                }
+            </div>
+            @if (!Model.HasFilters && Model.Menu.RecentItems.Count > 0)
+            {
+                <section class="menu-new-arrivals" aria-labelledby="new-menu-title" aria-roledescription="carousel" data-menu-new-arrivals>
+                    <header class="menu-new-arrivals__heading">
+                        <div>
+                            <p class="menu-new-arrivals__eyebrow">FRESH FROM OUR KITCHEN</p>
+                            <h3 id="new-menu-title">New on the menu</h3>
+                            <p class="menu-new-arrivals__intro">Added in the last 7 days.</p>
+                        </div>
+                        <div class="menu-new-arrivals__controls" data-menu-recent-controls hidden>
+                            <span class="menu-new-arrivals__count" aria-live="polite" aria-atomic="true" data-menu-recent-count>1 of @Model.Menu.RecentItems.Count</span>
+                            <button type="button" class="menu-new-arrivals__arrow" aria-label="Previous new dishes" aria-controls="new-menu-carousel" data-menu-recent-previous disabled>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
+                            </button>
+                            <button type="button" class="menu-new-arrivals__arrow" aria-label="Next new dishes" aria-controls="new-menu-carousel" data-menu-recent-next>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
+                            </button>
+                        </div>
+                    </header>
+                    <div class="menu-new-arrivals__viewport">
+                        <div class="menu-dish-grid menu-new-arrivals__track" id="new-menu-carousel" role="group" aria-label="New dishes. Swipe or use the arrow buttons to browse." tabindex="0" data-menu-recent-grid>
+                            @foreach (var item in Model.Menu.RecentItems)
+                            {
+                                var detailUrl = MenuUrl(Model.CategoryId, Model.Search, Model.Sort, Model.Limit, item.Id);
+                                @await Html.PartialAsync("_DishCard", item, new ViewDataDictionary(ViewData) { ["MenuDetailUrl"] = detailUrl })
+                            }
+                        </div>
+                    </div>
+                </section>
+            }
+            <div class="menu-results__heading">
+                <div class="menu-results__main">
+                    <div class="menu-results__intro">
+                        <span class="menu-results__eyebrow">@(Model.CategoryId.HasValue ? "CATEGORY COLLECTION" : "THE COLLECTION")</span>
+                        <h3 id="menu-results-title" tabindex="-1">@(Model.Search is not null ? "Search results" : Model.CurrentCategory)</h3>
+                    </div>
+                    <p class="menu-results__count" data-menu-matching-count>@Model.Menu.TotalCount @(Model.Menu.TotalCount == 1 ? "dish" : "dishes")@(Model.Search is not null || Model.CategoryId.HasValue ? " found" : " to explore")</p>
+                </div>
+                <span class="menu-results__rule" aria-hidden="true"></span>
+            </div>
+
+            @if (Model.Menu.TotalCount == 0)
+            {
+                <div class="menu-empty">
+                    <span lang="ja" aria-hidden="true">夜</span>
+                    <h4>@(Model.HasFilters ? "No dishes found this time." : "Something good is on its way.")</h4>
+                    <p>@(Model.HasFilters ? "Try a different dish, category or code, or clear your filters." : "Our menu is being prepared. Please check back soon.")</p>
+                    @if (Model.HasFilters)
+                    {
+                        <a href="@resetUrl" class="btn btn-outline-secondary" data-menu-link>Explore all dishes</a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="menu-dish-grid" data-dish-grid>
+                    @foreach (var item in Model.Menu.Items)
+                    {
+                        var detailUrl = MenuUrl(Model.CategoryId, Model.Search, Model.Sort, Model.Limit, item.Id);
+                        @await Html.PartialAsync("_DishCard", item, new ViewDataDictionary(ViewData) { ["MenuDetailUrl"] = detailUrl })
+                    }
+                </div>
+                <div class="menu-load-more">
+                    @if (Model.Menu.HasMore)
+                    {
+                        <a href="@MenuUrl(Model.CategoryId, Model.Search, Model.Sort, Model.Menu.NextLimit)" class="btn btn-outline-secondary" data-menu-link data-menu-more>Load more dishes <span aria-hidden="true">↓</span></a>
+                    }
+                    <p data-menu-loaded-count>Showing @Model.Menu.Items.Count of @Model.Menu.TotalCount @(Model.Menu.TotalCount == 1 ? "dish" : "dishes")</p>
+                </div>
+            }
+            <script type="application/json" data-menu-live-state>@Html.Raw(JsonSerializer.Serialize(Model.Menu.LiveState, new JsonSerializerOptions(JsonSerializerDefaults.Web)))</script>
+            @* One template per database ID, even when a dish is shown in both sections. *@
+            <div data-dish-templates hidden>
+                @foreach (var item in Model.Menu.Items.Concat(Model.Menu.RecentItems).DistinctBy(item => item.Id))
+                {
+                    <template id="dish-template-@item.Id"><partial name="_DishDetails" model="item" /></template>
+                }
+            </div>
+        </div>
+        @* Future US24 cart-drawer host. Hidden: no blank column or inactive cart UI in US23. *@
+        <div data-menu-cart-host hidden></div>
+    </div>
+    <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-menu-status></p>
+    <dialog class="menu-dish-dialog" id="dish-details" aria-labelledby="dish-detail-title" open="@(Model.SelectedItem is not null)" data-dish-dialog data-menu-dish-id="@(Model.SelectedItem?.Id)">
+        <form method="dialog" class="menu-dish-dialog__close"><button type="submit" aria-label="Close dish details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></form>
+        <div data-dish-dialog-content>
+            @if (Model.SelectedItem is not null)
+            {
+                <partial name="_DishDetails" model="Model.SelectedItem" />
+            }
+        </div>
+    </dialog>
+    <dialog class="menu-category-drawer" id="menu-category-drawer" aria-labelledby="menu-category-title" data-menu-category-dialog></dialog>
+</div>
+@section Scripts {
+    <script src="~/js/customer-menu.js" asp-append-version="true" defer></script>
+}
