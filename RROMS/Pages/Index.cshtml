@@ -5,6 +5,11 @@
     // US50 (Owner: Member 1): public Home page.
     ViewData["Title"] = "Home";
     ViewData["FullWidth"] = true;   // sections go edge to edge
+    
+    // Link to the dish on Member 3's menu page (opens its details pop-up). No ID -> the full menu.
+    string DishUrl(int? id) => id is null
+        ? Url.Page("/Menu/Index")!
+        : Url.Page("/Menu/Index", null, new { ItemId = id }, null, null, "dish-details")!;
 
     // A kanji for each card, picked from the category name (shown until the dish has a photo).
     // Checks Japanese and English words, e.g. "Sashimi · Raw Seafood" -> 刺 (from 刺身, sashimi).
@@ -44,7 +49,7 @@
     // Hero words for each mood (the mood comes from today's opening hours).
     var (eyebrow, title) = Model.Info.Mood switch
     {
-        "before" => ("夕暮れ · Opening soon", "Tokyo wakes up<br />at <em>five.</em>"),
+        "before" => ("夕暮れ · Opening soon", "Tokyo wakes up<br /><em>soon.</em>"),
         "last" => ("ラストオーダー · Last orders", "One more<br /><em>round?</em>"),
         "closed" => ("お休み · Resting tonight", "Resting tonight,<br />back <em>tomorrow.</em>"),
         _ => ("居酒屋 · YORU Izakaya", "Where Tokyo<br />comes <em>alive.</em>")
@@ -101,12 +106,13 @@
             {
                 var d = Model.Dishes[i];
                 var hasPhoto = !string.IsNullOrEmpty(d.ImageUrl);
-                <a class="hm-card hm-dish" href="/Menu" style="--pc:@(colours[i % colours.Length])">
+                <a class="hm-card hm-dish" href="@DishUrl(d.Id)" style="--pc:@(colours[i % colours.Length])">
                     @* Kanji first; the photo (if Member 3 added one) covers it. If the photo file is missing, it removes itself. *@
                     <span class="hm-card-kanji jp" aria-hidden="true">@Kanji(d.CategoryName)</span>
+                    @* Member 3 stores "~/menu-images/abc.png"; Url.Content turns "~/" into the real address, same as the Menu page. *@
                     @if (hasPhoto)
                     {
-                        <img class="hm-card-img" src="@d.ImageUrl" alt="@d.Name" loading="lazy" onerror="this.remove()" />
+                        <img class="hm-card-img" src="@Url.Content(d.ImageUrl)" alt="@d.Name" loading="lazy" onerror="this.remove()" />
                     }
                     @if (d.DiscountPercent is decimal off)
                     {
@@ -152,7 +158,7 @@
                 <div class="hm-stat"><b>@Model.Info.CategoryCount</b><span>Categories</span></div>
             }
             <div class="hm-stat"><b>@Model.Info.OpenDays</b><span>Nights a week</span></div>
-            <div class="hm-stat"><b>@Model.Info.LastOrders</b><span>We close</span></div>
+            <div class="hm-stat"><b>@Model.Info.LastOrders</b><span>Closing today</span></div>
         </div>
 
         <a class="btn btn-outline-gold px-4" href="/About">Learn more about us <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
@@ -194,21 +200,33 @@
                 <span class="hm-rule" aria-hidden="true"></span>
                 <p class="hm-text">Shake the box and let fortune pick your dish for tonight, from what's on our menu right now.</p>
             </div>
-            <div class="hm-omi-left">
-                <button type="button" class="hm-omi-box" id="omiBox" aria-label="Shake the omikuji box">
-                    <span class="hm-omi-shadow" aria-hidden="true"></span>
-                    <span class="hm-omi-wrap" aria-hidden="true">
-                        <span class="hm-omi-sticks"><i></i><i></i><i></i></span>
-                        <span class="hm-omi-stick"><b class="jp" id="omiNo">七番</b></span>
-                        <span class="hm-omi-body">
-                            <span class="hm-omi-rope"></span>
-                            <span class="hm-omi-shide l"></span><span class="hm-omi-shide r"></span>
-                            <span class="hm-omi-label jp">御神籤</span>
-                            <i class="hm-omi-seal jp">夜</i>
+                        <div class="hm-omi-left">
+                <div class="hm-omi-stage">
+                    @* Back: the painted circle, clouds and sakura (one image) *@
+                    <img class="hm-omi-bg" src="~/images/home/omikuji-bg.webp" alt="" aria-hidden="true" />
+
+                    <button type="button" class="hm-omi-box" id="omiBox" aria-label="Shake the omikuji box">
+                        <span class="hm-omi-shadow" aria-hidden="true"></span>
+                        <span class="hm-omi-wrap" aria-hidden="true">
+                            <span class="hm-omi-sticks"><i></i><i></i><i></i></span>
+                            <span class="hm-omi-stick"><b class="jp" id="omiNo">七番</b></span>
+                            <span class="hm-omi-body">
+                                <span class="hm-omi-rope"></span>
+                                <span class="hm-omi-shide l"></span><span class="hm-omi-shide r"></span>
+                                <span class="hm-omi-label jp">御神籤</span>
+                                <i class="hm-omi-seal jp">吉</i>
+                            </span>
                         </span>
-                    </span>
+                    </button>
+                    @* Front: the two big flowers only (transparent image), so they sit in front of the box *@
+                    <img class="hm-omi-bg hm-omi-bg-front" src="~/images/home/omikuji-front.webp" alt="" aria-hidden="true" />
+                </div>
+
+                <button type="button" class="hm-omi-btn" id="omiShake">
+                    <svg class="hm-omi-dice" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5 3.5 7v10l8.5 4.5 8.5-4.5V7Z" fill="#fff" fill-opacity=".14" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M3.8 7.2 12 11.6l8.2-4.4M12 11.6v9.6" fill="none" stroke="currentColor" stroke-width="1.6" /><circle cx="12" cy="6.9" r="1.2" fill="currentColor" /><circle cx="7.6" cy="12.6" r="1.1" fill="currentColor" /><circle cx="16.4" cy="12.6" r="1.1" fill="currentColor" /><circle cx="16.4" cy="16.4" r="1.1" fill="currentColor" /></svg>
+                    <span><span class="jp">振る</span> · Shake the box</span>
+                    <svg class="hm-omi-chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
                 </button>
-                <button type="button" class="btn btn-primary px-4" id="omiShake">振る · Shake the box</button>
                 <p class="hm-omi-hint">Tap the box or the button</p>
             </div>
             <div class="hm-slip is-empty" id="omiSlip" aria-live="polite">
@@ -234,11 +252,11 @@
                 {
                     var o = Model.Offers[i];
                     var hasPhoto = !string.IsNullOrEmpty(o.ImageUrl);
-                    <a class="hm-card" href="/Menu" style="--pc:@(colours[i % colours.Length])">
+                    <a class="hm-card" href="@DishUrl(o.MenuItemId)" style="--pc:@(colours[i % colours.Length])">
                         <span class="hm-card-kanji jp" aria-hidden="true">@Kanji(o.CategoryName + " " + o.DishName)</span>
                         @if (hasPhoto)
                         {
-                            <img class="hm-card-img" src="@o.ImageUrl" alt="@o.DishName" loading="lazy" onerror="this.remove()" />
+                            <img class="hm-card-img" src="@Url.Content(o.ImageUrl)" alt="@o.DishName" loading="lazy" onerror="this.remove()" />
                         }
                         @if (i == 0)
                         {
@@ -292,44 +310,314 @@
         </div>
 
         @* Saves nothing: it only opens Member 2's booking page with date, time and guests filled in. *@
-        <form class="hm-book" method="get" action="/Customer/Reservations/Create">
-            <h3>Make a reservation</h3>
-            <div class="mb-3">
-                <label class="form-label" for="bkDate">Date</label>
-                <input class="form-control" type="date" id="bkDate" name="date" value="@Model.Today" min="@Model.Today" required />
-            </div>
-            <div class="row g-2 mb-3">
-                <div class="col-6">
-                    <label class="form-label" for="bkTime">Time</label>
-                    <select class="form-select" id="bkTime" name="time">
-                        @foreach (var t in Model.BookingTimes)
-                        {
-                            <option value="@t.Value" selected="@(t.Value == "19:00")">@t.Label</option>
-                        }
-                    </select>
+        @* Quick booking box. Saves nothing: it only opens Member 2's booking page with date, time and guests filled in.
+           The real checks (free table, capacity, opening hours) happen on Member 2's page. *@
+        <form class="bk" id="bk" method="get" action="/Customer/Reservations/Create">
+            <div class="bk-head"><h3>Make a reservation</h3><span class="jp">ご予約</span></div>
+            <input type="hidden" name="date" id="bkDate" />
+            <input type="hidden" name="time" id="bkTime" />
+            <input type="hidden" name="guests" id="bkGuests" value="2" />
+
+            <div class="bk-fields">
+                <div class="bk-f wide" data-f="date">
+                    <button type="button" class="bk-field" aria-haspopup="dialog">
+                        <i class="bk-ico jp" aria-hidden="true">日</i><span><small>Date</small><b id="bkDateTxt">Choose a date</b></span>
+                    </button>
+                    <div class="bk-pop" role="dialog" aria-label="Choose a date">
+                        <div class="bk-month">
+                            <button type="button" class="bk-nav" id="bkPrev" aria-label="Previous month"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5" /></svg></button>
+                            <b id="bkMonthName"></b>
+                            <button type="button" class="bk-nav" id="bkNext" aria-label="Next month"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg></button>
+                        </div>
+                        <div class="bk-cal" id="bkCal"></div>
+                        <p class="bk-cal-note" id="bkRange"></p>
+                    </div>
                 </div>
-                <div class="col-6">
-                    <label class="form-label" for="bkGuests">Guests</label>
-                    <select class="form-select" id="bkGuests" name="guests">
-                        @for (var g = 1; g <= 10; g++)
-                        {
-                            <option value="@g" selected="@(g == 2)">@g @(g == 1 ? "person" : "people")</option>
-                        }
-                    </select>
+                <div class="bk-f" data-f="time">
+                    <button type="button" class="bk-field" aria-haspopup="dialog">
+                        <i class="bk-ico jp" aria-hidden="true">時</i><span><small>Time</small><b id="bkTimeTxt">Choose a time</b></span>
+                    </button>
+                    <div class="bk-pop" role="dialog" aria-label="Choose a time">
+                        <p class="bk-pop-head"><span id="bkTimeDay"></span><span id="bkLast"></span></p>
+                        <div class="bk-tlist" id="bkSlots"></div>
+                        <div class="bk-own" id="bkOwn">
+                            <p class="bk-own-title">Or set your own time</p>
+                            <div class="bk-own-row">
+                                <div class="bk-wheel">
+                                    <button type="button" id="bkOwnHUp" aria-label="One hour later"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10l4-4 4 4" /></svg></button>
+                                    <b id="bkOwnH">7</b>
+                                    <button type="button" id="bkOwnHDown" aria-label="One hour earlier"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg></button>
+                                </div>
+                                <span class="bk-colon">:</span>
+                                <div class="bk-wheel">
+                                    <button type="button" id="bkOwnMUp" aria-label="Five minutes later"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10l4-4 4 4" /></svg></button>
+                                    <b id="bkOwnM">00</b>
+                                    <button type="button" id="bkOwnMDown" aria-label="Five minutes earlier"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4" /></svg></button>
+                                </div>
+                                <span class="bk-ap" id="bkOwnAp">PM</span>
+                                <button type="button" class="bk-use" id="bkOwnUse">Use 7:00 PM</button>
+                            </div>
+                            <p class="bk-err" id="bkOwnErr" role="alert"></p>
+                        </div>
+                        <p class="bk-err" id="bkTimeErr" role="alert"></p>
+                    </div>
+                </div>
+                <div class="bk-f right" data-f="guests">
+                    <button type="button" class="bk-field" aria-haspopup="dialog">
+                        <i class="bk-ico jp" aria-hidden="true">人</i><span><small>Guests</small><b id="bkGuestTxt">2 guests</b></span>
+                    </button>
+                    <div class="bk-pop" role="dialog" aria-label="Number of guests">
+                        <p class="bk-pop-head"><span>How many guests?</span><span>Up to @Model.Booking.MaxGuests</span></p>
+                        <div class="bk-guests">
+                            <div class="bk-stepper">
+                                <button type="button" id="bkMinus" aria-label="One guest fewer">−</button>
+                                <input type="number" id="bkCount" class="bk-count" inputmode="numeric" min="1" step="1" value="2" aria-label="Number of guests" />
+                                <button type="button" id="bkPlus" aria-label="One guest more">+</button>
+                            </div>
+                            <div class="bk-quick" id="bkQuick"></div>
+                        </div>
+                        <p class="bk-err" id="bkGuestErr" role="alert"></p>
+                        <p class="bk-note">Tap + / − or type a number. Bigger group? <a href="@telLink">Call us</a></p>
+                        <button type="button" class="bk-done">Done</button>
+                    </div>
                 </div>
             </div>
-            <button class="btn btn-primary w-100" type="submit">Book now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
-            <small>You'll confirm the details on the next page.</small>
+
+            <button class="btn btn-primary bk-go" id="bkGo" type="submit" disabled>Book now <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
+            <small class="bk-foot">You'll confirm the details on the next page.</small>
         </form>
     </div>
 </section>
 
 </div>
 
+@* Opening hours, guest limit and rules for the booking box *@
+<script type="application/json" id="bkData">@Html.Raw(JsonSerializer.Serialize(Model.Booking))</script>
+
 @* Dishes for the omikuji box (JsonSerializer escapes < > & so this is safe inside a script tag) *@
 <script type="application/json" id="omiData">@Html.Raw(JsonSerializer.Serialize(Model.OmikujiDishes))</script>
 
 @section Scripts {
+    <script>
+        // US50 quick booking box. All rules come from HomeService (bkData): opening hours per weekday,
+        // biggest table, days ahead, last booking time. The clock is the server's, so every visitor sees restaurant time.
+        // This box only helps the customer choose sensible values. Member 2's booking page still does the real checks.
+        (function () {
+            var box = document.getElementById('bk'), raw = document.getElementById('bkData');
+            if (!box || !raw) return;
+            var cfg = JSON.parse(raw.textContent);
+            var HOURS = cfg.Hours, MAX = cfg.MaxGuests, LAST_BOOKING = cfg.LastBookingMinutes, STEP = cfg.StepMinutes, DAYS_AHEAD = cfg.DaysAhead;
+            var p = cfg.Now.split(/[-T:]/).map(Number), NOW = new Date(p[0], p[1] - 1, p[2], p[3], p[4]);
+            var NOW_MIN = NOW.getHours() * 60 + NOW.getMinutes(), MIN_NOTICE = 30;   // today: at least 30 minutes from now
+            var W = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var MN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            var $ = function (id) { return document.getElementById(id); };
+        
+            var today0 = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+            var lastDay = new Date(today0); lastDay.setDate(today0.getDate() + DAYS_AHEAD);
+            var st = { date: null, time: null, timeError: '', guests: 2, guestError: '' };
+            var view = new Date(today0.getFullYear(), today0.getMonth(), 1);
+        
+            // ---------- helpers ----------
+            function fmt(m) { var h = Math.floor(m / 60) % 24, n = m % 60; return ((h % 12) || 12) + ':' + (n < 10 ? '0' : '') + n + ' ' + (h < 12 ? 'AM' : 'PM'); }
+            function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+            function hhmm(m) { return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
+            function nice(d) { return W[d.getDay()] + ', ' + d.getDate() + ' ' + M[d.getMonth()]; }
+            function isToday(d) { return +d === +today0; }
+            // [open, last booking] for a day in minutes; closing at/after midnight counts as 24:00+
+            function windowFor(d) {
+                var h = HOURS[d.getDay()]; if (!h) return null;
+                var close = h[1] <= h[0] ? h[1] + 1440 : h[1];
+                return { open: h[0], last: close - LAST_BOOKING };
+            }
+            function slots(d) {
+                var w = windowFor(d), out = []; if (!w) return out;
+                for (var t = w.open; t <= w.last; t += STEP) if (!isToday(d) || t >= NOW_MIN + MIN_NOTICE) out.push(t);
+                return out;
+            }
+            function bookable(d) { return d >= today0 && d <= lastDay && slots(d).length > 0; }
+        
+            // The same rules for a time the customer typed: returns '' when OK, otherwise the message to show.
+            function checkTime(d, t) {
+                var w = windowFor(d);
+                if (!w) return "We're closed on " + nice(d) + '.';
+                if (t < w.open && t + 1440 <= w.last) t += 1440;              // e.g. 12:30 AM when we close at 2 AM
+                if (t < w.open) return 'We open at ' + fmt(w.open) + ' on this day.';
+                if (t > w.last) return 'The last booking on this day is ' + fmt(w.last) + '.';
+                if (isToday(d) && t < NOW_MIN + MIN_NOTICE) return 'Please choose a time at least 30 minutes from now.';
+                return '';
+            }
+        
+            // ---------- open / close the small pickers ----------
+            function open(name) {
+                [].forEach.call(box.querySelectorAll('.bk-f'), function (f) {
+                    var on = f.dataset.f === name && !f.classList.contains('is-open');
+                    f.classList.toggle('is-open', on);
+                    if (!on) return;
+                    var pop = f.querySelector('.bk-pop');
+                    pop.classList.remove('up');                              // open below; flip above if there is no room
+                    var r = pop.getBoundingClientRect();
+                    if (r.bottom > window.innerHeight - 8 && f.getBoundingClientRect().top > r.height + 16) pop.classList.add('up');
+                    if (name === 'time') { var c = $('bkSlots').querySelector('.bk-time.is-on'); if (c) $('bkSlots').scrollTop = c.offsetTop - $('bkSlots').offsetTop - 30; }
+                });
+            }
+            [].forEach.call(box.querySelectorAll('.bk-field'), function (b) { b.addEventListener('click', function () { open(b.parentNode.dataset.f); }); });
+            document.addEventListener('click', function (e) { if (!box.contains(e.target)) open(null); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') open(null); });
+            [].forEach.call(box.querySelectorAll('.bk-done'), function (b) { b.addEventListener('click', function () { open(null); }); });
+        
+            // ---------- 日 date: one month at a time ----------
+            function drawMonth() {
+                var cal = $('bkCal'); cal.innerHTML = '';
+                W.forEach(function (w) { var s = document.createElement('span'); s.className = 'w'; s.textContent = w[0]; cal.appendChild(s); });
+                for (var b = 0; b < view.getDay(); b++) { var e = document.createElement('span'); e.className = 'bk-day blank'; cal.appendChild(e); }
+                var n = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+                for (var i = 1; i <= n; i++) {
+                    var d = new Date(view.getFullYear(), view.getMonth(), i), ok = bookable(d), past = d < today0, far = d > lastDay;
+                    var c = document.createElement('button');
+                    c.type = 'button'; c.disabled = !ok;
+                    c.className = 'bk-day' + (st.date && +d === +st.date ? ' is-on' : '') + (isToday(d) ? ' is-today' : '');
+                    c.title = ok ? nice(d) : past ? '' : far ? 'Too far ahead' : (HOURS[d.getDay()] ? 'No times left' : 'Closed');
+                    c.innerHTML = i + (isToday(d) ? '<small>Today</small>' : (!ok && !past && !far ? '<small>' + (HOURS[d.getDay()] ? 'Full' : 'Shut') + '</small>' : ''));
+                    (function (dd) { c.addEventListener('click', function () { pickDate(dd); open('time'); }); })(d);
+                    cal.appendChild(c);
+                }
+                $('bkMonthName').textContent = MN[view.getMonth()] + ' ' + view.getFullYear();
+                $('bkPrev').disabled = view.getFullYear() === today0.getFullYear() && view.getMonth() === today0.getMonth();
+                $('bkNext').disabled = view.getFullYear() === lastDay.getFullYear() && view.getMonth() === lastDay.getMonth();
+            }
+            $('bkPrev').addEventListener('click', function () { view.setMonth(view.getMonth() - 1); drawMonth(); });
+            $('bkNext').addEventListener('click', function () { view.setMonth(view.getMonth() + 1); drawMonth(); });
+            $('bkRange').textContent = 'Book up to ' + DAYS_AHEAD + ' days ahead · until ' + nice(lastDay);
+        
+            function pickDate(d) {
+                st.date = d; drawMonth();
+                var list = slots(d), w = windowFor(d);
+                // keep the time if it is still allowed on the new day, otherwise 7 PM or the first free time
+                if (st.time === null || checkTime(d, st.time)) st.time = list.indexOf(1140) >= 0 ? 1140 : (list.length ? list[0] : null);
+                st.timeError = '';
+                $('bkTimeDay').textContent = nice(d);
+                $('bkLast').textContent = w ? 'Last booking ' + fmt(w.last) : '';
+                resetOwn();
+                drawSlots(list);
+                update();
+            }
+        
+            // ---------- 時 time: chips every 30 minutes, or type your own ----------
+            function drawSlots(list) {
+                var s = $('bkSlots'); s.innerHTML = '';
+                if (!list.length) { s.innerHTML = '<div class="bk-empty">No times left this day.</div>'; return; }
+                [['Lunch', 0, 900], ['Afternoon', 900, 1080], ['Evening', 1080, 3000]].forEach(function (g) {
+                    var part = list.filter(function (t) { return t >= g[1] && t < g[2]; }); if (!part.length) return;
+                    var wrap = document.createElement('div'); wrap.className = 'bk-group'; wrap.innerHTML = '<span>' + g[0] + '</span><div class="bk-times"></div>';
+                    part.forEach(function (t) {
+                        var c = document.createElement('button'); c.type = 'button'; c.className = 'bk-time'; c.dataset.t = t; c.textContent = fmt(t);
+                        c.addEventListener('click', function () { st.time = t; st.timeError = ''; resetOwn(); update(); open(null); });
+                        wrap.lastChild.appendChild(c);
+                    });
+                    s.appendChild(wrap);
+                });
+            }
+            // ---------- your own time: hour and minute steppers + "Use this time" ----------
+            // The steppers stay inside the day's opening hours, so most wrong times are impossible.
+            // checkTime still runs, e.g. for a time too close to now on today's date.
+            var own = null;   // minutes from midnight (can go past 24:00 when closing after midnight)
+            function ownLimits() { var w = st.date ? windowFor(st.date) : null; return w ? [w.open, w.last] : null; }
+            function resetOwn() {
+                var lim = ownLimits(); if (!lim) { own = null; drawOwn(); return; }
+                own = st.time !== null ? st.time : lim[0];
+                own = Math.min(lim[1], Math.max(lim[0], own));
+                drawOwn();
+            }
+            function moveOwn(delta) {
+                var lim = ownLimits(); if (!lim || own === null) return;
+                own = Math.min(lim[1], Math.max(lim[0], own + delta));
+                drawOwn();
+            }
+            function drawOwn() {
+                var lim = ownLimits(), wrap = $('bkOwn');
+                wrap.classList.toggle('is-off', !lim);
+                if (!lim) { $('bkOwnErr').textContent = ''; return; }
+                var h = Math.floor(own / 60) % 24, m = own % 60;
+                $('bkOwnH').textContent = (h % 12) || 12;
+                $('bkOwnM').textContent = (m < 10 ? '0' : '') + m;
+                $('bkOwnAp').textContent = h < 12 ? 'AM' : 'PM';
+                $('bkOwnHDown').disabled = own - 60 < lim[0]; $('bkOwnHUp').disabled = own + 60 > lim[1];
+                $('bkOwnMDown').disabled = own - 5 < lim[0];  $('bkOwnMUp').disabled = own + 5 > lim[1];
+                var err = checkTime(st.date, own);
+                $('bkOwnErr').textContent = err;
+                $('bkOwnUse').disabled = !!err;
+                $('bkOwnUse').textContent = err ? 'Not available' : 'Use ' + fmt(own);
+            }
+            $('bkOwnHUp').addEventListener('click', function () { moveOwn(60); });
+            $('bkOwnHDown').addEventListener('click', function () { moveOwn(-60); });
+            $('bkOwnMUp').addEventListener('click', function () { moveOwn(5); });
+            $('bkOwnMDown').addEventListener('click', function () { moveOwn(-5); });
+            $('bkOwnUse').addEventListener('click', function () {
+                if (own === null || checkTime(st.date, own)) return;
+                st.time = own; st.timeError = ''; update(); open(null);
+            });
+        
+            // ---------- 人 guests: + / −, quick buttons, or type a number ----------
+            function setGuests(n) { st.guests = n; st.guestError = ''; $('bkCount').value = n; update(); }
+            function checkGuests(text) {
+                if (!/^\d+$/.test(text.trim())) return 'Please enter a whole number of guests.';
+                var n = parseInt(text, 10);
+                if (n < 1) return 'At least 1 guest, please.';
+                if (n > MAX) return 'Online bookings are up to ' + MAX + ' guests. For bigger groups, please call us.';
+                return '';
+            }
+            [2, 4, 6].filter(function (n) { return n <= MAX; }).forEach(function (n) {
+                var q = document.createElement('button'); q.type = 'button'; q.textContent = n;
+                q.addEventListener('click', function () { setGuests(n); });
+                $('bkQuick').appendChild(q);
+            });
+            $('bkMinus').addEventListener('click', function () { setGuests(Math.max(1, (st.guestError ? 2 : st.guests) - 1)); });
+            $('bkPlus').addEventListener('click', function () { setGuests(Math.min(MAX, (st.guestError ? 1 : st.guests) + 1)); });
+            $('bkCount').max = MAX;
+            $('bkCount').addEventListener('input', function () {
+                var err = checkGuests(this.value);
+                st.guestError = err; if (!err) st.guests = parseInt(this.value, 10);
+                update();
+            });
+        
+            // ---------- show the current choice and enable Book now ----------
+            function update() {
+                var d = st.date;
+                $('bkDateTxt').textContent = d ? nice(d) + (isToday(d) ? ' · Today' : (d - today0) === 864e5 ? ' · Tomorrow' : '') : 'Choose a date';
+                $('bkDateTxt').classList.toggle('is-empty', !d);
+        
+                $('bkTimeTxt').textContent = st.timeError ? 'Check the time' : st.time !== null ? fmt(st.time) : 'Choose a time';
+                $('bkTimeTxt').classList.toggle('is-empty', st.time === null && !st.timeError);
+                $('bkTimeTxt').classList.toggle('is-bad', !!st.timeError);
+                $('bkTimeErr').textContent = st.timeError;
+                [].forEach.call($('bkSlots').querySelectorAll('.bk-time'), function (c) { c.classList.toggle('is-on', +c.dataset.t === st.time); });
+        
+                $('bkGuestTxt').textContent = st.guestError ? 'Check guests' : st.guests + (st.guests === 1 ? ' guest' : ' guests');
+                $('bkGuestTxt').classList.toggle('is-bad', !!st.guestError);
+                $('bkGuestErr').textContent = st.guestError;
+                $('bkCount').classList.toggle('is-bad', !!st.guestError);
+                $('bkMinus').disabled = !st.guestError && st.guests <= 1;
+                $('bkPlus').disabled = !st.guestError && st.guests >= MAX;
+                [].forEach.call($('bkQuick').children, function (q) { q.classList.toggle('is-on', !st.guestError && +q.textContent === st.guests); });
+        
+                var ready = d && st.time !== null && !st.timeError && !st.guestError;
+                $('bkDate').value = d ? iso(d) : '';
+                $('bkTime').value = st.time !== null ? hhmm(st.time) : '';
+                $('bkGuests').value = st.guestError ? '' : st.guests;
+                $('bkGo').disabled = !ready;
+            }
+        
+            // start with the first day that still has times (usually today or tomorrow), 7 PM, 2 guests
+            setGuests(2);
+            drawMonth();
+            for (var k = 0; k <= DAYS_AHEAD; k++) {
+                var t = new Date(today0); t.setDate(today0.getDate() + k);
+                if (bookable(t)) { pickDate(t); break; }
+            }
+            update();
+        })();
+    </script>
     <script>
         // US50 omikuji: shake the box, pick a random dish and a fortune.
         (function () {
@@ -370,7 +658,7 @@
                     meta.append(el('b', null, 'RM ' + Number(d.Price).toFixed(2)));
                     var btns = el('div', 'btns');
                     var menu = el('a', 'btn btn-primary btn-sm px-3', 'See it on the menu');
-                    menu.href = '/Menu';
+                    menu.href = d.Id ? '/Menu?ItemId=' + d.Id + '#dish-details' : '/Menu';
                     var again = el('button', 'btn btn-outline-secondary btn-sm px-3', 'Shake again');
                     again.type = 'button';
                     again.addEventListener('click', draw);

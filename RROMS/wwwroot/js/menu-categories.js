@@ -635,9 +635,12 @@
                 const inUpdatedView = element => element &&
                     (replacement.contains(element) || controls?.contains(element));
                 let target = focusedId ? document.getElementById(focusedId) : null;
-                // A successful filter Apply returns a collapsed panel. Restore
-                // focus to its visible toggle instead of its now-hidden button.
-                if (trigger?.matches?.("[data-menu-filter-form]")) {
+                // Completed searches focus the collection heading so the input
+                // caret stops blinking. Empty-search reminders still focus the field.
+                if (method === "GET" && trigger?.matches?.("[data-menu-search-form]")) {
+                    target = replacement.querySelector("#collection-title");
+                } else if (trigger?.matches?.("[data-menu-filter-form]")) {
+                    // Filter Apply closes its panel; return to the visible toggle.
                     target = replacement.querySelector("[data-menu-filter-toggle]");
                 }
                 if (!inUpdatedView(target)) {

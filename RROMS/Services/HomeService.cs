@@ -15,10 +15,21 @@ namespace RROMS.Services
         private readonly IRepository<Promotion> _promotions;
         private readonly IRepository<OperatingHour> _hours;
         private readonly IRepository<RestaurantSetting> _settings;
+        private readonly IRepository<RestaurantTable> _tables;
 
         // Used until Members 2 and 5 have saved real hours / settings, so the page is never empty.
         private const string DefaultAddress = "12 Jalan Bukit Bintang, 55100 Kuala Lumpur";
         private const string DefaultPhone = "+60 3-1234 5678";
+
+        // Last orders are taken this many minutes before closing (shown in the hero's "last" mood).
+        // If the team later adds this to RestaurantSettings (Member 5), read it from there instead.
+        private const int LastOrderMinutes = 30;
+
+        // Quick booking box rules. Member 2's booking page should use the same numbers.
+        // (If the team adds them to RestaurantSettings later, read them from there instead.)
+        private const int BookingDaysAhead = 60;               // customers can book up to 60 days ahead
+        private const int LastBookingMinutesBeforeClose = 60;  // last booking 1 hour before closing
+        private const int DefaultMaxGuests = 20;               // used only if there are no tables yet
 
         public HomeService(
             IRepository<MenuItem> menuItems,
@@ -26,7 +37,8 @@ namespace RROMS.Services
             IRepository<OrderItem> orderItems,
             IRepository<Promotion> promotions,
             IRepository<OperatingHour> hours,
-            IRepository<RestaurantSetting> settings)
+            IRepository<RestaurantSetting> settings,
+            IRepository<RestaurantTable> tables)
         {
             _menuItems = menuItems;
             _categories = categories;
@@ -34,6 +46,7 @@ namespace RROMS.Services
             _promotions = promotions;
             _hours = hours;
             _settings = settings;
+            _tables = tables;
         }
 
         // ---------- Signature menu (Member 3's menu) ----------
@@ -85,7 +98,8 @@ namespace RROMS.Services
                     discounts.TryGetValue(m.Id, out var pct) ? pct : null,
                     m.ImageUrl,
                     m.Category.Name,
-                    m.Id == mostOrderedId))
+                    m.Id == mostOrderedId,
+                    m.Id))
                 .ToList();
         }
 
@@ -113,7 +127,8 @@ namespace RROMS.Services
                     p.DiscountPercent,
                     p.MenuItem.ImageUrl,
                     p.MenuItem.Category?.Name ?? "",
-                    p.EndDate))
+                    p.EndDate,
+                    p.MenuItem.Id))
                 .ToList();
         }
 
@@ -134,7 +149,8 @@ namespace RROMS.Services
             return items.Select(m => new OmikujiDish(
                     m.Name,
                     m.Category.Name,
-                    discounts.TryGetValue(m.Id, out var pct) ? m.Price * (100 - pct) / 100 : m.Price))
+                    discounts.TryGetValue(m.Id, out var pct) ? m.Price * (100 - pct) / 100 : m.Price,
+                    m.Id))
                 .ToList();
         }
 
@@ -176,22 +192,23 @@ namespace RROMS.Services
             return rows;
         }
 
-        public async Task<List<BookingTime>> GetBookingTimesAsync()
+        public async Task<BookingSetup> GetBookingSetupAsync()
         {
-            var openDays = (await LoadWeekAsync()).Where(h => !h.IsClosed).ToList();
-            if (openDays.Count == 0) return new List<BookingTime>();
+            var week = await LoadWeekAsync();
+            var hours = week.ToDictionary(
+                h => (int)h.Day,
+                h => h.IsClosed ? null : new[] { (int)h.OpenTime.ToTimeSpan().TotalMinutes, (int)h.CloseTime.ToTimeSpan().TotalMinutes });
 
-            var first = openDays.Min(h => h.OpenTime.ToTimeSpan());
-            // Closing at or after midnight counts as 24:00 so the list doesn't stop early.
-            var last = openDays.Max(h => h.CloseTime <= h.OpenTime ? TimeSpan.FromHours(24) : h.CloseTime.ToTimeSpan());
+            // Biggest active table or room decides the guest limit (VVIP room = 20 today).
+            var biggest = await _tables.Query().Where(t => t.IsActive).Select(t => (int?)t.Capacity).MaxAsync();
 
-            var times = new List<BookingTime>();
-            for (var t = first; t <= last - TimeSpan.FromHours(1); t += TimeSpan.FromMinutes(30))
-            {
-                var time = TimeOnly.FromTimeSpan(t);
-                times.Add(new BookingTime(time.ToString("HH:mm", CultureInfo.InvariantCulture), Time(time)));
-            }
-            return times;
+            return new BookingSetup(
+                hours,
+                biggest ?? DefaultMaxGuests,
+                BookingDaysAhead,
+                LastBookingMinutesBeforeClose,
+                30,
+                DateTime.Now.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture));
         }
 
         // ---------- Address, phone, hero mood, numbers strip ----------
@@ -203,9 +220,9 @@ namespace RROMS.Services
             var openDays = week.Where(h => !h.IsClosed).ToList();
             var (mood, moodText) = WorkOutMood(week, DateTime.Now);
 
-            var lastOrders = openDays.Count == 0
-                ? "—"
-                : Time(openDays.OrderBy(h => h.CloseTime <= h.OpenTime ? TimeOnly.MaxValue : h.CloseTime).Last().CloseTime);
+            // "Closing today" in the numbers strip: today's own closing time (each day can differ).
+            var todayHours = week.First(h => h.Day == DateTime.Now.DayOfWeek);
+            var lastOrders = todayHours.IsClosed ? "Rest day" : Time(todayHours.CloseTime);
 
             return new HomeInfo(
                 string.IsNullOrWhiteSpace(setting?.Address) ? DefaultAddress : setting!.Address!,
@@ -232,9 +249,12 @@ namespace RROMS.Services
                 return (start, end);
             }
 
+            // "last" mood starts 1 hour before closing; last orders are LastOrderMinutes before closing.
             (string, string) Inside(DateTime end, OperatingHour h) =>
-                end - now <= TimeSpan.FromHours(1)
-                    ? ("last", $"Last orders soon · we close at {Time(h.CloseTime)}")
+                end - now <= TimeSpan.FromMinutes(LastOrderMinutes)
+                    ? ("last", $"Last orders have closed · we close at {Time(h.CloseTime)}")
+                : end - now <= TimeSpan.FromHours(1)
+                    ? ("last", $"Last orders {Time(h.CloseTime.AddMinutes(-LastOrderMinutes))} · we close at {Time(h.CloseTime)}")
                     : ("open", $"We're open now · until {Time(h.CloseTime)}");
 
             // Still open from yesterday (late night after midnight)?
