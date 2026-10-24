@@ -3,7 +3,78 @@
 
 @{
     ViewData["Title"] = "Admin Overview";
+    ViewData["FullWidth"] = true;
 }
+
+<style>
+    .overview-page {
+        position: relative;
+        padding: 28px 0 48px;
+    }
+
+    .overview-container {
+        position: relative;
+        z-index: 1;
+        width: 94vw;
+        max-width: none;
+        margin-left: calc(50% - 47vw);
+        margin-right: calc(50% - 47vw);
+    }
+
+    /* =========================
+       TABLET
+       ========================= */
+
+    @@media (max-width: 991px) {
+        .overview-container {
+            width: calc(100vw - 48px);
+            margin-left: calc(50% - 50vw + 24px);
+            margin-right: 0;
+        }
+    }
+
+    /* =========================
+       MOBILE
+       ========================= */
+
+    @@media (max-width: 768px) {
+        .overview-page {
+            padding-top: 20px;
+        }
+
+        .overview-container {
+            width: calc(100vw - 32px);
+            margin-left: calc(50% - 50vw + 16px);
+            margin-right: 0;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 16px;
+        }
+
+        .page-header .text-md-end {
+            text-align: left !important;
+        }
+
+        .card-body {
+            padding: 18px !important;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table {
+            min-width: 600px;
+        }
+    }
+</style>
+
+<div class="overview-page">
+<div class="overview-container">
 
 <div class="page-header">
     <div>
@@ -145,12 +216,12 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
-                            <tr>
-                                <th>Reference</th>
-                                <th>Time</th>
-                                <th>Guests</th>
-                                <th>Status</th>
-                            </tr>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Time</th>
+                            <th>Guests</th>
+                            <th>Status</th>
+                        </tr>
                         </thead>
                         <tbody>
                         @if (Model.Overview.LatestReservations.Count == 0)
@@ -199,12 +270,12 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
-                            <tr>
-                                <th>Order</th>
-                                <th>Type</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                            </tr>
+                        <tr>
+                            <th>Order</th>
+                            <th>Type</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                        </tr>
                         </thead>
                         <tbody>
                         @if (Model.Overview.LatestOrders.Count == 0)
@@ -254,13 +325,13 @@
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
-                    <tr>
-                        <th>Order</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Status</th>
-                        <th>Paid At</th>
-                    </tr>
+                <tr>
+                    <th>Order</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Paid At</th>
+                </tr>
                 </thead>
                 <tbody>
                 @if (Model.Overview.LatestPayments.Count == 0)
@@ -296,4 +367,6 @@
             </table>
         </div>
     </div>
+</div>
+</div>
 </div>
