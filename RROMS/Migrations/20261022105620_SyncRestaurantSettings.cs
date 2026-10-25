@@ -8,13 +8,19 @@ namespace RROMS.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // LogoPath already exists in the current database.
-            // This migration only synchronizes the EF Core migration state.
+            migrationBuilder.AddColumn<string>(
+                name: "LogoPath",
+                table: "RestaurantSettings",
+                type: "nvarchar(300)",
+                maxLength: 300,
+                nullable: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // No database change to reverse.
+            migrationBuilder.DropColumn(
+                name: "LogoPath",
+                table: "RestaurantSettings");
         }
     }
 }
