@@ -1,10 +1,10 @@
 namespace RROMS.Services.Interfaces
 {
     // Small read-only shapes the Home page shows (no database entities leave the service).
-    public record HomeDish(string Name, string? Description, decimal Price, decimal? DiscountPercent, string? ImageUrl, string CategoryName, bool IsPopular);
-    public record HomeOffer(string Title, string DishName, decimal Price, decimal DiscountPercent, string? ImageUrl, string CategoryName, DateTime EndDate);
+    public record HomeDish(string Name, string? Description, decimal Price, decimal? DiscountPercent, string? ImageUrl, string CategoryName, bool IsPopular, int? Id = null);
+    public record HomeOffer(string Title, string DishName, decimal Price, decimal DiscountPercent, string? ImageUrl, string CategoryName, DateTime EndDate, int? MenuItemId = null);
     public record HomeHoursRow(string Days, string Hours, bool IsClosed);
-    public record OmikujiDish(string Name, string Category, decimal Price);
+    public record OmikujiDish(string Name, string Category, decimal Price, int? Id = null);
     // Everything the quick booking box needs (sent to the browser as JSON).
     // Hours: key = day of week (0 = Sunday), value = [open, close] in minutes from midnight, or null when closed.
     public record BookingSetup(
