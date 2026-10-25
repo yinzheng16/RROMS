@@ -1,12 +1,17 @@
 @page
 @model AboutModel
 @{
-    // US53 (Owner: Member 1): About us. Starter version; the full page comes in Sprint 4.
+    // US53 (Owner: Member 1): About us. Public page, uses the shared layout.
     ViewData["Title"] = "About us";
-    ViewData["FullWidth"] = true;
+    ViewData["FullWidth"] = true;   // sections go edge to edge
+
+    var mapsUrl = "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(Model.Info.Address);
+    var phoneHref = "tel:" + new string(Model.Info.Phone.Where(c => char.IsDigit(c) || c == '+').ToArray());
 }
 
-<div class="hm">
+<div class="hm ab">
+
+    @* ---------- 1. Hero: who we are ---------- *@
     <section class="hm-story hm-dark">
         <div class="hm-story-photo" role="img" aria-label="Inside YORU Izakaya"></div>
         <div class="hm-story-copy">
@@ -14,26 +19,111 @@
             <h1 class="hm-h2">A little Tokyo<br /><em>after dark.</em></h1>
             <p class="hm-text">YORU means "night". We bring the warm, lively izakaya feeling of Tokyo to Kuala Lumpur: small plates to share, good drinks, and nobody rushing you home.</p>
             <p class="hm-text">Our chefs grill over real charcoal, our fish arrives every morning, and our bar pours sake, Japanese whisky and crisp highballs until late.</p>
-            <a class="btn btn-primary px-4 mt-2" href="/Customer/Reservations/Create">Book a table <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+            <div class="ab-actions">
+                <a class="btn btn-primary px-4" href="/Customer/Reservations/Create">Book a table <svg class="ab-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" /></svg></a>
+                <a class="btn ab-btn-ghost px-4" href="/Menu">See our menu</a>
+            </div>
         </div>
         <span class="hm-vert jp" aria-hidden="true">夜は、まだ終わらない</span>
         <span class="hm-waves" aria-hidden="true"></span>
     </section>
 
-    <section class="hm-exp hm-paper">
+    @* ---------- 2. A night at YORU (three moments of the evening) ---------- *@
+    <section class="ab-night hm-exp hm-paper">
         <div class="container-xl">
             <div class="hm-center">
-                <span class="hm-eyebrow">The YORU experience</span>
-                <h2 class="hm-h2">What we care about</h2>
+                <span class="hm-eyebrow">Our story · 物語</span>
+                <h2 class="hm-h2">A night at YORU</h2>
+                <p class="hm-text mx-auto">In Japan, an izakaya is where the day ends and the evening begins. Every night here moves through three moments.</p>
             </div>
-            <div class="hm-feats">
-                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-water" aria-hidden="true"></i></div><h3>Fresh ingredients</h3><p>Fish delivered every morning, sliced to order.</p></div>
-                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-fire" aria-hidden="true"></i></div><h3>Authentic taste</h3><p>Traditional recipes, grilled over real charcoal.</p></div>
-                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-cup-straw" aria-hidden="true"></i></div><h3>Crafted drinks</h3><p>Sake, Japanese whisky and crisp highballs.</p></div>
-                <div class="hm-feat"><div class="hm-feat-icon"><i class="bi bi-people" aria-hidden="true"></i></div><h3>Warm atmosphere</h3><p>A cosy space for friends, family and late nights.</p></div>
+            <ol class="ab-moments">
+                <li class="ab-moment">
+                    <span class="ab-moment-kanji jp" aria-hidden="true">夕</span>
+                    <span class="ab-moment-time">Early evening</span>
+                    <h3>The grill lights up</h3>
+                    <p>Charcoal glows, lanterns come on and the first plates leave the kitchen: edamame, yakitori, something fresh from the morning's fish.</p>
+                </li>
+                <li class="ab-moment">
+                    <span class="ab-moment-kanji jp" aria-hidden="true">宵</span>
+                    <span class="ab-moment-time">The heart of the night</span>
+                    <h3>Small plates, big table</h3>
+                    <p>Friends order a little at a time, share everything and raise a glass. The room gets louder, warmer and happier.</p>
+                </li>
+                <li class="ab-moment">
+                    <span class="ab-moment-kanji jp" aria-hidden="true">更</span>
+                    <span class="ab-moment-time">Late night</span>
+                    <h3>One last round</h3>
+                    <p>A bowl of ramen, a final highball, a slower conversation. Last orders are 30 minutes before we close.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    @* ---------- 3. New to izakaya? (a short guide) ---------- *@
+    <section class="ab-guide hm-dark">
+        <div class="container-xl ab-guide-grid">
+            <div class="ab-guide-intro">
+                <span class="hm-eyebrow">First time? · はじめて</span>
+                <h2 class="hm-h2">New to <em>izakaya?</em></h2>
+                <p class="hm-text">No rules to worry about, just a few habits that make the night more fun.</p>
+                <img class="ab-guide-ink" src="~/images/home/ink-landscape.webp" alt="" aria-hidden="true" loading="lazy" />
             </div>
-            <div class="text-center mt-5">
-                <a class="hm-link" href="/#visit">Find us and opening hours <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+            <ul class="ab-tips">
+                <li><span class="ab-tip-seal jp" aria-hidden="true">乾杯</span><div><h3>Start with "Kanpai!"</h3><p>The first drink is shared together. Raise your glass and say kanpai (cheers).</p></div></li>
+                <li><span class="ab-tip-seal jp" aria-hidden="true">共</span><div><h3>Share everything</h3><p>Plates go in the middle of the table, so everyone can try a bit of each.</p></div></li>
+                <li><span class="ab-tip-seal jp" aria-hidden="true">少</span><div><h3>Order in rounds</h3><p>Start with a few dishes and add more as you go. There is no rush.</p></div></li>
+                <li><span class="ab-tip-seal jp" aria-hidden="true">緩</span><div><h3>Take your time</h3><p>Stay, talk and order one more round. That is what an izakaya is for.</p></div></li>
+            </ul>
+        </div>
+    </section>
+
+    @* ---------- 4. Visit us (live address, hours and numbers) ---------- *@
+    <section class="ab-visit hm-paper" id="visit">
+        <div class="container-xl ab-visit-grid">
+            <div>
+                <span class="hm-eyebrow">Visit us · ご来店</span>
+                <h2 class="hm-h2">Find your seat</h2>
+                <dl class="ab-info">
+                    <dt>Address</dt>
+                    <dd>
+                        @Model.Info.Address
+                        <a class="ab-map-btn" href="@mapsUrl" target="_blank" rel="noopener">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" /><circle cx="12" cy="10" r="2.4" /></svg>
+                            Open in Google Maps
+                            <svg class="ab-map-ext" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3h7v7M13 3 5 11" /></svg>
+                        </a>
+                    </dd>
+                    <dt>Phone</dt>
+                    <dd><a href="@phoneHref">@Model.Info.Phone</a></dd>
+                    <dt>Hours</dt>
+                    <dd>
+                        <table class="ab-hours">
+                            @foreach (var h in Model.Hours)
+                            {
+                                <tr class="@(h.IsClosed ? "closed" : "")"><td>@h.Days</td><td>@h.Hours</td></tr>
+                            }
+                        </table>
+                    </dd>
+                </dl>
+            </div>
+            <div class="ab-stats">
+                <div class="ab-stat"><b>@Model.Info.DishCount</b><span>dishes on the menu</span></div>
+                <div class="ab-stat"><b>@Model.Info.CategoryCount</b><span>menu categories</span></div>
+                <div class="ab-stat"><b>@Model.Info.OpenDays</b><span>nights a week</span></div>
+                <div class="ab-stat"><b>30</b><span>minutes: last orders before closing</span></div>
+            </div>
+        </div>
+    </section>
+
+    @* ---------- 5. Closing call to action ---------- *@
+    <section class="ab-cta hm-dark">
+        <img class="ab-cta-torii" src="~/images/home/torii.webp" alt="" aria-hidden="true" loading="lazy" />
+        <div class="container-xl text-center">
+            <span class="ab-cta-kanji jp" aria-hidden="true">夜はこれから</span>
+            <h2 class="hm-h2">See you <em>tonight.</em></h2>
+            <div class="ab-actions justify-content-center">
+                <a class="btn btn-primary px-4" href="/Customer/Reservations/Create">Book a table <svg class="ab-arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4" /></svg></a>
+                <a class="btn ab-btn-ghost px-4" href="/Menu">See our menu</a>
             </div>
         </div>
     </section>
