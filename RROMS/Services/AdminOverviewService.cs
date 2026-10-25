@@ -30,19 +30,23 @@ public class AdminOverviewService : IAdminOverviewService
         _menuItemRepository = menuItemRepository;
     }
 
-    public async Task<AdminOverviewData> GetOverviewAsync()
+    public async Task<AdminOverviewData> GetOverviewAsync(OverviewPeriod period = OverviewPeriod.Today)
     {
-        var today = DateTime.Today;
+        var now = DateTime.Now;
+        var today = now.Date;
         var tomorrow = today.AddDays(1);
 
-        var data = new AdminOverviewData();
-        
-        var todayDayOfWeek = DateTime.Today.DayOfWeek;
-        
+        var data = new AdminOverviewData
+        {
+            GeneratedAt = now,
+            Period = period
+        };
+
+        // ---------- Restaurant status ----------
         var todayOperatingHour = await _operatingHourRepository
             .Query()
             .AsNoTracking()
-            .FirstOrDefaultAsync(h => h.Day == todayDayOfWeek);
+            .FirstOrDefaultAsync(h => h.Day == today.DayOfWeek);
 
         if (todayOperatingHour != null)
         {
@@ -54,7 +58,7 @@ public class AdminOverviewService : IAdminOverviewService
         {
             data.IsClosedToday = true;
         }
-        
+
         data.ActiveTableCount = await _restaurantTableRepository
             .Query()
             .CountAsync(t => t.IsActive);
@@ -63,34 +67,128 @@ public class AdminOverviewService : IAdminOverviewService
             .Query()
             .Where(t => t.IsActive)
             .SumAsync(t => (int?)t.Capacity) ?? 0;
-        
+
         data.AvailableMenuItemCount = await _menuItemRepository
             .Query()
             .CountAsync(m => m.IsAvailable);
 
+        data.TotalMenuItemCount = await _menuItemRepository
+            .Query()
+            .CountAsync();
+
+        // ---------- Today ----------
+        // Cancelled bookings are not "scheduled", so they are not counted.
         data.TodayReservationCount = await _reservationRepository
             .Query()
             .CountAsync(r => r.ReservedAt >= today &&
-                             r.ReservedAt < tomorrow);
+                             r.ReservedAt < tomorrow &&
+                             r.Status != ReservationStatus.Cancelled);
 
         data.TodayOrderCount = await _orderRepository
             .Query()
             .CountAsync(o => o.CreatedAt >= today &&
                              o.CreatedAt < tomorrow);
 
-        data.TodayPaymentCount = await _paymentRepository
+        // Only payments with status Paid count as received (not Refunded).
+        var paidToday = _paymentRepository
             .Query()
-            .CountAsync(p => p.PaidAt.HasValue &&
-                             p.PaidAt.Value >= today &&
-                             p.PaidAt.Value < tomorrow);
-
-        data.TodayPaymentTotal = await _paymentRepository
-            .Query()
-            .Where(p => p.PaidAt.HasValue &&
+            .Where(p => p.Status == PaymentStatus.Paid &&
+                        p.PaidAt.HasValue &&
                         p.PaidAt.Value >= today &&
-                        p.PaidAt.Value < tomorrow)
-            .SumAsync(p => (decimal?)p.Amount) ?? 0;
+                        p.PaidAt.Value < tomorrow);
 
+        data.TodayPaymentCount = await paidToday.CountAsync();
+        data.TodayPaymentTotal = await paidToday.SumAsync(p => (decimal?)p.Amount) ?? 0;
+
+        // ---------- Selected period (order tickets) ----------
+        var (start, endExclusive) = GetPeriodRange(period, today);
+        data.PeriodStart = start;
+        data.PeriodEnd = endExclusive.AddDays(-1);
+
+        data.PeriodReservationCount = await _reservationRepository
+            .Query()
+            .CountAsync(r => r.ReservedAt >= start &&
+                             r.ReservedAt < endExclusive &&
+                             r.Status != ReservationStatus.Cancelled);
+
+        data.PeriodOrderCount = await _orderRepository
+            .Query()
+            .CountAsync(o => o.CreatedAt >= start &&
+                             o.CreatedAt < endExclusive);
+
+        var paidInPeriod = _paymentRepository
+            .Query()
+            .Where(p => p.Status == PaymentStatus.Paid &&
+                        p.PaidAt.HasValue &&
+                        p.PaidAt.Value >= start &&
+                        p.PaidAt.Value < endExclusive);
+
+        data.PeriodPaymentCount = await paidInPeriod.CountAsync();
+        data.PeriodPaymentTotal = await paidInPeriod.SumAsync(p => (decimal?)p.Amount) ?? 0;
+
+        // ---------- Needs attention (today) ----------
+        var pendingReservations = _reservationRepository
+            .Query()
+            .Where(r => r.ReservedAt >= today &&
+                        r.ReservedAt < tomorrow &&
+                        r.Status == ReservationStatus.Pending);
+
+        data.PendingReservationCount = await pendingReservations.CountAsync();
+        data.FirstPendingReservationAt = await pendingReservations
+            .OrderBy(r => r.ReservedAt)
+            .Select(r => (DateTime?)r.ReservedAt)
+            .FirstOrDefaultAsync();
+
+        // Same rule as the order queue (US25): every Pending order, not only today's.
+        var pendingOrders = _orderRepository
+            .Query()
+            .Where(o => o.Status == OrderStatus.Pending);
+
+        data.PendingOrderCount = await pendingOrders.CountAsync();
+        data.OldestPendingOrderNo = await pendingOrders
+            .OrderBy(o => o.CreatedAt)
+            .Select(o => o.OrderNo)
+            .FirstOrDefaultAsync();
+
+        var failedPayments = _paymentRepository
+            .Query()
+            .Where(p => p.CreatedAt >= today &&
+                        p.CreatedAt < tomorrow &&
+                        p.Status == PaymentStatus.Failed);
+
+        data.FailedPaymentCount = await failedPayments.CountAsync();
+        data.LatestFailedPayment = await failedPayments
+            .AsNoTracking()
+            .Include(p => p.Order)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        // ---------- Today's reservations ----------
+        var activeToday = _reservationRepository
+            .Query()
+            .Where(r => r.ReservedAt >= today &&
+                        r.ReservedAt < tomorrow &&
+                        r.Status != ReservationStatus.Cancelled &&
+                        r.Status != ReservationStatus.NoShow);
+
+        data.TodayGuestCount = await activeToday.SumAsync(r => (int?)r.Guests) ?? 0;
+
+        // Still to arrive: later today and not seated yet.
+        var upcoming = activeToday
+            .Where(r => r.ReservedAt >= now &&
+                        (r.Status == ReservationStatus.Pending ||
+                         r.Status == ReservationStatus.Confirmed));
+
+        data.RemainingReservationCount = await upcoming.CountAsync();
+        data.UpcomingReservations = await upcoming
+            .AsNoTracking()
+            .Include(r => r.User)
+            .Include(r => r.Table)
+            .OrderBy(r => r.ReservedAt)
+            .Take(5)
+            .ToListAsync();
+
+        // ---------- Latest records ----------
         data.LatestReservations = await _reservationRepository
             .Query()
             .AsNoTracking()
@@ -117,5 +215,19 @@ public class AdminOverviewService : IAdminOverviewService
             .ToListAsync();
 
         return data;
+    }
+
+    // Today = today only. Week = Monday to today. Month = the 1st to today.
+    // The end date is exclusive (tomorrow at 00:00).
+    private static (DateTime Start, DateTime EndExclusive) GetPeriodRange(OverviewPeriod period, DateTime today)
+    {
+        var start = period switch
+        {
+            OverviewPeriod.Week => today.AddDays(-(((int)today.DayOfWeek + 6) % 7)),
+            OverviewPeriod.Month => new DateTime(today.Year, today.Month, 1),
+            _ => today
+        };
+
+        return (start, today.AddDays(1));
     }
 }
