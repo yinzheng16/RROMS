@@ -1,0 +1,73 @@
+@model RROMS.Services.Interfaces.CheckoutQuote
+@using System.Globalization
+@using RROMS.Models
+@{
+    string Money(decimal value) => value.ToString("F2", CultureInfo.InvariantCulture);
+    string Rate(decimal value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    var reservation = Model.Cart.Reservations.FirstOrDefault(row => row.Id == Model.Cart.ReservationId);
+}
+<div class="checkout-review">
+    <header class="checkout-review__header">
+        <button type="button" class="cart-dialog-close" data-checkout-close aria-label="Back to cart"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        <div class="checkout-review__art" aria-hidden="true">
+            <img src="~/images/cart/yoru-review-moon.webp" asp-append-version="true" alt="" width="2172" height="724" />
+            <span class="checkout-review__calligraphy" lang="ja">ご注文</span>
+            <span class="checkout-review__seal" lang="ja">夜</span>
+        </div>
+        <div class="checkout-review__header-copy">
+            <p class="eyebrow">YORU IZAKAYA</p>
+            <h2 id="checkout-title">Review your order</h2>
+            <p class="checkout-review__intro">One last look before you confirm.</p>
+            <span class="checkout-review__type">@(Model.Cart.OrderType == OrderType.DineIn ? (reservation is null ? "Dine-in · Walk-in" : "Dine-in · Reservation") : "Takeaway")</span>
+            @if (Model.Cart.OrderType == OrderType.DineIn && reservation is not null)
+            {
+                <p class="checkout-review__booking">@reservation.ReservedAt.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture) · @reservation.Guests @(reservation.Guests == 1 ? "guest" : "guests") · @reservation.ReferenceNo</p>
+            }
+        </div>
+    </header>
+    <div class="checkout-review__body" tabindex="0" role="region" aria-label="Dishes, notes and order total">
+        <section class="checkout-review__dishes" aria-labelledby="checkout-dishes-title">
+            <div class="checkout-review__list-heading">
+                <h3 id="checkout-dishes-title">Your dishes</h3>
+                <span class="cart-dishes__count">@Model.Cart.Quantity @(Model.Cart.Quantity == 1 ? "item" : "items")</span>
+            </div>
+            <ol class="checkout-review__lines">
+                @for (int i = 0; i < Model.Cart.Lines.Count; i++)
+                {
+                    var line = Model.Cart.Lines[i];
+                    <li>
+                        <span class="checkout-review__number" aria-hidden="true">@((i + 1).ToString("D2", CultureInfo.InvariantCulture))</span>
+                        <div class="checkout-review__line-details">
+                            <div class="checkout-review__dish-name"><strong>@line.Name</strong><span class="checkout-review__quantity"><span class="visually-hidden">Quantity </span>× @line.Quantity</span></div>
+                            @if (line.Notes is not null)
+                            {
+                                <p class="checkout-review__note"><span>Note · </span>@line.Notes</p>
+                            }
+                        </div>
+                        <span class="checkout-review__price">RM @Money(line.LineTotal)</span>
+                    </li>
+                }
+            </ol>
+            @if (Model.Cart.Notes is not null)
+            {
+                <div class="checkout-review__remarks"><strong>Order remarks</strong><p>@Model.Cart.Notes</p></div>
+            }
+        </section>
+        <section class="checkout-review__totals" aria-labelledby="checkout-totals-title">
+            <h3 id="checkout-totals-title">Order total</h3>
+            <dl class="cart-totals">
+                <div><dt>Subtotal</dt><dd>RM @Money(Model.Cart.Totals.Subtotal)</dd></div>
+                <div><dt>Tax (@Rate(Model.Cart.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Cart.Totals.Tax)</dd></div>
+                <div><dt>Service charge (@Rate(Model.Cart.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Cart.Totals.ServiceCharge)</dd></div>
+                <div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Cart.Totals.Total)</dd></div>
+            </dl>
+            <p class="checkout-review__pending">Your order will be sent to the restaurant with <strong>Pending</strong> status.</p>
+        </section>
+    </div>
+    <footer class="checkout-review__footer">
+        <form method="post" asp-page="/Customer/Cart" asp-page-handler="Place" data-cart-place>
+            <input type="hidden" name="token" value="@Model.Token" />
+            <div class="cart-dialog-actions"><a asp-page="/Customer/Cart" class="btn btn-outline-secondary" data-checkout-close>Back to cart</a><button type="submit" class="btn btn-primary">Confirm order</button></div>
+        </form>
+    </footer>
+</div>
