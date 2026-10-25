@@ -3,83 +3,18 @@
 
 @{
     ViewData["Title"] = "Admin Overview";
-    ViewData["FullWidth"] = true;
 }
 
-<style>
-    .overview-page {
-        position: relative;
-        padding: 28px 0 48px;
-    }
-
-    .overview-container {
-        position: relative;
-        z-index: 1;
-        width: 94vw;
-        max-width: none;
-        margin-left: calc(50% - 47vw);
-        margin-right: calc(50% - 47vw);
-    }
-
-    /* =========================
-       TABLET
-       ========================= */
-
-    @@media (max-width: 991px) {
-        .overview-container {
-            width: calc(100vw - 48px);
-            margin-left: calc(50% - 50vw + 24px);
-            margin-right: 0;
-        }
-    }
-
-    /* =========================
-       MOBILE
-       ========================= */
-
-    @@media (max-width: 768px) {
-        .overview-page {
-            padding-top: 20px;
-        }
-
-        .overview-container {
-            width: calc(100vw - 32px);
-            margin-left: calc(50% - 50vw + 16px);
-            margin-right: 0;
-        }
-
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start !important;
-            gap: 16px;
-        }
-
-        .page-header .text-md-end {
-            text-align: left !important;
-        }
-
-        .card-body {
-            padding: 18px !important;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .table {
-            min-width: 600px;
-        }
-    }
-</style>
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-overview.css" asp-append-version="true" />
+}
 
 <div class="overview-page">
 <div class="overview-container">
 
 <div class="page-header">
     <div>
-        <p class="eyebrow">Admin Overview ・ 管理</p>
-        <h1>Today's Overview</h1>
+        <h1>Admin Overview</h1>
         <p class="text-muted mb-0 mt-2">
             Here's what's happening at YORU IZAKAYA today.
         </p>
@@ -91,15 +26,48 @@
     </div>
 </div>
 
-<div class="row g-3 mb-4">
+    
+    <div class="quick-actions-section mb-4">
+        <p class="eyebrow mb-2">Quick Actions ・ クイック操作</p>
 
+        <div class="quick-actions-grid">
+            <a asp-page="/Admin/Tables/Index" class="quick-action-card">
+                <span class="quick-action-icon">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </span>
+
+                <span>
+                    <strong>Manage Tables</strong>
+                    <small>View tables and dining areas</small>
+                </span>
+
+                <i class="bi bi-arrow-right quick-action-arrow"></i>
+            </a>
+
+            <a asp-page="/Admin/Menu/Index" class="quick-action-card">
+                <span class="quick-action-icon">
+                    <i class="bi bi-journal-text"></i>
+                </span>
+
+                <span>
+                    <strong>Menu Items</strong>
+                    <small>Manage restaurant menu</small>
+                </span>
+
+                <i class="bi bi-arrow-right quick-action-arrow"></i>
+            </a>
+        </div>
+    </div>
+<p class="eyebrow mb-2">Today's Overview ・ 本日の概要</p>
+
+<div class="row g-3 mb-4">
     <!-- Reservations -->
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 shadow-sm">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <p class="eyebrow mb-1">予約 ・ Reservations</p>
+                        <p class="eyebrow mb-1">Reservations ・ 予約</p>
                         <p class="text-muted mb-0 small">Today's Reservations</p>
                     </div>
 
@@ -125,7 +93,7 @@
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <p class="eyebrow mb-1">注文 ・ Orders</p>
+                        <p class="eyebrow mb-1">Orders ・ 注文</p>
                         <p class="text-muted mb-0 small">Today's Orders</p>
                     </div>
 
@@ -151,7 +119,7 @@
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <p class="eyebrow mb-1">支払 ・ Payments</p>
+                        <p class="eyebrow mb-1">Payments ・ 支払</p>
                         <p class="text-muted mb-0 small">Today's Payments</p>
                     </div>
 
@@ -177,7 +145,7 @@
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
-                        <p class="eyebrow mb-1">売上 ・ Revenue</p>
+                        <p class="eyebrow mb-1">Revenue ・ 売上</p>
                         <p class="text-muted mb-0 small">Today's Revenue</p>
                     </div>
 
@@ -199,6 +167,54 @@
 
 </div>
 
+<div class="mb-4">
+    <p class="eyebrow mb-2">Restaurant Status ・ 店舗状況</p>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Today's Opening Hours</p>
+
+                    @if (Model.Overview.IsClosedToday)
+                    {
+                        <strong>Closed Today</strong>
+                    }
+                    else
+                    {
+                        <strong>
+                            @Model.Overview.TodayOpenTime?.ToString("hh:mm tt")
+                            –
+                            @Model.Overview.TodayCloseTime?.ToString("hh:mm tt")
+                        </strong>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Active Tables</p>
+                    <strong>
+                        @Model.Overview.ActiveTableCount active ·
+                        @Model.Overview.TotalSeatCount seats
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <p class="text-muted small mb-1">Available Menu Items</p>
+                    <strong>@Model.Overview.AvailableMenuItemCount available</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-4">
 
     <div class="col-lg-6">
@@ -206,6 +222,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3 class="mb-0">Latest Reservations</h3>
+                    @* View All will be linked when the dedicated page becomes available. *@
                     <a class="btn btn-outline-secondary btn-sm disabled"
                        href="#"
                        aria-disabled="true">
@@ -216,19 +233,23 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
-                        <tr>
-                            <th>Reference</th>
-                            <th>Time</th>
-                            <th>Guests</th>
-                            <th>Status</th>
+                        <tr class="text-center">
+                            <th class="text-center">Reference</th>
+                            <th class="text-center">Time</th>
+                            <th class="text-center">Guests</th>
+                            <th class="text-center">Status</th>
                         </tr>
                         </thead>
                         <tbody>
                         @if (Model.Overview.LatestReservations.Count == 0)
                         {
                             <tr>
-                                <td colspan="4" class="text-muted">
-                                    No reservations found.
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="bi bi-calendar-check fs-4 text-secondary"></i>
+                                    <p class="mb-1 mt-2 fw-semibold">No reservations yet</p>
+                                    <small class="text-muted">
+                                        New reservations will appear here when they are available.
+                                    </small>
                                 </td>
                             </tr>
                         }
@@ -271,18 +292,22 @@
                     <table class="table table-hover align-middle">
                         <thead>
                         <tr>
-                            <th>Order</th>
-                            <th>Type</th>
-                            <th>Total</th>
-                            <th>Status</th>
+                            <th class="text-center">Order</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">Status</th>
                         </tr>
                         </thead>
                         <tbody>
                         @if (Model.Overview.LatestOrders.Count == 0)
                         {
                             <tr>
-                                <td colspan="4" class="text-muted">
-                                    No orders found.
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="bi bi-receipt fs-4 text-secondary"></i>
+                                    <p class="mb-1 mt-2 fw-semibold">No orders yet</p>
+                                    <small class="text-muted">
+                                        New orders will appear here when they are placed.
+                                    </small>
                                 </td>
                             </tr>
                         }
@@ -290,7 +315,7 @@
                         {
                             @foreach (var order in Model.Overview.LatestOrders)
                             {
-                                <tr>
+                                <tr class="text-center">
                                     <td>@order.OrderNo</td>
                                     <td>@order.OrderType</td>
                                     <td>RM @order.TotalAmount.ToString("N2")</td>
@@ -326,19 +351,23 @@
             <table class="table table-hover align-middle">
                 <thead>
                 <tr>
-                    <th>Order</th>
-                    <th>Amount</th>
-                    <th>Method</th>
-                    <th>Status</th>
-                    <th>Paid At</th>
+                    <th class="text-center">Order</th>
+                    <th class="text-center">Amount</th>
+                    <th class="text-center">Method</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Paid At</th>
                 </tr>
                 </thead>
                 <tbody>
                 @if (Model.Overview.LatestPayments.Count == 0)
                 {
                     <tr>
-                        <td colspan="5" class="text-muted">
-                            No payments found.
+                        <td colspan="5" class="text-center py-4">
+                            <i class="bi bi-credit-card fs-4 text-secondary"></i>
+                            <p class="mb-1 mt-2 fw-semibold">No payments yet</p>
+                            <small class="text-muted">
+                                Completed payments will appear here when they are received.
+                            </small>
                         </td>
                     </tr>
                 }
@@ -346,7 +375,7 @@
                 {
                     @foreach (var payment in Model.Overview.LatestPayments)
                     {
-                        <tr>
+                        <tr class="text-center">
                             <td>@payment.Order.OrderNo</td>
                             <td>RM @payment.Amount.ToString("N2")</td>
                             <td>@payment.Method</td>
