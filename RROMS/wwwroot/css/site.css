@@ -4389,7 +4389,432 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
         box-shadow: inset 0 0 0 2px rgba(255, 225, 170, .6), 0 6px 14px -6px rgba(169, 42, 28, .6);
     }
 
+    /* Phone link on Home "Visit us": same dashed red underline as the About page */
+    .hm-visit a[href^="tel:"] {
+        color: var(--yoru-ink);
+        text-decoration: none;
+        border-bottom: 1px dashed rgba(200, 62, 45, .5);
+    }
+
+    .hm-visit a[href^="tel:"]:hover {
+        color: var(--yoru-red-text);
+        border-bottom-color: var(--yoru-red);
+    }
 
 /* ================= HOME PAGE (US50) - END ================= */
+
+
+
+/* ===================== ABOUT US PAGE (US53, Member 1) ===================== */
+/* Reuses the Home page styles (.hm-*); these are the extra About parts (.ab-*). */
+.ab-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 1.2rem;
+}
+
+.ab-arrow {
+    width: 1rem;
+    height: 1rem;
+    margin-left: .35rem;
+    vertical-align: -.15em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ab-btn-ghost {
+    border: 1px solid rgba(212, 173, 98, .7);
+    color: #e9d3a6;
+    background: transparent;
+}
+
+    .ab-btn-ghost:hover {
+        background: rgba(212, 173, 98, .12);
+        color: #fff;
+        border-color: #d4ad62;
+    }
+
+/* 2. A night at YORU (also uses .hm-exp for the sakura branches in the corners) */
+.ab-night {
+    padding: 5.5rem 0 5rem;
+}
+
+.ab-moments {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .ab-moments::before {
+        content: "";
+        position: absolute;
+        left: 16%;
+        right: 16%;
+        top: 2.6rem;
+        border-top: 1px dashed rgba(200, 62, 45, .45);
+    }
+
+.ab-moment {
+    position: relative;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.ab-moment-kanji {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 5.2rem;
+    height: 5.2rem;
+    margin: 0 auto 1.1rem;
+    border-radius: 50%;
+    background: var(--yoru-cream);
+    border: 1px solid var(--yoru-red);
+    color: var(--yoru-red);
+    font-size: 2.1rem;
+    box-shadow: 0 0 0 6px var(--yoru-cream);
+}
+
+.ab-moment:nth-child(2) .ab-moment-kanji {
+    background: var(--yoru-red);
+    color: #fff;
+}
+
+.ab-moment:nth-child(3) .ab-moment-kanji {
+    background: var(--yoru-ink);
+    border-color: var(--yoru-ink);
+    color: #e9d3a6;
+}
+
+.ab-moment-time {
+    display: block;
+    margin-bottom: .35rem;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--yoru-red-text);
+}
+
+.ab-moment h3 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    color: var(--yoru-ink);
+    margin-bottom: .5rem;
+}
+
+.ab-moment p {
+    color: var(--yoru-olive-text);
+    max-width: 19rem;
+    margin: 0 auto;
+}
+
+/* 3. New to izakaya? */
+.ab-guide {
+    position: relative;
+    overflow: hidden;
+    padding: 5.5rem 0;
+}
+
+.ab-guide-grid {
+    display: grid;
+    grid-template-columns: .9fr 1.1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.ab-guide-ink {
+    display: block;
+    width: 100%;
+    max-width: 24rem;
+    margin-top: 1.5rem;
+    opacity: .35;
+    filter: invert(1) sepia(.4);
+    mix-blend-mode: screen;
+}
+
+.ab-tips {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .ab-tips li {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 1.4rem;
+        border: 1px solid rgba(212, 173, 98, .25);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, .03);
+        transition: border-color .2s, transform .2s;
+    }
+
+        .ab-tips li:hover {
+            border-color: rgba(212, 173, 98, .6);
+            transform: translateY(-3px);
+        }
+
+.ab-tip-seal {
+    flex: none;
+    display: grid;
+    place-items: center;
+    min-width: 2.8rem;
+    height: 2.8rem;
+    padding: 0 .4rem;
+    border-radius: 6px;
+    background: var(--yoru-red);
+    color: #fff;
+    font-size: 1.1rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 225, 170, .5);
+}
+
+.ab-tips h3 {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--yoru-cream);
+    margin: .1rem 0 .35rem;
+}
+
+.ab-tips p {
+    margin: 0;
+    font-size: .92rem;
+    color: rgba(245, 240, 231, .7);
+}
+
+/* 4. Visit us (gold clouds in the corners, like the Home signature menu) */
+.ab-visit {
+    position: relative;
+    overflow: hidden;
+    padding: 5.5rem 0;
+}
+
+    .ab-visit::before, .ab-visit::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        width: min(40%, 30rem);
+        aspect-ratio: 764 / 318;
+        background: center / contain no-repeat;
+        opacity: .8;
+    }
+
+    .ab-visit::before {
+        left: 0;
+        top: 0;
+        background-image: url("/images/home/clouds-l.webp");
+    }
+
+    .ab-visit::after {
+        right: 0;
+        bottom: 0;
+        background-image: url("/images/home/clouds-r.webp");
+    }
+
+    .ab-visit > .container-xl {
+        position: relative;
+        z-index: 1;
+    }
+
+.ab-visit-grid {
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.ab-info {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: .9rem 1.2rem;
+    margin: 1.2rem 0 0;
+}
+
+    .ab-info dt {
+        font-size: .72rem;
+        font-weight: 600;
+        letter-spacing: .2em;
+        text-transform: uppercase;
+        color: var(--yoru-red-text);
+        padding-top: .2rem;
+    }
+
+    .ab-info dd {
+        margin: 0;
+        color: var(--yoru-ink);
+    }
+
+    .ab-info a {
+        color: var(--yoru-ink);
+    }
+
+.ab-map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    width: max-content;
+    margin-top: .6rem;
+    padding: .45rem .95rem .45rem .75rem;
+    border: 1px solid rgba(200, 62, 45, .35);
+    border-radius: 999px;
+    background: #fffdf8;
+    color: var(--yoru-red-text) !important;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-decoration: none;
+    transition: background .2s, color .2s, border-color .2s, transform .2s;
+}
+
+    .ab-map-btn svg {
+        width: 1.05rem;
+        height: 1.05rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .ab-map-btn .ab-map-ext {
+        width: .7rem;
+        height: .7rem;
+        opacity: .7;
+        transition: transform .2s;
+    }
+
+    .ab-map-btn:hover {
+        background: var(--yoru-red);
+        border-color: var(--yoru-red);
+        color: #fff !important;
+        transform: translateY(-1px);
+    }
+
+        .ab-map-btn:hover .ab-map-ext {
+            transform: translate(2px, -2px);
+        }
+
+.ab-info dd {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+    .ab-info dd a[href^="tel:"] {
+        width: max-content;
+        text-decoration: none;
+        border-bottom: 1px dashed rgba(200, 62, 45, .5);
+    }
+
+        .ab-info dd a[href^="tel:"]:hover {
+            color: var(--yoru-red-text);
+        }
+
+.ab-hours td {
+    padding: 0 1.4rem .15rem 0;
+}
+
+.ab-hours .closed td:last-child {
+    color: var(--yoru-red-text);
+}
+
+.ab-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.ab-stat {
+    padding: 1.5rem 1.3rem;
+    border-radius: 10px;
+    background: #fffdf8;
+    border: 1px solid var(--yoru-line);
+    box-shadow: 0 12px 28px -18px rgba(90, 40, 20, .35);
+}
+
+    .ab-stat b {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 2.4rem;
+        line-height: 1;
+        color: var(--yoru-red);
+        margin-bottom: .4rem;
+    }
+
+    .ab-stat span {
+        font-size: .85rem;
+        color: var(--yoru-olive-text);
+    }
+
+/* 5. See you tonight */
+.ab-cta {
+    position: relative;
+    overflow: hidden;
+    padding: 5rem 0 5.5rem;
+}
+
+.ab-cta-torii {
+    position: absolute;
+    right: -2rem;
+    bottom: -1rem;
+    width: 22rem;
+    opacity: .12;
+    pointer-events: none;
+}
+
+.ab-cta-kanji {
+    display: block;
+    margin-bottom: .6rem;
+    font-size: 1rem;
+    letter-spacing: .5em;
+    color: var(--yoru-gold);
+}
+
+/* Tablets and phones */
+@media (max-width: 991.98px) {
+    .ab-moments, .ab-guide-grid, .ab-visit-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+        .ab-moments::before {
+            display: none;
+        }
+
+    .ab-guide-ink {
+        display: none;
+    }
+
+    .ab-visit::before, .ab-visit::after {
+        width: 70%;
+        opacity: .5;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .ab-tips {
+        grid-template-columns: 1fr;
+    }
+
+    .ab-info {
+        grid-template-columns: 1fr;
+        gap: .2rem;
+    }
+
+        .ab-info dd {
+            margin-bottom: .8rem;
+        }
+}
 
 
