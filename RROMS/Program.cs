@@ -62,7 +62,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-// Member 4: builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 // Member 5: builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAdminOverviewService, AdminOverviewService>();
 
