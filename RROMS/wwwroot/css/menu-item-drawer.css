@@ -1450,3 +1450,8 @@ html.yoru-photo-open {
         min-block-size: 2.4em;
     }
 }
+
+/* Match Tables & Hours: the same gap below the shared navigation on both menu tabs. */
+body.back-office:has([data-menu-studio]) .site-main > .container-wide {
+    padding-top: 1rem !important;
+}

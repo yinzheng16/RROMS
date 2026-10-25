@@ -19,7 +19,7 @@ namespace RROMS.Services
             // Keep demoNames in the signature so existing service callers still work.
             // A dish's name or import source does not determine whether it is new.
             DateTime cutoff = now.AddDays(-7);
-            return source.Where(item => item.Price > 0
+            return source.Where(item => item.Price >= 0
                     && item.CreatedAt >= cutoff && item.CreatedAt <= now)
                 .OrderByDescending(item => item.CreatedAt)
                 .ThenByDescending(item => item.Id)
@@ -78,7 +78,8 @@ namespace RROMS.Services
         public static CustomerMenuPage Build(IReadOnlyList<MenuItemSummary> source,
             string? search, int? categoryId, string? sortOrder, int limit)
         {
-            var all = InMenuOrder(source.Where(item => item.Price > 0)).ToArray();
+            // Base-price validation happens in the service. A 100% promotion may be free.
+            var all = InMenuOrder(source.Where(item => item.Price >= 0)).ToArray();
             var categories = all.GroupBy(item => item.CategoryId)
                 .Select(group => new CustomerMenuCategory(group.Key,
                     group.First().CategoryName, group.First().CategoryCode)
