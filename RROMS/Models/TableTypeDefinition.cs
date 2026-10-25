@@ -10,12 +10,18 @@ public class TableTypeDefinition
     [Required, StringLength(50)]
     public string Name { get; set; } = string.Empty;
 
+    // New system-generated table type code.
+    [StringLength(6)]
+    public string? Code { get; set; }
+
+    // Legacy fields: keep temporarily until Service and database migration are updated.
     [Required, StringLength(10)]
     public string Prefix { get; set; } = string.Empty;
 
     public int StartingNumber { get; set; } = 1;
 
-    public int NumberPadding { get; set; } = 1;
+    [Range(1, 4)]
+    public int NumberPadding { get; set; } = 3;
 
     public int DefaultDiningAreaId { get; set; }
 

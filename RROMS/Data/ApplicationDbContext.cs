@@ -66,6 +66,10 @@ namespace RROMS.Data
             {
                 e.HasIndex(t => t.Name).IsUnique();
 
+                e.HasIndex(t => t.Code)
+                    .IsUnique()
+                    .HasFilter("[Code] IS NOT NULL");
+
                 e.HasOne(t => t.DefaultDiningArea)
                     .WithMany()
                     .HasForeignKey(t => t.DefaultDiningAreaId)
