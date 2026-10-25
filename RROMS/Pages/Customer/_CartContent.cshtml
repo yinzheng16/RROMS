@@ -1,0 +1,154 @@
+@model RROMS.Services.Interfaces.CartView
+@using System.Globalization
+@using RROMS.Models
+@{
+    string Money(decimal amount) => amount.ToString("F2", CultureInfo.InvariantCulture);
+    string Rate(decimal amount) => amount.ToString("0.##", CultureInfo.InvariantCulture);
+    var selectedReservation = Model.Reservations.FirstOrDefault(row => row.Id == Model.ReservationId);
+    var reservationUnavailable = !Model.ReservationValid;
+}
+<div data-cart-content data-cart-quantity="@Model.Quantity" data-cart-revision="@Model.Revision">
+    @if (Model.Lines.Count == 0)
+    {
+        <section class="card cart-empty text-center p-4 p-lg-5">
+            <i class="bi bi-bag fs-1" aria-hidden="true"></i>
+            <h2>A good meal starts with a dish.</h2>
+            <p>Your cart is empty. Explore the menu and find a favourite.</p>
+            <a class="btn btn-primary align-self-center" asp-page="/Menu/Index">Explore the menu →</a>
+        </section>
+    }
+    else
+    {
+        <form method="post" asp-page="/Customer/Cart" asp-page-handler="Save" data-cart-form>
+            <input type="hidden" name="Input.Revision" value="@Model.Revision" />
+            <section class="card cart-fulfilment" id="cart-dining-options" tabindex="-1" aria-labelledby="cart-options-title">
+                <header class="cart-section-heading">
+                    <h2 id="cart-options-title">Make it yours</h2>
+                    <p>Tell us a little more about your order.</p>
+                </header>
+                <div class="cart-fulfilment__fields">
+                    <fieldset>
+                        <legend class="form-label">Dining option</legend>
+                        <div class="cart-order-types">
+                            <label class="cart-order-type"><input type="radio" name="Input.OrderType" value="DineIn" checked="@(Model.OrderType == OrderType.DineIn)" data-cart-order-type /><span><strong>Dine-in</strong></span></label>
+                            <label class="cart-order-type"><input type="radio" name="Input.OrderType" value="Takeaway" checked="@(Model.OrderType == OrderType.Takeaway)" data-cart-order-type /><span><strong>Takeaway</strong></span></label>
+                        </div>
+                    </fieldset>
+                    <div class="cart-fulfilment__reservation">
+                        <div class="cart-reservation" data-cart-reservation hidden="@(Model.OrderType != OrderType.DineIn)">
+                            <label for="cart-reservation" id="cart-reservation-label" class="form-label">Reservation <span class="cart-note__optional">(optional)</span></label>
+                            <select class="form-select cart-reservation__native" id="cart-reservation" name="Input.ReservationId" data-cart-autosave disabled="@(Model.OrderType != OrderType.DineIn)">
+                                <option value="" selected="@(!Model.ReservationId.HasValue)">No reservation · Walk-in</option>
+                                @if (!Model.ReservationValid)
+                                {
+                                    <option value="@Model.ReservationId" data-unavailable="true" selected>Reservation no longer available — choose another or Walk-in</option>
+                                }
+                                @foreach (var reservation in Model.Reservations)
+                                {
+                                    <option value="@reservation.Id" data-booking-date="@reservation.ReservedAt.ToString("ddd, dd MMM · h:mm tt", CultureInfo.InvariantCulture)" data-booking-details="@reservation.Guests @(reservation.Guests == 1 ? "guest" : "guests") · @reservation.ReferenceNo" selected="@(Model.ReservationId == reservation.Id)">@reservation.ReservedAt.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture) · @reservation.Guests guests · @reservation.ReferenceNo (@reservation.Status)</option>
+                                }
+                            </select>
+                            <div class="cart-reservation-picker" data-cart-reservation-rendered>
+                                <button type="button" id="cart-reservation-trigger" class="cart-reservation__trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="cart-reservation-label cart-reservation-value" disabled>
+                                    <i class="bi bi-@(reservationUnavailable ? "exclamation-circle" : selectedReservation is null ? "shop" : "calendar4")" aria-hidden="true"></i>
+                                    <span id="cart-reservation-value" class="cart-reservation__value">
+                                        <span>@(reservationUnavailable ? "Reservation no longer available — choose another or Walk-in" : selectedReservation is null ? "No reservation · Walk-in" : selectedReservation.ReservedAt.ToString("ddd, dd MMM · h:mm tt", CultureInfo.InvariantCulture))</span>
+                                        @if (selectedReservation is not null)
+                                        {
+                                            <small>@selectedReservation.Guests @(selectedReservation.Guests == 1 ? "guest" : "guests") · @selectedReservation.ReferenceNo</small>
+                                        }
+                                    </span>
+                                    <span class="cart-reservation__chevron" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="cart-takeaway" data-cart-takeaway-message hidden="@(Model.OrderType != OrderType.Takeaway)">
+                            <p class="form-label">Takeaway</p>
+                            <p class="cart-takeaway__message"><i class="bi bi-bag" aria-hidden="true"></i><span>No reservation needed for takeaway.</span></p>
+                        </div>
+                    </div>
+                    <div class="cart-fulfilment__remarks">
+                        <label for="cart-remarks" class="form-label">Overall remarks <span class="cart-note__optional">(optional)</span></label>
+                        <textarea id="cart-remarks" class="form-control" name="Input.Notes" maxlength="500" rows="2" placeholder="Any special requests for your order?" data-cart-autosave>@Model.Notes</textarea>
+                    </div>
+                </div>
+            </section>
+            <div class="cart-main-grid">
+                <div>
+                    <section class="card cart-dishes">
+                        <header class="cart-section-heading cart-dishes__heading">
+                            <div><h2 id="cart-dishes-title">Your dishes</h2><p>@Model.Lines.Count @(Model.Lines.Count == 1 ? "dish selection" : "dish selections")</p></div>
+                            <span class="cart-dishes__count">@Model.Quantity @(Model.Quantity == 1 ? "item" : "items")</span>
+                        </header>
+                        <div id="cart-dish-list" class="cart-dish-list" role="region" aria-labelledby="cart-dishes-title" tabindex="0">
+                            @for (int i = 0; i < Model.Lines.Count; i++)
+                            {
+                                var line = Model.Lines[i];
+                                string notesId = "dish-note-" + line.Id.ToString("N");
+                                <article class="cart-line @(!line.IsAvailable ? "cart-line--unavailable" : "")" data-cart-line="@line.Id">
+                                    <input type="hidden" name="Input.Lines[@i].Id" value="@line.Id" />
+                                    @if (!string.IsNullOrWhiteSpace(line.ImageUrl))
+                                    {
+                                        <img class="cart-line__photo" src="@Url.Content(line.ImageUrl)" alt="@line.Name" width="160" height="160" loading="lazy" />
+                                    }
+                                    else
+                                    {
+
+                                        <span class="cart-line__photo cart-line__placeholder" aria-hidden="true">夜</span>
+                                    }
+                                    <div class="cart-line__description">
+                                        <p class="cart-line__code">@line.Code</p><h3>@line.Name</h3>
+                                        <p class="cart-line__unit">RM @Money(line.UnitPrice) each</p>
+                                        @if (!line.IsAvailable)
+                                        {
+                                            <p class="cart-line__warning"><i class="bi bi-info-circle" aria-hidden="true"></i> Unavailable — remove to continue</p>
+                                        }
+                                        <div class="cart-line__note" data-cart-note>
+                                            <label for="@notesId">Dish note <span class="cart-note__optional">(optional)</span><span class="visually-hidden"> for @line.Name</span></label>
+                                            <textarea class="form-control" id="@notesId" name="Input.Lines[@i].Notes" maxlength="200" rows="1" placeholder="Any requests for this dish?" data-cart-autosave>@line.Notes</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="cart-line__controls">
+                                        <div class="cart-line__quantity">
+                                            <label class="visually-hidden" for="qty-@line.Id">Quantity for @line.Name</label>
+                                            <div class="cart-quantity">
+                                                <button type="button" data-cart-step="-1" aria-label="Decrease @line.Name quantity" disabled="@(line.Quantity <= 1)">−</button>
+                                                <input id="qty-@line.Id" type="number" name="Input.Lines[@i].Quantity" value="@line.Quantity" min="1" max="100" step="1" required data-cart-quantity-input />
+                                                <button type="button" data-cart-step="1" aria-label="Increase @line.Name quantity" disabled="@(line.Quantity >= 100)">+</button>
+                                            </div>
+                                        </div>
+                                        <strong class="cart-line__total">RM @Money(line.LineTotal)</strong>
+                                        <button type="submit" class="cart-remove" name="removeLineId" value="@line.Id" data-cart-remove aria-label="Remove @line.Name"><i class="bi bi-trash3" aria-hidden="true"></i><span>Remove</span></button>
+                                    </div>
+                                </article>
+                            }
+                        </div>
+                    </section>
+                </div>
+                <div class="cart-summary-column">
+                    <aside class="card cart-summary" aria-labelledby="cart-summary-title">
+                        <header class="cart-summary__heading"><div><h2 id="cart-summary-title">Order summary</h2><p>@Model.Quantity @(Model.Quantity == 1 ? "item" : "items")</p></div><i class="bi bi-bag" aria-hidden="true"></i></header>
+                        <div class="cart-summary__body">
+                            <dl class="cart-totals"><div><dt>Subtotal</dt><dd>RM @Money(Model.Totals.Subtotal)</dd></div><div><dt>Tax (@Rate(Model.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Totals.Tax)</dd></div><div><dt>Service charge (@Rate(Model.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Totals.ServiceCharge)</dd></div><div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Totals.Total)</dd></div></dl>
+                            <div class="cart-summary__dining">
+                                <p class="cart-summary__type"><i class="bi @(Model.OrderType == OrderType.DineIn ? "bi-shop" : "bi-bag")" aria-hidden="true"></i> @(Model.OrderType == OrderType.DineIn ? (Model.ReservationId.HasValue ? "Dine-in · Reservation" : "Dine-in · Walk-in") : "Takeaway")</p>
+                            </div>
+                            @if (Model.HasUnavailable)
+                            {
+                                <p class="cart-line__warning">Remove unavailable dishes before ordering.</p>
+                            }
+                            else if (!Model.ReservationValid)
+                            {
+
+                                <p class="cart-summary__hint">Choose another reservation or continue as a walk-in.</p>
+                            }
+                            <button type="submit" class="btn btn-primary w-100" asp-page-handler="Review" data-cart-review disabled="@(Model.HasUnavailable)">Place order</button>
+                            <p class="cart-summary__hint mt-2">Review and confirm before your order is sent. Prices and availability are checked again.</p>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+            <div class="cart-save-state mt-3"><span data-cart-save-state>Changes are saved when you finish editing.</span><button type="submit" class="btn btn-outline-secondary btn-sm" data-cart-save-button>Save cart</button></div>
+        </form>
+    }
+</div>
