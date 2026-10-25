@@ -41,10 +41,10 @@ namespace RROMS.Areas.Identity.Pages.Account
 
         public IActionResult OnGet(string? returnUrl = null)
         {
-            // Already logged in: no need to log in again.
+            // Already logged in: no need to log in again, go to your role's starting page (US51).
             if (User.Identity?.IsAuthenticated == true)
             {
-                return LocalRedirect("~/");
+                return LocalRedirect(_accounts.GetStartPage(User));
             }
 
             ReturnUrl = returnUrl;
@@ -72,9 +72,11 @@ namespace RROMS.Areas.Identity.Pages.Account
 
             if (result == LoginResult.Success)
             {
-                // Only go back to pages on our own site (stops "open redirect" tricks).
-                // US51 will change this to send each role to its own starting page.
-                var target = !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) ? returnUrl : "~/";
+                // US51: if the user was sent here from a protected page, go back to it
+                // (only pages on our own site, which stops "open redirect" tricks).
+                // Otherwise go to the role's starting page: Admin -> /Admin, Staff -> /Staff, Customer -> Home.
+                var cameFromPage = !string.IsNullOrEmpty(returnUrl) && returnUrl != "/" && Url.IsLocalUrl(returnUrl);
+                var target = cameFromPage ? returnUrl! : await _accounts.GetStartPageAsync(Input.Email);
                 return LocalRedirect(target);
             }
 

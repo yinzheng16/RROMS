@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using PhoneNumbers;   // NuGet: libphonenumber-csharp
@@ -130,6 +131,41 @@ namespace RROMS.Services
         public async Task LogoutAsync()
         {
             await _signInManager.SignOutAsync();
+        }
+
+        // ---------- US51: starting page per role ----------
+
+        // The only place that decides where each role starts. Pages are built by:
+        // Admin overview = Member 5 (US41), Staff reservations = Member 2 (US16), Home = Member 1 (US50).
+        private const string AdminStartPage = "/Admin";
+        private const string StaffStartPage = "/Staff";
+        private const string CustomerStartPage = "/";
+
+        public async Task<string> GetStartPageAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email.Trim());
+            if (user is null) return CustomerStartPage;
+
+            if (await _userManager.IsInRoleAsync(user, Roles.Admin)) return AdminStartPage;
+            if (await _userManager.IsInRoleAsync(user, Roles.Staff)) return StaffStartPage;
+            return CustomerStartPage;
+        }
+
+        // US50: full name for "Welcome back, ..." on the Home page.
+        // Full name, not the first word, because Malaysian names often start with the surname.
+        public async Task<string?> GetDisplayNameAsync(ClaimsPrincipal user)
+        {
+            if (user.Identity?.IsAuthenticated != true) return null;
+            var appUser = await _userManager.GetUserAsync(user);
+            var fullName = appUser?.FullName?.Trim();
+            return string.IsNullOrEmpty(fullName) ? null : fullName;
+        }
+
+        public string GetStartPage(ClaimsPrincipal user)
+        {
+            if (user.IsInRole(Roles.Admin)) return AdminStartPage;
+            if (user.IsInRole(Roles.Staff)) return StaffStartPage;
+            return CustomerStartPage;
         }
     }
 }

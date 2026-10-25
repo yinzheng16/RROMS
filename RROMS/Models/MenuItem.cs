@@ -23,6 +23,9 @@ namespace RROMS.Models
         [StringLength(300)]
         public string? ImageUrl { get; set; }
 
+        [Required, StringLength(24)]
+        public string Code { get; set; } = string.Empty;
+
         public bool IsAvailable { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;

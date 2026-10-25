@@ -59,11 +59,13 @@ builder.Services.AddRazorPages(options =>
 // ---------- Business logic tier (register each module's services here) ----------
 builder.Services.AddScoped<INotificationService, NotificationService>();   // EN06 / Member 4
 builder.Services.AddScoped<IAccountService, AccountService>();
-// Member 2: builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-// Member 4: builder.Services.AddScoped<IPaymentService, PaymentService>();
+
 // Member 5: Feedback, Reports & Dashboard
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>(); // Member 4
 // Member 5: builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
