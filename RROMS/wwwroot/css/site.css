@@ -4120,6 +4120,265 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
     background-image: none;
 }
 
+/* ---------- Omikuji box stage (painted image behind the box + new button) ---------- */
+.hm-omikuji {
+    grid-template-columns: .8fr minmax(22rem, 1fr) 1.2fr;
+    gap: 2rem;
+}
+
+.hm-omi-left {
+    min-width: 0;
+}
+
+.hm-omi-stage {
+    position: relative;
+    width: 25rem;
+    max-width: 100%;
+    aspect-ratio: 3 / 2;
+    margin: 0 auto;
+}
+
+.hm-omi-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    transition: transform .5s ease;
+}
+
+.hm-omi-bg-front {
+    z-index: 2;
+}
+
+.hm-omi-stage:has(.hm-omi-box.shake) .hm-omi-bg {
+    transform: scale(1.03);
+}
+
+/* The box: centred on the painted circle */
+.hm-omi-stage .hm-omi-box {
+    position: absolute;
+    left: 50%;
+    top: 49%;
+    z-index: 1;
+    margin: 0;
+    transform: translate(-50%, -60%) scale(.8);
+}
+
+.hm-omi-stage .hm-omi-body {
+    background: linear-gradient(90deg, rgba(0,0,0,.5) 0 21%, rgba(255,255,255,.08) 21% 24%, transparent 24% 76%, rgba(0,0,0,.1) 76% 79%, rgba(0,0,0,.38) 79%), linear-gradient(180deg, #a3241b 0 8%, #e3c07a 8% 9.2%, transparent 9.2% 89%, #e3c07a 89% 90.2%, #a3241b 90.2%), repeating-linear-gradient(180deg, rgba(40,15,5,.14) 0 2px, transparent 2px 7px), linear-gradient(90deg, #4e2610, #9a5a2c 50%, #4e2610);
+    box-shadow: 0 18px 26px -8px rgba(90, 20, 10, .55);
+}
+
+    .hm-omi-stage .hm-omi-body::after {
+        content: "";
+        position: absolute;
+        left: -6%;
+        right: -6%;
+        bottom: -.7rem;
+        height: .8rem;
+        border-radius: 2px;
+        background: linear-gradient(180deg, #8f2118, #5e140e);
+        box-shadow: inset 0 1px 0 #e3c07a, 0 4px 8px rgba(60,10,5,.4);
+    }
+
+.hm-omi-stage .hm-omi-stick::after {
+    content: "";
+    position: absolute;
+    left: -.15rem;
+    right: -.15rem;
+    top: .7rem;
+    height: .35rem;
+    background: #b8281c;
+    border-radius: 1px;
+    box-shadow: 0 .5rem 0 #b8281c;
+}
+
+.hm-omi-stage .hm-omi-shadow {
+    bottom: -.4rem;
+}
+
+.hm-omi-seal {
+    background: var(--yoru-red);
+    box-shadow: 0 0 0 2px #e3c07a, 0 2px 4px rgba(0,0,0,.35);
+}
+/* Shake button: red pill with a gold border, sits over the bottom of the circle */
+.hm-omi-btn {
+    position: relative;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+    margin-top: -2rem;
+    padding: .85rem 1.9rem;
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: .03em;
+    cursor: pointer;
+    background: linear-gradient(180deg, #c8382a, #8f1f15);
+    box-shadow: inset 0 0 0 2px #e3c07a, inset 0 0 0 4px #7a1a12, inset 0 2px 0 4px rgba(255,255,255,.12), 0 0 0 2px #7a1a12, 0 12px 24px -8px rgba(120, 25, 15, .65);
+    transition: transform .2s ease, filter .2s ease;
+}
+
+    .hm-omi-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.06);
+    }
+
+    .hm-omi-btn:active {
+        transform: translateY(0);
+    }
+
+    .hm-omi-btn:focus-visible {
+        outline: 2px solid var(--yoru-red);
+        outline-offset: 5px;
+    }
+
+.hm-omi-dice {
+    width: 1.3rem;
+    height: 1.3rem;
+    flex: none;
+}
+
+.hm-omi-chev {
+    width: .9rem;
+    height: .9rem;
+    flex: none;
+    transition: transform .2s ease;
+}
+
+.hm-omi-btn:hover .hm-omi-chev {
+    transform: translateX(3px);
+}
+
+.hm-omi-left .hm-omi-hint {
+    margin-top: .9rem;
+}
+
+@media (max-width: 991.98px) {
+    .hm-omikuji {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .hm-omi-stage .hm-omi-box {
+        transform: translate(-50%, -60%) scale(.75);
+    }
+}
+
+/* ---------- Fortune card: gold double frame, corner marks, sakura watermark, waves ---------- */
+.hm-slip, .hm-slip.is-empty {
+    --gold: #d9b56f;
+    --waves: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='20'%3E%3Cg fill='none' stroke='%23d9b977' stroke-width='1'%3E%3Cpath d='M2 20a18 18 0 0 1 36 0M8 20a12 12 0 0 1 24 0M14 20a6 6 0 0 1 12 0M-18 10a18 18 0 0 1 36 0M-12 10a12 12 0 0 1 24 0M-6 10a6 6 0 0 1 12 0M22 10a18 18 0 0 1 36 0M28 10a12 12 0 0 1 24 0M34 10a6 6 0 0 1 12 0'/%3E%3C/g%3E%3C/svg%3E");
+    overflow: hidden;
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    background:
+    /* corner marks (4 little L shapes inside the frame) */
+    linear-gradient(var(--gold), var(--gold)) left .95rem top .95rem / .9rem 1.5px no-repeat, linear-gradient(var(--gold), var(--gold)) left .95rem top .95rem / 1.5px .9rem no-repeat, linear-gradient(var(--gold), var(--gold)) right .95rem top .95rem / .9rem 1.5px no-repeat, linear-gradient(var(--gold), var(--gold)) right .95rem top .95rem / 1.5px .9rem no-repeat, linear-gradient(var(--gold), var(--gold)) left .95rem bottom .95rem / .9rem 1.5px no-repeat, linear-gradient(var(--gold), var(--gold)) left .95rem bottom .95rem / 1.5px .9rem no-repeat, linear-gradient(var(--gold), var(--gold)) right .95rem bottom .95rem / .9rem 1.5px no-repeat, linear-gradient(var(--gold), var(--gold)) right .95rem bottom .95rem / 1.5px .9rem no-repeat,
+    /* faded sakura watermark */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-24 -24 48 48'%3E%3Cg fill='%23f7d9d6'%3E%3Cpath id='p' d='M0 -2C-8 -7 -9 -17 -4 -22L0 -19L4 -22C9 -17 8 -7 0 -2Z'/%3E%3Cuse href='%23p' transform='rotate(72)'/%3E%3Cuse href='%23p' transform='rotate(144)'/%3E%3Cuse href='%23p' transform='rotate(216)'/%3E%3Cuse href='%23p' transform='rotate(288)'/%3E%3C/g%3E%3Cg stroke='%23f0c4c0' stroke-width='.8'%3E%3Cpath d='M0 0 0 -8M0 0 7.6 -2.5M0 0 4.7 6.5M0 0 -4.7 6.5M0 0 -7.6 -2.5'/%3E%3C/g%3E%3C/svg%3E") right 1.6rem top 1.4rem / 3.4rem no-repeat, linear-gradient(180deg, #fffcf5, #faf3e6);
+    box-shadow: 0 18px 36px -14px rgba(90, 40, 20, .25);
+}
+
+    .hm-slip::before {
+        inset: .5rem;
+        border: 1px solid var(--gold);
+        border-radius: 4px;
+        opacity: .8;
+    }
+
+    .hm-slip::after {
+        content: "";
+        position: absolute;
+        right: .5rem;
+        bottom: .5rem;
+        width: 8.5rem;
+        height: 4.5rem;
+        pointer-events: none;
+        opacity: .55;
+        z-index: 0;
+        background: var(--waves) 0 0 / 40px 20px;
+        -webkit-mask-image: radial-gradient(ellipse at 100% 100%, #000 25%, transparent 72%);
+        mask-image: radial-gradient(ellipse at 100% 100%, #000 25%, transparent 72%);
+    }
+
+    .hm-slip > * {
+        position: relative;
+        z-index: 1;
+    }
+    /* Solid buttons so the waves never show through them */
+    .hm-slip .btn-outline-secondary {
+        background-color: #fffcf5;
+    }
+
+/* Red side panel: soft gradient, gold edge, waves at the bottom, "Good luck" in the serif font */
+.hm-rank {
+    position: absolute;
+    overflow: hidden;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #cf4433, #a92a1c);
+    box-shadow: inset 0 0 0 1px rgba(255, 225, 170, .5);
+}
+
+    .hm-rank::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 4.5rem;
+        opacity: .35;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Cg fill='none' stroke='%23ffd9a0' stroke-width='.8'%3E%3Cpath d='M1 12a11 11 0 0 1 22 0M5 12a7 7 0 0 1 14 0M9 12a3 3 0 0 1 6 0M-11 6a11 11 0 0 1 22 0M-7 6a7 7 0 0 1 14 0M-3 6a3 3 0 0 1 6 0M13 6a11 11 0 0 1 22 0M17 6a7 7 0 0 1 14 0M21 6a3 3 0 0 1 6 0'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 24px 12px;
+        -webkit-mask-image: linear-gradient(0deg, #000 30%, transparent);
+        mask-image: linear-gradient(0deg, #000 30%, transparent);
+    }
+
+    .hm-rank b, .hm-rank small {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hm-rank small {
+        font-family: var(--font-display);
+        text-transform: none;
+        font-size: .78rem;
+        letter-spacing: .08em;
+        opacity: .9;
+    }
+
+/* Empty card before the first shake: a sealed fortune */
+.hm-slip.is-empty {
+    border-style: solid;
+    color: var(--yoru-olive-text);
+    box-shadow: 0 12px 28px -14px rgba(90, 40, 20, .2);
+}
+
+    .hm-slip.is-empty::before {
+        display: block;
+    }
+
+    .hm-slip.is-empty .hm-slip-big {
+        width: 3.6rem;
+        height: 3.6rem;
+        margin: 0 auto .9rem;
+        border-radius: 6px;
+        opacity: 1;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #cf4433, #a92a1c);
+        color: #fff;
+        font-size: 1.9rem;
+        transform: rotate(-4deg);
+        box-shadow: inset 0 0 0 2px rgba(255, 225, 170, .6), 0 6px 14px -6px rgba(169, 42, 28, .6);
+    }
+
+
 /* ================= HOME PAGE (US50) - END ================= */
 
 

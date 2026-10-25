@@ -5,6 +5,11 @@
     // US50 (Owner: Member 1): public Home page.
     ViewData["Title"] = "Home";
     ViewData["FullWidth"] = true;   // sections go edge to edge
+    
+    // Link to the dish on Member 3's menu page (opens its details pop-up). No ID -> the full menu.
+    string DishUrl(int? id) => id is null
+        ? Url.Page("/Menu/Index")!
+        : Url.Page("/Menu/Index", null, new { ItemId = id }, null, null, "dish-details")!;
 
     // A kanji for each card, picked from the category name (shown until the dish has a photo).
     // Checks Japanese and English words, e.g. "Sashimi · Raw Seafood" -> 刺 (from 刺身, sashimi).
@@ -101,7 +106,7 @@
             {
                 var d = Model.Dishes[i];
                 var hasPhoto = !string.IsNullOrEmpty(d.ImageUrl);
-                <a class="hm-card hm-dish" href="/Menu" style="--pc:@(colours[i % colours.Length])">
+                <a class="hm-card hm-dish" href="@DishUrl(d.Id)" style="--pc:@(colours[i % colours.Length])">
                     @* Kanji first; the photo (if Member 3 added one) covers it. If the photo file is missing, it removes itself. *@
                     <span class="hm-card-kanji jp" aria-hidden="true">@Kanji(d.CategoryName)</span>
                     @* Member 3 stores "~/menu-images/abc.png"; Url.Content turns "~/" into the real address, same as the Menu page. *@
@@ -195,21 +200,33 @@
                 <span class="hm-rule" aria-hidden="true"></span>
                 <p class="hm-text">Shake the box and let fortune pick your dish for tonight, from what's on our menu right now.</p>
             </div>
-            <div class="hm-omi-left">
-                <button type="button" class="hm-omi-box" id="omiBox" aria-label="Shake the omikuji box">
-                    <span class="hm-omi-shadow" aria-hidden="true"></span>
-                    <span class="hm-omi-wrap" aria-hidden="true">
-                        <span class="hm-omi-sticks"><i></i><i></i><i></i></span>
-                        <span class="hm-omi-stick"><b class="jp" id="omiNo">七番</b></span>
-                        <span class="hm-omi-body">
-                            <span class="hm-omi-rope"></span>
-                            <span class="hm-omi-shide l"></span><span class="hm-omi-shide r"></span>
-                            <span class="hm-omi-label jp">御神籤</span>
-                            <i class="hm-omi-seal jp">夜</i>
+                        <div class="hm-omi-left">
+                <div class="hm-omi-stage">
+                    @* Back: the painted circle, clouds and sakura (one image) *@
+                    <img class="hm-omi-bg" src="~/images/home/omikuji-bg.webp" alt="" aria-hidden="true" />
+
+                    <button type="button" class="hm-omi-box" id="omiBox" aria-label="Shake the omikuji box">
+                        <span class="hm-omi-shadow" aria-hidden="true"></span>
+                        <span class="hm-omi-wrap" aria-hidden="true">
+                            <span class="hm-omi-sticks"><i></i><i></i><i></i></span>
+                            <span class="hm-omi-stick"><b class="jp" id="omiNo">七番</b></span>
+                            <span class="hm-omi-body">
+                                <span class="hm-omi-rope"></span>
+                                <span class="hm-omi-shide l"></span><span class="hm-omi-shide r"></span>
+                                <span class="hm-omi-label jp">御神籤</span>
+                                <i class="hm-omi-seal jp">吉</i>
+                            </span>
                         </span>
-                    </span>
+                    </button>
+                    @* Front: the two big flowers only (transparent image), so they sit in front of the box *@
+                    <img class="hm-omi-bg hm-omi-bg-front" src="~/images/home/omikuji-front.webp" alt="" aria-hidden="true" />
+                </div>
+
+                <button type="button" class="hm-omi-btn" id="omiShake">
+                    <svg class="hm-omi-dice" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.5 3.5 7v10l8.5 4.5 8.5-4.5V7Z" fill="#fff" fill-opacity=".14" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /><path d="M3.8 7.2 12 11.6l8.2-4.4M12 11.6v9.6" fill="none" stroke="currentColor" stroke-width="1.6" /><circle cx="12" cy="6.9" r="1.2" fill="currentColor" /><circle cx="7.6" cy="12.6" r="1.1" fill="currentColor" /><circle cx="16.4" cy="12.6" r="1.1" fill="currentColor" /><circle cx="16.4" cy="16.4" r="1.1" fill="currentColor" /></svg>
+                    <span><span class="jp">振る</span> · Shake the box</span>
+                    <svg class="hm-omi-chev" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
                 </button>
-                <button type="button" class="btn btn-primary px-4" id="omiShake">振る · Shake the box</button>
                 <p class="hm-omi-hint">Tap the box or the button</p>
             </div>
             <div class="hm-slip is-empty" id="omiSlip" aria-live="polite">
@@ -235,7 +252,7 @@
                 {
                     var o = Model.Offers[i];
                     var hasPhoto = !string.IsNullOrEmpty(o.ImageUrl);
-                    <a class="hm-card" href="/Menu" style="--pc:@(colours[i % colours.Length])">
+                    <a class="hm-card" href="@DishUrl(o.MenuItemId)" style="--pc:@(colours[i % colours.Length])">
                         <span class="hm-card-kanji jp" aria-hidden="true">@Kanji(o.CategoryName + " " + o.DishName)</span>
                         @if (hasPhoto)
                         {
@@ -641,7 +658,7 @@
                     meta.append(el('b', null, 'RM ' + Number(d.Price).toFixed(2)));
                     var btns = el('div', 'btns');
                     var menu = el('a', 'btn btn-primary btn-sm px-3', 'See it on the menu');
-                    menu.href = '/Menu';
+                    menu.href = d.Id ? '/Menu?ItemId=' + d.Id + '#dish-details' : '/Menu';
                     var again = el('button', 'btn btn-outline-secondary btn-sm px-3', 'Shake again');
                     again.type = 'button';
                     again.addEventListener('click', draw);
