@@ -244,51 +244,180 @@
 
                 <div class="d-flex justify-content-between
                     align-items-center mb-3">
-                    <h5 class="card-title billing-card-title mb-0">Payment Management</h5>
 
-                    <span class="badge bg-secondary">
-                        Integration Pending
-                    </span>
+                    <h5 class="card-title billing-card-title mb-0">
+                        Payment Management
+                    </h5>
+
+                    @if (Model.LatestPayment == null)
+                    {
+                        <span class="badge bg-secondary">
+                            No Payment
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">
+                            @Model.LatestPayment.Status
+                        </span>
+                    }
+
                 </div>
 
-                <p class="text-muted mb-3">
-                    Payment method, payment status and
-                    transaction history will be displayed
-                    after US31 integration.
-                </p>
+                @if (Model.Payments.Count == 0)
+                {
+                    <p class="text-muted mb-3">
+                        No payment transactions have been recorded
+                        for this order.
+                    </p>
+                }
+                else
+                {
+                    <p class="text-muted mb-3">
+                        Payment details and transaction records
+                        for this order.
+                    </p>
+                }
 
                 <div class="row g-3">
+
                     <div class="col-md-6">
                         <label class="form-label">
                             Payment Method
                         </label>
-                        <input class="form-control"
-                               value="Not available yet"
-                               disabled />
+
+                        <div class="form-control">
+                            @(Model.LatestPayment?.Method.ToString() ?? "Not recorded")
+                        </div>
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label">
                             Payment Status
                         </label>
-                        <input class="form-control"
-                               value="Not available yet"
-                               disabled />
+
+                        <div class="form-control">
+                            @(Model.LatestPayment?.Status.ToString() ?? "Not recorded")
+                        </div>
                     </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Amount (RM)
+                        </label>
+
+                        <div class="form-control">
+                            @(Model.LatestPayment == null
+                                ? "Not recorded"
+                                : Model.LatestPayment.Amount.ToString("F2"))
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Transaction Reference
+                        </label>
+
+                        <div class="form-control">
+                            @(string.IsNullOrWhiteSpace(Model.LatestPayment?.TransactionRef)
+                                ? "N/A"
+                                : Model.LatestPayment.TransactionRef)
+                        </div>
+                    </div>
+
+                    @if (Model.LatestPayment?.Status ==
+     RROMS.Models.PaymentStatus.Pending)
+                    {
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <form method="post"
+                                      asp-page-handler="ConfirmPayment">
+
+                                    <input type="hidden"
+                                           name="orderNo"
+                                           value="@Model.OrderNo" />
+
+                                    <input type="hidden"
+                                           name="paymentId"
+                                           value="@Model.LatestPayment.Id" />
+
+                                    <button type="submit"
+                                            class="btn btn-success w-100">
+                                        Confirm Payment
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="col-md-6">
+                                <form method="post"
+                                      asp-page-handler="MarkPaymentFailed">
+
+                                    <input type="hidden"
+                                           name="orderNo"
+                                           value="@Model.OrderNo" />
+
+                                    <input type="hidden"
+                                           name="paymentId"
+                                           value="@Model.LatestPayment.Id" />
+
+                                    <button type="submit"
+                                            class="btn btn-outline-danger w-100">
+                                        Mark as Failed
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    }
                 </div>
 
                 <hr />
 
-                <button type="button"
-                        class="btn btn-outline-dark"
-                        disabled>
-                    Record Payment
-                </button>
+                @if (Model.Bill != null &&
+                     !Model.IsPreview &&
+                        Model.LatestPayment?.Status != RROMS.Models.PaymentStatus.Pending &&
+                        Model.LatestPayment?.Status != RROMS.Models.PaymentStatus.Paid)
+                {
+                    <form method="post"
+                          asp-page-handler="RecordPayment"
+                          class="mt-3">
 
-                <p class="text-muted small mt-2 mb-0">
-                    Payment actions will be enabled
-                    after PaymentService integration.
-                </p>
+                        <input type="hidden"
+                               name="orderNo"
+                               value="@Model.OrderNo" />
+
+                        <div class="row g-3 align-items-end">
+
+                            <div class="col-md-6">
+                                <label class="form-label"
+                                       for="paymentMethod">
+                                    Payment Method
+                                </label>
+
+                                <select class="form-select"
+                                        id="paymentMethod"
+                                        name="method"
+                                        required>
+                                    <option value="">Select payment method</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Card">Card</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <button type="submit"
+                                        class="btn btn-outline-dark w-100">
+                                    Record Payment
+                                </button>
+                            </div>
+
+                        </div>
+
+                        <p class="text-muted small mt-2 mb-0">
+                            This will record a pending payment for
+                            the confirmed bill amount.
+                        </p>
+                    </form>
+                }
 
             </div>
         </div>
