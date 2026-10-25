@@ -29,11 +29,11 @@ namespace RROMS.Services
         // Browsing includes unavailable dishes. Cart/order accessors remain availability-filtered.
         private async Task<IReadOnlyList<MenuItemSummary>> GetBrowsableCustomerMenuItemsAsync(
             CancellationToken cancellationToken)
-            => await ItemSummaries(_context.MenuItems.AsNoTracking()
+            => await WithCustomerPricesAsync(await ItemSummaries(_context.MenuItems.AsNoTracking()
                 .Where(item => item.Price > 0)
                 .OrderBy(item => item.Category.DisplayOrder).ThenBy(item => item.Category.Name)
                 .ThenBy(item => item.CategoryId).ThenBy(item => item.Name).ThenBy(item => item.Id))
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken), cancellationToken);
 
         public async Task<CustomerMenuView> GetCustomerMenuAsync(string? search = null,
             int? categoryId = null, CancellationToken cancellationToken = default)

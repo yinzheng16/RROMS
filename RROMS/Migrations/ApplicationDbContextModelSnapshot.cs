@@ -269,6 +269,68 @@ namespace RROMS.Migrations
                     b.ToTable("ChatFaqs");
                 });
 
+            modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("OrderType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("ReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("Revision")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("CustomerCarts");
+                });
+
+            modelBuilder.Entity("RROMS.Models.CustomerCartLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MenuItemId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CustomerCartLines");
+                });
+
             modelBuilder.Entity("RROMS.Models.DiningArea", b =>
                 {
                     b.Property<int>("Id")
@@ -343,6 +405,11 @@ namespace RROMS.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("nvarchar(12)");
+
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("int");
 
@@ -350,11 +417,6 @@ namespace RROMS.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("nvarchar(12)");
 
                     b.HasKey("Id");
 
@@ -392,6 +454,11 @@ namespace RROMS.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("nvarchar(24)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -415,17 +482,12 @@ namespace RROMS.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(24)
-                        .HasColumnType("nvarchar(24)");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("Code")
                         .IsUnique();
-
-                    b.HasIndex("CategoryId");
 
                     b.ToTable("MenuItems");
                 });
@@ -975,6 +1037,36 @@ namespace RROMS.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
+                {
+                    b.HasOne("RROMS.Models.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RROMS.Models.CustomerCartLine", b =>
+                {
+                    b.HasOne("RROMS.Models.MenuItem", "MenuItem")
+                        .WithMany()
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RROMS.Models.CustomerCart", "Cart")
+                        .WithMany("Lines")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cart");
+
+                    b.Navigation("MenuItem");
+                });
+
             modelBuilder.Entity("RROMS.Models.Feedback", b =>
                 {
                     b.HasOne("RROMS.Models.Order", "Order")
@@ -1121,6 +1213,11 @@ namespace RROMS.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("RROMS.Models.DiningArea", b =>
