@@ -887,6 +887,9 @@ namespace RROMS.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("AllowBelowMinGuests")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Code")
                         .HasMaxLength(6)
                         .HasColumnType("nvarchar(6)");

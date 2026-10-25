@@ -77,6 +77,10 @@ public class IndexModel : PageModel
 
         public bool IsActive { get; set; } = true;
 
+        // Off: parties below Min Guests cannot book this type.
+        // On: they can, but must accept the minimum spend.
+        public bool AllowBelowMinGuests { get; set; }
+
         // Set by the "Remove photo" button on the type form.
         public bool RemoveTypePhoto { get; set; }
 
@@ -178,7 +182,8 @@ public class IndexModel : PageModel
             DefaultMaxGuests = TableTypeForm.DefaultMaxGuests,
             DefaultMinimumSpend = TableTypeForm.DefaultMinimumSpend,
             Description = TableTypeForm.Description,
-            IsActive = TableTypeForm.IsActive
+            IsActive = TableTypeForm.IsActive,
+            AllowBelowMinGuests = TableTypeForm.AllowBelowMinGuests
         };
 
         var result = await _service.SaveTableTypeAsync(

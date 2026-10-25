@@ -266,6 +266,18 @@ public class ReservationService : IReservationService
             return ReservationResult.Fail(
                 "Please select a valid dining area.");
 
+        // Smaller parties may only book if they accept a minimum spend.
+        if (input.AllowBelowMinGuests &&
+            (input.DefaultMinimumSpend ?? 0m) <= 0m)
+            return ReservationResult.Fail(
+                "Set a minimum spend above RM 0 to allow parties " +
+                "smaller than the minimum guests.");
+
+        if (!await _db.DiningAreas.AnyAsync(
+            a => a.Id == input.DefaultDiningAreaId))
+            return ReservationResult.Fail(
+                "Please select a valid dining area.");
+
         if (await _db.TableTypeDefinitions.AnyAsync(
             t => t.Name == name && t.Id != input.Id))
             return ReservationResult.Fail(
@@ -459,7 +471,8 @@ public class ReservationService : IReservationService
 
                 var conflict = reservations.FirstOrDefault(r =>
                     r.ReservedAt.AddMinutes(r.DurationMinutes) > now &&
-                    (r.Guests < input.DefaultMinGuests ||
+                    ((!input.AllowBelowMinGuests &&
+                     r.Guests < input.DefaultMinGuests) ||
                      r.Guests > input.DefaultMaxGuests));
 
                 if (conflict != null)
@@ -516,6 +529,7 @@ public class ReservationService : IReservationService
             type.DefaultMinimumSpend = input.DefaultMinimumSpend;
             type.Description = input.Description;
             type.IsActive = input.IsActive;
+            type.AllowBelowMinGuests = input.AllowBelowMinGuests;
 
             await _db.SaveChangesAsync();
 

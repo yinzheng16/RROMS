@@ -46,4 +46,6 @@ public class TableTypeDefinition
 
     public ICollection<RestaurantTable> Tables { get; set; }
         = new List<RestaurantTable>();
+
+    public bool AllowBelowMinGuests { get; set; }
 }

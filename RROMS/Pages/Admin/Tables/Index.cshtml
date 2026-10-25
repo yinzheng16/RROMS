@@ -1331,6 +1331,7 @@
                             data-area="@type.DefaultDiningAreaId"
                             data-min="@type.DefaultMinGuests"
                             data-max="@type.DefaultMaxGuests"
+                            data-allow-below="@type.AllowBelowMinGuests.ToString().ToLowerInvariant()"
                             data-spend="@(type.DefaultMinimumSpend?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")"
                             data-desc="@type.Description"
                             data-active="@type.IsActive.ToString().ToLowerInvariant()"
@@ -1693,6 +1694,23 @@
                             <div class="form-text">Leave blank for no minimum spend.</div>
                         </div>
 
+                        <div class="col-12">
+                            <div class="yoru-active-row">
+                                <div>
+                                    <div class="yoru-active-title">Allow smaller parties</div>
+                                    <small class="text-muted">
+                                        Off: customers with fewer guests than Min Guests cannot book this type.
+                                        On: they can, but must accept the minimum spend.
+                                    </small>
+                                </div>
+                                <div class="form-check form-switch yoru-switch m-0">
+                                    <input asp-for="TableTypeForm.AllowBelowMinGuests"
+                                           role="switch"
+                                           aria-label="Allow smaller parties"
+                                           class="form-check-input" />
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-12 yoru-form-section"><span>Description &amp; photo</span></div>
 
                         <div class="col-12">
@@ -2939,7 +2957,24 @@
             } else {
                 input.value = value ?? '';
             }
+
+            syncAllowBelowRule();
         }
+
+         // "Allow smaller parties" needs a minimum spend above RM 0.
+        function syncAllowBelowRule() {
+            const sw = tableTypeForm.querySelector('[name="TableTypeForm.AllowBelowMinGuests"][type="checkbox"]');
+            const spend = tableTypeForm.querySelector('[name="TableTypeForm.DefaultMinimumSpend"]');
+            if (!sw || !spend) return;
+
+            spend.min = sw.checked ? '0.01' : '0';
+            spend.required = sw.checked;
+            spend.placeholder = sw.checked ? 'Required' : 'Optional';
+        }
+
+        tableTypeForm.addEventListener('change', e => {
+            if (e.target.name === 'TableTypeForm.AllowBelowMinGuests') syncAllowBelowRule();
+        });
 
         const tableTypePhotoInput =
             document.getElementById('tableTypePhotoInput');
@@ -3024,6 +3059,7 @@
             setTypeFormValue('Description', '');
             setTypeFormValue('IsActive', 'true');
             setTypeFormValue('CreateFirstTable', 'false');
+            setTypeFormValue('AllowBelowMinGuests', 'false');
 
             typeFormTitle.textContent = 'Add New Table Type';
 
@@ -3047,6 +3083,7 @@
             setTypeFormValue('DefaultMinimumSpend', d.spend);
             setTypeFormValue('Description', d.desc);
             setTypeFormValue('IsActive', d.active);
+            setTypeFormValue('AllowBelowMinGuests', d.allowBelow)
 
             tableTypePhotoInput.value = '';
             originalTableTypePhoto = d.photo || '';
