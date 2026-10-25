@@ -1051,12 +1051,12 @@ html.menu-detail-open {
 
 .menu-sort-trigger {
     display: grid;
-    grid-template-columns: 1.15rem minmax(0, 1fr) .8rem;
+    grid-template-columns: minmax(0, 1fr) .8rem;
     align-items: center;
     gap: .65rem;
     width: 100%;
     min-height: 2.8rem;
-    padding: .35rem .75rem;
+    padding: .55rem .85rem;
     border: 1px solid var(--yoru-line);
     border-radius: var(--bs-border-radius, .375rem);
     background: var(--yoru-paper);
@@ -1079,28 +1079,25 @@ html.menu-detail-open {
     border-color: var(--yoru-olive);
 }
 
-.menu-sort-trigger > svg {
-    inline-size: 1.15rem;
-    block-size: 1.15rem;
-}
-
 .menu-sort-trigger__text {
+    display: flex;
+    align-items: baseline;
+    gap: .35rem;
     min-width: 0;
+    font-size: .79rem;
+    line-height: 1.4;
+    white-space: nowrap;
 }
 
-    .menu-sort-trigger__text small {
-        display: block;
-        color: var(--yoru-olive-text);
-        font-size: .55rem;
-        font-weight: 600;
-        line-height: 1.25;
-        letter-spacing: .12em;
-    }
+.menu-sort-trigger__label {
+    flex: 0 0 auto;
+    color: var(--yoru-olive-text);
+}
 
 .menu-sort-trigger__value {
     display: block;
-    font-size: .79rem;
-    line-height: 1.4;
+    min-width: 0;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1287,65 +1284,6 @@ html.menu-detail-open {
 @media (prefers-reduced-motion: reduce) {
     .menu-reset {
         transition: none;
-    }
-}
-
-/* One stationary shortcut returns customers to search and category filters. */
-.menu-search {
-    scroll-margin-block-start: 6.5rem;
-}
-
-.menu-back-filters {
-    position: fixed;
-    inset-inline-end: max(1rem, env(safe-area-inset-right, 0px));
-    inset-block-end: calc(var(--menu-shortcut-bottom, 1.25rem) + env(safe-area-inset-bottom, 0px));
-    z-index: 30;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 2.9rem;
-    block-size: 2.9rem;
-    min-height: 2.9rem;
-    padding: .8rem;
-    border: 1px solid var(--yoru-line);
-    border-radius: 999px;
-    background: var(--yoru-paper);
-    color: var(--yoru-ink);
-    font-family: inherit;
-    font-size: .82rem;
-    font-weight: 500;
-    line-height: 1.2;
-    white-space: nowrap;
-    cursor: pointer;
-    box-shadow: 0 .25rem 1rem color-mix(in srgb, var(--yoru-ink) 12%, transparent);
-    transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
-    animation: menu-filter-shortcut-enter .18s ease-out;
-}
-
-    .menu-back-filters > svg {
-        inline-size: 1rem;
-        block-size: 1rem;
-        flex: 0 0 auto;
-    }
-
-    .menu-back-filters:hover {
-        background: #e8eced;
-        border-color: var(--yoru-olive);
-        box-shadow: 0 .3rem 1.1rem color-mix(in srgb, var(--yoru-ink) 16%, transparent);
-    }
-
-.customer-menu .menu-back-filters:focus-visible {
-    outline: 2px solid var(--yoru-olive-text);
-    outline-offset: 3px;
-}
-
-@keyframes menu-filter-shortcut-enter {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
     }
 }
 
