@@ -1,0 +1,248 @@
+@page
+@model RROMS.Pages.Admin.Feedback.Index
+
+@{
+    // US43 View and reply to feedback (Member 5)
+    // Styles: wwwroot/css/admin-feedback.css · Script: wwwroot/js/admin-feedback.js
+    ViewData["Title"] = "Customer Feedback";
+
+    var s = Model.Summary;
+    var labels = new[] { "", "Poor", "Fair", "Good", "Very good", "Excellent" };
+    var quickReplies = new[] { "Thank you for visiting!", "We're sorry about this.", "We hope to see you again soon." };
+}
+
+@* Brush font for the letter parts (same as the customer feedback page) *@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" />
+<link rel="stylesheet" href="~/css/admin-feedback.css" asp-append-version="true" />
+
+<div class="af-page">
+
+    <!-- ===== Letter header (same look as the customer feedback page) ===== -->
+    <header class="af-head">
+        <div class="af-spine" aria-hidden="true">
+            <div class="af-spine-text">お客様の声</div>
+            <div class="af-seal">夜<br />YORU</div>
+        </div>
+        <div class="af-head-body">
+            <div>
+                <p class="af-to">Letters from our guests</p>
+                <h1 class="af-title">Customer Feedback</h1>
+                <p class="af-lede">Read every letter and write back. Guests see your reply on their My reviews page.</p>
+            </div>
+            <div class="af-head-avg">
+                <div class="af-big">@(s.Total == 0 ? "—" : s.Average.ToString("0.0"))</div>
+                <small>average · @s.Total @(s.Total == 1 ? "letter" : "letters")</small>
+            </div>
+        </div>
+    </header>
+
+    <div class="af-layout">
+
+        <!-- ===== Side index ===== -->
+        <nav class="af-side" aria-label="Feedback sections">
+            <div class="af-side-title">SECTIONS · 目次</div>
+            <a href="#af-summary" class="af-side-link"><b>一</b>Summary</a>
+            <a href="@Model.FilterUrl(status: "needs")#af-list" class="af-side-link @(Model.Status == "needs" ? "is-on" : "")">
+                <b>二</b>Needs reply<span class="af-side-count">@s.NeedsReply</span>
+            </a>
+            <a href="/Admin/Feedback#af-list" class="af-side-link @(!Model.HasFilters ? "is-on" : "")">
+                <b>三</b>All feedback<span class="af-side-count">@s.Total</span>
+            </a>
+            <div class="af-side-tip">Reply to low ratings first. Guests are notified when you write back.</div>
+        </nav>
+
+        <div>
+            <!-- ===== 一 Summary ===== -->
+            <section class="af-sec" id="af-summary">
+                <div class="af-sec-head" data-kanji="評価">
+                    <div class="af-num" aria-hidden="true">一</div>
+                    <div>
+                        <h2>Summary</h2>
+                        <p>Average rating and how the ratings are spread. Tap a bar to filter.</p>
+                    </div>
+                </div>
+
+                <div class="af-sec-body">
+                    <div class="af-kpis">
+                        <div class="af-kpi">
+                            <div class="af-kpi-num">@(s.Total == 0 ? "—" : s.Average.ToString("0.0"))</div>
+                            <small>average rating · @s.Total @(s.Total == 1 ? "review" : "reviews")</small>
+                        </div>
+
+                        <div class="af-kpi af-dist">
+                            @for (var r = 5; r >= 1; r--)
+                            {
+                                var count = s.CountByRating[r];
+                                var width = s.Total == 0 ? 0 : count * 100.0 / s.Total;
+                                var isOn = Model.Rating == r;
+
+                                <a class="af-dist-row @(isOn ? "is-on" : "")"
+                                   href="@Model.FilterUrl(rating: isOn ? null : r)#af-list"
+                                   title="@(isOn ? "Show all ratings" : $"Show {r}-star reviews")">
+                                    <span>@r ★</span>
+                                    <span class="af-bar"><i style="width:@width.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></i></span>
+                                    <span class="af-dist-count">@count</span>
+                                </a>
+                            }
+                        </div>
+
+                        <div class="af-kpi">
+                            <div class="af-kpi-num">@s.NeedsReply</div>
+                            <small>waiting for a reply</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== 二 Feedback ===== -->
+            <section class="af-sec" id="af-list">
+                <div class="af-sec-head" data-kanji="返信">
+                    <div class="af-num" aria-hidden="true">二</div>
+                    <div>
+                        <h2>Feedback</h2>
+                        <p>Filter, read and write back.</p>
+                    </div>
+                </div>
+
+                <div class="af-sec-body">
+                    <!-- Filters -->
+                    <div class="af-tools">
+                        <a class="af-chip @(Model.Status == null ? "is-on" : "")" href="@Model.FilterUrl(status: null)#af-list">All</a>
+                        <a class="af-chip @(Model.Status == "needs" ? "is-on" : "")" href="@Model.FilterUrl(status: "needs")#af-list">Needs reply · @s.NeedsReply</a>
+                        <a class="af-chip @(Model.Status == "replied" ? "is-on" : "")" href="@Model.FilterUrl(status: "replied")#af-list">Replied</a>
+
+                        <span class="af-stamps" aria-label="Filter by rating">
+                            @for (var r = 5; r >= 1; r--)
+                            {
+                                var isOn = Model.Rating == r;
+                                <a class="af-hanko @(r <= 2 ? "is-low" : "") @(isOn || Model.Rating == null ? "is-on" : "")"
+                                   href="@Model.FilterUrl(rating: isOn ? null : r)#af-list"
+                                   aria-label="@(isOn ? "Show all ratings" : $"Show only {r}-star reviews")">@r</a>
+                            }
+                        </span>
+
+                        <form method="get" class="af-search" action="/Admin/Feedback">
+                            @if (Model.Rating.HasValue) { <input type="hidden" name="rating" value="@Model.Rating" /> }
+                            @if (Model.Status != null) { <input type="hidden" name="status" value="@Model.Status" /> }
+                            <input type="search" name="q" value="@Model.Q" maxlength="100"
+                                   placeholder="Search order no, customer or comment" aria-label="Search feedback" />
+
+                            <label class="af-visually-hidden" for="afSort">Sort feedback</label>
+                            <select id="afSort" name="sort" class="af-sort-select">
+                                <option value="" selected="@(Model.Sort != "lowest")">Newest first</option>
+                                <option value="lowest" selected="@(Model.Sort == "lowest")">Lowest rating first</option>
+                            </select>
+
+                            <noscript><button type="submit" class="af-chip">Apply</button></noscript>
+                        </form>
+                    </div>
+
+                    @if (Model.HasFilters)
+                    {
+                        <p class="af-showing">
+                            Showing @Model.Items.Count of @s.Total ·
+                            <a href="/Admin/Feedback#af-list">Clear filters</a>
+                        </p>
+                    }
+
+                    <!-- List -->
+                    @if (Model.Items.Count == 0)
+                    {
+                        <div class="af-empty">
+                            <div class="af-hanko is-on" aria-hidden="true">声</div>
+                            <h3>@(s.Total == 0 ? "No feedback yet" : "Nothing matches these filters")</h3>
+                            <p>
+                                @(s.Total == 0
+                                    ? "When customers review a completed order, their letters will appear here."
+                                    : "Try another rating or clear the filters.")
+                            </p>
+                        </div>
+                    }
+
+                    @foreach (var fb in Model.Items)
+                    {
+                        var replied = !string.IsNullOrWhiteSpace(fb.AdminReply);
+                        var hasError = Model.ErrorFeedbackId == fb.Id;
+                        var openReply = hasError || (!replied && fb.Rating <= 2);
+                        var customer = string.IsNullOrWhiteSpace(fb.Order.User?.FullName) ? "Customer" : fb.Order.User.FullName;
+                        var firstName = customer.Split(' ')[0];
+                        var typeText = fb.Order.OrderType == RROMS.Models.OrderType.DineIn ? "Dine-in" : fb.Order.OrderType.ToString();
+
+                        <article class="af-row" id="fb-@fb.Id">
+                            <span class="af-hanko is-on @(fb.Rating <= 2 ? "is-low" : "")" title="@labels[fb.Rating]">@fb.Rating</span>
+
+                            <div class="af-who">
+                                <b>@customer</b>
+                                <small>@fb.Order.OrderNo · @typeText · @fb.CreatedAt.ToString("d MMM yyyy")</small>
+                            </div>
+
+                            <div class="af-comment">
+                                @if (string.IsNullOrWhiteSpace(fb.Comment))
+                                {
+                                    <span class="af-muted">No comment, rating only</span>
+                                }
+                                else
+                                {
+                                    @fb.Comment
+                                }
+                            </div>
+
+                            <span class="af-tag @(replied ? "is-done" : "is-need")">@(replied ? "Replied" : "Needs reply")</span>
+
+                            @if (replied)
+                            {
+                                <div class="af-answer"><b>Our reply:</b> @fb.AdminReply</div>
+                            }
+
+                            <details class="af-reply" open="@openReply">
+                                <summary>@(replied ? "✎ Edit reply" : "↩ Write back")</summary>
+
+                                <form method="post"
+                                      asp-page-handler="Reply"
+                                      asp-route-rating="@Model.Rating"
+                                      asp-route-status="@Model.Status"
+                                      asp-route-q="@Model.Q"
+                                      asp-route-sort="@Model.Sort">
+                                    <input type="hidden" name="FeedbackId" value="@fb.Id" />
+
+                                    <label class="af-visually-hidden" for="reply-@fb.Id">Reply to @customer</label>
+                                    <textarea id="reply-@fb.Id"
+                                              name="ReplyText"
+                                              class="af-reply-text"
+                                              maxlength="500"
+                                              required
+                                              placeholder="Dear @firstName, …">@(hasError ? Model.ReplyText : fb.AdminReply)</textarea>
+
+                                    <div class="af-under">
+                                        <span>The customer can read this on their My reviews page.</span>
+                                        <span><span class="af-count">0</span> / 500</span>
+                                    </div>
+
+                                    @if (hasError)
+                                    {
+                                        <span class="af-error" asp-validation-for="ReplyText"></span>
+                                    }
+
+                                    <div class="af-quick">
+                                        @foreach (var phrase in quickReplies)
+                                        {
+                                            <button type="button" class="af-quick-btn">@phrase</button>
+                                        }
+                                    </div>
+
+                                    <div class="af-actions">
+                                        <button type="submit" class="af-send">@(replied ? "Update reply" : "Send reply")</button>
+                                    </div>
+                                </form>
+                            </details>
+                        </article>
+                    }
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-feedback.js" asp-append-version="true"></script>
+}
