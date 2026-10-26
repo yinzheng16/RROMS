@@ -7,16 +7,20 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RROMS.Services.Interfaces;
+using System.Security.Claims;
+using RROMS.Models;
 
 namespace RROMS.Pages.Menu
 {
     // Owner: Member 3. Public browsing. Pages call the service, never the database.
     [AllowAnonymous]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    [RequestSizeLimit(131072)]
     public class IndexModel : PageModel
     {
         private readonly IOrderService _menu;
-        public IndexModel(IOrderService menu) { _menu = menu; }
+        private readonly ICustomerCartService _carts;
+        public IndexModel(IOrderService menu, ICustomerCartService carts) { _menu = menu; _carts = carts; }
 
         [BindProperty(SupportsGet = true)] public string? Search { get; set; }
         [BindProperty(SupportsGet = true)] public int? CategoryId { get; set; }
@@ -51,6 +55,35 @@ namespace RROMS.Pages.Menu
             var page = await _menu.GetCustomerMenuPageAsync(Search, CategoryId, Sort,
                 CustomerMenuBrowsing.PageSize, cancellationToken);
             return new JsonResult(page.LiveState, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        }
+
+        public async Task<IActionResult> OnPostAddAsync(int menuItemId, int quantity,
+            string? notes, string? returnUrl, CancellationToken cancellationToken)
+        {
+            bool ajax = Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            string destination = Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Page("/Menu/Index")!;
+            if (User.Identity?.IsAuthenticated != true)
+            {
+                if (ajax) { Response.StatusCode = 401; return new JsonResult(new { message = "Please sign in to add dishes to your cart." }); }
+                return RedirectToPage("/Account/Login", new { area = "Identity", returnUrl = destination });
+            }
+            if (!User.IsInRole(Roles.Customer))
+            {
+                if (ajax) { Response.StatusCode = 403; return new JsonResult(new { message = "Only customer accounts can add dishes to a cart." }); }
+                TempData["ErrorMessage"] = "Only customer accounts can place orders.";
+                return LocalRedirect(destination);
+            }
+            var result = ModelState.IsValid
+                ? await _carts.AddAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!, menuItemId, quantity, notes, cancellationToken)
+                : new CartOperation(CartResult.Invalid, "Check your quantity and dish note.");
+            if (ajax)
+            {
+                Response.StatusCode = result.Succeeded ? 200 : result.Status == CartResult.Forbidden ? 403 : 422;
+                return new JsonResult(new { message = result.Message, count = await _carts.CountAsync(
+                    User.FindFirstValue(ClaimTypes.NameIdentifier)!, cancellationToken), success = result.Succeeded });
+            }
+            TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
+            return LocalRedirect(destination);
         }
 
         public static (string Primary, string Secondary) CategoryLabel(string name)

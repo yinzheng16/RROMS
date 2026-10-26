@@ -62,8 +62,12 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
+builder.Services.AddScoped<IBillingService, BillingService>();
+builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
 builder.Services.AddScoped<IBillingService, BillingService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+// Member 5: builder.Services.AddScoped<IReportService, ReportService>();
 
 var app = builder.Build();
 
