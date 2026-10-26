@@ -56,4 +56,11 @@ public interface IReservationService
     Task<ReservationResult> DeleteSpecialDateAsync(int id);
 
     // US12, US13, US14... will be added here in the next branches.
+    // ---- US12 / US14: customer booking ----
+    Task<List<string>> GetBookableDatesAsync();
+    Task<List<BookingSlot>> GetTimeSlotsAsync(DateTime date);
+    Task<int> GetMaxPartySizeAsync();
+    Task<TypeOptionsResult> GetTypeOptionsAsync(DateTime start, int guests);
+    Task<BookingResult> CreateReservationAsync(CreateReservationRequest request);
+    Task<int> ReleaseOverdueReservationsAsync();
 }

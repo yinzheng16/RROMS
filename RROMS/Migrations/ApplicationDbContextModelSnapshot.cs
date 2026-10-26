@@ -765,6 +765,12 @@ namespace RROMS.Migrations
                     b.Property<int>("Guests")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("MinimumSpendAccepted")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("MinimumSpendAcceptedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ReferenceNo")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -781,6 +787,10 @@ namespace RROMS.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SubmissionToken")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<int?>("TableId")
                         .HasColumnType("int");
@@ -975,6 +985,10 @@ namespace RROMS.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
+
+                    b.Property<string>("JapaneseName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Name")
                         .IsRequired()

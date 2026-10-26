@@ -1,0 +1,2228 @@
+﻿/* US12 customer reservation (Member 2). Dark YORU izakaya look, scoped to .rsv. */
+.rsv {
+    --rsv-ink: #120d0c;
+    --rsv-panel: #1b1412;
+    --rsv-panel-2: #241a17;
+    --rsv-line: rgba(214, 177, 111, .22);
+    --rsv-gold: #d6b16f;
+    --rsv-red: #c3392b;
+    --rsv-red-deep: #8f1f17;
+    --rsv-paper: #efe4d4;
+    --rsv-paper-ink: #2a1c17;
+    --rsv-muted: #a89a8c;
+    --rsv-text: #f4ebe0;
+    --rsv-green: #4f9a55;
+    --rsv-main-h: clamp(650px, calc(100vh - 215px), 780px);
+    position: relative;
+    min-height: 100%;
+    isolation: isolate;
+    padding: 24px 24px 48px;
+    color: var(--rsv-text);
+    background: linear-gradient(180deg, rgba(8,6,5,.12), rgba(8,6,5,.1) 58%, rgba(8,6,5,.3)), url("../images/reservations/yoru-reservation-scene.png") center top / cover no-repeat, var(--rsv-ink);
+    font-family: "Zen Kaku Gothic New", system-ui, sans-serif;
+}
+
+    .rsv *, .rsv *::before, .rsv *::after {
+        box-sizing: border-box;
+    }
+
+html {
+    scrollbar-gutter: stable;
+}
+
+.rsv-wrap {
+    max-width: 1488px;
+    margin: 0 auto;
+}
+
+/* ---------- heading ---------- */
+.rsv-head {
+    padding: 7px 6px 14px;
+    text-shadow: 0 2px 18px rgba(0,0,0,.72);
+}
+
+.rsv-eyebrow {
+    margin: 0 0 8px;
+    font-size: 12px;
+    letter-spacing: .22em;
+    color: var(--rsv-muted);
+}
+
+    .rsv-eyebrow i {
+        font-style: normal;
+        margin: 0 .5em;
+        color: var(--rsv-gold);
+    }
+
+.rsv-head h1 {
+    margin: 0;
+    font-family: "Shippori Mincho", serif;
+    font-weight: 700;
+    font-size: clamp(34px, 4vw, 50px);
+    line-height: 1.1;
+    letter-spacing: .01em;
+}
+
+    .rsv-head h1 span {
+        color: var(--rsv-red);
+    }
+
+.rsv-tagline {
+    margin: 8px 0 0;
+    font-family: "Shippori Mincho", serif;
+    font-size: 18px;
+    color: var(--rsv-text);
+    opacity: .9;
+}
+
+/* ---------- 3 columns ---------- */
+.rsv-shell {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr) 385px;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.rsv-rail, .rsv-main {
+    border: 1px solid rgba(194,158,106,.48);
+    border-radius: 7px;
+    background: linear-gradient(160deg, rgba(17,17,16,.95), rgba(15,15,15,.97));
+    box-shadow: 0 18px 50px rgba(0,0,0,.62);
+}
+
+/* ---------- left rail ---------- */
+.rsv-rail {
+    position: relative;
+    overflow: hidden;
+    padding: 34px 19px 28px 82px;
+    border-color: rgba(174,54,43,.68);
+    background: radial-gradient(circle at 94% 14%, rgba(130,24,17,.22), transparent 39%), linear-gradient(155deg, rgba(60,10,10,.94), rgba(23,7,7,.97) 62%, rgba(17,6,7,.98));
+}
+
+.rsv-rail-eyebrow {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: .24em;
+    color: var(--rsv-muted);
+}
+
+.rsv-rail-title {
+    margin: 0 0 26px;
+    font-family: "Shippori Mincho", serif;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.rsv-steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 38px;
+    --progress: 0%;
+}
+
+    .rsv-steps::before, .rsv-steps::after {
+        content: "";
+        position: absolute;
+        left: 21px;
+        top: 22px;
+        width: 2px;
+        border-radius: 2px;
+    }
+
+    /* the line between two dots is drawn by the upper step, so nothing hangs below the last dot */
+    .rsv-steps li:not(:last-child)::before, .rsv-steps li:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        left: 21px;
+        top: 22px;
+        width: 2px;
+        border-radius: 2px;
+        z-index: -1;
+    }
+
+    .rsv-steps li:not(:last-child)::before {
+        height: calc(100% + 38px);
+        background: rgba(255, 255, 255, .14);
+    }
+
+    .rsv-steps li:not(:last-child)::after {
+        height: 0;
+        background: linear-gradient(var(--rsv-red), var(--rsv-gold));
+        transition: height 1.2s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .rsv-steps li.is-done:not(:last-child)::after {
+        height: calc(100% + 38px);
+    }
+
+    .rsv-steps li {
+        position: relative;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        z-index: 1;
+    }
+
+.rsv-dot {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .28);
+    background: var(--rsv-ink);
+    color: var(--rsv-text);
+    font-family: "Shippori Mincho", serif;
+    font-size: 19px;
+    transition: background .8s ease, border-color .8s, transform .8s;
+    position: relative;
+}
+
+    .rsv-dot i {
+        position: absolute;
+        font-size: 24px;
+        opacity: 0;
+        transform: scale(.3);
+    }
+
+.rsv-step-text {
+    padding-top: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    transition: transform .8s ease, opacity .8s;
+    opacity: .62;
+}
+
+    .rsv-step-text strong {
+        font-family: "Shippori Mincho", serif;
+        font-size: 18px;
+        font-weight: 500;
+    }
+
+    .rsv-step-text small {
+        color: var(--rsv-muted);
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+.rsv-steps li.is-active .rsv-dot {
+    background: var(--rsv-red);
+    border-color: #ff8a77;
+    box-shadow: 0 0 0 0 rgba(195, 57, 43, .6);
+    animation: rsvPulse 3.6s ease-in-out infinite;
+}
+
+.rsv-steps li.is-active .rsv-step-text {
+    opacity: 1;
+    transform: translateX(4px);
+}
+
+.rsv-steps li.is-done .rsv-dot {
+    background: var(--rsv-red-deep);
+    border-color: var(--rsv-gold);
+}
+
+    .rsv-steps li.is-done .rsv-dot b {
+        opacity: 0;
+    }
+
+    .rsv-steps li.is-done .rsv-dot i {
+        opacity: 1;
+        transform: scale(1);
+        animation: rsvPop .9s cubic-bezier(.3, 1.4, .5, 1);
+        color: var(--rsv-gold);
+    }
+
+.rsv-steps li.is-done .rsv-step-text {
+    opacity: .9;
+}
+
+@keyframes rsvPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(195, 57, 43, .38);
+    }
+
+    70%, 100% {
+        box-shadow: 0 0 0 13px rgba(195, 57, 43, 0);
+    }
+}
+
+@keyframes rsvPop {
+    0% {
+        transform: scale(.2);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.rsv-rail-note {
+    margin-top: 34px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rsv-line);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--rsv-muted);
+    line-height: 1.5;
+}
+
+    .rsv-rail-note strong {
+        color: var(--rsv-text);
+        font-family: "Shippori Mincho", serif;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+
+/* Ink ornaments and vertical poem inside the vermilion progress card. */
+.rsv-rail::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .24;
+    background: repeating-radial-gradient(circle at 12% 8%, transparent 0 22px, rgba(218,110,86,.21) 23px 24px, transparent 25px 43px), radial-gradient(circle at 90% 90%, rgba(167,29,22,.3), transparent 35%);
+}
+
+.rsv-rail > :not(.rsv-rail-ornament):not(.rsv-rail-jp) {
+    position: relative;
+    z-index: 1;
+}
+
+.rsv-rail-jp {
+    position: absolute;
+    top: 88px;
+    left: 21px;
+    z-index: 1;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: .2em;
+    color: rgba(232,204,183,.64);
+    font-family: "Shippori Mincho", serif;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.rsv-rail-ornament {
+    position: absolute;
+    left: -22px;
+    bottom: -12px;
+    width: 290px;
+    height: 222px;
+    opacity: .35;
+    pointer-events: none;
+}
+
+.rsv-rail-note {
+    position: relative;
+}
+
+    .rsv-rail-note::before {
+        content: "夜";
+        position: absolute;
+        top: -14px;
+        left: -65px;
+        display: grid;
+        place-items: center;
+        width: 29px;
+        height: 29px;
+        border: 2px solid #bc392e;
+        color: #d24839;
+        font-family: "Shippori Mincho", serif;
+        font-size: 20px;
+        line-height: 1;
+    }
+
+/* ---------- centre ---------- */
+.rsv-main {
+    padding: 24px 26px 24px;
+    height: auto;
+    min-height: var(--rsv-main-h);
+    contain: size; /* the panel never makes the row taller; it fills the row and scrolls inside */
+    background: linear-gradient(125deg, rgba(18,18,17,.94), rgba(11,12,12,.96));
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+    .rsv-main::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .rsv-main::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 18px 0; /* keeps the bar clear of the rounded corners */
+    }
+
+    .rsv-main::-webkit-scrollbar-thumb {
+        background: rgba(214, 177, 111, .32);
+        border-radius: 10px;
+        border: 3px solid transparent;
+        background-clip: content-box;
+    }
+
+        .rsv-main::-webkit-scrollbar-thumb:hover {
+            background: rgba(214, 177, 111, .6);
+            background-clip: content-box;
+        }
+
+    .rsv-main::-webkit-scrollbar-button, .rsv-slots::-webkit-scrollbar-button {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+.rsv-panel[hidden] {
+    display: none !important;
+}
+
+.rsv-panel.is-current {
+    animation: rsvIn .95s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+.rsv-panel.is-back {
+    animation-name: rsvInBack;
+}
+
+@keyframes rsvIn {
+    from {
+        opacity: 0;
+        transform: translateX(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes rsvInBack {
+    from {
+        opacity: 0;
+        transform: translateX(-18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.rsv-kicker {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: .26em;
+    color: var(--rsv-muted);
+}
+
+.rsv-title {
+    margin: 0;
+    font-family: "Shippori Mincho", serif;
+    font-size: clamp(30px, 3.4vw, 42px);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.rsv-sub {
+    margin: 6px 0 16px;
+    color: var(--rsv-muted);
+    font-size: 15px;
+}
+
+.rsv-card {
+    border: 1px solid var(--rsv-line);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .03);
+    padding: 16px;
+}
+
+.rsv-label {
+    margin: 0 0 10px;
+    font-size: 12px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--rsv-muted);
+}
+
+.rsv-hint {
+    margin: 10px 0 0;
+    font-size: 12.5px;
+    color: var(--rsv-muted);
+}
+
+.rsv-empty {
+    margin: 0;
+    color: var(--rsv-muted);
+    font-size: 14px;
+}
+
+.rsv-step1-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.rsv-side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.rsv-icon-btn {
+    width: 38px;
+    height: 38px;
+    display: inline-grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid var(--rsv-line);
+    background: transparent;
+    color: var(--rsv-text);
+    cursor: pointer;
+    transition: background .2s, transform .2s, border-color .2s;
+}
+
+    .rsv-icon-btn:hover:not(:disabled) {
+        background: rgba(214, 177, 111, .15);
+        border-color: var(--rsv-gold);
+    }
+
+    .rsv-icon-btn:active:not(:disabled) {
+        transform: scale(.92);
+    }
+
+    .rsv-icon-btn:disabled {
+        opacity: .35;
+        cursor: not-allowed;
+    }
+
+/* calendar */
+.rsv-cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+    .rsv-cal-head strong {
+        font-family: "Shippori Mincho", serif;
+        font-size: 20px;
+        font-weight: 500;
+    }
+
+.rsv-cal-week, .rsv-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    text-align: center;
+}
+
+    .rsv-cal-week span {
+        font-size: 11px;
+        letter-spacing: .08em;
+        color: var(--rsv-muted);
+        padding: 4px 0;
+    }
+
+.rsv-day {
+    height: 38px;
+    min-height: 0;
+    min-width: 0;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--rsv-text);
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .2s, transform .2s, border-color .2s;
+}
+
+.rsv-cal-grid {
+    grid-auto-rows: 38px;
+    min-height: 248px;
+    align-content: start;
+}
+
+.rsv-day:disabled {
+    color: rgba(255, 255, 255, .22);
+    cursor: not-allowed;
+}
+
+.rsv-day:not(:disabled):hover {
+    background: rgba(214, 177, 111, .16);
+    border-color: var(--rsv-line);
+}
+
+.rsv-day.is-today {
+    border-color: var(--rsv-line);
+}
+
+.rsv-day.is-selected {
+    background: var(--rsv-red);
+    border-color: #ff8a77;
+    color: #fff;
+    transform: scale(1.04);
+}
+
+.rsv-day.is-blank {
+    visibility: hidden;
+}
+
+/* time slots */
+.rsv-slots {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+    height: 190px;
+    overflow: auto;
+    overflow-x: hidden;
+    padding: 2px 6px 2px 2px;
+}
+
+    .rsv-slots::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .rsv-slots::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .rsv-slots::-webkit-scrollbar-thumb {
+        background: rgba(214, 177, 111, .32);
+        border-radius: 8px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+    }
+
+        .rsv-slots::-webkit-scrollbar-thumb:hover {
+            background: rgba(214, 177, 111, .6);
+            background-clip: content-box;
+        }
+
+.rsv-slot {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--rsv-line);
+    background: transparent;
+    color: var(--rsv-text);
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, transform .15s;
+}
+
+    .rsv-slot:hover {
+        border-color: var(--rsv-gold);
+        background: rgba(214, 177, 111, .12);
+    }
+
+    .rsv-slot.is-selected {
+        background: var(--rsv-red);
+        border-color: #ff8a77;
+        color: #fff;
+    }
+
+.rsv-skeleton {
+    display: block;
+    height: 34px;
+    width: 74px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255,255,255,.05), rgba(255,255,255,.14), rgba(255,255,255,.05));
+    background-size: 200% 100%;
+    animation: rsvShimmer 1.2s linear infinite;
+}
+
+@keyframes rsvShimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+/* guests */
+.rsv-stepper {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+    .rsv-stepper input.rsv-num {
+        width: 84px;
+        text-align: center;
+        font-family: "Shippori Mincho", serif;
+        font-size: 34px;
+        color: var(--rsv-text);
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid var(--rsv-line);
+        border-radius: 0;
+        padding: 0 0 2px;
+        outline: none;
+        transition: border-color .3s;
+        -moz-appearance: textfield;
+    }
+
+        .rsv-stepper input.rsv-num:focus {
+            border-bottom-color: var(--rsv-gold);
+        }
+
+        .rsv-stepper input.rsv-num.is-bad {
+            border-bottom-color: #ff8a77;
+        }
+
+.rsv-hint.is-bad {
+    color: #ff9d8c;
+}
+
+
+/* chips */
+.rsv-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.rsv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--rsv-line);
+    background: rgba(255, 255, 255, .04);
+    font-size: 14px;
+}
+
+    .rsv-chip i {
+        color: var(--rsv-gold);
+    }
+
+.rsv-link {
+    border: 0;
+    background: transparent;
+    color: var(--rsv-gold);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+    .rsv-link:hover {
+        text-decoration: underline;
+    }
+
+/* table type cards (cream paper on dark) */
+.rsv-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 14px;
+}
+
+.rsv-type {
+    position: relative;
+    text-align: left;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--rsv-paper);
+    color: var(--rsv-paper-ink);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    animation: rsvCard .5s cubic-bezier(.22, 1, .36, 1) both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@keyframes rsvCard {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.rsv-type:hover:not([aria-disabled="true"]) {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .45);
+}
+
+.rsv-type.is-selected {
+    border-color: var(--rsv-red);
+    box-shadow: 0 0 0 3px rgba(195, 57, 43, .35);
+}
+
+.rsv-type[aria-disabled="true"] {
+    cursor: not-allowed;
+}
+
+    .rsv-type[aria-disabled="true"] .rsv-type-body {
+        opacity: .6;
+    }
+
+.rsv-type-photo {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #3a2c26;
+    overflow: hidden;
+}
+
+    .rsv-type-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform .5s ease;
+    }
+
+.rsv-type:hover:not([aria-disabled="true"]) .rsv-type-photo img {
+    transform: scale(1.06);
+}
+
+.rsv-type[aria-disabled="true"] .rsv-type-photo img {
+    filter: grayscale(.7) brightness(.8);
+}
+
+.rsv-nophoto {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 4px;
+    color: #d8c8b6;
+    font-size: 12px;
+}
+
+    .rsv-nophoto i {
+        font-size: 22px;
+    }
+
+.rsv-type-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid rgba(255, 255, 255, .8);
+    background: rgba(0, 0, 0, .35);
+    color: transparent;
+    font-size: 15px;
+    transition: background .2s, transform .2s;
+}
+
+.rsv-type.is-selected .rsv-type-check {
+    background: var(--rsv-red);
+    border-color: #fff;
+    color: #fff;
+    transform: scale(1.08);
+}
+
+.rsv-type-body {
+    padding: 12px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.rsv-type-name {
+    margin: 0;
+    font-family: "Shippori Mincho", serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.rsv-type-jp {
+    margin: 0;
+    font-size: 13px;
+    letter-spacing: .12em;
+    color: #6e5547;
+}
+
+.rsv-type-seats {
+    margin: 4px 0 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rsv-type-desc {
+    margin: 0;
+    font-size: 13.5px;
+    color: #55443a;
+}
+
+.rsv-type-spend {
+    margin: 0;
+    font-size: 13px;
+    color: #8f1f17;
+    font-weight: 700;
+}
+
+.rsv-status {
+    align-self: flex-start;
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 12px 4px 9px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+    .rsv-status::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .rsv-status.available {
+        background: #2f6a35;
+        color: #e9fbe9;
+    }
+
+    .rsv-status.fullybooked {
+        background: #8e6b17;
+        color: #fff3cf;
+    }
+
+    .rsv-status.notsuitable, .rsv-status.unavailable {
+        background: #5a4d46;
+        color: #efe4d4;
+    }
+
+.rsv-type-reason {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #55443a;
+}
+
+/* special requests */
+.rsv-special {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rsv-line);
+    position: relative;
+}
+
+    .rsv-special label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+
+        .rsv-special label small {
+            color: var(--rsv-muted);
+        }
+
+    .rsv-special textarea {
+        width: 100%;
+        resize: vertical;
+        border-radius: 10px;
+        border: 1px solid var(--rsv-line);
+        background: rgba(255, 255, 255, .04);
+        color: var(--rsv-text);
+        padding: 10px 12px;
+        font: inherit;
+    }
+
+        .rsv-special textarea:focus, .rsv-btn:focus-visible, .rsv-slot:focus-visible, .rsv-day:focus-visible, .rsv-type:focus-visible, .rsv-icon-btn:focus-visible, .rsv-link:focus-visible {
+            outline: 2px solid var(--rsv-gold);
+            outline-offset: 2px;
+        }
+
+.rsv-count {
+    position: absolute;
+    right: 4px;
+    bottom: -18px;
+    color: var(--rsv-muted);
+}
+
+/* review */
+.rsv-review {
+    margin: 0 0 16px;
+    border: 1px solid var(--rsv-line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .03);
+}
+
+.rsv-rv-hero {
+    padding: 18px 22px 16px;
+    background: linear-gradient(135deg, rgba(143, 31, 23, .5), rgba(36, 26, 23, .15) 70%);
+    border-bottom: 1px solid var(--rsv-line);
+}
+
+.rsv-rv-eyebrow {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: .26em;
+    text-transform: uppercase;
+    color: var(--rsv-gold);
+}
+
+.rsv-rv-date {
+    margin: 0;
+    font-family: "Shippori Mincho", serif;
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.rsv-rv-meta {
+    margin: 8px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    font-size: 16px;
+}
+
+    .rsv-rv-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rsv-rv-meta i {
+        color: var(--rsv-gold);
+    }
+
+.rsv-rv-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--rsv-line);
+}
+
+.rsv-rv-tile {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 2px;
+    align-content: start;
+    padding: 14px 22px;
+    background: var(--rsv-panel);
+    position: relative;
+    height: 92px;
+    overflow: hidden;
+}
+
+    .rsv-rv-tile.is-wide {
+        grid-column: 1 / -1;
+    }
+
+    .rsv-rv-tile > i {
+        grid-row: 1 / span 3;
+        font-size: 18px;
+        color: var(--rsv-gold);
+        padding-top: 2px;
+    }
+
+    .rsv-rv-tile small {
+        font-size: 11px;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        color: var(--rsv-muted);
+        padding-right: 84px;
+    }
+
+    .rsv-rv-tile strong {
+        font-size: 16px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+
+    .rsv-rv-tile span {
+        font-size: 13px;
+        letter-spacing: .1em;
+        color: var(--rsv-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+
+.rsv-rv-more {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--rsv-line);
+    background: rgba(214, 177, 111, .08);
+    color: var(--rsv-gold);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .25s, border-color .25s;
+}
+
+    .rsv-rv-more:hover {
+        background: rgba(214, 177, 111, .18);
+        border-color: var(--rsv-gold);
+    }
+
+/* full text pop-up */
+.rsv-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(8, 5, 4, .66);
+    opacity: 0;
+    transition: opacity .35s ease;
+}
+
+    .rsv-modal.is-open {
+        opacity: 1;
+    }
+
+    .rsv-modal[hidden] {
+        display: none;
+    }
+
+.rsv-modal-panel {
+    width: min(520px, 100%);
+    max-height: min(70vh, 560px);
+    display: flex;
+    flex-direction: column;
+    padding: 22px 24px 20px;
+    border: 1px solid var(--rsv-line);
+    border-radius: 16px;
+    background: linear-gradient(180deg, var(--rsv-panel-2), var(--rsv-panel));
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .6);
+    transform: translateY(10px) scale(.98);
+    transition: transform .4s cubic-bezier(.22, 1, .36, 1);
+}
+
+.rsv-modal.is-open .rsv-modal-panel {
+    transform: none;
+}
+
+.rsv-modal-title {
+    margin: 0 0 12px;
+    font-size: 12px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--rsv-gold);
+}
+
+.rsv-modal-body {
+    margin: 0;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.rsv-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.rsv-notice {
+    border: 1px solid var(--rsv-line);
+    border-left: 4px solid var(--rsv-gold);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .04);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    font-size: 14.5px;
+    line-height: 1.55;
+}
+
+    .rsv-notice p {
+        margin: 0 0 8px;
+    }
+
+        .rsv-notice p:last-child {
+            margin-bottom: 0;
+        }
+
+.rsv-notice-title {
+    font-family: "Shippori Mincho", serif;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .rsv-notice-title i {
+        color: var(--rsv-gold);
+    }
+
+.rsv-spend {
+    border-left-color: var(--rsv-red);
+}
+
+.rsv-check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-top: 10px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+    .rsv-check input {
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+        accent-color: var(--rsv-red);
+        flex: none;
+    }
+
+.rsv-nospend {
+    margin: 0 0 14px;
+    color: #9ed2a3;
+    font-size: 14.5px;
+}
+
+.rsv-error {
+    margin: 14px 0 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(195, 57, 43, .18);
+    border: 1px solid rgba(255, 138, 119, .5);
+    color: #ffd3cb;
+    font-size: 14.5px;
+}
+
+    .rsv-error[hidden] {
+        display: none;
+    }
+
+/* buttons */
+.rsv-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.rsv-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 46px;
+    padding: 0 24px;
+    border-radius: 10px;
+    border: 1px solid var(--rsv-line);
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s, background .2s, opacity .2s;
+}
+
+.rsv-btn-ghost {
+    background: transparent;
+    color: var(--rsv-text);
+}
+
+    .rsv-btn-ghost:hover {
+        background: rgba(255, 255, 255, .06);
+    }
+
+.rsv-btn-primary {
+    background: linear-gradient(180deg, #d04434, var(--rsv-red-deep));
+    border-color: #ff8a77;
+    color: #fff;
+    min-width: 170px;
+}
+
+    .rsv-btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(195, 57, 43, .4);
+        color: #fff;
+    }
+
+.rsv-btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.rsv-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .4);
+    border-top-color: #fff;
+    animation: rsvSpin .7s linear infinite;
+}
+
+.rsv-btn.is-loading .rsv-spinner {
+    display: inline-block;
+}
+
+.rsv-btn.is-loading {
+    pointer-events: none;
+}
+
+@keyframes rsvSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ---------- right: summary / ticket ---------- */
+.rsv-summary-wrap {
+    align-self: start;
+    perspective: 1400px;
+}
+
+.rsv-flip {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .9s cubic-bezier(.22, 1, .36, 1);
+}
+
+    .rsv-flip.is-flipped {
+        transform: rotateY(180deg);
+    }
+
+.rsv-face {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 6px;
+    background: var(--rsv-paper);
+    color: var(--rsv-paper-ink);
+    box-shadow: 0 22px 54px rgba(0, 0, 0, .55);
+}
+
+.rsv-front {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: var(--rsv-main-h);
+    overflow: hidden;
+    padding: 28px 26px 145px;
+    border: 1px solid #c4aa86;
+    border-radius: 8px;
+    background: radial-gradient(circle at 16% 13%, rgba(255,255,255,.65), transparent 42%), repeating-linear-gradient(35deg, transparent 0 3px, rgba(110,83,57,.026) 3px 4px), #f2e8d5;
+    -webkit-mask: radial-gradient(circle 8px at 9px calc(100% - 1px), #0000 96%, #000) 0 0 / 18px 100% repeat-x;
+    mask: radial-gradient(circle 8px at 9px calc(100% - 1px), #0000 96%, #000) 0 0 / 18px 100% repeat-x;
+}
+
+.rsv-back {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 560px; /* fixed, so the pass does not change size when the flight ends */
+    transform: rotateY(180deg);
+    padding: 0;
+    overflow: hidden;
+}
+
+.rsv-flip.is-flipped .rsv-front {
+    visibility: hidden;
+    transition: visibility 0s .45s;
+}
+
+.rsv-sum-head {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 8px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(79,52,34,.5);
+}
+
+    .rsv-sum-head > div {
+        display: contents;
+    }
+
+    .rsv-sum-head .rsv-sum-eyebrow {
+        grid-area: 1 / 1;
+    }
+
+    .rsv-sum-head .rsv-badge {
+        grid-area: 1 / 2;
+        align-self: center;
+    }
+
+    .rsv-sum-head h2 {
+        grid-column: 1 / -1;
+    }
+
+    .rsv-sum-head::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 38px;
+        height: 3px;
+        background: var(--rsv-red);
+    }
+
+    .rsv-sum-head h2 {
+        margin: 2px 0 0;
+        font-family: "Shippori Mincho", serif;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+.rsv-sum-eyebrow {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: .18em;
+    color: #7a6254;
+}
+
+.rsv-badge {
+    flex: none;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 12px;
+    border: 1px solid #c3392b;
+    color: #a52a1f;
+    background: rgba(195, 57, 43, .08);
+    white-space: nowrap;
+}
+
+.rsv-badge-pending {
+    border-color: #b8860b;
+    color: #7a5a06;
+    background: rgba(214, 177, 111, .3);
+}
+
+.rsv-sum-list {
+    position: relative;
+    z-index: 1;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+    .rsv-sum-list li {
+        display: grid;
+        grid-template-columns: 37px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: center;
+        min-height: 75px;
+        padding: 13px 0;
+        border-bottom: 1px solid rgba(66,43,29,.27);
+    }
+
+        .rsv-sum-list li[hidden] {
+            display: none;
+        }
+
+        /* the spend row keeps its space before a table is chosen, so the card never grows when one is picked */
+        .rsv-sum-list li[data-sum="spend"][hidden] {
+            display: grid;
+            visibility: hidden;
+        }
+
+        .rsv-sum-list li > i {
+            font-size: 20px;
+            color: #4a362d;
+        }
+
+    .rsv-sum-list small {
+        display: block;
+        color: #7a6254;
+        font-size: 13px;
+    }
+
+    .rsv-sum-list strong {
+        display: block;
+        font-family: "Shippori Mincho", serif;
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+        /* a long special request stays two lines here; the full text is in the review step */
+        .rsv-sum-list strong#sumSpecial {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+    .rsv-sum-list span[lang="ja"] {
+        display: block;
+        color: #6e5547;
+        font-size: 13px;
+        letter-spacing: .1em;
+    }
+
+    .rsv-sum-list .rsv-link {
+        color: #a52a1f;
+        font-weight: 700;
+    }
+
+    .rsv-sum-list li.is-flash strong {
+        animation: rsvSettle 1.5s cubic-bezier(.22, 1, .36, 1);
+    }
+
+@keyframes rsvSettle {
+    from {
+        opacity: .2;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.rsv-sum-note {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: auto 0 0;
+    padding-top: 25px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #3e332b;
+}
+
+
+/* The summary front uses the same muted ink landscape as the reference. */
+.rsv-front::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .22;
+    background: repeating-radial-gradient(circle at 80% 15%, rgba(134,94,58,.12) 0 .7px, transparent 1px 6px);
+}
+
+.rsv-front::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    height: 155px;
+    pointer-events: none;
+    opacity: .66;
+    background: url("../images/reservations/yoru-summary-ink.svg") center bottom / 100% 100% no-repeat;
+}
+
+.rsv-sum-seal {
+    position: absolute;
+    right: 24px;
+    bottom: 31px;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    border: 2px solid #b73b2d;
+    color: #ae3228;
+    font-family: "Shippori Mincho", serif;
+    font-size: 18px;
+    line-height: 1;
+    transform: rotate(-8deg);
+}
+
+.rsv-sum-list li > i {
+    color: #211a16;
+    font-size: 26px;
+}
+
+.rsv-sum-list small {
+    color: #5d493b;
+    font-size: 13px;
+}
+
+.rsv-sum-list strong {
+    color: #251a14;
+    font-size: 19px;
+}
+
+.rsv-sum-list li[data-sum="type"] {
+    min-height: 91px; /* room for the Japanese name, so choosing a table does not change the height */
+}
+
+    .rsv-sum-list li[data-sum="type"] strong {
+        font-size: 20px;
+    }
+
+.rsv-sum-list span[lang="ja"] {
+    color: #5d493b;
+    font-size: 13px;
+}
+
+.rsv-sum-list .rsv-link {
+    color: #aa3024;
+    font-size: 12px;
+    font-weight: 700;
+    justify-self: end;
+}
+
+.rsv-sum-note > i {
+    color: #251b15;
+    font-size: 20px;
+}
+
+.rsv-sum-head h2 {
+    font-size: 22px;
+    white-space: nowrap;
+}
+
+.rsv-sum-eyebrow {
+    color: #654f3e;
+}
+
+.rsv-badge {
+    border-radius: 6px;
+}
+
+/* ---------- the reservation pass: 350 x 560, washi paper, ink hills and a cherry branch ---------- */
+.rsv-back {
+    padding: 0;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+}
+
+.rsv-ticket-shadow {
+    position: absolute;
+    inset: 0;
+    filter: drop-shadow(0 18px 22px rgba(0, 0, 0, .5));
+}
+
+.rsv-ticket {
+    --rsv-stub: 104px;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 560px;
+    overflow: hidden;
+    border: 1px solid #c9ae87;
+    border-radius: 9px;
+    color: #2a1c17;
+    background: radial-gradient(circle at 12% 16%, rgba(255,255,255,.55), transparent 40%), radial-gradient(circle at 88% 80%, rgba(151,106,61,.12), transparent 40%), repeating-linear-gradient(32deg, transparent 0 3px, rgba(119,91,56,.025) 3px 4px), #f1e7d5;
+    /* real see-through half circles on both sides of the tear line */
+    -webkit-mask: radial-gradient(circle 11px at 0 calc(100% - var(--rsv-stub)), #0000 97%, #000) left / 51% 100% no-repeat, radial-gradient(circle 11px at 100% calc(100% - var(--rsv-stub)), #0000 97%, #000) right / 51% 100% no-repeat;
+    mask: radial-gradient(circle 11px at 0 calc(100% - var(--rsv-stub)), #0000 97%, #000) left / 51% 100% no-repeat, radial-gradient(circle 11px at 100% calc(100% - var(--rsv-stub)), #0000 97%, #000) right / 51% 100% no-repeat;
+}
+
+    .rsv-ticket::before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        z-index: 2;
+        border: 1px solid rgba(145,103,65,.35);
+        border-radius: 3px;
+        pointer-events: none;
+    }
+
+    /* one soft light sweep across the paper when the pass lands */
+    .rsv-ticket::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        background: linear-gradient(105deg, transparent 36%, rgba(255, 246, 222, .6) 50%, transparent 64%);
+        transform: translateX(-130%);
+    }
+
+.rsv-flip.is-flipped .rsv-ticket::after {
+    animation: rsvSheen 1.7s .2s ease-out both;
+}
+
+@keyframes rsvSheen {
+    to {
+        transform: translateX(130%);
+    }
+}
+
+.rsv-ticket-art {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    width: 210px;
+    height: 160px;
+    opacity: .82;
+    pointer-events: none;
+}
+
+.rsv-ticket-landscape {
+    position: absolute;
+    z-index: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 168px;
+    pointer-events: none;
+}
+
+.rsv-ticket-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 18px 20px 0;
+}
+
+/* ----- header: brand, status, title (left aligned, so the branch on the right stays clear) ----- */
+.rsv-ticket-header {
+    text-align: left;
+}
+
+.rsv-ticket-brand {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    height: 40px;
+}
+
+    .rsv-ticket-brand > span {
+        font-family: "Shippori Mincho", serif;
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: .16em;
+        line-height: 1;
+    }
+
+    .rsv-ticket-brand b {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 4px;
+        background: #a9362b;
+        color: #fff4e9;
+        font-size: 21px;
+        font-weight: 500;
+        transform: translateY(-2px) rotate(-3deg);
+    }
+
+    .rsv-ticket-brand small {
+        position: absolute;
+        left: 2px;
+        bottom: -7px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: .52em;
+        color: #684b37;
+    }
+
+.rsv-ticket-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 13px 0 0;
+    padding: 3px 12px 3px 9px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+    .rsv-ticket-status i {
+        font-size: 13px;
+    }
+
+.rsv-ticket h2 {
+    margin: 10px 0 0;
+    font-family: "Shippori Mincho", serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+
+.rsv-ticket-message {
+    margin: 6px 0 0;
+    color: #5d4a3d;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* ----- details ----- */
+.rsv-ticket-grid {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-evenly; /* spare height is shared between the rows, so a short pass never looks empty */
+    gap: 9px;
+    min-height: 0;
+    margin-top: 9px;
+    padding: 10px 0 8px;
+    border-top: 1px solid rgba(95,68,44,.3);
+    overflow: hidden;
+}
+
+/* date and time are the two things a guest looks for first */
+.rsv-ticket-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2px 0 11px;
+    border-bottom: 1px dashed rgba(95,68,44,.3);
+}
+
+.rsv-ticket-day {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+    .rsv-ticket-day b {
+        font-family: "Shippori Mincho", serif;
+        font-size: 44px;
+        font-weight: 700;
+        line-height: 1;
+        color: #99291f;
+        transform: translateY(-3px); /* the digits sit low in their line box; lift them to the optical centre */
+    }
+
+    .rsv-ticket-day span {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        min-width: 0;
+        transform: translateY(-2px);
+    }
+
+    .rsv-ticket-day strong {
+        font-family: "Shippori Mincho", serif;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.1;
+        white-space: nowrap;
+    }
+
+    .rsv-ticket-day em {
+        font-style: normal;
+        font-size: 13px;
+        letter-spacing: .06em;
+        color: #776353;
+    }
+
+.rsv-ticket-clock {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-left: 12px;
+    border-left: 1px solid rgba(95,68,44,.26);
+    text-align: right;
+}
+
+    .rsv-ticket-clock small {
+        display: block;
+        color: #776353;
+        font-size: 11.5px;
+        letter-spacing: .04em;
+    }
+
+    .rsv-ticket-clock strong {
+        display: block;
+        font-family: "Shippori Mincho", serif;
+        font-size: 25px;
+        font-weight: 700;
+        line-height: 1.1;
+        white-space: nowrap;
+    }
+
+.rsv-ticket-pair {
+    display: grid;
+    grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    column-gap: 12px;
+}
+
+    .rsv-ticket-pair > .rsv-ticket-detail + .rsv-ticket-detail {
+        padding-left: 12px;
+        border-left: 1px solid rgba(95,68,44,.26);
+    }
+
+.rsv-ticket-detail {
+    display: grid;
+    grid-template-columns: 19px minmax(0, 1fr);
+    gap: 8px;
+    align-items: start;
+    min-width: 0;
+}
+
+    .rsv-ticket-detail[hidden], .rsv-ticket-request[hidden], .rsv-ticket-accepted[hidden] {
+        display: none;
+    }
+
+    .rsv-ticket-detail > i {
+        padding-top: 3px;
+        color: #9e3a30;
+        font-size: 17px;
+    }
+
+    .rsv-ticket-detail small, .rsv-ticket-request small {
+        display: block;
+        margin-bottom: 2px;
+        color: #776353;
+        font-size: 11.5px;
+        letter-spacing: .03em;
+    }
+
+    .rsv-ticket-detail strong {
+        display: block;
+        font-family: "Shippori Mincho", serif;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+
+#tkType {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.rsv-ticket-sub {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-top: 2px;
+    color: #6e5547;
+    font-size: 12.5px;
+}
+
+    .rsv-ticket-sub:empty {
+        display: none;
+    }
+
+    .rsv-ticket-sub > span:empty {
+        display: none;
+    }
+
+    .rsv-ticket-sub > span:not(:empty) + span:not(:empty)::before {
+        content: " \00B7  ";
+    }
+
+/* minimum spend sits on its own line, with the "accepted" mark at the end */
+.rsv-ticket-detail.is-spend {
+    grid-template-columns: 19px minmax(0, 1fr) auto;
+    align-items: center;
+    padding-top: 9px;
+    border-top: 1px dashed rgba(95,68,44,.3);
+}
+
+    .rsv-ticket-detail.is-spend strong {
+        white-space: nowrap;
+    }
+
+.rsv-ticket-accepted {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid #b98a3a;
+    background: rgba(214,177,111,.28);
+    color: #6b4d0b;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.rsv-ticket-request {
+    padding: 6px 10px;
+    border-left: 3px solid #a9362b;
+    background: rgba(244,235,221,.8);
+}
+
+    .rsv-ticket-request strong {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.35;
+    }
+
+/* ----- tear-off stub ----- */
+.rsv-ticket-stub {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+    flex: none;
+    height: var(--rsv-stub);
+    margin: 0 -20px;
+    padding: 14px 20px;
+    border-top: 2px dashed rgba(82,55,38,.58);
+    background: linear-gradient(180deg, rgba(241,231,213,.76), rgba(241,231,213,.26));
+}
+
+    .rsv-ticket-stub > div {
+        min-width: 0;
+    }
+
+    .rsv-ticket-stub small {
+        display: block;
+        margin-bottom: 4px;
+        color: #776353;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .1em;
+    }
+
+    .rsv-ticket-stub strong {
+        display: block;
+        color: #99291f;
+        font-family: "Shippori Mincho", serif;
+        font-size: 20px;
+        letter-spacing: .04em;
+        white-space: nowrap;
+    }
+
+    .rsv-ticket-stub .is-long strong {
+        font-size: 15px;
+        letter-spacing: .01em;
+    }
+
+    .rsv-ticket-stub p {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        margin: 0;
+        padding-left: 12px;
+        border-left: 1px solid rgba(82,55,38,.3);
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+        .rsv-ticket-stub p i {
+            flex: none;
+            padding-top: 1px;
+            color: #a9362b;
+            font-size: 14px;
+        }
+
+.rsv-ticket-close {
+    display: none;
+    width: min(350px,100%);
+    margin: 12px auto 0;
+}
+
+.rsv-flip.is-flipped + .rsv-ticket-close {
+    display: flex;
+}
+
+.rsv-shell.is-done .rsv-flip {
+    height: 560px;
+    min-height: 560px;
+}
+
+.rsv-shell.is-done .rsv-front {
+    position: absolute;
+    inset: 0;
+}
+
+/* finished: the side columns step aside and the ticket takes the middle */
+.rsv-rail, .rsv-main {
+    transition: opacity .8s ease, transform .8s ease;
+}
+
+.rsv-shell.is-fading .rsv-rail, .rsv-shell.is-fading .rsv-main {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+}
+
+.rsv-shell.is-done {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    align-content: start;
+    min-height: var(--rsv-main-h);
+}
+
+    .rsv-shell.is-done .rsv-rail, .rsv-shell.is-done .rsv-main {
+        display: none;
+    }
+
+    .rsv-shell.is-done .rsv-summary-wrap {
+        grid-column: 1;
+        position: relative;
+        top: 0;
+        width: min(350px, 100%);
+    }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1230px) {
+    .rsv-shell {
+        grid-template-columns: 230px minmax(0, 1fr);
+    }
+
+    .rsv-summary-wrap {
+        grid-column: 1 / -1;
+        position: relative;
+        top: 0;
+        justify-self: center;
+        width: min(350px, 100%);
+    }
+
+    .rsv-rail {
+        padding: 25px 18px 25px 70px;
+    }
+
+    .rsv-rail-jp {
+        left: 14px;
+    }
+}
+
+@media (max-width: 820px) {
+    .rsv {
+        padding: 18px 12px 56px;
+    }
+
+    .rsv-shell {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rsv-rail {
+        position: relative;
+        top: 0;
+        padding: 16px;
+    }
+
+    .rsv-front {
+        min-height: 0;
+        padding-bottom: 130px;
+    }
+
+    .rsv {
+        background-position: center top;
+    }
+
+    .rsv-rail-title, .rsv-rail-eyebrow, .rsv-rail-note, .rsv-step-text small,
+    .rsv-rail-jp, .rsv-rail-ornament {
+        display: none;
+    }
+
+    .rsv-steps {
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+        /* the line between two dots is drawn by the upper step, so nothing hangs below the last dot */
+        .rsv-steps li:not(:last-child)::before, .rsv-steps li:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            left: 21px;
+            top: 22px;
+            width: 2px;
+            border-radius: 2px;
+            z-index: -1;
+        }
+
+        .rsv-steps li:not(:last-child)::before {
+            height: calc(100% + 38px);
+            background: rgba(255, 255, 255, .14);
+        }
+
+        .rsv-steps li:not(:last-child)::after {
+            height: 0;
+            background: linear-gradient(var(--rsv-red), var(--rsv-gold));
+            transition: height 1.2s cubic-bezier(.22, 1, .36, 1);
+        }
+
+        .rsv-steps li.is-done:not(:last-child)::after {
+            height: calc(100% + 38px);
+        }
+
+        .rsv-steps li {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 6px;
+            flex: 1;
+        }
+
+    .rsv-step-text strong {
+        font-size: 14px;
+    }
+
+    .rsv-main {
+        padding: 20px 16px 22px;
+        min-height: 0;
+        contain: none;
+    }
+
+    .rsv-step1-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rsv-actions .rsv-btn {
+        flex: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rsv *, .rsv *::before, .rsv *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+.rsv-skeleton-card {
+    height: 220px;
+    background: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.12), rgba(255,255,255,.04));
+    background-size: 200% 100%;
+    animation: rsvShimmer 1.2s linear infinite;
+}
+
+/* Firefox has no ::-webkit-scrollbar, so it gets the standard thin scrollbar instead */
+@supports not selector(::-webkit-scrollbar) {
+    .rsv-main, .rsv-slots {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(214, 177, 111, .38) transparent;
+    }
+}
