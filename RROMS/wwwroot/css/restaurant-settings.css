@@ -1209,3 +1209,584 @@
         transition: none;
     }
 }
+
+
+/* =========================================================
+   夜 NIGHT INK THEME (design v2)
+   Overrides the look above; layout and behaviour are unchanged.
+   Colours follow the site palette (site.css: --yoru-*).
+   ========================================================= */
+
+.rs-page {
+    --rs-page: #F3ECE0;
+    --rs-paper: #FFFCF6;
+    --rs-paper-2: #F7F0E4;
+    --rs-kraft: #EFE4D2;
+    --rs-ink: #191919;
+    --rs-line: #E2D5C1;
+    --rs-line-2: #CDBBA2;
+    --rs-shu: #C83E2D;
+    --rs-shu-dark: #A93324;
+    --rs-kin: #B79B72;
+    --rs-kin-soft: #F1E7D6;
+    --rs-dark: linear-gradient(100deg, #1d1816 0%, #2b211d 100%);
+    /* one accent per section: brand / contact / charges */
+    --rs-a1: #C83E2D;
+    --rs-a2: #3D5A7A;
+    --rs-a3: #6B8A4E;
+    padding-top: 24px;
+}
+
+/* ---------- Hero header ---------- */
+.rs-head {
+    position: relative;
+    overflow: hidden;
+    align-items: flex-start;
+    margin-bottom: 28px;
+    padding: 36px 40px 50px;
+    border-radius: 18px;
+    color: #F5F0E7;
+    background:
+        radial-gradient(60% 120% at 88% 10%, rgba(200, 62, 45, .45), transparent 60%),
+        linear-gradient(120deg, #171312, #2A1D19);
+    box-shadow: 0 18px 40px rgba(20, 15, 10, .18);
+}
+
+.rs-head::before {
+    content: "設定";
+    position: absolute;
+    right: 150px;
+    top: -26px;
+    font-family: var(--rs-serif);
+    font-weight: 800;
+    font-size: 170px;
+    line-height: 1;
+    color: rgba(255, 255, 255, .05);
+    pointer-events: none;
+}
+
+/* gold seigaiha waves along the bottom */
+.rs-head::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 30px;
+    opacity: .55;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle at 50% 100%, transparent 18%, var(--rs-kin) 19% 22%, transparent 23% 38%, var(--rs-kin) 39% 42%, transparent 43% 58%, var(--rs-kin) 59% 62%, transparent 63%),
+        radial-gradient(circle at 50% 100%, transparent 18%, var(--rs-kin) 19% 22%, transparent 23% 38%, var(--rs-kin) 39% 42%, transparent 43% 58%, var(--rs-kin) 59% 62%, transparent 63%);
+    background-size: 30px 15px;
+    background-position: 0 0, 15px 7.5px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+}
+
+.rs-head > * {
+    position: relative;
+    z-index: 1;
+}
+
+.rs-eyebrow {
+    color: var(--rs-kin);
+}
+
+.rs-title {
+    color: #F5F0E7;
+    font-size: 46px;
+}
+
+.rs-title em {
+    font-style: normal;
+    color: #F07A66;
+}
+
+.rs-lede {
+    color: rgba(255, 255, 255, .72);
+}
+
+.rs-hanko {
+    width: 92px;
+    height: 92px;
+    border-color: #E46A55;
+    border-radius: 12px;
+    color: #E46A55;
+    font-size: 26px;
+    background: rgba(200, 62, 45, .08);
+    transform: rotate(-7deg);
+    opacity: 1;
+}
+
+/* ---------- Side index: dark card ---------- */
+.rs-layout {
+    grid-template-columns: 190px minmax(0, 1fr);
+}
+
+.rs-side {
+    top: 20px;
+    padding: 14px;
+    border-radius: 16px;
+    background: var(--rs-dark);
+    box-shadow: 0 12px 28px rgba(20, 15, 10, .15);
+}
+
+.rs-side-title {
+    margin: 4px 8px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--rs-kin);
+}
+
+.rs-side a {
+    gap: 12px;
+    padding: 10px;
+    border-left: 0;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, .7);
+    transition: background .15s, color .15s;
+}
+
+.rs-side a b {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid rgba(255, 255, 255, .25);
+    border-radius: 50%;
+    font-size: 15px;
+    color: #fff;
+}
+
+.rs-side a small {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(255, 255, 255, .4);
+}
+
+.rs-side a:hover {
+    background: rgba(255, 255, 255, .06);
+}
+
+.rs-side a.is-on {
+    color: #fff;
+    background: rgba(255, 255, 255, .1);
+}
+
+.rs-side a.is-on b {
+    color: #fff;
+    background: var(--c);
+    border-color: var(--c);
+}
+
+.rs-side-tip {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .06);
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, .62);
+}
+
+.rs-side-tip b {
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--rs-serif);
+    font-size: 13px;
+    color: var(--rs-kin);
+}
+
+/* ---------- Section cards ---------- */
+.rs-sec {
+    margin-bottom: 26px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(40, 30, 20, .06);
+}
+
+/* coloured edge on the left */
+.rs-sec::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 18px;
+    bottom: 18px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--c);
+}
+
+.rs-sec-head {
+    border-bottom: 0;
+    border-radius: 16px 16px 0 0;
+    background: var(--rs-dark);
+    color: #F5F0E7;
+}
+
+/* swap the cream wave pattern for a big faint kanji watermark */
+.rs-sec-head::before {
+    display: none;
+}
+
+.rs-sec-head::after {
+    content: attr(data-kanji);
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: var(--rs-serif);
+    font-weight: 800;
+    font-size: 64px;
+    letter-spacing: .1em;
+    color: rgba(255, 255, 255, .07);
+    pointer-events: none;
+}
+
+.rs-num {
+    width: 46px;
+    height: 46px;
+    font-size: 21px;
+    background: var(--c);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, .08), 0 0 0 5px var(--c);
+}
+
+.rs-sec-head p {
+    color: rgba(255, 255, 255, .62);
+}
+
+.rs-sec-jp {
+    z-index: 1;
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 999px;
+    letter-spacing: 5px;
+}
+
+.rs-sub {
+    margin: 28px 0 14px;
+    font-size: 17px;
+}
+
+/* small diamond in the section colour */
+.rs-sub::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    transform: rotate(45deg);
+    background: var(--c);
+}
+
+.rs-sub::after {
+    background: linear-gradient(90deg, var(--rs-line-2), transparent);
+}
+
+/* ---------- Inputs ---------- */
+.rs-input,
+.rs-textarea,
+.rs-page .cc-btn {
+    background: var(--rs-paper-2);
+    border-radius: 10px;
+}
+
+.rs-input:focus,
+.rs-textarea:focus {
+    background: #fff;
+}
+
+.rs-affix {
+    border-radius: 10px;
+    background: var(--rs-paper-2);
+}
+
+.rs-affix .rs-input {
+    background: transparent;
+}
+
+/* % box in the section colour */
+.rs-affix-end {
+    width: 46px;
+    justify-content: center;
+    padding: 0;
+    border-left: 0;
+    background: var(--c);
+    color: #fff;
+}
+
+/* rate bar under tax / service charge */
+.rs-bar {
+    height: 6px;
+    margin-top: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--rs-kraft);
+}
+
+.rs-bar i {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--c);
+    transition: width .25s;
+}
+
+/* S / M / L pills */
+.rs-seg {
+    padding: 3px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--rs-kraft);
+}
+
+.rs-seg label {
+    width: 30px;
+    height: 24px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: transparent;
+    font-weight: 700;
+}
+
+.rs-seg label + input + label {
+    border-left: 0;
+}
+
+.rs-seg input:checked + label {
+    background: var(--rs-ink);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+}
+
+/* ---------- Display style cards ---------- */
+.rs-mode {
+    align-items: center;
+    border-radius: 14px;
+    background: var(--rs-paper-2);
+    transition: border-color .2s, background .2s, transform .2s, box-shadow .2s;
+}
+
+.rs-mode:hover {
+    transform: translateY(-1px);
+}
+
+.rs-mode:has(input:checked) {
+    border-color: var(--rs-shu);
+    background: var(--rs-dark);
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(20, 15, 10, .18);
+}
+
+.rs-mode:has(input:checked) small {
+    color: rgba(255, 255, 255, .65);
+}
+
+.rs-mode:has(input:checked)::after {
+    padding: 2px 9px;
+    border-radius: 999px;
+}
+
+.rs-mode-thumb {
+    background: #111;
+    border: 1px solid rgba(255, 255, 255, .1);
+}
+
+/* ---------- Image slots: kraft paper ---------- */
+.rs-slot {
+    position: relative;
+    border: 0;
+    border-radius: 14px;
+    background: var(--rs-kraft);
+}
+
+.rs-slot::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1.5px dashed var(--rs-line-2);
+    border-radius: 10px;
+    pointer-events: none;
+}
+
+.rs-slot > * {
+    position: relative;
+}
+
+.rs-where {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--rs-ink);
+    color: #fff;
+}
+
+.rs-slot-prev {
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05);
+}
+
+.rs-btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 7px 14px;
+    background: var(--rs-ink);
+    color: #fff;
+}
+
+.rs-btn:hover {
+    background: var(--rs-shu);
+}
+
+.rs-btn-ghost {
+    background: transparent;
+    color: var(--rs-ink-2);
+}
+
+.rs-btn-ghost:hover {
+    background: transparent;
+    color: var(--rs-shu);
+}
+
+/* ---------- Live preview frame ---------- */
+.rs-previews {
+    padding: 16px;
+    border: 1px solid var(--rs-line);
+    border-radius: 16px;
+    background: var(--rs-kraft);
+}
+
+/* ---------- Example bill: paper receipt ---------- */
+.rs-receipt {
+    position: relative;
+    padding: 20px 22px 30px;
+    border: 0;
+    border-radius: 6px 6px 0 0;
+    background: #FFFEFA;
+    box-shadow: 0 12px 28px rgba(40, 30, 20, .12);
+    /* torn zig-zag bottom edge */
+    -webkit-mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 16px 100%;
+    mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 16px 100%;
+}
+
+.rs-receipt h4 {
+    display: block;
+    margin: 0;
+    text-align: center;
+    font-size: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 56px;
+}
+
+.rs-receipt-sub {
+    margin: 2px 0 12px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--rs-muted);
+}
+
+.rs-receipt-row {
+    padding: 4px 0;
+    border-bottom: 1px dotted var(--rs-line-2);
+}
+
+.rs-receipt-total {
+    margin-top: 10px;
+    padding-top: 0;
+    border-top: 0;
+    border-bottom: 0;
+    font-size: 17px;
+}
+
+.rs-receipt-stamp {
+    position: absolute;
+    right: 16px;
+    top: 12px;
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    border: 2.5px solid var(--rs-shu);
+    border-radius: 50%;
+    color: var(--rs-shu);
+    font-family: var(--rs-serif);
+    font-weight: 800;
+    font-size: 15px;
+    transform: rotate(-14deg);
+    opacity: .75;
+}
+
+/* ---------- Save bar: dark floating pill ---------- */
+.rs-savebar {
+    bottom: 14px;
+    padding: 12px 14px 12px 20px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--rs-dark);
+    color: rgba(255, 255, 255, .75);
+    box-shadow: 0 14px 34px rgba(20, 15, 10, .3);
+}
+
+.rs-save-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #7FBF8E;
+    box-shadow: 0 0 0 4px rgba(127, 191, 142, .2);
+}
+
+.rs-savebar:has(.is-dirty) .rs-save-dot {
+    background: var(--rs-kin);
+    box-shadow: 0 0 0 4px rgba(183, 155, 114, .25);
+}
+
+.rs-save-state {
+    color: rgba(255, 255, 255, .8);
+}
+
+.rs-save-state.is-dirty {
+    color: var(--rs-kin);
+}
+
+.rs-save-note {
+    color: rgba(255, 255, 255, .45);
+}
+
+.rs-primary {
+    border-radius: 999px;
+    padding: 12px 28px;
+    box-shadow: 0 6px 16px rgba(200, 62, 45, .4);
+}
+
+.rs-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 3px 10px rgba(200, 62, 45, .4);
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+    .rs-head {
+        padding: 26px 20px 40px;
+    }
+
+    .rs-title {
+        font-size: 32px;
+    }
+
+    .rs-head::before {
+        font-size: 110px;
+        right: 10px;
+    }
+
+    .rs-sec-head::after {
+        display: none;
+    }
+
+    .rs-savebar {
+        border-radius: 16px;
+    }
+}

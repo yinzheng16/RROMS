@@ -11,6 +11,11 @@
     var isFullBrandImage = s.BrandingMode == "FullBrandImage";
     var sizes = new[] { "S", "M", "L" };
     var hasErrors = ViewData.ModelState.ErrorCount > 0;
+
+    // Restaurant name printed at the top of the example bill
+    var summaryName = string.IsNullOrWhiteSpace(s.RestaurantNameLine2)
+        ? s.RestaurantName
+        : $"{s.RestaurantName} {s.RestaurantNameLine2}";
 }
 
 @* Same flag icons as /Account/Register (emoji flags don't show on Windows) *@
@@ -22,12 +27,12 @@
      data-logo="@s.LogoPath"
      data-footer="@s.FooterImagePath"
      data-favicon="@s.FaviconPath"
-     data-default-favicon="@Url.Content("~/favicon.ico")">
+     data-default-favicon="@Url.Content("~/images/yoru-icon.png")">
 
     <header class="rs-head">
         <div>
             <p class="rs-eyebrow">ADMINISTRATION · 店舗設定</p>
-            <h1 class="rs-title">Restaurant Settings</h1>
+            <h1 class="rs-title">Restaurant <em>Settings</em></h1>
             <p class="rs-lede">
                 Manage how your restaurant presents itself — brand, contact details and the rates used on every bill.
             </p>
@@ -45,16 +50,21 @@
         <div class="rs-layout">
 
             <nav class="rs-side" id="rsSide" aria-label="Settings sections">
-                <a href="#rs-brand" class="is-on"><b>一</b>Brand</a>
-                <a href="#rs-contact"><b>二</b>Contact</a>
-                <a href="#rs-charges"><b>三</b>Charges</a>
+                <div class="rs-side-title">SECTIONS · 目次</div>
+                <a href="#rs-brand" class="is-on" style="--c:var(--rs-a1)"><b>一</b><span>Brand<small>看板</small></span></a>
+                <a href="#rs-contact" style="--c:var(--rs-a2)"><b>二</b><span>Contact<small>連絡先</small></span></a>
+                <a href="#rs-charges" style="--c:var(--rs-a3)"><b>三</b><span>Charges<small>料金</small></span></a>
+                <div class="rs-side-tip">
+                    <b>Tip</b>
+                    The live preview updates as you type. Nothing goes live until you press Save.
+                </div>
             </nav>
 
             <div>
 
                 <!-- ================= 一 BRAND ================= -->
-                <section class="rs-sec" id="rs-brand">
-                    <div class="rs-sec-head">
+                <section class="rs-sec" id="rs-brand" style="--c:var(--rs-a1)">
+                    <div class="rs-sec-head" data-kanji="看板">
                         <div class="rs-num" aria-hidden="true">一</div>
                         <div>
                             <h2>Brand</h2>
@@ -308,8 +318,8 @@
                 </section>
 
                 <!-- ================= 二 CONTACT ================= -->
-                <section class="rs-sec" id="rs-contact">
-                    <div class="rs-sec-head">
+                <section class="rs-sec" id="rs-contact" style="--c:var(--rs-a2)">
+                    <div class="rs-sec-head" data-kanji="連絡">
                         <div class="rs-num" aria-hidden="true">二</div>
                         <div>
                             <h2>Contact</h2>
@@ -400,8 +410,8 @@
                 </section>
 
                 <!-- ================= 三 CHARGES ================= -->
-                <section class="rs-sec" id="rs-charges">
-                    <div class="rs-sec-head">
+                <section class="rs-sec" id="rs-charges" style="--c:var(--rs-a3)">
+                    <div class="rs-sec-head" data-kanji="料金">
                         <div class="rs-num" aria-hidden="true">三</div>
                         <div>
                             <h2>Charges</h2>
@@ -425,6 +435,7 @@
                                                inputmode="decimal" />
                                         <span class="rs-affix-end">%</span>
                                     </div>
+                                    <div class="rs-bar" aria-hidden="true"><i id="taxBar"></i></div>
                                     <div class="rs-hint"><span>Between 0 and 100. Up to 2 decimal places.</span></div>
                                     <span asp-validation-for="RestaurantSetting.TaxRatePercent"></span>
                                 </div>
@@ -441,13 +452,16 @@
                                                inputmode="decimal" />
                                         <span class="rs-affix-end">%</span>
                                     </div>
+                                    <div class="rs-bar" aria-hidden="true"><i id="svcBar"></i></div>
                                     <div class="rs-hint"><span>Between 0 and 100. Up to 2 decimal places.</span></div>
                                     <span asp-validation-for="RestaurantSetting.ServiceChargePercent"></span>
                                 </div>
                             </div>
 
                             <div class="rs-receipt" aria-live="polite">
-                                <h4>Example bill <small>for a RM 100.00 order</small></h4>
+                                <div class="rs-receipt-stamp" aria-hidden="true">見本</div>
+                                <h4 id="rcName">@summaryName</h4>
+                                <p class="rs-receipt-sub">EXAMPLE BILL · RM 100.00 ORDER</p>
                                 <div class="rs-receipt-row"><span>Subtotal</span><span>RM 100.00</span></div>
                                 <div class="rs-receipt-row"><span id="rcSvcLabel"></span><span id="rcSvc"></span></div>
                                 <div class="rs-receipt-row"><span id="rcTaxLabel"></span><span id="rcTax"></span></div>
@@ -460,6 +474,7 @@
 
                 <!-- Save bar -->
                 <div class="rs-savebar">
+                    <span class="rs-save-dot" aria-hidden="true"></span>
                     <span class="rs-save-state" id="rsSaveState">All changes saved</span>
                     <span class="rs-save-note">Shared with Home, billing and the site layout.</span>
                     <button type="submit" class="rs-primary">Save Changes</button>

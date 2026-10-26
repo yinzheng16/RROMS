@@ -243,6 +243,19 @@
         byId("rcTotal").textContent = serviceAmount === null || taxAmount === null
             ? "Fix the rates above"
             : money(subtotal + serviceAmount + taxAmount);
+
+        // Rate bars under the inputs (0-100%)
+        var taxBar = byId("taxBar");
+        var svcBar = byId("svcBar");
+        if (taxBar) { taxBar.style.width = (taxRate === null ? 0 : taxRate) + "%"; }
+        if (svcBar) { svcBar.style.width = (serviceRate === null ? 0 : serviceRate) + "%"; }
+
+        // Restaurant name at the top of the example bill
+        var receiptName = byId("rcName");
+        if (receiptName) {
+            var l2 = line2Input ? line2Input.value.trim() : "";
+            receiptName.textContent = [nameInput.value.trim() || "Restaurant", l2].filter(Boolean).join(" ");
+        }
     }
 
     // ---------- Unsaved-changes indicator ----------

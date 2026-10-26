@@ -248,7 +248,7 @@
     {
         <footer class="site-footer site-footer-slim">
             <div class="@containerClass d-flex justify-content-between flex-wrap gap-2">
-                <span>@BrandName @BrandSub · Back office</span>
+                <span>@fullRestaurantName · Back office</span>
                 <span>&copy; @DateTime.Now.Year RROMS</span>
             </div>
         </footer>
@@ -260,34 +260,29 @@
             <div class="container-xl">
                 <div class="row gy-4">
                     <div class="col-md-5">
-                        <img class="footer-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
+                        <img class="footer-logo" src="@footerImage" alt="@fullRestaurantName" />
                         <p class="footer-tagline-jp">@TaglineJp</p>
                         <p class="footer-tagline">@Tagline</p>
                     </div>
                     @{
                         // Same data as the Home page: Member 5's settings + Member 2's opening hours.
-                        var footerInfo = await HomeData.GetInfoAsync();
                         var footerHours = await HomeData.GetOpeningHoursAsync();
                     }
                     <div class="col-6 col-md-3">
                         <h2 class="footer-heading">Visit</h2>
-                        @* Placeholder: Member 5 can read this from RestaurantSetting (US49). *@
-                        <p>
-                            @restaurantSettings.Address
-                        </p>
-
-                        <p>
-                            @restaurantSettings.Phone
-                        </p>
-
+                        @* US49: contact details from Restaurant Settings *@
+                        @if (!string.IsNullOrWhiteSpace(restaurantSettings.Address))
+                        {
+                            <p class="footer-address">@restaurantSettings.Address</p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(restaurantSettings.Phone))
+                        {
+                            <p><a class="footer-link" href="tel:@restaurantSettings.Phone">@restaurantSettings.Phone</a></p>
+                        }
                         @if (!string.IsNullOrWhiteSpace(restaurantSettings.Email))
                         {
-                            <p>
-                                @restaurantSettings.Email
-                            </p>
+                            <p><a class="footer-link" href="mailto:@restaurantSettings.Email">@restaurantSettings.Email</a></p>
                         }
-                        <p>@footerInfo.Address</p>
-                        <p>@footerInfo.Phone</p>
                     </div>
                     <div class="col-6 col-md-4">
                         <h2 class="footer-heading">Hours</h2>
@@ -301,7 +296,7 @@
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <span>&copy; @DateTime.Now.Year @BrandName @BrandSub</span>
+                    <span>&copy; @DateTime.Now.Year @fullRestaurantName</span>
                     <span>5026CMD Software Engineering · RROMS</span>
                 </div>
             </div>

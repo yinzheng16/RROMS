@@ -49,3 +49,28 @@
         max-width: 9rem;
     }
 }
+
+/* ---------- Footer (public pages) ---------- */
+/* Footer image from Restaurant Settings: a square logo must not grow to 260px tall */
+.site-footer .footer-logo {
+    width: auto;
+    max-width: 260px;
+    max-height: 7rem;
+    object-fit: contain;
+}
+
+/* Address keeps the admin's line breaks and wraps instead of stretching the footer */
+.footer-address {
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    max-width: 18rem;
+}
+
+.footer-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.footer-link:hover {
+    color: var(--yoru-gold);
+}
