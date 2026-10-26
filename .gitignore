@@ -428,3 +428,6 @@ FodyWeavers.xsd
 #*.lscache
 
 RROMS/App_Data/MenuImages/
+
+# Branding images uploaded in Admin -> Restaurant Settings (US49)
+**/wwwroot/uploads/
