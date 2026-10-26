@@ -471,14 +471,74 @@
     var sections = Array.prototype.slice.call(page.querySelectorAll(".rs-sec"));
     var links = Array.prototype.slice.call(page.querySelectorAll(".rs-side a"));
 
-    window.addEventListener("scroll", function () {
+    function setActiveLink(id) {
+        links.forEach(function (link) {
+            link.classList.toggle("is-on", link.getAttribute("href") === "#" + id);
+        });
+    }
+
+    // Section chosen by clicking a link. It stays red until the admin
+    // scrolls again by hand AFTER the smooth scroll has finished.
+    var clickedId = "";
+    var autoScrolling = false;   // true while the smooth scroll from a click is still moving
+    var settleTimer;
+
+    // Scroll with JavaScript instead of changing the URL to "#rs-charges".
+    // Otherwise the hash stays in the address bar, and after Save the page
+    // reloads and jumps straight back down to that section.
+    links.forEach(function (link) {
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+            clickedId = link.getAttribute("href").slice(1);
+            autoScrolling = true;
+            setActiveLink(clickedId);
+            var target = byId(clickedId);
+            if (target) { target.scrollIntoView({ behavior: "smooth", block: "start" }); }
+            // If the page is already at that spot there is no scroll event, so settle anyway.
+            clearTimeout(settleTimer);
+            settleTimer = setTimeout(function () { autoScrolling = false; }, 200);
+        });
+    });
+
+    // Clean up an old "#rs-..." left in the address bar (e.g. from a bookmark or an earlier version).
+    if (/^#rs-/.test(window.location.hash)) {
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+        window.addEventListener("load", function () { window.scrollTo(0, 0); });
+    }
+
+    // A real scroll by the admin (not trackpad momentum during the smooth scroll)
+    // hands control back to the normal "which section is on screen" rule.
+    function userScrolled() {
+        if (!autoScrolling) { clickedId = ""; }
+    }
+
+    window.addEventListener("wheel", userScrolled, { passive: true });
+    window.addEventListener("touchmove", userScrolled, { passive: true });
+    window.addEventListener("keydown", userScrolled);
+
+    function sectionOnScreen() {
         var current = sections[0] ? sections[0].id : "";
         sections.forEach(function (section) {
             if (section.getBoundingClientRect().top < 160) { current = section.id; }
         });
-        links.forEach(function (link) {
-            link.classList.toggle("is-on", link.getAttribute("href") === "#" + current);
-        });
+
+        // The last section is short and can never reach the top of the screen,
+        // so treat "scrolled to the bottom" as being on the last section.
+        var scrolled = Math.ceil(window.innerHeight + window.scrollY);
+        var atBottom = scrolled >= document.documentElement.scrollHeight - 8;
+        if (atBottom && sections.length) { current = sections[sections.length - 1].id; }
+
+        return current;
+    }
+
+    window.addEventListener("scroll", function () {
+        if (clickedId) {
+            // Still finishing the smooth scroll: wait until it stops moving.
+            clearTimeout(settleTimer);
+            settleTimer = setTimeout(function () { autoScrolling = false; }, 150);
+            return;
+        }
+        setActiveLink(sectionOnScreen());
     }, { passive: true });
 
     // ---------- First paint ----------

@@ -25,6 +25,21 @@
 
     var useFullBrandImage =
         restaurantSettings.BrandingMode == "FullBrandImage";
+    
+    
+    // US49: second name line, navbar text sizes (S/M/L), footer image and tab icon.
+    var restaurantNameLine2 = restaurantSettings.RestaurantNameLine2;
+    var nameLine1Size = (restaurantSettings.NameLine1Size ?? "M").ToLowerInvariant();
+    var nameLine2Size = (restaurantSettings.NameLine2Size ?? "S").ToLowerInvariant();
+    var fullRestaurantName = string.IsNullOrWhiteSpace(restaurantNameLine2)
+        ? restaurantName
+        : $"{restaurantName} {restaurantNameLine2}";
+    var footerImage = string.IsNullOrWhiteSpace(restaurantSettings.FooterImagePath)
+        ? restaurantLogo
+        : restaurantSettings.FooterImagePath;
+    var faviconPath = string.IsNullOrWhiteSpace(restaurantSettings.FaviconPath)
+        ? "/images/yoru-icon.png"
+        : restaurantSettings.FaviconPath;
 
     var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
     var signedIn = SignInManager.IsSignedIn(User);
@@ -57,8 +72,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · @BrandName @BrandSub</title>
-    <link rel="icon" type="image/png" href="~/images/yoru-icon.png" />
+    <title>@ViewData["Title"] · @fullRestaurantName</title>
+    <link rel="icon" href="@faviconPath" />
     <link rel="apple-touch-icon" href="~/images/yoru-icon-180.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -67,6 +82,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/brand.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RROMS.styles.css" asp-append-version="true" />
 </head>
 <body class="@(isBackOffice ? "back-office" : "front-of-house")">
@@ -87,8 +103,13 @@
                              src="@restaurantLogo"
                              alt="@restaurantName" />
 
-                        <span class="brand-restaurant-name">
-                            @restaurantName
+                        @* US49: line 1 + optional line 2, with the S/M/L sizes from Restaurant Settings *@
+                        <span class="brand-names">
+                            <span class="brand-restaurant-name brand-line1 brand-size-@nameLine1Size">@restaurantName</span>
+                            @if (!string.IsNullOrWhiteSpace(restaurantNameLine2))
+                            {
+                                <span class="brand-line2 brand-size-@nameLine2Size">@restaurantNameLine2</span>
+                            }
                         </span>
                     }
 
