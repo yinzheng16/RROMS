@@ -1,0 +1,27 @@
+/* Owner: Member 3. Confirmation-only controls; shared notification styling is retained. */
+.cart-confirmation__status [hidden] { display: none !important; }
+.order-status-heading { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.order-status-update, .order-status-toast-action {
+    display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+    min-block-size: 2.2rem; padding: .4rem .7rem; border: 1px solid var(--yoru-gold);
+    border-radius: .5rem; background: transparent; color: var(--yoru-cream);
+    font: inherit; font-size: .8rem; font-weight: 600; line-height: 1.4;
+    white-space: nowrap; cursor: pointer; transition: background-color .18s ease, color .18s ease;
+}
+.order-status-update:hover, .order-status-toast-action:hover { background: var(--yoru-gold); color: var(--yoru-ink); }
+.order-status-update:focus-visible, .order-status-toast-action:focus-visible { outline: .15rem solid var(--yoru-gold); outline-offset: .2rem; }
+.order-status-update:disabled, .order-status-toast-action:disabled { opacity: .65; cursor: wait; }
+.cart-confirmation__status .order-status-feedback { color: var(--yoru-gold); }
+[data-order-status-toast] { z-index: 1100; }
+[data-order-status-toast] .yoru-toast { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .8rem; }
+[data-order-status-toast] .yoru-toast-body { min-inline-size: 0; }
+[data-order-status-toast] .yoru-toast-msg { overflow-wrap: anywhere; }
+[data-order-status-toast] .yoru-toast-close { position: absolute; }
+.order-status-toast-action { margin-inline-end: .6rem; }
+@media (max-width: 35.99rem) {
+    [data-order-status-toast] .yoru-toast { grid-template-columns: auto minmax(0, 1fr); }
+    .order-status-toast-action { grid-column: 2; justify-self: start; margin-inline-end: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .order-status-update, .order-status-toast-action { transition: none; }
+}

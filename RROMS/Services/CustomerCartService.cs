@@ -237,6 +237,17 @@ public sealed class CustomerCartService : ICustomerCartService
         }, cancellationToken);
     }
 
+    // Lightweight, read-only status check. Never expose another customer's order.
+    public async Task<OrderStatus?> GetOrderStatusAsync(string userId, int orderId,
+        CancellationToken cancellationToken = default)
+    {
+        if (orderId <= 0 || !await IsCustomerAsync(userId, cancellationToken)) return null;
+        return await _db.Orders.AsNoTracking()
+            .Where(order => order.Id == orderId && order.UserId == userId)
+            .Select(order => (OrderStatus?)order.Status)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<OrderReceipt?> ReceiptAsync(string userId, int orderId,
         CancellationToken cancellationToken = default)
     {
