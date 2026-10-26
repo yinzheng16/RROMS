@@ -29,6 +29,8 @@ namespace RROMS.Data
         public DbSet<Promotion> Promotions => Set<Promotion>();
         public DbSet<Order> Orders => Set<Order>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+        public DbSet<CustomerCart> CustomerCarts => Set<CustomerCart>();
+        public DbSet<CustomerCartLine> CustomerCartLines => Set<CustomerCartLine>();
 
         // Member 4: Payments & Notifications
         public DbSet<Payment> Payments => Set<Payment>();
@@ -109,6 +111,22 @@ namespace RROMS.Data
             });
 
             // ---------- Menu & Orders ----------
+            builder.Entity<CustomerCart>(e =>
+            {
+                e.HasKey(c => c.UserId);
+                e.Property(c => c.Revision).IsConcurrencyToken();
+                e.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+            builder.Entity<CustomerCartLine>(e =>
+            {
+                e.Property(l => l.Id).ValueGeneratedNever();
+                e.HasOne(l => l.Cart).WithMany(c => c.Lines).HasForeignKey(l => l.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(l => l.MenuItem).WithMany().HasForeignKey(l => l.MenuItemId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             builder.Entity<MenuCategory>(e =>
             {
                 e.HasIndex(c => c.Name).IsUnique();
