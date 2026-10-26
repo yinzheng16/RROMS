@@ -21,7 +21,8 @@ public class FeedbackService : IFeedbackService
     public async Task<List<Order>> GetEligibleOrdersAsync(string userId)
     {
         return await _orderRepository.Query()
-            .AsNoTracking()
+            .AsNoTracking() 
+            .Include(o => o.Items)
             .Where(o =>
                 o.UserId == userId &&
                 o.Status == OrderStatus.Completed &&

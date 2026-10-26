@@ -2,587 +2,147 @@
 @model RROMS.Pages.Customer.Feedback.Create
 
 @{
+    // US42 Customer Feedback & Rating (Member 5)
+    // Design: 手紙 "Letter". Styles: wwwroot/css/feedback.css · Script: wwwroot/js/feedback.js
     ViewData["Title"] = "Customer Feedback";
+
+    var ratingLabels = new[] { "Poor", "Fair", "Good", "Very good", "Excellent" };
+    var quickPhrases = new[] { "Great food", "Friendly staff", "Nice atmosphere", "Worth the price", "Slow service" };
 }
 
+@* Brush font for the handwritten parts of the letter *@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" />
 <link rel="stylesheet" href="~/css/feedback.css" asp-append-version="true" />
 
+<section class="fb-page">
+    <div class="fb-letter">
 
-<div class="feedback-section">
+        <aside class="fb-spine" aria-hidden="true">
+            <div class="fb-spine-text">お客様の声</div>
+            <div class="fb-seal">夜<br />YORU</div>
+        </aside>
 
-    <div class="feedback-intro">
-        <div class="feedback-kanji">声</div>
-
-        <div class="feedback-intro-content">
-            <p class="feedback-overline">YOUR EXPERIENCE MATTERS</p>
-
-            <h2>
-                Share Your<br />
-                Experience
-            </h2>
-
-            <p class="feedback-description">
-                Every visit has a story. Tell us about your dining
-                experience and help us make your next night at YORU
-                even better.
+        <div class="fb-body">
+            <p class="fb-to">Dear YORU,</p>
+            <h1 class="fb-title">A note about my night</h1>
+            <p class="fb-lede">
+                Write to us like a letter. Stamp a rating and tell us what you remember most.
             </p>
 
-            <div class="feedback-accent"></div>
-        </div>
-    </div>
+            @if (Model.EligibleOrders.Count == 0)
+            {
+                <div class="fb-empty">
+                    <div class="fb-empty-seal" aria-hidden="true">声</div>
+                    <h2>Nothing to review yet</h2>
+                    <p>Once you complete an order at YORU, you can come back here to share your experience.</p>
+                    <a class="fb-submit" href="/">Back to home</a>
+                </div>
+            }
+            else
+            {
+                <form method="post" id="fbForm">
 
-    <div class="feedback-card">
+                    <div asp-validation-summary="ModelOnly" class="fb-summary"></div>
 
-        <h3>How was your night at YORU?</h3>
+                    <!-- 1. Which visit? -->
+                    <fieldset class="fb-field">
+                        <legend class="fb-label">Which visit? <small>Completed orders</small></legend>
 
-        <p class="feedback-card-subtitle">
-            Feedback is available for completed orders only.
-        </p>
-
-        @if (Model.EligibleOrders.Count == 0)
-        {
-            <div class="feedback-empty">
-                <div class="feedback-empty-icon">声</div>
-
-                <h4>Nothing to review yet</h4>
-
-                <p>
-                    Once you complete an order at YORU, you can come back here
-                    to share your experience.
-                </p>
-            </div>
-        }
-        else
-        {
-            <form method="post">
-
-                <div asp-validation-summary="ModelOnly"
-                     class="feedback-validation"></div>
-
-                <!-- COMPLETED ORDER -->
-                <div class="feedback-field">
-
-                    <label asp-for="OrderId">
-                        Completed Order
-                    </label>
-
-                    <input asp-for="OrderId"
-                           type="hidden"
-                           id="orderIdInput" />
-
-                    <div class="yoru-dropdown"
-                         id="orderDropdown">
-
-                        <button type="button"
-                                class="yoru-dropdown-trigger"
-                                id="orderDropdownTrigger"
-                                aria-expanded="false">
-
-                            <span id="orderDropdownText">
-                                Select an order
-                            </span>
-
-                            <span class="yoru-dropdown-arrow">
-                                ⌄
-                            </span>
-
-                        </button>
-
-                        <div class="yoru-dropdown-menu"
-                             id="orderDropdownMenu">
-
+                        <div class="fb-orders">
                             @foreach (var order in Model.EligibleOrders)
                             {
-                                <button type="button"
-                                        class="yoru-dropdown-option"
-                                        data-value="@order.Id"
-                                        data-label="@order.OrderNo · RM @order.TotalAmount.ToString("N2")">
+                                var isDineIn = order.OrderType == RROMS.Models.OrderType.DineIn;
+                                var typeText = isDineIn ? "Dine-in" : order.OrderType.ToString();
+                                var itemCount = order.Items.Count;
 
-                                    <span class="yoru-order-info">
-
-                                        <strong>
-                                            @order.OrderNo
-                                        </strong>
-
+                                <label class="fb-order">
+                                    <input type="radio"
+                                           asp-for="OrderId"
+                                           value="@order.Id"
+                                           id="order-@order.Id"
+                                           class="fb-hidden-input" />
+                                    <span class="fb-order-icon" aria-hidden="true">@(isDineIn ? "卓" : "持")</span>
+                                    <span class="fb-order-text">
+                                        <b>@order.OrderNo · @typeText</b>
                                         <small>
-                                            Completed Order · RM @order.TotalAmount.ToString("N2")
+                                            @order.CreatedAt.ToString("ddd, d MMM · h:mm tt")
+                                            @if (itemCount > 0)
+                                            {
+                                                <text> · @itemCount @(itemCount == 1 ? "item" : "items")</text>
+                                            }
                                         </small>
-
                                     </span>
-
-                                    <span class="yoru-option-check">
-                                        ✓
-                                    </span>
-
-                                </button>
+                                    <span class="fb-order-amount">RM @order.TotalAmount.ToString("N2")</span>
+                                    <span class="fb-order-tick" aria-hidden="true">✓</span>
+                                </label>
                             }
-
                         </div>
 
+                        <span asp-validation-for="OrderId" class="fb-error"></span>
+                    </fieldset>
+
+                    <!-- 2. Stamp your rating -->
+                    <fieldset class="fb-field">
+                        <legend class="fb-label">Stamp your rating <small>1 to 5</small></legend>
+
+                        <div class="fb-stamps" id="fbStamps">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                <label class="fb-stamp" title="@ratingLabels[i - 1]">
+                                    <input type="radio"
+                                           asp-for="Rating"
+                                           value="@i"
+                                           id="rating-@i"
+                                           class="fb-hidden-input" />
+                                    <span class="fb-stamp-face">@i</span>
+                                    <span class="fb-visually-hidden">@i of 5, @ratingLabels[i - 1]</span>
+                                </label>
+                            }
+                        </div>
+
+                        <div class="fb-rating-text" id="fbRatingText" aria-live="polite">Tap a stamp to rate your night</div>
+                        <span asp-validation-for="Rating" class="fb-error"></span>
+                    </fieldset>
+
+                    <!-- 3. Your words -->
+                    <div class="fb-field">
+                        <label class="fb-label" asp-for="Comment">Your words <small>Optional</small></label>
+
+                        <textarea asp-for="Comment"
+                                  id="fbComment"
+                                  class="fb-comment"
+                                  maxlength="500"
+                                  rows="5"
+                                  placeholder="What did you enjoy? Is there anything we can do better?"></textarea>
+
+                        <div class="fb-under">
+                            <span>Tap a phrase to add it</span>
+                            <span><span id="fbCount">0</span> / 500</span>
+                        </div>
+
+                        <div class="fb-phrases">
+                            @foreach (var phrase in quickPhrases)
+                            {
+                                <button type="button" class="fb-phrase">@phrase</button>
+                            }
+                        </div>
+
+                        <span asp-validation-for="Comment" class="fb-error"></span>
                     </div>
 
-                    <span asp-validation-for="OrderId"
-                          class="feedback-error"></span>
+                    <p class="fb-sign" aria-hidden="true">ありがとう · Thank you for dining with us</p>
 
-                </div>
-
-                <!-- RATING -->
-                <div class="feedback-field">
-
-                    <label>
-                        Your Rating
-                    </label>
-
-                    <input asp-for="Rating"
-                           type="hidden"
-                           id="ratingValue" />
-
-                    <div class="feedback-stars"
-                         id="ratingStars">
-
-                        @for (var i = 1; i <= 5; i++)
-                        {
-                            <button type="button"
-                                    class="feedback-star"
-                                    data-rating="@i"
-                                    aria-label="@i star rating">
-                                ★
-                            </button>
-                        }
-
+                    <div class="fb-actions">
+                        <small>One review per completed order.</small>
+                        <button type="submit" class="fb-submit">Send my letter</button>
                     </div>
-
-                    <div class="feedback-rating-text"
-                         id="ratingText">
-                        Tap a star to rate your experience
-                    </div>
-
-                    <span asp-validation-for="Rating"
-                          class="feedback-error"></span>
-
-                </div>
-
-                <!-- COMMENT -->
-                <div class="feedback-field">
-
-                    <label asp-for="Comment">
-                        Tell us more
-                    </label>
-
-                    <textarea asp-for="Comment"
-                              id="feedbackComment"
-                              class="feedback-textarea"
-                              maxlength="500"
-                              placeholder="What did you enjoy? Is there anything we can do better?"></textarea>
-
-                    <div class="feedback-character-count">
-                        <span id="characterCount">0</span> / 500
-                    </div>
-
-                    <span asp-validation-for="Comment"
-                          class="feedback-error"></span>
-
-                </div>
-
-                <!-- ACTIONS -->
-                <div class="feedback-actions">
-
-                    <span>
-                        One review per completed order.
-                    </span>
-
-                    <button type="submit"
-                            class="feedback-submit">
-                        Submit Feedback
-                    </button>
-
-                </div>
-
-            </form>
-        }
-
+                </form>
+            }
+        </div>
     </div>
-
-</div>
+</section>
 
 @section Scripts {
-
     <partial name="_ValidationScriptsPartial" />
-
-    <script>
-
-        document.addEventListener("DOMContentLoaded", function () {
-
-
-            // ==========================================
-            // YORU CUSTOM ORDER DROPDOWN
-            // ==========================================
-
-            const orderDropdown =
-                document.getElementById("orderDropdown");
-
-            const orderDropdownTrigger =
-                document.getElementById("orderDropdownTrigger");
-
-            const orderDropdownText =
-                document.getElementById("orderDropdownText");
-
-            const orderIdInput =
-                document.getElementById("orderIdInput");
-
-            const orderOptions =
-                document.querySelectorAll(
-                    ".yoru-dropdown-option"
-                );
-
-
-            // Open / close dropdown
-            orderDropdownTrigger?.addEventListener(
-                "click",
-                function () {
-
-                    if (!orderDropdown) {
-                        return;
-                    }
-
-                    const isOpen =
-                        orderDropdown.classList.toggle(
-                            "open"
-                        );
-
-                    orderDropdownTrigger.setAttribute(
-                        "aria-expanded",
-                        isOpen.toString()
-                    );
-                }
-            );
-
-
-            // Select order
-            orderOptions.forEach(
-                function (option) {
-
-                    option.addEventListener(
-                        "click",
-                        function () {
-
-                            if (
-                                !orderIdInput ||
-                                !orderDropdownText ||
-                                !orderDropdown
-                            ) {
-                                return;
-                            }
-
-                            const value =
-                                option.dataset.value;
-
-                            const label =
-                                option.dataset.label;
-
-                            orderIdInput.value =
-                                value || "";
-
-                            orderDropdownText.textContent =
-                                label || "Select an order";
-
-
-                            orderOptions.forEach(
-                                function (item) {
-
-                                    item.classList.remove(
-                                        "selected"
-                                    );
-
-                                }
-                            );
-
-
-                            option.classList.add(
-                                "selected"
-                            );
-
-
-                            orderDropdown.classList.remove(
-                                "open"
-                            );
-
-
-                            orderDropdownTrigger?.setAttribute(
-                                "aria-expanded",
-                                "false"
-                            );
-
-
-                            orderIdInput.dispatchEvent(
-                                new Event(
-                                    "change",
-                                    {
-                                        bubbles: true
-                                    }
-                                )
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
-
-            // Keep selected order after validation refresh
-            if (
-                orderIdInput &&
-                orderIdInput.value
-            ) {
-
-                orderOptions.forEach(
-                    function (option) {
-
-                        if (
-                            option.dataset.value ===
-                            orderIdInput.value
-                        ) {
-
-                            option.classList.add(
-                                "selected"
-                            );
-
-                            if (orderDropdownText) {
-
-                                orderDropdownText.textContent =
-                                    option.dataset.label ||
-                                    "Select an order";
-
-                            }
-
-                        }
-
-                    }
-                );
-
-            }
-
-
-            // Close dropdown when clicking outside
-            document.addEventListener(
-                "click",
-                function (event) {
-
-                    if (
-                        orderDropdown &&
-                        !orderDropdown.contains(
-                            event.target
-                        )
-                    ) {
-
-                        orderDropdown.classList.remove(
-                            "open"
-                        );
-
-                        orderDropdownTrigger?.setAttribute(
-                            "aria-expanded",
-                            "false"
-                        );
-
-                    }
-
-                }
-            );
-
-
-            // ==========================================
-            // STAR RATING
-            // ==========================================
-
-            const stars =
-                document.querySelectorAll(
-                    ".feedback-star"
-                );
-
-            const ratingInput =
-                document.getElementById(
-                    "ratingValue"
-                );
-
-            const ratingText =
-                document.getElementById(
-                    "ratingText"
-                );
-
-
-            const ratingLabels = {
-                1: "1 / 5 · Poor",
-                2: "2 / 5 · Fair",
-                3: "3 / 5 · Good",
-                4: "4 / 5 · Very Good",
-                5: "5 / 5 · Excellent"
-            };
-
-
-            let selectedRating =
-                parseInt(
-                    ratingInput?.value || "0"
-                );
-
-
-            function paintStars(rating) {
-
-                stars.forEach(
-                    function (star) {
-
-                        const starValue =
-                            parseInt(
-                                star.dataset.rating
-                            );
-
-                        star.classList.toggle(
-                            "active",
-                            starValue <= rating
-                        );
-
-                    }
-                );
-
-            }
-
-
-            // Restore rating after validation
-            if (selectedRating > 0) {
-
-                paintStars(
-                    selectedRating
-                );
-
-                if (ratingText) {
-
-                    ratingText.textContent =
-                        ratingLabels[
-                            selectedRating
-                        ];
-
-                }
-
-            }
-
-
-            stars.forEach(
-                function (star) {
-
-                    star.addEventListener(
-                        "mouseenter",
-                        function () {
-
-                            paintStars(
-                                parseInt(
-                                    star.dataset.rating
-                                )
-                            );
-
-                        }
-                    );
-
-
-                    star.addEventListener(
-                        "mouseleave",
-                        function () {
-
-                            paintStars(
-                                selectedRating
-                            );
-
-                        }
-                    );
-
-
-                    star.addEventListener(
-                        "click",
-                        function () {
-
-                            selectedRating =
-                                parseInt(
-                                    star.dataset.rating
-                                );
-
-
-                            if (ratingInput) {
-
-                                ratingInput.value =
-                                    selectedRating;
-
-                            }
-
-
-                            paintStars(
-                                selectedRating
-                            );
-
-
-                            if (ratingText) {
-
-                                ratingText.textContent =
-                                    ratingLabels[
-                                        selectedRating
-                                    ];
-
-                            }
-
-
-                            ratingInput?.dispatchEvent(
-                                new Event(
-                                    "change",
-                                    {
-                                        bubbles: true
-                                    }
-                                )
-                            );
-
-                        }
-                    );
-
-                }
-            );
-
-
-            // ==========================================
-            // COMMENT CHARACTER COUNTER
-            // ==========================================
-
-            const comment =
-                document.getElementById(
-                    "feedbackComment"
-                );
-
-            const characterCount =
-                document.getElementById(
-                    "characterCount"
-                );
-
-
-            function updateCharacterCount() {
-
-                if (
-                    !comment ||
-                    !characterCount
-                ) {
-                    return;
-                }
-
-                characterCount.textContent =
-                    comment.value.length;
-
-            }
-
-
-            updateCharacterCount();
-
-
-            comment?.addEventListener(
-                "input",
-                updateCharacterCount
-            );
-
-        });
-
-    </script>
+    <script src="~/js/feedback.js" asp-append-version="true"></script>
 }
