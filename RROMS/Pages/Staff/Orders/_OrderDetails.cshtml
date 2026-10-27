@@ -1,0 +1,96 @@
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@model StaffOrderDetails
+@{
+    long seconds = StaffQueueRules.WaitSeconds(Model.CreatedAt, Model.ServerNow);
+    string Money(decimal amount) => "RM " + amount.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+}
+<div class="sq-detail" data-sq-detail="@Model.Id">
+    <header class="sq-detail__header">
+        <p class="eyebrow">ORDER DETAILS</p>
+        <a asp-page="/Staff/Orders/Index" asp-route-search="@ViewData["QueueSearch"]"
+           asp-route-dining="@ViewData["QueueDining"]" asp-route-sort="@ViewData["QueueSort"]"
+           asp-route-pageNumber="@ViewData["QueuePage"]" asp-route-showAll="@(ViewData["QueueShowAll"] is true ? "true" : "false")" class="sq-close" data-sq-close aria-label="Close order details"><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+        <h2 id="sq-detail-title" tabindex="-1">@Model.OrderNo</h2>
+        <div class="sq-detail__badges">
+            <span class="status-badge status-@Model.Status">@(Model.Status == OrderStatus.ReadyToServe ? "Ready to Serve" : Model.Status.ToString())</span>
+            <span class="sq-dining sq-dining--@(Model.Dining == OrderType.Takeaway ? "takeaway" : "dinein")"><i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : "bi-people")" aria-hidden="true"></i>@StaffQueueRules.DiningLabel(Model.Dining)</span>
+        </div>
+        <p class="sq-detail__meta">@Model.CustomerName <span>·</span> @Model.CreatedAt.ToString("dd MMM yyyy · HH:mm", CultureInfo.InvariantCulture)</p>
+        @if (Model.Status == OrderStatus.Pending)
+        {
+            <span class="sq-wait sq-wait--@StaffQueueRules.WaitClass(seconds)" data-sq-wait="@seconds"><span><i class="bi bi-clock" aria-hidden="true"></i><span data-sq-wait-label>@StaffQueueRules.WaitLabel(seconds)</span></span><small data-sq-long hidden="@(seconds < 1200)">Long wait</small></span>
+        }
+    </header>
+    <div class="sq-booking">
+        <i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : Model.Booking is null ? "bi-person-walking" : "bi-calendar-check")" aria-hidden="true"></i>
+        <div>
+            @if (Model.Dining == OrderType.Takeaway)
+            {
+                <strong>Takeaway</strong><p>No reservation required</p>
+            }
+            else if (Model.Booking is null)
+            {
+                <strong>Walk-in</strong><p>No reservation linked</p>
+            }
+            else
+            {
+                <strong>Reservation @Model.Booking.Reference</strong>
+                <p>@Model.Booking.ReservedAt.ToString("dd MMM yyyy · HH:mm", CultureInfo.InvariantCulture) · @Model.Booking.Guests guests</p>
+                <p>@(Model.Booking.TableNumber is not null ? "Table " + Model.Booking.TableNumber : "Table not assigned") · @Model.Booking.Status</p>
+            }
+        </div>
+    </div>
+    <div class="sq-dishes-heading"><h3>Dishes</h3><span>@Model.Portions @(Model.Portions == 1 ? "portion" : "portions")</span></div>
+    <ol class="sq-dishes">
+        @foreach (var dish in Model.Dishes)
+        {
+            <li>
+                <span class="sq-dish__photo">
+                    <i class="bi bi-cup-hot" aria-hidden="true"></i>
+                    @if (dish.ImageUrl is not null)
+                    {
+                        <img src="@Url.Content(dish.ImageUrl)" alt="" loading="lazy" decoding="async" width="64" height="64" />
+                    }
+                </span>
+                <div class="sq-dish__body">
+                    <div class="sq-dish__title"><strong>@dish.Name</strong><span>× @dish.Quantity</span></div>
+                    <p class="sq-dish__code">@dish.Code <span>·</span> @Money(dish.UnitPrice) each</p>
+                    @if (!string.IsNullOrWhiteSpace(dish.Notes))
+                    {
+                        <p class="sq-dish-note"><strong>Dish note</strong><span>@dish.Notes</span></p>
+                    }
+                </div>
+            </li>
+        }
+    </ol>
+    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+    {
+        <div class="sq-overall-note"><i class="bi bi-journal-text" aria-hidden="true"></i><div><strong>Overall remarks</strong><p>@Model.Notes</p></div></div>
+    }
+    <dl class="sq-total">
+        <div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div>
+        <div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div>
+        <div><dt>Service charge</dt><dd>@Money(Model.ServiceCharge)</dd></div>
+        <div class="sq-total__grand"><dt>Order total</dt><dd>@Money(Model.Total)</dd></div>
+    </dl>
+    <footer class="sq-detail__footer">
+        @if (Model.Status == OrderStatus.Pending)
+        {
+            <form method="post" asp-page="/Staff/Orders/Index" asp-page-handler="Accept" data-sq-accept>
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input type="hidden" name="search" value="@ViewData["QueueSearch"]" /><input type="hidden" name="dining" value="@ViewData["QueueDining"]" />
+                <input type="hidden" name="pageNumber" value="@(ViewData["QueuePage"] ?? 1)" />
+                <input type="hidden" name="showAll" value="@(ViewData["QueueShowAll"] is true ? "true" : "false")" />
+                <input type="hidden" name="sort" value="@(ViewData["QueueSort"] ?? "newest")" />
+                <button type="submit" class="btn btn-primary">Accept order</button>
+            </form>
+            <p>Moves this order to Preparing.</p>
+        }
+        else
+        {
+            <p class="sq-readonly">This order is @Model.Status. It is no longer waiting to be accepted.</p>
+        }
+    </footer>
+</div>
