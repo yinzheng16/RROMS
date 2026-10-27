@@ -2226,3 +2226,17 @@ html {
         scrollbar-color: rgba(214, 177, 111, .38) transparent;
     }
 }
+
+/* Date and time sit in the middle of the band between the top rule and the dashed line:
+   the band takes the spare height, so the content is centred whatever the pass holds below. */
+.rsv-ticket-grid {
+    justify-content: flex-start;
+}
+
+.rsv-ticket-hero {
+    flex: 1 1 auto;
+    min-height: 70px;
+    max-height: 180px;
+    padding: 8px 0;
+    align-items: center;
+}

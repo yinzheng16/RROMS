@@ -380,4 +380,15 @@
 
 @section Scripts {
     <script src="~/js/customer-reservation.js" asp-append-version="true"></script>
+    @if (!string.IsNullOrEmpty(Model.DiningSummary))
+    {
+        <script>
+            // The box is pre-filled from the customer's profile; tell the page so the counter and the summary update.
+            // Only runs on a fresh load, so nothing the customer typed is ever replaced.
+            document.addEventListener('DOMContentLoaded', function () {
+                var box = document.getElementById('rsvSpecial');
+                if (box && box.value) box.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        </script>
+    }
 }

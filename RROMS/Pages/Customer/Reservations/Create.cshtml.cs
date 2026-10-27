@@ -16,10 +16,14 @@ namespace RROMS.Pages.Customer.Reservations;
 public class CreateModel(
     IReservationService reservations,
     INotificationService notifications,
-    UserManager<ApplicationUser> users) : PageModel
+    UserManager<ApplicationUser> users,
+    IProfileService profiles) : PageModel
 {
     public string CustomerName { get; private set; } = "";
     public string? CustomerPhone { get; private set; }
+
+    // From My profile (Member 1, US03): allergies, diet and notes. Used only to pre-fill an empty request box.
+    public string? DiningSummary { get; private set; }
     public List<string> BookableDates { get; private set; } = new();
     public int MaxGuests { get; private set; } = 2;
 
@@ -47,6 +51,18 @@ public class CreateModel(
         var user = await users.GetUserAsync(User);
         CustomerName = user?.FullName ?? "";
         CustomerPhone = user?.PhoneNumber;
+
+        // Read-only and always for the logged-in customer. A failure here must never stop the booking page.
+        try
+        {
+            var summary = (await profiles.GetDiningSummaryAsync(UserId))?.Trim();
+            DiningSummary = string.IsNullOrEmpty(summary) ? null
+                : summary.Length > 500 ? summary[..500] : summary;   // the request box holds 500 characters
+        }
+        catch
+        {
+            DiningSummary = null;
+        }
 
         await reservations.ReleaseOverdueReservationsAsync();
         BookableDates = await reservations.GetBookableDatesAsync();
