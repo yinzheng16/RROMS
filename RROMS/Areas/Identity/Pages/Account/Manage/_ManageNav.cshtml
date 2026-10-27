@@ -1,0 +1,11 @@
+@* US03 / US04 (Owner: Member 1): side menu on the built-in Change email / Change password pages.
+   Replaces Identity's menu, so Two-factor authentication and Personal data are no longer shown. *@
+@{
+    var path = Context.Request.Path.Value ?? "";
+    string Active(string page) => path.EndsWith("/" + page, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<ul class="nav nav-pills flex-column">
+    <li class="nav-item"><a class="nav-link" href="/Identity/Account/Manage">← Back to my profile</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Email")" href="/Identity/Account/Manage/Email">Email</a></li>
+    <li class="nav-item"><a class="nav-link @Active("ChangePassword")" href="/Identity/Account/Manage/ChangePassword">Password</a></li>
+</ul>
