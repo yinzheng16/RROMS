@@ -7,6 +7,7 @@
 
 <div class="container py-4 us32-billing">
 
+    <!-- Find Order -->
     <div class="mb-4">
         <h2 class="mb-1">Billing & Payment Management</h2>
         <p class="text-muted mb-0">
@@ -16,7 +17,9 @@
 
     <div class="card shadow-sm mb-4 billing-card">
         <div class="card-body">
-            <h5 class="card-title billing-card-title mb-3">Find Order</h5>
+            <h5 class="card-title billing-card-title mb-3">
+                Find Order
+            </h5>
 
             <form method="get">
                 <div class="row g-3 align-items-end">
@@ -44,6 +47,7 @@
         </div>
     </div>
 
+    <!-- Feedback messages -->
     @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
     {
         <div class="alert alert-warning" role="alert">
@@ -60,8 +64,12 @@
 
     @if (Model.Bill != null)
     {
-        <div class="card shadow-sm mb-4 billing-card" id="printableBill">
+        <!-- Bill Details / Preview -->
+        <div class="card shadow-sm mb-4 billing-card"
+             id="printableBill">
             <div class="card-body">
+
+                <!-- Print-only restaurant header -->
                 <div class="yoru-print-header">
                     <div class="yoru-print-brand">
                         <img src="~/images/yoru-icon.png"
@@ -70,26 +78,30 @@
                              class="yoru-print-logo" />
 
                         <h1>YORU</h1>
-                        <div class="yoru-print-subtitle">I Z A K A Y A</div>
+                        <div class="yoru-print-subtitle">
+                            I Z A K A Y A
+                        </div>
                     </div>
 
                     <div class="yoru-print-divider"></div>
 
                     <h2>
-                        @(Model.IsPreview ? "BILL PREVIEW" : "BILL DETAILS")
+                        @(Model.IsPreview
+                            ? "BILL PREVIEW"
+                            : "BILL DETAILS")
                     </h2>
 
                     <p>Japanese Dining</p>
                 </div>
 
-
-
-                <div class="d-flex flex-wrap
-                    justify-content-between
+                <!-- Bill heading -->
+                <div class="d-flex flex-wrap justify-content-between
                     align-items-center gap-2 bill-preview-heading">
 
                     <h5 class="card-title billing-card-title mb-0">
-                        @(Model.IsPreview ? "Bill Preview" : "Bill Details")
+                        @(Model.IsPreview
+                            ? "Bill Preview"
+                            : "Bill Details")
                     </h5>
                 </div>
 
@@ -97,14 +109,12 @@
                     Order Number: @Model.Bill.OrderNo
                 </p>
 
+                <!-- Ordered items -->
                 <h6>Ordered Items</h6>
-
-
 
                 <div class="table-responsive">
                     <table class="table table-bordered
                         table-hover align-middle">
-
                         <thead class="table-light">
                             <tr>
                                 <th>Menu Item</th>
@@ -138,6 +148,7 @@
                     </table>
                 </div>
 
+                <!-- Bill totals -->
                 <div class="row justify-content-end mt-4">
                     <div class="col-md-6 col-lg-5">
 
@@ -168,7 +179,6 @@
                             </span>
                         </div>
 
-
                         <hr class="billing-total-divider" />
 
                         <div class="d-flex justify-content-between
@@ -180,12 +190,12 @@
                         </div>
 
                         <hr class="billing-actions-divider" />
-
                     </div>
                 </div>
 
-
-                <div class="d-flex flex-wrap align-items-center gap-2 billing-actions">
+                <!-- Bill actions -->
+                <div class="d-flex flex-wrap
+                    align-items-center gap-2 billing-actions">
 
                     @if (Model.IsPreview && Model.CanGenerateBill)
                     {
@@ -197,7 +207,8 @@
                                    name="orderNo"
                                    value="@Model.OrderNo" />
 
-                            <button type="submit" class="btn btn-dark">
+                            <button type="submit"
+                                    class="btn btn-dark">
                                 Confirm Bill
                             </button>
                         </form>
@@ -208,9 +219,9 @@
                             onclick="window.print()">
                         Print Bill
                     </button>
-
                 </div>
 
+                <!-- Print-only footer -->
                 <div class="yoru-print-footer">
                     <div class="yoru-print-divider"></div>
 
@@ -219,7 +230,6 @@
                     </p>
 
                     <p>Thank you for dining with us.</p>
-
                     <strong>YORU IZAKAYA</strong>
 
                     @if (Model.IsPreview)
@@ -235,190 +245,302 @@
                         </p>
                     }
                 </div>
-
             </div>
         </div>
 
-        <div class="card shadow-sm mb-4 billing-card">
+        <!-- Payment Management -->
+        <div class="card shadow-sm mb-4
+            billing-card payment-management-card">
             <div class="card-body">
 
+                @{
+                    var paymentStatus =
+                        Model.LatestPayment?.Status.ToString()
+                        ?? "No Payment";
+
+                    var isPending = paymentStatus == "Pending";
+                    var isPaid = paymentStatus == "Paid";
+                    var isFailed = paymentStatus == "Failed";
+
+                    var canRecordPayment =
+                        !Model.IsPreview && !isPending && !isPaid;
+
+                    var statusClass = isPaid
+                        ? "bg-success"
+                        : isPending
+                            ? "bg-warning text-dark"
+                            : isFailed
+                                ? "bg-danger"
+                                : "bg-secondary";
+                }
+
                 <div class="d-flex justify-content-between
-                    align-items-center mb-3">
+                    align-items-center gap-2 mb-0">
 
                     <h5 class="card-title billing-card-title mb-0">
                         Payment Management
                     </h5>
 
-                    @if (Model.LatestPayment == null)
-                    {
-                        <span class="badge bg-secondary">
-                            No Payment
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary">
-                            @Model.LatestPayment.Status
-                        </span>
-                    }
-
+                    <span class="badge @statusClass">
+                        @paymentStatus
+                    </span>
                 </div>
 
-                @if (Model.Payments.Count == 0)
+                <!-- Pending / Failed / No Payment messages -->
+                @if (isPending)
                 {
-                    <p class="text-muted mb-3">
+                    <div class="payment-result
+                        payment-result-pending mb-3"
+                         role="status">
+                        This payment is pending confirmation.
+                        Confirm it only after verifying the payment,
+                        or mark it as failed.
+                    </div>
+                }
+                else if (isFailed)
+                {
+                    <div class="payment-result
+                        payment-result-failed mb-3"
+                         role="status">
+                        This payment was marked as failed.
+                        You can record a new payment below.
+                    </div>
+                }
+                else if (!isPaid)
+                {
+                    <p class="text-muted payment-empty-message mb-3">
                         No payment transactions have been recorded
                         for this order.
                     </p>
                 }
-                else
+
+                <!-- Existing payment details -->
+                @if (Model.LatestPayment != null)
                 {
-                    <p class="text-muted mb-3">
-                        Payment details and transaction records
-                        for this order.
-                    </p>
+                    <div class="row g-3 payment-details">
+
+                        <div class="col-md-6">
+                            <div class="form-label">
+                                Payment Method
+                            </div>
+                            <div class="payment-readonly-value">
+                                @Model.LatestPayment.Method
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-label">
+                                Payment Status
+                            </div>
+                            <div class="payment-readonly-value">
+                                @paymentStatus
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-label">
+                                Amount (RM)
+                            </div>
+                            <div class="payment-readonly-value">
+                                @Model.LatestPayment.Amount.ToString("F2")
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-label">
+                                Transaction Reference
+                            </div>
+                            <div class="payment-readonly-value">
+                                @(string.IsNullOrWhiteSpace(
+                                    Model.LatestPayment.TransactionRef)
+                                    ? "N/A"
+                                    : Model.LatestPayment.TransactionRef)
+                            </div>
+                        </div>
+                    </div>
                 }
 
-                <div class="row g-3">
+                <!-- Pending payment actions -->
+                @if (isPending && Model.LatestPayment != null)
+                {
+                    <div class="row g-3 mt-2 payment-decision-actions">
 
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Payment Method
-                        </label>
+                        <div class="col-md-6">
+                            <form method="post"
+                                  asp-page-handler="ConfirmPayment">
 
-                        <div class="form-control">
-                            @(Model.LatestPayment?.Method.ToString() ?? "Not recorded")
+                                <input type="hidden"
+                                       name="orderNo"
+                                       value="@Model.OrderNo" />
+
+                                <input type="hidden"
+                                       name="paymentId"
+                                       value="@Model.LatestPayment.Id" />
+
+                                <button type="submit"
+                                        class="btn btn-dark w-100">
+                                    Confirm Payment
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="col-md-6">
+                            <form method="post"
+                                  asp-page-handler="MarkPaymentFailed">
+
+                                <input type="hidden"
+                                       name="orderNo"
+                                       value="@Model.OrderNo" />
+
+                                <input type="hidden"
+                                       name="paymentId"
+                                       value="@Model.LatestPayment.Id" />
+
+                                <button type="submit"
+                                        class="btn btn-outline-danger w-100">
+                                    Mark as Failed
+                                </button>
+                            </form>
                         </div>
                     </div>
+                }
 
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Payment Status
-                        </label>
-
-                        <div class="form-control">
-                            @(Model.LatestPayment?.Status.ToString() ?? "Not recorded")
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Amount (RM)
-                        </label>
-
-                        <div class="form-control">
-                            @(Model.LatestPayment == null
-                                ? "Not recorded"
-                                : Model.LatestPayment.Amount.ToString("F2"))
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">
-                            Transaction Reference
-                        </label>
-
-                        <div class="form-control">
-                            @(string.IsNullOrWhiteSpace(Model.LatestPayment?.TransactionRef)
-                                ? "N/A"
-                                : Model.LatestPayment.TransactionRef)
-                        </div>
-                    </div>
-
-                    @if (Model.LatestPayment?.Status ==
-     RROMS.Models.PaymentStatus.Pending)
-                    {
-                        <div class="row g-3 mt-2">
-                            <div class="col-md-6">
-                                <form method="post"
-                                      asp-page-handler="ConfirmPayment">
-
-                                    <input type="hidden"
-                                           name="orderNo"
-                                           value="@Model.OrderNo" />
-
-                                    <input type="hidden"
-                                           name="paymentId"
-                                           value="@Model.LatestPayment.Id" />
-
-                                    <button type="submit"
-                                            class="btn btn-success w-100">
-                                        Confirm Payment
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div class="col-md-6">
-                                <form method="post"
-                                      asp-page-handler="MarkPaymentFailed">
-
-                                    <input type="hidden"
-                                           name="orderNo"
-                                           value="@Model.OrderNo" />
-
-                                    <input type="hidden"
-                                           name="paymentId"
-                                           value="@Model.LatestPayment.Id" />
-
-                                    <button type="submit"
-                                            class="btn btn-outline-danger w-100">
-                                        Mark as Failed
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-
-
-                @if (Model.Bill != null &&
-                     !Model.IsPreview &&
-                        Model.LatestPayment?.Status != RROMS.Models.PaymentStatus.Pending &&
-                        Model.LatestPayment?.Status != RROMS.Models.PaymentStatus.Paid)
+                <!-- Record payment -->
+                @if (canRecordPayment)
                 {
                     <form method="post"
                           asp-page-handler="RecordPayment"
-                          class="mt-3">
+                          class="payment-record-form mt-3">
 
                         <input type="hidden"
                                name="orderNo"
                                value="@Model.OrderNo" />
 
-                        <div class="row g-3 align-items-end">
+                        @if (isFailed)
+                        {
+                            <h6 class="mb-3">
+                                Record New Payment
+                            </h6>
+                        }
+
+                        <fieldset class="payment-method-fieldset">
+                            <legend class="form-label">
+                                1. Select Payment Method
+                            </legend>
+
+                            <div class="row g-3">
+
+                                <!-- Cash -->
+                                <div class="col-sm-4">
+                                    <input type="radio"
+                                           class="visually-hidden payment-method-radio"
+                                           name="method"
+                                           id="paymentCash"
+                                           value="Cash"
+                                           required />
+
+                                    <label class="payment-method-tile"
+                                           for="paymentCash">
+                                        <span class="payment-method-icon"
+                                              aria-hidden="true">
+                                            RM
+                                        </span>
+                                        <strong>Cash</strong>
+                                    </label>
+                                </div>
+
+                                <!-- Card -->
+                                <div class="col-sm-4">
+                                    <input type="radio"
+                                           class="visually-hidden payment-method-radio"
+                                           name="method"
+                                           id="paymentCard"
+                                           value="Card"
+                                           required />
+
+                                    <label class="payment-method-tile"
+                                           for="paymentCard">
+                                        <span class="payment-method-icon"
+                                              aria-hidden="true">
+                                            ▭
+                                        </span>
+                                        <strong>Card</strong>
+                                        <small>In-store</small>
+                                    </label>
+                                </div>
+
+                                <!-- Online Payment -->
+                                <div class="col-sm-4">
+                                    @* Enable only when backend supports it. *@
+
+                                    <input type="radio"
+                                           class="visually-hidden payment-method-radio"
+                                           name="method"
+                                           id="paymentOnline"
+                                           value="Online"
+                                           disabled />
+
+                                    <label class="payment-method-tile
+                                        payment-method-tile-disabled"
+                                           for="paymentOnline">
+                                        <span class="payment-method-icon"
+                                              aria-hidden="true">
+                                            ▣
+                                        </span>
+                                        <strong>Online Payment</strong>
+                                        <small>
+                                            Coming soon
+                                        </small>
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Payment amount -->
+                        <div class="row g-3 mt-2">
 
                             <div class="col-md-6">
-                                <label class="form-label"
-                                       for="paymentMethod">
-                                    Payment Method
-                                </label>
-
-                                <select class="form-select"
-                                        id="paymentMethod"
-                                        name="method"
-                                        required>
-                                    <option value="">Select payment method</option>
-                                    <option value="Cash">Cash</option>
-                                    <option value="Card">Card</option>
-                                </select>
+                                <div class="form-label">
+                                    Amount (RM)
+                                </div>
+                                <div class="payment-readonly-value">
+                                    @Model.Bill.TotalAmount.ToString("F2")
+                                </div>
                             </div>
 
                             <div class="col-md-6">
-                                <button type="submit"
-                                        class="btn btn-outline-dark w-100">
-                                    Record Payment
-                                </button>
+                                <div class="form-label">
+                                    Transaction Reference
+                                </div>
+                                <div class="payment-readonly-value text-muted">
+                                    Assigned by payment processing
+                                </div>
                             </div>
-
                         </div>
 
+                        <button type="submit"
+                                class="btn btn-dark w-100 mt-3">
+                            Record Payment
+                        </button>
+
                         <p class="text-muted small mt-2 mb-0">
-                            This will record a pending payment for
-                            the confirmed bill amount.
+                            This will record a pending payment
+                            for the confirmed bill amount.
                         </p>
                     </form>
                 }
 
+                <!-- Paid: success message at the bottom -->
+                @if (isPaid)
+                {
+                    <div class="payment-result
+                        payment-result-success mt-3"
+                         role="status">
+                        <span aria-hidden="true">&#10003;</span>
+                        Payment successfully confirmed.
+                        No further action required.
+                    </div>
+                }
             </div>
         </div>
     }
@@ -433,12 +555,13 @@
             </div>
         </div>
     }
-
 </div>
 
-
 <style>
-    /* US32 Luxury Editorial: screen-only layout and typography. */
+    /* =====================================================
+           YORU IZAKAYA — US32 SCREEN STYLES
+           ===================================================== */
+
     @@media screen {
 
         .us32-billing .billing-card {
@@ -459,47 +582,27 @@
                 margin-bottom: 8px !important;
             }
 
-
             .us32-billing .billing-card h6 {
                 font-family: var(--font-body);
                 font-size: 15px;
                 font-weight: 500;
                 line-height: 1.5;
-                letter-spacing: 0;
                 margin-bottom: 12px;
             }
 
+            .us32-billing .billing-card .form-label {
+                font-family: var(--font-body);
+                font-size: 14px;
+                font-weight: 500;
+                line-height: 1.5;
+                margin-bottom: 8px;
+            }
 
-            .us32-billing .billing-card .form-label {
-                font-family: var(--font-body);
-                font-size: 14px;
-                font-weight: 500;
-                line-height: 1.5;
-                margin-bottom: 8px;
-            }
-            /* All form labels */
-            .us32-billing .billing-card .form-label {
-                font-family: var(--font-body);
-                font-size: 14px;
-                font-weight: 500;
-                line-height: 1.5;
-                margin-bottom: 8px;
-            }
-            /* Find Order - Order Number label */
             .us32-billing .billing-card .billing-order-label {
                 font-family: var(--font-body);
                 font-size: 15px;
                 font-weight: 500;
                 line-height: 1.5;
-                letter-spacing: 0;
-            }
-            /* Form input */
-            .us32-billing .billing-card .form-control {
-                font-family: var(--font-body);
-                font-size: 14px;
-                font-weight: 400;
-                line-height: 1.5;
-                min-height: 42px;
             }
 
             .us32-billing .billing-card .form-control {
@@ -517,10 +620,6 @@
                 line-height: 1.65;
             }
 
-                .us32-billing .billing-card p strong {
-                    font-weight: 600;
-                }
-
             .us32-billing .billing-card table {
                 font-family: var(--font-body);
             }
@@ -529,7 +628,7 @@
                     font-size: 11px;
                     font-weight: 600;
                     line-height: 1.5;
-                    letter-spacing: 0.7px;
+                    letter-spacing: .7px;
                     padding: 12px;
                 }
 
@@ -540,7 +639,8 @@
                     padding: 13px 12px;
                 }
 
-            .us32-billing .billing-card .row.justify-content-end span {
+            .us32-billing .billing-card
+            .row.justify-content-end span {
                 font-family: var(--font-body);
                 font-size: 13px;
                 line-height: 1.6;
@@ -565,44 +665,46 @@
             font-family: var(--font-body);
             font-size: 11px;
             font-weight: 500;
-            letter-spacing: 0.3px;
+            letter-spacing: .3px;
         }
-        /* Bill Preview: same title spacing as Find Order */
-        .us32-billing #printableBill .bill-preview-heading {
+        /* Bill heading */
+        .us32-billing #printableBill
+        .bill-preview-heading {
             margin-bottom: 8px !important;
         }
-            /* Bill Preview title: same style as Find Order */
-            .us32-billing #printableBill .bill-preview-heading .billing-card-title {
+
+            .us32-billing #printableBill
+            .bill-preview-heading .billing-card-title {
                 font-family: var(--font-display);
                 font-size: 20px;
                 font-weight: 600;
                 line-height: 1.4;
                 margin-bottom: 0 !important;
             }
-        /* Order Number: same typography as Find Order label */
-        .us32-billing #printableBill .bill-order-number {
+
+        .us32-billing #printableBill
+        .bill-order-number {
             font-family: var(--font-body);
             font-size: 14px;
             font-weight: 400;
             line-height: 1.5;
             margin-bottom: 22px !important;
         }
-            /* Keep the label and order value consistent */
-            .us32-billing #printableBill .bill-order-number strong {
-                font-weight: 500;
-            }
-        /* Final Total: balanced screen dividers */
-        .us32-billing #printableBill .billing-total-divider {
+        /* Balanced Final Total spacing */
+        .us32-billing #printableBill
+        .billing-total-divider {
             margin-top: 12px !important;
             margin-bottom: 12px !important;
         }
 
-        .us32-billing #printableBill .billing-final-total {
+        .us32-billing #printableBill
+        .billing-final-total {
             margin: 0 !important;
             padding: 0 !important;
         }
 
-        .us32-billing #printableBill .billing-actions-divider {
+        .us32-billing #printableBill
+        .billing-actions-divider {
             margin-top: 12px !important;
             margin-bottom: 12px !important;
         }
@@ -614,46 +716,135 @@
         }
     }
 
-    /* Hidden on the normal staff billing screen */
+    /* =====================================================
+           PAYMENT MANAGEMENT
+           ===================================================== */
+
+    /* Reduce spacing below Payment Management heading */
+    .us32-billing .payment-management-card
+    .payment-empty-message {
+        margin-top: 0 !important;
+        margin-bottom: 12px !important;
+        line-height: 1.5;
+    }
+
+    .us32-billing .payment-method-fieldset {
+        min-width: 0;
+    }
+
+        .us32-billing .payment-method-fieldset legend {
+            float: none;
+            width: auto;
+        }
+
+    .us32-billing .payment-method-tile {
+        min-height: 112px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        text-align: center;
+        cursor: pointer;
+        padding: 14px 8px;
+        border: 1px solid #d8cfc2;
+        border-radius: 7px;
+        background: #fffdf9;
+        transition: border-color .15s, background-color .15s;
+    }
+
+        .us32-billing .payment-method-tile strong {
+            font-size: 14px;
+        }
+
+        .us32-billing .payment-method-tile small {
+            font-size: 11px;
+            color: #746d63;
+        }
+
+    .us32-billing .payment-method-icon {
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .us32-billing
+    .payment-method-radio:checked + .payment-method-tile {
+        border-color: #a67b3f;
+        background: #fff0d3;
+        box-shadow: inset 0 0 0 1px #a67b3f;
+    }
+
+    .us32-billing
+    .payment-method-radio:focus-visible + .payment-method-tile {
+        outline: 3px solid #896a42;
+        outline-offset: 3px;
+    }
+
+    .us32-billing .payment-method-tile-disabled {
+        opacity: .55;
+        cursor: not-allowed;
+    }
+
+    .us32-billing .payment-readonly-value {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        padding: 10px 12px;
+        border: 1px solid #e0d8cc;
+        border-radius: 6px;
+        background: #faf8f4;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+    }
+
+    .us32-billing .payment-result {
+        border-radius: 6px;
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+
+    .us32-billing .payment-result-success {
+        background: #e8f6eb;
+        color: #166534;
+    }
+
+    .us32-billing .payment-result-pending {
+        background: #fff2d6;
+        color: #845400;
+    }
+
+    .us32-billing .payment-result-failed {
+        background: #fce8e7;
+        color: #9b2823;
+    }
+
+    /* =====================================================
+           PRINT-ONLY ELEMENTS
+           ===================================================== */
+
     .yoru-print-header,
     .yoru-print-footer {
         display: none;
     }
 
-    
+    .yoru-print-logo {
+        display: block;
+        width: 100px;
+        max-height: 85px;
+        object-fit: contain;
+        margin: 0 auto 12px;
+    }
+
+    /* =====================================================
+           PRINT BILL — A4
+           ===================================================== */
+
     @@media print {
+
         @@page {
             size: A4 portrait;
             margin: 18mm;
         }
-        /* Use the existing YORU font system */
-        #printableBill {
-            font-family: var(--font-body) !important;
-            font-weight: 400;
-        }
-
-            #printableBill .yoru-print-brand h1,
-            #printableBill .yoru-print-header h2 {
-                font-family: var(--font-display) !important;
-                font-weight: 700;
-            }
-
-            #printableBill .yoru-print-subtitle,
-            #printableBill p,
-            #printableBill span,
-            #printableBill td,
-            #printableBill th,
-            #printableBill h4,
-            #printableBill h5,
-            #printableBill h6,
-            #printableBill strong {
-                font-family: var(--font-body) !important;
-            }
-
-            #printableBill .yoru-japanese {
-                font-family: var(--font-display) !important;
-            }
-
 
         html, body {
             background: #fff !important;
@@ -678,7 +869,9 @@
             padding: 0 !important;
             border: none !important;
             box-shadow: none !important;
-            background: white !important;
+            background: #fff !important;
+            font-family: var(--font-body) !important;
+            font-weight: 400;
         }
 
             #printableBill .card-body {
@@ -686,7 +879,8 @@
             }
 
             #printableBill .billing-actions,
-            #printableBill .billing-actions-divider {
+            #printableBill .billing-actions-divider,
+            .us32-billing .payment-management-card {
                 display: none !important;
             }
             /* Restaurant branding */
@@ -696,163 +890,147 @@
                 margin-bottom: 28px;
             }
 
-        .yoru-print-symbol {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 52px;
-            height: 52px;
-            margin: 0 auto 10px;
-            background: #a94736 !important;
-            color: white !important;
-            border-radius: 50%;
-            font-size: 28px;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
+                #printableBill .yoru-print-brand h1,
+                #printableBill .yoru-print-header h2 {
+                    font-family: var(--font-display) !important;
+                    font-weight: 700;
+                }
 
-        .yoru-print-brand h1 {
-            margin: 0;
-            font-size: 34px;
-            letter-spacing: 3px;
-            font-weight: 700;
-        }
-
-        .yoru-print-subtitle {
-            margin-top: 3px;
-            color: #9b8062 !important;
-            font-size: 11px;
-            letter-spacing: 5px;
-        }
-
-        .yoru-print-divider {
-            width: 100%;
-            height: 1px;
-            background: #b49a76 !important;
-            margin: 20px 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-
-        .yoru-print-header h2 {
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin: 14px 0 5px;
-        }
-
-        .yoru-print-header p {
-            color: #77716b !important;
-            font-size: 11px;
-            margin: 0;
-        }
-        /* Avoid duplicated headings */
-        #printableBill .card-body > .yoru-print-header + .d-flex {
-            display: none !important;
-        }
-        /* Item table */
-        #printableBill .table-responsive {
-            overflow: visible !important;
-        }
-
-        #printableBill table {
-            width: 100% !important;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-
-        #printableBill th {
-            background: #f7f3ed !important;
-            color: #6f5b47 !important;
-            font-size: 10px;
-            letter-spacing: 0.7px;
-            padding: 12px 8px !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-
-        #printableBill td {
-            padding: 12px 8px !important;
-            border-color: #e8e2d9 !important;
-        }
-
-        #printableBill tr {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-        /* Totals */
-        #printableBill .row.justify-content-end {
-            margin-top: 24px !important;
-        }
-
-            #printableBill .row.justify-content-end > div {
-                width: 100% !important;
-                max-width: 100% !important;
-                flex: 0 0 100% !important;
+            #printableBill .yoru-print-brand h1 {
+                margin: 0;
+                font-size: 34px;
+                letter-spacing: 3px;
             }
 
-        #printableBill h4 {
-            color: var(--yoru-red-text) !important;
-            font-size: 22px;
-            font-weight: 700;
-        }
-        /* Footer */
+            #printableBill .yoru-print-subtitle {
+                margin-top: 3px;
+                color: #9b8062 !important;
+                font-size: 11px;
+                letter-spacing: 5px;
+            }
 
-        #printableBill .yoru-print-footer {
-            display: block !important;
-            text-align: center;
-            margin-top: 0 !important;
-        }
-        /* Equal spacing around printed Final Total */
-        #printableBill .billing-total-divider {
-            margin-top: 12px !important;
-            margin-bottom: 12px !important;
-        }
+            #printableBill .yoru-print-divider {
+                width: 100%;
+                height: 1px;
+                background: #b49a76 !important;
+                margin: 20px 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-        #printableBill .billing-final-total {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+            #printableBill .yoru-print-header h2 {
+                font-size: 15px;
+                letter-spacing: 1px;
+                margin: 14px 0 5px;
+            }
 
-        #printableBill .yoru-print-footer .yoru-print-divider {
-            margin-top: 12px !important;
-            margin-bottom: 20px !important;
-        }
+            #printableBill .yoru-print-header p {
+                color: #77716b !important;
+                font-size: 11px;
+                margin: 0;
+            }
+            /* Avoid duplicate headings */
+            #printableBill .card-body >
+            .yoru-print-header + .d-flex {
+                display: none !important;
+            }
+            /* Item table */
+            #printableBill .table-responsive {
+                overflow: visible !important;
+            }
 
+            #printableBill table {
+                width: 100% !important;
+                border-collapse: collapse;
+                font-size: 12px;
+            }
 
-        .yoru-print-footer p {
-            font-size: 11px;
-            color: #77716b !important;
-            margin: 5px 0;
-        }
+            #printableBill th {
+                background: #f7f3ed !important;
+                color: #6f5b47 !important;
+                font-size: 10px;
+                letter-spacing: .7px;
+                padding: 12px 8px !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
 
-        .yoru-print-footer .yoru-japanese {
-            font-size: 17px;
-            color: #9b8062 !important;
-        }
+            #printableBill td {
+                padding: 12px 8px !important;
+                border-color: #e8e2d9 !important;
+            }
 
-        .yoru-print-footer strong {
-            display: block;
-            margin-top: 12px;
-            font-size: 11px;
-            letter-spacing: 2px;
-            color: #a94736 !important;
-        }
+            #printableBill tr {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            /* Bill totals */
+            #printableBill .row.justify-content-end {
+                margin-top: 24px !important;
+            }
 
-        .yoru-print-footer .yoru-print-notice {
-            margin-top: 16px;
-            font-size: 10px;
-            font-style: italic;
-        }
-    }
+                #printableBill
+                .row.justify-content-end > div {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    flex: 0 0 100% !important;
+                }
 
+            #printableBill h4 {
+                color: var(--yoru-red-text) !important;
+                font-size: 22px;
+                font-weight: 700;
+            }
+            /* Balanced Final Total spacing */
+            #printableBill .billing-total-divider {
+                margin-top: 12px !important;
+                margin-bottom: 12px !important;
+            }
 
-    
-    .yoru-print-logo {
-        display: block;
-        width: 100px;
-        max-height: 85px;
-        object-fit: contain;
-        margin: 0 auto 12px;
+            #printableBill .billing-final-total {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            /* Print footer */
+            #printableBill .yoru-print-footer {
+                display: block !important;
+                text-align: center;
+                margin-top: 0 !important;
+            }
+
+                #printableBill .yoru-print-footer
+                .yoru-print-divider {
+                    margin-top: 12px !important;
+                    margin-bottom: 20px !important;
+                }
+
+                #printableBill .yoru-print-footer p {
+                    font-family: var(--font-body) !important;
+                    font-size: 11px;
+                    color: #77716b !important;
+                    margin: 5px 0;
+                }
+
+                #printableBill .yoru-print-footer
+                .yoru-japanese {
+                    font-family: var(--font-display) !important;
+                    font-size: 17px;
+                    color: #9b8062 !important;
+                }
+
+                #printableBill .yoru-print-footer strong {
+                    display: block;
+                    margin-top: 12px;
+                    font-size: 11px;
+                    letter-spacing: 2px;
+                    color: #a94736 !important;
+                }
+
+                #printableBill .yoru-print-footer
+                .yoru-print-notice {
+                    margin-top: 16px;
+                    font-size: 10px;
+                    font-style: italic;
+                }
     }
 </style>
