@@ -9,6 +9,7 @@
     var s = Model.Summary;
     var labels = new[] { "", "Poor", "Fair", "Good", "Very good", "Excellent" };
     var quickReplies = new[] { "Thank you for visiting!", "We're sorry about this.", "We hope to see you again soon." };
+    var lowest = Model.Sort == "lowest";
 }
 
 @* Brush font for the letter parts (same as the customer feedback page) *@
@@ -37,19 +38,6 @@
     </header>
 
     <div class="af-layout">
-
-        <!-- ===== Side index ===== -->
-        <nav class="af-side" aria-label="Feedback sections">
-            <div class="af-side-title">SECTIONS · 目次</div>
-            <a href="#af-summary" class="af-side-link"><b>一</b>Summary</a>
-            <a href="@Model.FilterUrl(status: "needs")#af-list" class="af-side-link @(Model.Status == "needs" ? "is-on" : "")">
-                <b>二</b>Needs reply<span class="af-side-count">@s.NeedsReply</span>
-            </a>
-            <a href="/Admin/Feedback#af-list" class="af-side-link @(!Model.HasFilters ? "is-on" : "")">
-                <b>三</b>All feedback<span class="af-side-count">@s.Total</span>
-            </a>
-            <div class="af-side-tip">Reply to low ratings first. Guests are notified when you write back.</div>
-        </nav>
 
         <div>
             <!-- ===== 一 Summary ===== -->
@@ -127,11 +115,32 @@
                             <input type="search" name="q" value="@Model.Q" maxlength="100"
                                    placeholder="Search order no, customer or comment" aria-label="Search feedback" />
 
+                            @* Plain select: used without JavaScript. With JavaScript it is hidden and the
+                               hanko menu below sets its value instead. *@
                             <label class="af-visually-hidden" for="afSort">Sort feedback</label>
                             <select id="afSort" name="sort" class="af-sort-select">
-                                <option value="" selected="@(Model.Sort != "lowest")">Newest first</option>
-                                <option value="lowest" selected="@(Model.Sort == "lowest")">Lowest rating first</option>
+                                <option value="" selected="@(!lowest)">Newest first</option>
+                                <option value="lowest" selected="@lowest">Lowest rating first</option>
                             </select>
+
+                            <div class="af-sort">
+                                <button type="button" class="af-sort-btn" aria-haspopup="listbox" aria-expanded="false">
+                                    <span class="af-sort-label">@(lowest ? "Lowest rating first" : "Newest first")</span>
+                                    <i class="af-sort-arrow" aria-hidden="true"></i>
+                                </button>
+                                <div class="af-sort-menu" role="listbox" aria-label="Sort feedback">
+                                    <button type="button" class="af-sort-opt @(!lowest ? "is-on" : "")" role="option"
+                                            aria-selected="@(!lowest ? "true" : "false")" data-value="" data-label="Newest first">
+                                        <span class="af-sort-stamp" aria-hidden="true">新</span>
+                                        <span><b>Newest first</b><small>Latest letters at the top</small></span>
+                                    </button>
+                                    <button type="button" class="af-sort-opt is-low @(lowest ? "is-on" : "")" role="option"
+                                            aria-selected="@(lowest ? "true" : "false")" data-value="lowest" data-label="Lowest rating first">
+                                        <span class="af-sort-stamp" aria-hidden="true">低</span>
+                                        <span><b>Lowest rating first</b><small>Unhappy guests at the top</small></span>
+                                    </button>
+                                </div>
+                            </div>
 
                             <noscript><button type="submit" class="af-chip">Apply</button></noscript>
                         </form>

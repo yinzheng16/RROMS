@@ -2,10 +2,12 @@
 // US43 Admin feedback (Member 5)
 // Pages/Admin/Feedback/Index
 // - Reply boxes: character counter, quick phrases, no empty replies
-// - Filters (rating stamps, bars, chips, sort, search, side index) load
-//   in the background, so the page does not reload or jump to the top.
+// - Sort menu with hanko stamps (新 newest / 低 lowest)
+// - Filters (rating stamps, bars, chips, sort, search) load in the
+//   background, so the page does not reload or jump to the top.
 //   The URL still updates (?rating=5…), so Back / Refresh / sharing work.
-//   Without JavaScript the filters are normal links and still work.
+//   Without JavaScript the filters are normal links, the sort is a plain
+//   select, and everything still works.
 // =========================================================
 (function () {
     "use strict";
@@ -14,6 +16,9 @@
     if (!page) {
         return;
     }
+
+    // Tells the CSS to show the hanko sort menu instead of the plain select.
+    page.classList.add("af-js");
 
     var MAX = 500;
     var loading = false;
@@ -65,16 +70,51 @@
         });
     }
 
-    // ---------- Side index highlight ----------
-    function setSideActive(link) {
-        page.querySelectorAll(".af-side-link").forEach(function (a) {
-            a.classList.toggle("is-on", a === link);
+    // ---------- Sort menu ----------
+    function openSort(sort, open) {
+        if (!sort) {
+            return;
+        }
+        sort.classList.toggle("is-open", open);
+        var btn = sort.querySelector(".af-sort-btn");
+        if (btn) {
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+        }
+        if (open) {
+            var current = sort.querySelector(".af-sort-opt.is-on") || sort.querySelector(".af-sort-opt");
+            if (current) { current.focus(); }
+        }
+    }
+
+    function closeAllSorts() {
+        page.querySelectorAll(".af-sort.is-open").forEach(function (sort) {
+            openSort(sort, false);
         });
+    }
+
+    function pickSort(option) {
+        var sort = option.closest(".af-sort");
+        var form = option.closest("form");
+        var select = form && form.querySelector(".af-sort-select");
+
+        sort.querySelectorAll(".af-sort-opt").forEach(function (o) {
+            var on = o === option;
+            o.classList.toggle("is-on", on);
+            o.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        sort.querySelector(".af-sort-label").textContent = option.dataset.label;
+        openSort(sort, false);
+        sort.querySelector(".af-sort-btn").focus();
+
+        if (select && select.value !== option.dataset.value) {
+            select.value = option.dataset.value;
+            submitSearch(form);
+        }
     }
 
     // ---------- Background filtering ----------
     // Parts of the page that change when a filter changes.
-    var PARTS = [".af-dist", "#af-list .af-sec-body", ".af-side"];
+    var PARTS = [".af-dist", "#af-list .af-sec-body"];
 
     function isFilterLink(a) {
         var href = a.getAttribute("href") || "";
@@ -126,7 +166,33 @@
             });
     }
 
+    function submitSearch(form) {
+        var params = new URLSearchParams(new FormData(form));
+        Array.from(params.keys()).forEach(function (key) {
+            if (!params.get(key)) { params.delete(key); }
+        });
+
+        var query = params.toString();
+        load("/Admin/Feedback" + (query ? "?" + query : ""), true);
+    }
+
+    // ---------- Clicks ----------
     page.addEventListener("click", function (event) {
+        // Sort menu button
+        var sortBtn = event.target.closest(".af-sort-btn");
+        if (sortBtn) {
+            var sort = sortBtn.closest(".af-sort");
+            openSort(sort, !sort.classList.contains("is-open"));
+            return;
+        }
+
+        // Sort menu option
+        var option = event.target.closest(".af-sort-opt");
+        if (option) {
+            pickSort(option);
+            return;
+        }
+
         var link = event.target.closest("a");
         if (!link || !page.contains(link)) {
             return;
@@ -137,13 +203,9 @@
             return;
         }
 
-        if (link.classList.contains("af-side-link")) {
-            setSideActive(link);
-        }
-
         var href = link.getAttribute("href") || "";
 
-        // "一 Summary": smooth scroll, no "#" left in the address bar.
+        // In-page links: smooth scroll, no "#" left in the address bar.
         if (href.charAt(0) === "#") {
             event.preventDefault();
             var section = document.querySelector(href);
@@ -153,14 +215,42 @@
 
         if (isFilterLink(link)) {
             event.preventDefault();
-
-            // The side links also take you to the list.
-            if (link.classList.contains("af-side-link")) {
-                var listSection = document.getElementById("af-list");
-                if (listSection) { listSection.scrollIntoView({ behavior: "smooth", block: "start" }); }
-            }
-
             load(link.href, true);
+        }
+    });
+
+    // Click anywhere else closes the sort menu.
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest(".af-sort")) {
+            closeAllSorts();
+        }
+    });
+
+    // Keyboard in the sort menu: Esc closes, ↑ / ↓ move between options.
+    page.addEventListener("keydown", function (event) {
+        var sort = event.target.closest && event.target.closest(".af-sort");
+        if (!sort) {
+            return;
+        }
+
+        if (event.key === "Escape" && sort.classList.contains("is-open")) {
+            event.preventDefault();
+            openSort(sort, false);
+            sort.querySelector(".af-sort-btn").focus();
+            return;
+        }
+
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            if (!sort.classList.contains("is-open")) {
+                openSort(sort, true);
+                return;
+            }
+            var options = Array.from(sort.querySelectorAll(".af-sort-opt"));
+            var index = options.indexOf(document.activeElement);
+            var step = event.key === "ArrowDown" ? 1 : -1;
+            var next = options[(index + step + options.length) % options.length];
+            next.focus();
         }
     });
 
@@ -170,27 +260,14 @@
         if (!form.classList.contains("af-search")) {
             return;
         }
-
         event.preventDefault();
-
-        var params = new URLSearchParams(new FormData(form));
-        Array.from(params.keys()).forEach(function (key) {
-            if (!params.get(key)) { params.delete(key); }
-        });
-
-        var query = params.toString();
-        load("/Admin/Feedback" + (query ? "?" + query : ""), true);
+        submitSearch(form);
     });
 
     // Browser Back / Forward between filters.
     window.addEventListener("popstate", function () {
         load(window.location.href, false);
     });
-
-    // Opened with #af-summary in the address: highlight Summary.
-    if (window.location.hash === "#af-summary") {
-        setSideActive(page.querySelector('.af-side-link[href="#af-summary"]'));
-    }
 
     bindReplyForms(page);
 })();

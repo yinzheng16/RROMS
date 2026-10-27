@@ -1,30 +1,29 @@
 /* =========================================================
    US43 Admin feedback (Member 5)
-   Letter header + admin section layout, in the customer
-   feedback (Letter) colours. Used by Pages/Admin/Feedback/Index.
+   Letter header + admin section layout, 茶 Tea brown colours. Used by Pages/Admin/Feedback/Index.
    Every class starts with af- so nothing leaks to other pages.
    ========================================================= */
 
 .af-page {
     --af-ink: #191919;
-    --af-muted: #6F655C;
+    --af-muted: #5E5248;
     --af-letter: #FFFDF7;
-    --af-soft: #FFF6F3;
-    --af-kraft: #EFE4D2;
+    --af-soft: #F6EFE8;
+    --af-kraft: #EADCCB;
     --af-line: #E2D5C1;
-    --af-line-2: #CDBBA2;
-    --af-rule: #E8DCC8;
-    --af-red: #C83E2D;
-    --af-red-dark: #A93324;
+    --af-line-2: #CDB8A2;
+    --af-rule: #DCCBB6;
+    --af-red: #6E4A2E;          /* accent (tea brown) */
+    --af-red-dark: #553821;
     --af-low: #B23526;
     --af-low-bg: #F8E1DC;
     --af-green: #2F7A4E;
     --af-green-bg: #E3F1E7;
     --af-gold: #B79B72;
-    --af-stamp-off: #d6c9b5;
+    --af-stamp-off: #D8C7B4;
     --af-serif: "Shippori Mincho", Georgia, serif;
     --af-brush: "Yuji Syuku", "Shippori Mincho", Georgia, serif;
-    --af-paper-lines: repeating-linear-gradient(90deg, transparent 0 57px, rgba(200, 62, 45, .05) 57px 58px);
+    --af-paper-lines: repeating-linear-gradient(90deg, transparent 0 57px, rgba(110, 74, 46, .05) 57px 58px);
     --af-shadow: 0 2px 0 #e2d6c2, 0 14px 32px rgba(80, 60, 30, .12);
 
     padding: 26px 0 40px;
@@ -153,86 +152,14 @@
 /* ---------- Layout ---------- */
 
 .af-layout {
-    display: grid;
-    grid-template-columns: 190px minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
-}
-
-.af-side {
-    position: sticky;
-    top: 16px;
-    padding: 14px;
-    border-top: 5px solid var(--af-red);
-    border-radius: 4px;
-    background: var(--af-letter);
-    box-shadow: 0 2px 0 #e2d6c2, 0 10px 24px rgba(80, 60, 30, .1);
-}
-
-.af-side-title {
-    margin: 4px 8px 10px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: var(--af-red);
-}
-
-.af-side-link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 10px;
-    border-radius: 8px;
-    color: var(--af-muted);
-}
-
-.af-side-link:hover,
-.af-side-link.is-on {
-    background: var(--af-soft);
-    color: var(--af-ink);
-}
-
-.af-side-link.is-on {
-    font-weight: 700;
-}
-
-.af-side-link b {
-    width: 28px;
-    height: 28px;
-    display: grid;
-    place-items: center;
-    border: 2px solid var(--af-stamp-off);
-    border-radius: 50%;
-    color: #b9a98f;
-    font-family: var(--af-serif);
-    transform: rotate(-8deg);
-}
-
-.af-side-link.is-on b {
-    border-color: var(--af-red);
-    color: var(--af-red);
-}
-
-.af-side-count {
-    margin-left: auto;
-    font-size: 11px;
-}
-
-.af-side-tip {
-    margin-top: 12px;
-    padding: 10px;
-    border-radius: 8px;
-    background: #F5EDE0;
-    font-family: var(--af-brush);
-    font-size: 14px;
-    color: var(--af-muted);
+    display: block;
 }
 
 /* ---------- Section cards ---------- */
 
 .af-sec {
     margin-bottom: 22px;
-    overflow: hidden;
+    overflow: visible;      /* so the sort menu is not cut off */
     border-radius: 4px;
     background: var(--af-letter) var(--af-paper-lines);
     box-shadow: var(--af-shadow);
@@ -242,6 +169,7 @@
 .af-sec-head {
     position: relative;
     overflow: hidden;
+    border-radius: 4px 4px 0 0;
     display: flex;
     align-items: center;
     gap: 14px;
@@ -259,7 +187,7 @@
     font-family: var(--af-serif);
     font-weight: 800;
     font-size: 52px;
-    color: rgba(200, 62, 45, .08);
+    color: rgba(110, 74, 46, .09);
     pointer-events: none;
 }
 
@@ -424,7 +352,7 @@ a.af-hanko:hover {
 
 .af-hanko.is-on {
     border-color: var(--af-red);
-    background: rgba(200, 62, 45, .05);
+    background: var(--af-soft);
     color: var(--af-red);
 }
 
@@ -447,7 +375,7 @@ a.af-hanko:hover {
     padding: 7px 34px 7px 14px;
     border: 1px dashed var(--af-line-2);
     border-radius: 999px;
-    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23C83E2D' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236E4A2E' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center;
     color: var(--af-ink);
     font-size: 12px;
     cursor: pointer;
@@ -460,6 +388,141 @@ a.af-hanko:hover {
     outline: none;
     border-style: solid;
     border-color: var(--af-red);
+}
+
+/* ---------- Sort menu (hanko stamps) ----------
+   Without JavaScript only the plain select shows.
+   With JavaScript (.af-js on the page) only the hanko menu shows. */
+.af-sort {
+    display: none;
+    position: relative;
+    flex: none;
+}
+
+.af-js .af-sort {
+    display: block;
+}
+
+.af-js .af-sort-select {
+    display: none;
+}
+
+.af-sort-btn {
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 16px;
+    border: 1px dashed var(--af-line-2);
+    border-radius: 999px;
+    background: var(--af-letter);
+    color: var(--af-ink);
+    font: inherit;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.af-sort-btn:hover,
+.af-sort-btn:focus-visible,
+.af-sort.is-open .af-sort-btn {
+    outline: none;
+    border-style: solid;
+    border-color: var(--af-red);
+}
+
+.af-sort-arrow {
+    width: 7px;
+    height: 7px;
+    border-right: 1.6px solid var(--af-red);
+    border-bottom: 1.6px solid var(--af-red);
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform .15s ease;
+}
+
+.af-sort.is-open .af-sort-arrow {
+    transform: translateY(1px) rotate(-135deg);
+}
+
+.af-sort-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 20;
+    display: none;
+    min-width: 240px;
+    padding: 6px;
+    border: 1px dashed var(--af-line-2);
+    border-radius: 14px;
+    background: var(--af-letter);
+    box-shadow: 0 14px 30px rgba(80, 60, 30, .18);
+}
+
+.af-sort.is-open .af-sort-menu {
+    display: block;
+}
+
+.af-sort-opt {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--af-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.af-sort-opt:hover,
+.af-sort-opt:focus-visible {
+    outline: none;
+    background: var(--af-soft);
+}
+
+.af-sort-opt b {
+    display: block;
+    font-size: 13px;
+}
+
+.af-sort-opt small {
+    display: block;
+    color: var(--af-muted);
+    font-size: 11px;
+}
+
+.af-sort-stamp {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--af-stamp-off);
+    border-radius: 50%;
+    color: #B8A48E;
+    font-family: var(--af-serif);
+    font-weight: 800;
+    font-size: 14px;
+    transform: rotate(-6deg);
+}
+
+.af-sort-opt.is-on b {
+    color: var(--af-red);
+}
+
+.af-sort-opt.is-on .af-sort-stamp {
+    border-color: var(--af-red);
+    background: var(--af-soft);
+    color: var(--af-red);
+}
+
+.af-sort-opt.is-on.is-low .af-sort-stamp {
+    border-color: var(--af-low);
+    background: var(--af-low-bg);
+    color: var(--af-low);
 }
 
 .af-search input {
@@ -509,17 +572,24 @@ a.af-hanko:hover {
 
 .af-who b {
     display: block;
+    font-size: 15px;
 }
 
 .af-who small {
     color: var(--af-muted);
-    font-size: 12px;
+    font-size: 12.5px;
 }
 
+/* The customer's words: clear serif text with a quote line, easy to read */
 .af-comment {
-    font-family: var(--af-brush);
+    padding: 2px 0 2px 14px;
+    border-left: 3px solid var(--af-kraft);
+    color: var(--af-ink);
+    font-family: var(--af-serif);
     font-size: 16px;
-    line-height: 1.7;
+    font-weight: 500;
+    line-height: 1.75;
+    letter-spacing: normal;
     overflow-wrap: anywhere;
 }
 
@@ -532,8 +602,8 @@ a.af-hanko:hover {
 }
 
 .af-tag.is-need {
-    background: #FBE6E0;
-    color: #A63824;
+    background: #F6E1D6;
+    color: #8C3B1E;
 }
 
 .af-tag.is-done {
@@ -543,11 +613,13 @@ a.af-hanko:hover {
 
 .af-answer {
     grid-column: 2 / -1;
-    padding: 8px 12px;
+    padding: 10px 14px;
+    font-family: var(--af-serif);
+    font-size: 15px;
+    line-height: 1.7;
     border-left: 3px solid var(--af-red);
     border-radius: 0 8px 8px 0;
     background: var(--af-soft);
-    font-size: 13px;
     overflow-wrap: anywhere;
 }
 
@@ -563,11 +635,17 @@ a.af-hanko:hover {
 }
 
 .af-reply summary {
+    display: inline-block;
     cursor: pointer;
     list-style: none;
     color: var(--af-red);
     font-weight: 700;
-    font-size: 13px;
+    font-size: 14px;
+}
+
+.af-reply summary:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .af-reply summary::-webkit-details-marker {
@@ -578,31 +656,39 @@ a.af-hanko:hover {
     margin-bottom: 8px;
 }
 
+/* Reply box: white letter paper with ruled lines, clear text */
 .af-reply-text {
     width: 100%;
-    min-height: 92px;
+    min-height: 112px;
     resize: vertical;
-    padding: 0 4px;
-    border: 0;
-    border-radius: 0;
-    background: repeating-linear-gradient(transparent 0 29px, var(--af-rule) 29px 30px);
+    padding: 4px 14px;
+    border: 1px solid var(--af-line-2);
+    border-radius: 10px;
+    background: #fff repeating-linear-gradient(transparent 0 31px, var(--af-rule) 31px 32px);
+    background-origin: content-box;
     color: var(--af-ink);
-    font-family: var(--af-brush);
+    font-family: var(--af-serif);
     font-size: 16px;
-    line-height: 30px;
+    font-weight: 500;
+    line-height: 32px;
+}
+
+.af-reply-text::placeholder {
+    color: #8C7F72;
 }
 
 .af-reply-text:focus {
     outline: none;
-    background-color: rgba(183, 155, 114, .06);
+    border-color: var(--af-red);
+    box-shadow: 0 0 0 3px rgba(110, 74, 46, .15);
 }
 
 .af-under {
     display: flex;
     justify-content: space-between;
     gap: 10px;
-    margin-top: 4px;
-    font-size: 12px;
+    margin-top: 6px;
+    font-size: 12.5px;
     color: var(--af-muted);
 }
 
@@ -627,11 +713,12 @@ a.af-hanko:hover {
 }
 
 .af-quick-btn {
-    padding: 3px 10px;
+    padding: 5px 12px;
     border: 1px solid var(--af-line-2);
     border-radius: 999px;
-    background: transparent;
-    font-size: 12px;
+    background: #fff;
+    color: var(--af-ink);
+    font-size: 13px;
     cursor: pointer;
 }
 
@@ -647,14 +734,15 @@ a.af-hanko:hover {
 }
 
 .af-send {
-    padding: 9px 20px;
+    padding: 10px 22px;
+    font-size: 14px;
     border: 0;
     border-radius: 999px;
     background: var(--af-red);
     color: #fff;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 6px 14px rgba(200, 62, 45, .28);
+    box-shadow: 0 6px 14px rgba(110, 74, 46, .25);
 }
 
 .af-send:hover {
@@ -687,16 +775,6 @@ a.af-hanko:hover {
 }
 
 /* ---------- Small screens ---------- */
-
-@media (max-width: 991px) {
-    .af-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .af-side {
-        display: none;
-    }
-}
 
 @media (max-width: 760px) {
     .af-head,
