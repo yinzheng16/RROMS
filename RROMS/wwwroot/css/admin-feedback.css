@@ -565,9 +565,21 @@ a.af-hanko:hover {
     scroll-margin-top: 20px;
 }
 
-.af-row:target {
-    background: var(--af-soft);
+/* The review that was just answered: page scrolls to it and it glows once. */
+.af-row.is-just-replied {
     border-radius: 8px;
+    animation: af-just-replied 2.6s ease-out;
+}
+
+@keyframes af-just-replied {
+    0%, 35% {
+        background: var(--af-kraft);
+        box-shadow: 0 0 0 2px var(--af-red);
+    }
+    100% {
+        background: transparent;
+        box-shadow: 0 0 0 2px transparent;
+    }
 }
 
 .af-who b {
@@ -828,5 +840,10 @@ a.af-hanko:hover {
 @media (prefers-reduced-motion: reduce) {
     .af-hanko {
         transition: none;
+    }
+
+    .af-row.is-just-replied {
+        animation: none;
+        background: var(--af-soft);
     }
 }

@@ -269,5 +269,37 @@
         load(window.location.href, false);
     });
 
+    // ---------- After sending a reply ----------
+    // The server sends us back to /Admin/Feedback#fb-12. Wait until the page has
+    // fully loaded (fonts and styles change the height), then scroll to that
+    // review ourselves and let it glow once, so the admin sees which one was saved.
+    function showRepliedRow() {
+        var match = /^#fb-(\d+)$/.exec(window.location.hash);
+        if (!match) {
+            return;
+        }
+
+        var row = document.getElementById("fb-" + match[1]);
+        if (!row) {
+            return;
+        }
+
+        // Keep the address clean (no #fb-12), so Refresh does not scroll again.
+        history.replaceState(history.state, "", window.location.pathname + window.location.search);
+
+        function go() {
+            row.scrollIntoView({ block: "center" });
+            row.classList.add("is-just-replied");
+            setTimeout(function () { row.classList.remove("is-just-replied"); }, 2700);
+        }
+
+        if (document.readyState === "complete") {
+            setTimeout(go, 60);
+        } else {
+            window.addEventListener("load", function () { setTimeout(go, 60); });
+        }
+    }
+
     bindReplyForms(page);
+    showRepliedRow();
 })();
