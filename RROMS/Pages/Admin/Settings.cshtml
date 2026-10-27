@@ -1,0 +1,504 @@
+@page
+@model RROMS.Pages.Admin.Settings
+
+@{
+    // US49 Restaurant Settings (Member 5)
+    // Styles: wwwroot/css/restaurant-settings.css
+    // Script: wwwroot/js/restaurant-settings.js
+    ViewData["Title"] = "Restaurant Settings";
+
+    var s = Model.RestaurantSetting;
+    var isFullBrandImage = s.BrandingMode == "FullBrandImage";
+    var sizes = new[] { "S", "M", "L" };
+    var hasErrors = ViewData.ModelState.ErrorCount > 0;
+
+    // Restaurant name printed at the top of the example bill
+    var summaryName = string.IsNullOrWhiteSpace(s.RestaurantNameLine2)
+        ? s.RestaurantName
+        : $"{s.RestaurantName} {s.RestaurantNameLine2}";
+}
+
+@* Same flag icons as /Account/Register (emoji flags don't show on Windows) *@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" />
+<link rel="stylesheet" href="~/css/restaurant-settings.css" asp-append-version="true" />
+
+<div class="rs-page @(isFullBrandImage ? "rs-mode-full" : "")"
+     id="rsPage"
+     data-logo="@s.LogoPath"
+     data-footer="@s.FooterImagePath"
+     data-favicon="@s.FaviconPath"
+     data-default-favicon="@Url.Content("~/images/yoru-icon.png")">
+
+    <header class="rs-head">
+        <div>
+            <p class="rs-eyebrow">ADMINISTRATION · 店舗設定</p>
+            <h1 class="rs-title">Restaurant <em>Settings</em></h1>
+            <p class="rs-lede">
+                Manage how your restaurant presents itself — brand, contact details and the rates used on every bill.
+            </p>
+        </div>
+        <div class="rs-hanko" aria-hidden="true">店舗<br />設定</div>
+    </header>
+
+    <form method="post" enctype="multipart/form-data" id="rsForm">
+
+        <input type="hidden" asp-for="RestaurantSetting.Id" />
+        <input type="hidden" asp-for="RemoveFavicon" />
+
+        <div asp-validation-summary="ModelOnly" class="rs-summary"></div>
+
+        <div class="rs-layout">
+
+            <nav class="rs-side" id="rsSide" aria-label="Settings sections">
+                <div class="rs-side-title">SECTIONS · 目次</div>
+                <a href="#rs-brand" class="is-on" style="--c:var(--rs-a1)"><b>一</b><span>Brand<small>看板</small></span></a>
+                <a href="#rs-contact" style="--c:var(--rs-a2)"><b>二</b><span>Contact<small>連絡先</small></span></a>
+                <a href="#rs-charges" style="--c:var(--rs-a3)"><b>三</b><span>Charges<small>料金</small></span></a>
+                <div class="rs-side-tip">
+                    <b>Tip</b>
+                    The live preview updates as you type. Nothing goes live until you press Save.
+                </div>
+            </nav>
+
+            <div>
+
+                <!-- ================= 一 BRAND ================= -->
+                <section class="rs-sec" id="rs-brand" style="--c:var(--rs-a1)">
+                    <div class="rs-sec-head" data-kanji="看板">
+                        <div class="rs-num" aria-hidden="true">一</div>
+                        <div>
+                            <h2>Brand</h2>
+                            <p>Name, images and how they appear across the site.</p>
+                        </div>
+                        <div class="rs-sec-jp" aria-hidden="true">看 板</div>
+                    </div>
+
+                    <div class="rs-sec-body">
+
+                        <div class="rs-sub">Display style</div>
+
+                        <div class="rs-modes" role="radiogroup" aria-label="Display style">
+                            <label class="rs-mode">
+                                <input type="radio"
+                                       class="rs-visually-hidden"
+                                       name="RestaurantSetting.BrandingMode"
+                                       value="LogoWithName"
+                                       checked="@(!isFullBrandImage)" />
+                                <span class="rs-mode-thumb" aria-hidden="true"><i></i><em></em></span>
+                                <span>
+                                    <b>Logo + Restaurant Name</b>
+                                    <small>Upload a logo and show the name as text beside it.</small>
+                                </span>
+                            </label>
+
+                            <label class="rs-mode">
+                                <input type="radio"
+                                       class="rs-visually-hidden"
+                                       name="RestaurantSetting.BrandingMode"
+                                       value="FullBrandImage"
+                                       checked="@isFullBrandImage" />
+                                <span class="rs-mode-thumb" aria-hidden="true"><span class="rs-mode-full-bar"></span></span>
+                                <span>
+                                    <b>Full Brand Image</b>
+                                    <small>One image that already contains the logo and name.</small>
+                                </span>
+                            </label>
+                        </div>
+                        <span asp-validation-for="RestaurantSetting.BrandingMode"></span>
+
+                        <!-- Restaurant name -->
+                        <div class="rs-sub">Restaurant name</div>
+
+                        <div class="rs-fullname-info">
+                            <div class="rs-fi-icon" aria-hidden="true">名</div>
+                            <div>
+                                <b>Your brand image already shows the name</b>
+                                It won't appear as text in the navbar or footer. Keep the name below filled in:
+                                it's still printed on receipts and bills, used as the browser tab title,
+                                and read aloud to screen-reader users.
+                            </div>
+                        </div>
+
+                        <div class="rs-grid2 rs-name-grid">
+                            <div class="rs-field">
+                                <label asp-for="RestaurantSetting.RestaurantName">
+                                    <span>
+                                        <span class="rs-text-only">Line 1</span>
+                                        <span class="rs-full-only">Restaurant name <span class="rs-badge">HIDDEN IN NAVBAR</span></span>
+                                    </span>
+                                    <span class="rs-opt">Required</span>
+                                </label>
+                                <input asp-for="RestaurantSetting.RestaurantName"
+                                       class="rs-input"
+                                       maxlength="30"
+                                       autocomplete="organization" />
+                                <div class="rs-hint">
+                                    <span>
+                                        <span class="rs-text-only">Main name. Also used on receipts and bills.</span>
+                                        <span class="rs-full-only">Used on receipts, bills, the browser tab title and as image alt text.</span>
+                                    </span>
+                                    <span class="rs-count" data-count-for="RestaurantSetting_RestaurantName" data-max="30"></span>
+                                </div>
+                                <span asp-validation-for="RestaurantSetting.RestaurantName"></span>
+
+                                <div class="rs-size rs-text-only">
+                                    <span class="rs-size-label" id="l1SizeLabel">Text size</span>
+                                    <span class="rs-seg" role="radiogroup" aria-labelledby="l1SizeLabel">
+                                        @foreach (var size in sizes)
+                                        {
+                                            <input type="radio"
+                                                   id="l1-size-@size"
+                                                   name="RestaurantSetting.NameLine1Size"
+                                                   value="@size"
+                                                   checked="@(s.NameLine1Size == size)" />
+                                            <label for="l1-size-@size">@size</label>
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="rs-field rs-text-only">
+                                <label asp-for="RestaurantSetting.RestaurantNameLine2">
+                                    <span>Line 2</span>
+                                    <span class="rs-opt">Optional</span>
+                                </label>
+                                <input asp-for="RestaurantSetting.RestaurantNameLine2"
+                                       class="rs-input"
+                                       maxlength="40"
+                                       placeholder="e.g. Izakaya · Penang" />
+                                <div class="rs-hint">
+                                    <span>Small subtitle under line 1.</span>
+                                    <span class="rs-count" data-count-for="RestaurantSetting_RestaurantNameLine2" data-max="40"></span>
+                                </div>
+                                <span asp-validation-for="RestaurantSetting.RestaurantNameLine2"></span>
+
+                                <div class="rs-size">
+                                    <span class="rs-size-label" id="l2SizeLabel">Text size</span>
+                                    <span class="rs-seg" role="radiogroup" aria-labelledby="l2SizeLabel">
+                                        @foreach (var size in sizes)
+                                        {
+                                            <input type="radio"
+                                                   id="l2-size-@size"
+                                                   name="RestaurantSetting.NameLine2Size"
+                                                   value="@size"
+                                                   checked="@(s.NameLine2Size == size)" />
+                                            <label for="l2-size-@size">@size</label>
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Images -->
+                        <div class="rs-sub">Images</div>
+
+                        <div class="rs-slots">
+
+                            <!-- Navbar image -->
+                            <div class="rs-slot">
+                                <div class="rs-slot-top">
+                                    <b>
+                                        <span class="rs-text-only">Navigation logo</span>
+                                        <span class="rs-full-only">Full brand image</span>
+                                    </b>
+                                    <span class="rs-where">NAVBAR</span>
+                                </div>
+                                <div class="rs-slot-prev">
+                                    <img id="imgNav" src="@s.LogoPath" alt="Navigation image preview"
+                                         hidden="@string.IsNullOrWhiteSpace(s.LogoPath)" />
+                                    <span class="rs-ph" id="phNav" aria-hidden="true"
+                                          hidden="@(!string.IsNullOrWhiteSpace(s.LogoPath))">夜</span>
+                                </div>
+                                <div class="rs-slot-meta">
+                                    PNG or JPG · max 2 MB<br />
+                                    <span class="rs-text-only">Square logo, transparent PNG recommended</span>
+                                    <span class="rs-full-only">Wide image with logo + name, transparent PNG</span>
+                                </div>
+                                <div class="rs-slot-acts">
+                                    <label class="rs-btn">
+                                        Upload
+                                        <input asp-for="LogoFile" type="file" class="rs-file" accept=".jpg,.jpeg,.png" />
+                                    </label>
+                                    <button type="button" class="rs-btn rs-btn-ghost" data-reset="nav">Undo</button>
+                                </div>
+                                <span asp-validation-for="LogoFile"></span>
+                            </div>
+
+                            <!-- Footer image -->
+                            <div class="rs-slot @(Model.FooterSameAsNav ? "is-disabled" : "")" id="slotFooter">
+                                <div class="rs-slot-top">
+                                    <b>Footer image</b>
+                                    <span class="rs-where">FOOTER</span>
+                                </div>
+                                <label class="rs-check">
+                                    <input asp-for="FooterSameAsNav" />
+                                    Same as navigation image
+                                </label>
+                                <div class="rs-slot-prev">
+                                    <img id="imgFooter" alt="Footer image preview" />
+                                    <span class="rs-ph" id="phFooter" aria-hidden="true">夜</span>
+                                </div>
+                                <div class="rs-slot-meta">PNG or JPG · max 2 MB</div>
+                                <div class="rs-slot-acts">
+                                    <label class="rs-btn">
+                                        Upload
+                                        <input asp-for="FooterFile" type="file" class="rs-file" accept=".jpg,.jpeg,.png" />
+                                    </label>
+                                    <button type="button" class="rs-btn rs-btn-ghost" data-reset="footer">Undo</button>
+                                </div>
+                                <span asp-validation-for="FooterFile"></span>
+                            </div>
+
+                            <!-- Browser tab icon -->
+                            <div class="rs-slot">
+                                <div class="rs-slot-top">
+                                    <b>Browser tab icon</b>
+                                    <span class="rs-where">FAVICON</span>
+                                </div>
+                                <div class="rs-slot-prev is-square">
+                                    <img id="imgFavicon" alt="Tab icon preview" />
+                                </div>
+                                <div class="rs-slot-meta">Square PNG or ICO · 64×64 or larger · max 512 KB</div>
+                                <div class="rs-slot-acts">
+                                    <label class="rs-btn">
+                                        Upload
+                                        <input asp-for="FaviconFile" type="file" class="rs-file" accept=".png,.ico" />
+                                    </label>
+                                    <button type="button" class="rs-btn rs-btn-ghost" data-reset="favicon">Use default</button>
+                                </div>
+                                <span asp-validation-for="FaviconFile"></span>
+                            </div>
+                        </div>
+
+                        <div class="rs-tip">
+                            <b>Tip</b>
+                            <span>
+                                The navbar and footer are dark. Use a <strong>transparent PNG</strong>
+                                so the image doesn't sit on a white box. The checkerboard shows which areas are transparent.
+                            </span>
+                        </div>
+
+                        <!-- Live preview -->
+                        <div class="rs-sub">Live preview</div>
+
+                        <div class="rs-previews" aria-live="polite">
+                            <div>
+                                <div class="rs-pv-label">NAVIGATION BAR</div>
+                                <div class="rs-pv-nav">
+                                    <div class="rs-pv-brand" id="pvBrand"></div>
+                                    <div class="rs-pv-fake" aria-hidden="true"><i></i><i></i><i></i></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="rs-pv-label">FOOTER</div>
+                                <div class="rs-pv-foot">
+                                    <img id="pvFootImg" alt="" />
+                                    <div>
+                                        <div class="rs-pv-foot-name" id="pvFootName"></div>
+                                        <div class="rs-pv-foot-addr" id="pvFootAddr"></div>
+                                        <div class="rs-pv-foot-contact" id="pvFootContact"></div>
+                                    </div>
+                                    <div class="rs-pv-foot-right">© @DateTime.Now.Year RROMS</div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="rs-pv-label">BROWSER TAB</div>
+                                <div class="rs-pv-tab">
+                                    <div class="rs-pv-tab-item">
+                                        <img id="pvFavicon" alt="" />
+                                        <span id="pvTabTitle"></span>
+                                    </div>
+                                    <div class="rs-pv-tab-item is-off">New Tab</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= 二 CONTACT ================= -->
+                <section class="rs-sec" id="rs-contact" style="--c:var(--rs-a2)">
+                    <div class="rs-sec-head" data-kanji="連絡">
+                        <div class="rs-num" aria-hidden="true">二</div>
+                        <div>
+                            <h2>Contact</h2>
+                            <p>Shown in the footer and on receipts.</p>
+                        </div>
+                        <div class="rs-sec-jp" aria-hidden="true">連 絡 先</div>
+                    </div>
+
+                    <div class="rs-sec-body">
+                        <div class="rs-grid2">
+
+                            <div class="rs-field">
+                                <label asp-for="PhoneInput">
+                                    <span>Phone</span>
+                                    <span class="rs-opt">Optional</span>
+                                </label>
+                                @* Same country picker as /Account/Register (styles in site.css: .cc, .cc-btn, .cc-panel).
+                                   The real <select> is sent with the form; the button + search panel are drawn by the script. *@
+                                <div class="rs-phone-row" id="phoneBox">
+                                    <div class="rs-phone-code cc" data-cc>
+                                        <select asp-for="RestaurantSetting.PhoneCountry" class="form-select cc-native" aria-label="Country code" autocomplete="tel-country-code">
+                                            @foreach (var c in Model.Countries)
+                                            {
+                                                <option value="@c.Iso" data-name="@c.Name" data-dial="@c.DialCode">@c.Iso @c.DialCode</option>
+                                            }
+                                        </select>
+
+                                        <button type="button" class="cc-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Country code">
+                                            <span class="cc-flag fi" aria-hidden="true"></span>
+                                            <span class="cc-dial"></span>
+                                            <i class="bi bi-chevron-down cc-caret" aria-hidden="true"></i>
+                                        </button>
+
+                                        <div class="cc-panel" hidden>
+                                            <div class="cc-search">
+                                                <i class="bi bi-search" aria-hidden="true"></i>
+                                                <input type="text" class="cc-input" placeholder="Search country or code" aria-label="Search country or code" autocomplete="off" />
+                                            </div>
+                                            <ul class="cc-list" role="listbox" aria-label="Countries"></ul>
+                                            <p class="cc-empty" hidden><i class="bi bi-globe2 me-1" aria-hidden="true"></i>No country found</p>
+                                        </div>
+                                    </div>
+
+                                    <input asp-for="PhoneInput"
+                                           class="rs-input"
+                                           type="tel"
+                                           inputmode="tel"
+                                           autocomplete="tel-national"
+                                           placeholder="Phone number (e.g. 12-345 6789)" />
+                                </div>
+                                <div class="rs-hint"><span id="phoneHint">Digits only. Spaces and dashes are fine.</span></div>
+                                <span class="rs-msg" id="phoneMsg" hidden></span>
+                                <span asp-validation-for="RestaurantSetting.PhoneCountry"></span>
+                                <span asp-validation-for="PhoneInput" id="phoneServerMsg"></span>
+                            </div>
+
+                            <div class="rs-field">
+                                <label asp-for="RestaurantSetting.Email">
+                                    <span>Email</span>
+                                    <span class="rs-opt">Optional</span>
+                                </label>
+                                <input asp-for="RestaurantSetting.Email"
+                                       class="rs-input"
+                                       type="email"
+                                       autocomplete="email"
+                                       placeholder="hello@yourrestaurant.com" />
+                                <span asp-validation-for="RestaurantSetting.Email"></span>
+                            </div>
+                        </div>
+
+                        <div class="rs-field" style="margin-top:18px">
+                            <label asp-for="RestaurantSetting.Address">
+                                <span>Address</span>
+                                <span class="rs-opt">Optional</span>
+                            </label>
+                            <textarea asp-for="RestaurantSetting.Address"
+                                      class="rs-textarea"
+                                      rows="3"
+                                      maxlength="200"
+                                      autocomplete="street-address"></textarea>
+                            <div class="rs-hint">
+                                <span>Press Enter to start a new line. Long lines wrap automatically in the footer.</span>
+                                <span class="rs-count" data-count-for="RestaurantSetting_Address" data-max="200"></span>
+                            </div>
+                            <span asp-validation-for="RestaurantSetting.Address"></span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= 三 CHARGES ================= -->
+                <section class="rs-sec" id="rs-charges" style="--c:var(--rs-a3)">
+                    <div class="rs-sec-head" data-kanji="料金">
+                        <div class="rs-num" aria-hidden="true">三</div>
+                        <div>
+                            <h2>Charges</h2>
+                            <p>Applied to every bill by the billing module.</p>
+                        </div>
+                        <div class="rs-sec-jp" aria-hidden="true">料 金</div>
+                    </div>
+
+                    <div class="rs-sec-body">
+                        <div class="rs-grid2">
+                            <div>
+                                <div class="rs-field">
+                                    <label asp-for="RestaurantSetting.TaxRatePercent"><span>Tax rate</span></label>
+                                    <div class="rs-affix">
+                                        <input asp-for="RestaurantSetting.TaxRatePercent"
+                                               class="rs-input"
+                                               type="number"
+                                               step="0.01"
+                                               min="0"
+                                               max="100"
+                                               inputmode="decimal" />
+                                        <span class="rs-affix-end">%</span>
+                                    </div>
+                                    <div class="rs-bar" aria-hidden="true"><i id="taxBar"></i></div>
+                                    <div class="rs-hint"><span>Between 0 and 100. Up to 2 decimal places.</span></div>
+                                    <span asp-validation-for="RestaurantSetting.TaxRatePercent"></span>
+                                </div>
+
+                                <div class="rs-field" style="margin-top:18px">
+                                    <label asp-for="RestaurantSetting.ServiceChargePercent"><span>Service charge</span></label>
+                                    <div class="rs-affix">
+                                        <input asp-for="RestaurantSetting.ServiceChargePercent"
+                                               class="rs-input"
+                                               type="number"
+                                               step="0.01"
+                                               min="0"
+                                               max="100"
+                                               inputmode="decimal" />
+                                        <span class="rs-affix-end">%</span>
+                                    </div>
+                                    <div class="rs-bar" aria-hidden="true"><i id="svcBar"></i></div>
+                                    <div class="rs-hint"><span>Between 0 and 100. Up to 2 decimal places.</span></div>
+                                    <span asp-validation-for="RestaurantSetting.ServiceChargePercent"></span>
+                                </div>
+                            </div>
+
+                            <div class="rs-receipt" aria-live="polite">
+                                <div class="rs-receipt-stamp" aria-hidden="true">見本</div>
+                                <h4 id="rcName">@summaryName</h4>
+                                <p class="rs-receipt-sub">EXAMPLE BILL · RM 100.00 ORDER</p>
+                                <div class="rs-receipt-row"><span>Subtotal</span><span>RM 100.00</span></div>
+                                <div class="rs-receipt-row"><span id="rcSvcLabel"></span><span id="rcSvc"></span></div>
+                                <div class="rs-receipt-row"><span id="rcTaxLabel"></span><span id="rcTax"></span></div>
+                                <div class="rs-receipt-row rs-receipt-total"><span>Total</span><span id="rcTotal"></span></div>
+                                <p class="rs-receipt-note">Example only. The billing module decides the exact calculation.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Save bar -->
+                <div class="rs-savebar">
+                    <span class="rs-save-dot" aria-hidden="true"></span>
+                    <span class="rs-save-state" id="rsSaveState">All changes saved</span>
+                    <span class="rs-save-note">Shared with Home, billing and the site layout.</span>
+                    <button type="submit" class="rs-primary">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @* Error toast only. "Settings saved" is shown by the site-wide toast in the shared layout. *@
+    <div class="rs-toast is-error @(hasErrors ? "is-show" : "")" id="rsToast" role="alert">
+        <div class="rs-toast-stamp" aria-hidden="true">!</div>
+        <div>
+            <b>Please fix the highlighted fields</b>
+            <small>Nothing was saved yet.</small>
+        </div>
+        <button type="button" class="rs-toast-close" aria-label="Close">×</button>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    @* Same phone rules as the server (libphonenumber), for instant feedback while typing *@
+    <script src="https://cdn.jsdelivr.net/npm/libphonenumber-js@1/bundle/libphonenumber-min.js"></script>
+
+    <script src="~/js/restaurant-settings.js" asp-append-version="true"></script>
+}

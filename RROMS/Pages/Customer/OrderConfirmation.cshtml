@@ -10,6 +10,7 @@
     string Money(decimal value) => value.ToString("F2", CultureInfo.InvariantCulture);
 }
 <link rel="stylesheet" href="~/css/customer-cart.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/customer-order-status.css" asp-append-version="true" />
 <div class="customer-cart cart-confirmation">
     <p class="cart-confirmation__eyebrow">YORU IZAKAYA <span aria-hidden="true">·</span> <span lang="ja">ご注文</span></p>
     <div class="cart-confirmation__layout">
@@ -20,9 +21,19 @@
                 <h1 id="order-confirmation-title">Thank you,<span>from YORU.</span></h1>
                 <p>Your order has been received.</p>
             </header>
-            <div class="cart-confirmation__status">
-                <span class="status-badge status-@receipt.Status">@receipt.Status</span>
-                <p>@(receipt.Status == OrderStatus.Pending ? "Waiting for the restaurant to accept your order." : "Your current order status is shown here.")</p>
+            <div class="cart-confirmation__status" data-customer-order-status
+                 data-status-url="@Url.Page("/Customer/OrderConfirmation", "Status", new { id = receipt.Id })"
+                 data-order-id="@receipt.Id" data-current-status="@receipt.Status">
+                <div class="order-status-heading">
+                    <span class="status-badge status-@receipt.Status" data-order-status-badge>@RROMS.Pages.Customer.OrderConfirmationModel.StatusLabel(receipt.Status)</span>
+                    <button type="button" class="order-status-update" data-order-status-update hidden>
+                        <i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span>Update status</span>
+                    </button>
+                </div>
+                <p data-order-status-message>@RROMS.Pages.Customer.OrderConfirmationModel.StatusMessage(receipt.Status)</p>
+                <p class="order-status-feedback" data-order-status-feedback role="status" hidden></p>
+                <span class="visually-hidden" data-order-status-live role="status" aria-live="polite" aria-atomic="true"></span>
+                <noscript><p>Refresh this page to check the latest order status.</p></noscript>
             </div>
             <dl class="cart-confirmation__details">
                 <div><dt>Order number</dt><dd class="cart-confirmation__order-number">@receipt.OrderNo</dd></div>
@@ -86,3 +97,7 @@
     </div>
     <p class="cart-confirmation__hint">Your order is saved. This confirmation is not a payment receipt.</p>
 </div>
+
+@section Scripts {
+    <script src="~/js/customer-order-status.js" asp-append-version="true"></script>
+}
