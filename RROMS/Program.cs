@@ -65,8 +65,9 @@ builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-// Member 5: builder.Services.AddScoped<IReportService, ReportService>();
 
+//Member 5
+builder.Services.AddScoped<IReportService, ReportService>();
 var app = builder.Build();
 
 // Apply migrations and create the roles and test accounts.

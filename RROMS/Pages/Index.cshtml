@@ -59,7 +59,8 @@
         eyebrow = $"おかえりなさい · Welcome back, {Model.CustomerName}";
     }
 
-    var mapsUrl = "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString("YORU IZAKAYA " + Model.Info.Address);
+    var mapsUrl = "https://www.google.com/maps/search/?api=1&query="
+    + Uri.EscapeDataString(RROMS.Models.Brand.FullName + " " + Model.Info.Address.Replace("\r", "").Replace("\n", ", "));
     var telLink = "tel:" + new string(Model.Info.Phone.Where(ch => char.IsDigit(ch) || ch == '+').ToArray());
 }
 
@@ -287,7 +288,7 @@
             <div class="hm-info-row">
                 <i class="bi bi-geo-alt" aria-hidden="true"></i>
                 <div>
-                    <b>Address</b>@Model.Info.Address<br />
+                        <b>Address</b><span style="white-space:pre-line">@Model.Info.Address</span><br />
                     <a class="hm-link mt-1" href="@mapsUrl" target="_blank" rel="noopener">Open in Google Maps <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></a>
                 </div>
             </div>
@@ -309,7 +310,7 @@
             </div>
         </div>
 
-        @* Saves nothing: it only opens Member 2's booking page with date, time and guests filled in. *@
+        
         @* Quick booking box. Saves nothing: it only opens Member 2's booking page with date, time and guests filled in.
            The real checks (free table, capacity, opening hours) happen on Member 2's page. *@
         <form class="bk" id="bk" method="get" action="/Customer/Reservations/Create">

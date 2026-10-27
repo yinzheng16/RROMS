@@ -19,7 +19,7 @@ namespace RROMS.Services
 
         // Used until Members 2 and 5 have saved real hours / settings, so the page is never empty.
         private const string DefaultAddress = "12 Jalan Bukit Bintang, 55100 Kuala Lumpur";
-        private const string DefaultPhone = "+60 3-1234 5678";
+        private const string DefaultPhone = "+60 3-2142 6688";
 
         // Last orders are taken this many minutes before closing (shown in the hero's "last" mood).
         // If the team later adds this to RestaurantSettings (Member 5), read it from there instead.
@@ -226,7 +226,7 @@ namespace RROMS.Services
 
             return new HomeInfo(
                 string.IsNullOrWhiteSpace(setting?.Address) ? DefaultAddress : setting!.Address!,
-                string.IsNullOrWhiteSpace(setting?.Phone) ? DefaultPhone : setting!.Phone!,
+                string.IsNullOrWhiteSpace(setting?.Phone) ? DefaultPhone : PhoneDisplay.Pretty(setting!.Phone),
                 mood,
                 moodText,
                 await _menuItems.Query().CountAsync(m => m.IsAvailable),
