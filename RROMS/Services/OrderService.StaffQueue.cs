@@ -88,7 +88,7 @@ public partial class OrderService
             order.Items.OrderBy(item => item.Id).Select(item => new StaffOrderDish(item.Id, item.MenuItemId,
                 item.MenuItem?.Code ?? "", item.MenuItem?.Name ?? "Dish no longer listed", StaffQueueImage(item.MenuItem?.ImageUrl),
                 item.Quantity, item.UnitPrice, item.Notes)).ToArray(), order.Notes, booking,
-            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount);
+            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount, order.UserId);
     }
 
     private static string? StaffQueueImage(string? path)

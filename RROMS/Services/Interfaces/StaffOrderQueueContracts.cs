@@ -37,7 +37,8 @@ public sealed record StaffOrderBooking(string Reference, DateTime ReservedAt, in
 public sealed record StaffOrderDetails(int Id, string OrderNo, string CustomerName,
     OrderType Dining, OrderStatus Status, DateTime CreatedAt, DateTime ServerNow,
     IReadOnlyList<StaffOrderDish> Dishes, string? Notes, StaffOrderBooking? Booking,
-    decimal Subtotal, decimal Tax, decimal ServiceCharge, decimal Total)
+    decimal Subtotal, decimal Tax, decimal ServiceCharge, decimal Total,
+    string? CustomerId = null, string? DiningPreferences = null)
 {
     public int Portions => Dishes.Sum(dish => dish.Quantity);
 }

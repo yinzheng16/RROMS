@@ -9,7 +9,7 @@ namespace RROMS.Pages.Staff.Orders;
 // Owner: Member 3 / US25. Pages call services only.
 [Authorize(Policy = "StaffOrAdmin")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class IndexModel(IOrderService orders, ILogger<IndexModel> logger) : PageModel
+public class IndexModel(IOrderService orders, ILogger<IndexModel> logger, IProfileService profiles) : PageModel
 {
     public StaffOrderQueue Queue { get; private set; } = null!;
     public StaffOrderDetails? Details { get; private set; }
@@ -23,7 +23,7 @@ public class IndexModel(IOrderService orders, ILogger<IndexModel> logger) : Page
         ViewData["QueueSearch"] = Queue.Search;
         ViewData["QueueDining"] = Queue.Dining;
         ViewData["QueuePage"] = Queue.PageNumber;
-        if (orderId.HasValue) Details = await orders.GetStaffOrderDetailsAsync(orderId.Value, cancellationToken);
+        if (orderId.HasValue) Details = await LoadDetailsAsync(orderId.Value, cancellationToken);
         if (orderId.HasValue && Details is null) TempData["InfoMessage"] = "That order is no longer available.";
     }
 
@@ -36,8 +36,19 @@ public class IndexModel(IOrderService orders, ILogger<IndexModel> logger) : Page
 
     public async Task<IActionResult> OnGetDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
-        var details = await orders.GetStaffOrderDetailsAsync(id, cancellationToken);
+        var details = await LoadDetailsAsync(id, cancellationToken);
         return details is null ? NotFound() : Partial("_OrderDetails", details);
+    }
+
+    private async Task<StaffOrderDetails?> LoadDetailsAsync(int id, CancellationToken ct)
+    {
+        var details = await orders.GetStaffOrderDetailsAsync(id, ct);
+        if (details is null || string.IsNullOrEmpty(details.CustomerId)) return details;
+
+        // The page policy authorizes Staff/Admin. Read the ORDER'S customer,
+        // never the logged-in staff member and never a customer ID from the URL.
+        string? summary = await profiles.GetDiningSummaryAsync(details.CustomerId);
+        return details with { DiningPreferences = summary };
     }
 
     public async Task<IActionResult> OnPostAcceptAsync(int id, string? search, string? dining,
