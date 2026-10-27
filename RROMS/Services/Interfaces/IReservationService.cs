@@ -23,6 +23,7 @@ public interface IReservationService
 
     // Delete a type only if it has no tables.
     Task<ReservationResult> DeleteTableTypeAsync(int id);
+    Task<DeleteAllTablesResult> DeleteAllTablesAsync(int tableTypeId);
 
     // Upload or change a table type photo.
     Task<ReservationResult> SetTableTypePhotoAsync(
@@ -44,6 +45,7 @@ public interface IReservationService
     Task<ReservationResult> SetTablePhotoAsync(int tableId, IFormFile photo);
     Task<ReservationResult> SetTypePhotoAsync(TableType type, IFormFile photo);
     Task<ReservationResult> SetTableStatusAsync(int id, TableStatus status);
+    Task<ReservationResult> RemoveTableTypePhotoAsync(int tableTypeId);
 
     /// <summary>Always returns 7 rows (Monday to Sunday).</summary>
     Task<List<OperatingHour>> GetOperatingHoursAsync();

@@ -348,16 +348,16 @@ namespace RROMS.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)");
 
-                    b.Property<int?>("ManualStatus")
-                        .HasColumnType("int");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsOccupied")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<int>("StatusMode")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -539,6 +539,12 @@ namespace RROMS.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<TimeOnly?>("BreakEnd")
+                        .HasColumnType("time");
+
+                    b.Property<TimeOnly?>("BreakStart")
+                        .HasColumnType("time");
 
                     b.Property<TimeOnly>("CloseTime")
                         .HasColumnType("time");
@@ -881,6 +887,10 @@ namespace RROMS.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<string>("StatusBeforeAreaOccupied")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("TableNumber")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -920,6 +930,9 @@ namespace RROMS.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsClosed")
                         .HasColumnType("bit");
 
@@ -946,6 +959,13 @@ namespace RROMS.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowBelowMinGuests")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
 
                     b.Property<int>("DefaultDiningAreaId")
                         .HasColumnType("int");
@@ -988,6 +1008,10 @@ namespace RROMS.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[Code] IS NOT NULL");
 
                     b.HasIndex("DefaultDiningAreaId");
 
