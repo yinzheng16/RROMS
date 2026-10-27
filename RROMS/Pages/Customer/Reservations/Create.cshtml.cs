@@ -32,6 +32,11 @@ public class CreateModel(
     public int MaxActiveBookings => BookingRules.MaxActiveBookings;
     public int NoShowGraceMinutes => BookingRules.NoShowGraceMinutes;
 
+    // "1 hour" / "90 minutes", for the hint under the calendar.
+    public string MinLeadText => BookingRules.MinLeadMinutes % 60 == 0
+        ? $"{BookingRules.MinLeadMinutes / 60} hour{(BookingRules.MinLeadMinutes / 60 == 1 ? "" : "s")}"
+        : $"{BookingRules.MinLeadMinutes} minutes";
+
     public class SubmitDto
     {
         public string? Date { get; set; }
