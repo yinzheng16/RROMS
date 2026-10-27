@@ -1,0 +1,74 @@
+@page
+@model RROMS.Pages.Staff.Orders.IndexModel
+@{
+    ViewData["Title"] = "Order queue";
+    ViewData["FullWidth"] = true;
+    ViewData["QueueDetails"] = Model.Details;
+}
+<link rel="stylesheet" href="~/css/staff-order-queue.css" asp-append-version="true" />
+<script>
+    // Run before the queue is painted so browser reload does not flash old results.
+    (() => {
+        const navigation = performance.getEntriesByType('navigation')[0];
+        if (navigation?.type !== 'reload') return;
+        const url = new URL(location.href);
+        const resetKeys = new Set(['search', 'dining', 'pagenumber', 'sort', 'showall']);
+        const viewKeys = [...url.searchParams.keys()].filter(key => resetKeys.has(key.toLowerCase()));
+        if (!viewKeys.length) return;
+        viewKeys.forEach(key => url.searchParams.delete(key));
+        document.documentElement.classList.add('sq-resetting');
+        location.replace(url.href);
+    })();
+</script>
+
+<div class="staff-queue" data-staff-queue data-base-url="@Url.Page("/Staff/Orders/Index")">
+    <header class="sq-masthead sq-masthead--dispenser" aria-labelledby="sq-page-title">
+        <div class="sq-masthead__inner container-xl container-wide">
+            <div class="sq-masthead__title">
+                <span class="sq-masthead__jp" lang="ja" aria-hidden="true">注文受付</span>
+                <div class="sq-masthead__copy">
+                    <p class="eyebrow">YORU IZAKAYA <span aria-hidden="true">/</span> STAFF WORKSPACE</p>
+                    <h1 id="sq-page-title">Order queue</h1>
+                    <p class="sq-masthead__intro">A clear view of every incoming order.</p>
+                    <div class="sq-masthead__rule" aria-hidden="true"></div>
+                </div>
+            </div>
+            <section class="sq-dispenser" aria-label="All pending order totals">
+                <div class="sq-dispenser__caption">
+                    <span>YORU / ORDER DESK</span>
+                    <span class="sq-dispenser__state"><i aria-hidden="true"></i>Awaiting acceptance</span>
+                </div>
+                <div class="sq-dispenser__paper">
+                    <div class="sq-dispenser__metric sq-dispenser__metric--pending">
+                        <div class="sq-dispenser__label"><i class="bi bi-clipboard2-check" aria-hidden="true"></i><p>Pending orders</p><span class="sq-dispenser__stamp" aria-hidden="true">Pending</span></div>
+                        <strong data-sq-count="pending">@Model.Queue.Signal.Pending</strong>
+                    </div>
+                    <div class="sq-dispenser__metric">
+                        <div class="sq-dispenser__label"><i class="bi bi-people" aria-hidden="true"></i><p>Dine-in</p></div>
+                        <strong data-sq-count="dineIn">@Model.Queue.Signal.DineIn</strong>
+                    </div>
+                    <div class="sq-dispenser__metric">
+                        <div class="sq-dispenser__label"><i class="bi bi-bag" aria-hidden="true"></i><p>Takeaway</p></div>
+                        <strong data-sq-count="takeaway">@Model.Queue.Signal.Takeaway</strong>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </header>
+
+    <div class="sq-content container-xl container-wide">
+        <div class="sq-connection" data-sq-connection hidden role="status">
+            <i class="bi bi-wifi-off" aria-hidden="true"></i>
+            <span>Live checks paused. Your displayed orders are unchanged.</span>
+            <button type="button" data-sq-retry>Retry</button>
+        </div>
+        <partial name="_Queue" model="Model.Queue" />
+        <button type="button" class="sq-backdrop" data-sq-backdrop aria-label="Close order details" hidden></button>
+        <p class="visually-hidden" data-sq-live role="status" aria-live="polite"></p>
+        <noscript><p class="small text-muted mt-3">Refresh this page to check for incoming orders. Waiting times update when the page reloads.</p></noscript>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/staff-order-queue.js" asp-append-version="true" defer></script>
+}

@@ -17,6 +17,8 @@ public interface ICustomerCartService
         CancellationToken cancellationToken = default);
     Task<OrderReceipt?> ReceiptAsync(string userId, int orderId,
         CancellationToken cancellationToken = default);
+    Task<OrderStatus?> GetOrderStatusAsync(string userId, int orderId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record CartLineView(Guid Id, int MenuItemId, string Code, string Name,
