@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services.Interfaces;
@@ -11,10 +12,17 @@ namespace RROMS.Services
         public const int MaxReplyLength = 500;
 
         private readonly IRepository<Feedback> _feedbackRepository;
+        private readonly INotificationService _notificationService;   // EN06 / Member 4
+        private readonly ILogger<AdminFeedbackService> _logger;
 
-        public AdminFeedbackService(IRepository<Feedback> feedbackRepository)
+        public AdminFeedbackService(
+            IRepository<Feedback> feedbackRepository,
+            INotificationService notificationService,
+            ILogger<AdminFeedbackService> logger)
         {
             _feedbackRepository = feedbackRepository;
+            _notificationService = notificationService;
+            _logger = logger;
         }
 
         public async Task<FeedbackSummary> GetSummaryAsync()
@@ -108,11 +116,48 @@ namespace RROMS.Services
                 throw new InvalidOperationException("This feedback could not be found.");
             }
 
+            var isFirstReply = string.IsNullOrWhiteSpace(feedback.AdminReply);
+            var changed = feedback.AdminReply != text;
+
             feedback.AdminReply = text;
             _feedbackRepository.Update(feedback);
             await _feedbackRepository.SaveChangesAsync();
 
+            // Let the customer know (AC: "Reply visible to customer").
+            // Only when the text really changed, so saving the same reply twice
+            // does not send a second notification.
+            if (changed && !string.IsNullOrEmpty(feedback.Order?.UserId))
+            {
+                await NotifyCustomerAsync(feedback, isFirstReply);
+            }
+
             return feedback;
+        }
+
+        private async Task NotifyCustomerAsync(Feedback feedback, bool isFirstReply)
+        {
+            var title = isFirstReply
+                ? "YORU replied to your review"
+                : "YORU updated its reply to your review";
+
+            var message = $"Order {feedback.Order.OrderNo}: \"{Shorten(feedback.AdminReply!, 120)}\" " +
+                          "Read the full reply on My reviews.";
+
+            try
+            {
+                await _notificationService.SendAsync(feedback.Order.UserId, title, message, NotificationType.Order);
+            }
+            catch (Exception ex)
+            {
+                // The reply is already saved and the customer can still see it on
+                // My reviews, so a failed notification must not undo or block it.
+                _logger.LogWarning(ex, "Could not send the feedback reply notification for feedback {FeedbackId}.", feedback.Id);
+            }
+        }
+
+        private static string Shorten(string text, int max)
+        {
+            return text.Length <= max ? text : text.Substring(0, max - 1).TrimEnd() + "…";
         }
 
         public async Task<List<Feedback>> GetCustomerFeedbackAsync(string userId)
