@@ -1,0 +1,166 @@
+﻿@page
+@model RROMS.Pages.Customer.Reservations.IndexModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "My Reservations";
+    ViewData["FullWidth"] = true;
+    var en = IndexModel.DisplayCulture;
+    var next = Model.Reservations.FirstOrDefault();
+    var later = Model.Reservations.Skip(1).ToList();
+    var config = JsonSerializer.Serialize(new
+    {
+        cancelUrl = Url.Page("/Customer/Reservations/Index", "Cancel"),
+        graceMinutes = Model.NoShowGraceMinutes,
+        serverNowMs = IndexModel.RestaurantEpoch(DateTime.Now),
+        customerName = Model.CustomerName,
+        items = Model.Reservations.Select(r => new
+        {
+            id = r.Id,
+            reference = r.ReferenceNo,
+            date = r.ReservedAt.ToString("dd MMM yyyy", en),
+            weekday = r.ReservedAt.ToString("ddd", en),
+            time = r.ReservedAt.ToString("HH:mm", en),
+            reservedAtMs = IndexModel.RestaurantEpoch(r.ReservedAt),
+            guests = r.Guests,
+            seating = IndexModel.Seating(r),
+            request = string.IsNullOrWhiteSpace(r.SpecialRequest) ? "None" : r.SpecialRequest,
+            spend = IndexModel.Spend(r),
+            hasMinimumSpend = r.MinimumSpend > 0m,
+            spendAccepted = r.MinimumSpendWasAccepted,
+            status = r.Status,
+            canCancel = r.CanCancel
+        })
+    });
+}
+<link rel="stylesheet" href="~/css/my-reservations.css" asp-append-version="true" />
+<partial name="_ReservationIcons" />
+<section class="myr" id="myReservations" aria-labelledby="myrTitle">
+    <div class="myr-wrap">
+        <header class="myr-heading">
+            <h1 id="myrTitle">My Reservations<span>.</span></h1>
+            <p>Your evenings at YORU, all in one place.</p>
+        </header>
+        <div class="myr-toolbar">
+            <h2 class="myr-upcoming" id="myrListHeading" tabindex="-1">Upcoming (<span id="myrCount">@Model.UpcomingCount</span>)</h2>
+            <p class="myr-limit">@Model.UpcomingCount of @Model.MaxActiveBookings upcoming bookings used</p>
+            <a class="myr-make" asp-page="/Customer/Reservations/Create"><svg aria-hidden="true"><use href="#myr-calendar" /></svg>Make a Reservation</a>
+        </div>
+        <div class="myr-list" id="myrList" aria-labelledby="myrListHeading">
+            @if (next is not null)
+            {
+                <section class="myr-next" aria-label="Next reservation">
+                    <p class="myr-next-label"><span class="myr-next-pill">NEXT UP</span><span>@IndexModel.When(next.ReservedAt)</span></p>
+                    @{
+                        var confirmed = next.Status == "Confirmed";
+                    }
+                    <article class="myr-ticket" data-reservation-id="@next.Id" aria-label="Reservation @next.ReferenceNo">
+                        <div class="myr-date">
+                            <span class="myr-day">@next.ReservedAt.ToString("dd", en)</span>
+                            <span class="myr-month">@next.ReservedAt.ToString("MMM yyyy", en).ToUpperInvariant()</span>
+                            <span class="myr-date-rule"></span>
+                            <time>@next.ReservedAt.ToString("HH:mm", en)</time>
+                        </div>
+                        <div class="myr-row-body">
+                            <div class="myr-facts">
+                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong>@IndexModel.Seating(next)</strong></div></div>
+                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-users" /></svg><div><span class="myr-label">Guests</span><strong>@next.Guests @(next.Guests == 1 ? "guest" : "guests")</strong></div></div>
+                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-ticket" /></svg><div><span class="myr-label">Reservation reference</span><strong>@next.ReferenceNo</strong></div></div>
+                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-coins" /></svg><div><span class="myr-label">Minimum spend (per booking)</span><strong>@IndexModel.Spend(next)</strong></div></div>
+                            </div>
+                            <div class="myr-status-area">
+                                <span class="myr-status @(confirmed ? "is-confirmed" : "is-pending")"><svg aria-hidden="true"><use href="@(confirmed ? "#myr-check" : "#myr-hourglass")" /></svg>@next.Status</span>
+                                <p>@(!next.CanCancel ? $"Your table is held until {next.ReservedAt.AddMinutes(Model.NoShowGraceMinutes).ToString("HH:mm", en)}." : confirmed ? "We look forward to welcoming you." : "Awaiting restaurant confirmation.")</p>
+                                <div class="myr-actions">
+                                    @if (next.CanCancel)
+                                    {
+                                        <button class="myr-quick-cancel" type="button" data-cancel="@next.Id" aria-label="Cancel reservation @next.ReferenceNo">Cancel</button>
+                                    }
+                                    <button class="myr-view" type="button" data-view="@next.Id" aria-label="View reservation @next.ReferenceNo">View Reservation<svg aria-hidden="true"><use href="#myr-arrow" /></svg></button>
+                                </div>
+                                <span class="myr-small-seal" lang="ja" aria-hidden="true">夜</span>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+            }
+            @if (later.Count > 0)
+            {
+                <section class="myr-later-section" aria-labelledby="myrLaterTitle">
+                    <h3 class="myr-later-title" id="myrLaterTitle"><span>Later</span></h3>
+                    <div class="myr-later-list">
+                        @foreach (var r in later)
+                        {
+                            var ok = r.Status == "Confirmed";
+                            <article class="myr-later" data-reservation-id="@r.Id" aria-label="Reservation @r.ReferenceNo">
+                                <div class="myr-later-date" aria-hidden="true">
+                                    <small>@r.ReservedAt.ToString("ddd", en).ToUpperInvariant()</small>
+                                    <b>@r.ReservedAt.ToString("dd", en)</b>
+                                    <small>@r.ReservedAt.ToString("MMM", en).ToUpperInvariant()</small>
+                                </div>
+                                <div class="myr-later-main">
+                                    <strong class="myr-later-time"><time>@r.ReservedAt.ToString("HH:mm", en)</time><span>@IndexModel.When(r.ReservedAt)</span></strong>
+                                    <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@r.Guests @(r.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@IndexModel.Seating(r)</p>
+                                    @if (r.MinimumSpend > 0m)
+                                    {
+                                        <p class="myr-later-spend"><svg aria-hidden="true"><use href="#myr-coins" /></svg>Minimum spend @IndexModel.Spend(r)</p>
+                                    }
+                                </div>
+                                <div class="myr-later-ref"><span class="myr-label">Reference</span><strong>@r.ReferenceNo</strong></div>
+                                <span class="myr-status @(ok ? "is-confirmed" : "is-pending")"><svg aria-hidden="true"><use href="@(ok ? "#myr-check" : "#myr-hourglass")" /></svg>@r.Status</span>
+                                <div class="myr-later-actions">
+                                    @if (r.CanCancel)
+                                    {
+                                        <button class="myr-quick-cancel" type="button" data-cancel="@r.Id" aria-label="Cancel reservation @r.ReferenceNo">Cancel</button>
+                                    }
+                                    <button class="myr-view" type="button" data-view="@r.Id" aria-label="View reservation @r.ReferenceNo">View<svg aria-hidden="true"><use href="#myr-arrow" /></svg></button>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+        <div class="myr-empty" id="myrEmpty" hidden="@(Model.Reservations.Count > 0)">
+            <span class="myr-empty-seal" lang="ja" aria-hidden="true">夜</span>
+            <h2>Your next evening awaits.</h2>
+            <p>You have no upcoming reservations. Reserve a table and join us at YORU.</p>
+            <a class="myr-make" asp-page="/Customer/Reservations/Create">Make a Reservation<svg aria-hidden="true"><use href="#myr-arrow" /></svg></a>
+        </div>
+        <footer class="myr-reminder"><svg aria-hidden="true"><use href="#myr-info" /></svg><p><strong>Cancel any time before the booking time.</strong> The table is held for @Model.NoShowGraceMinutes minutes after the booking time. If you will be late, please contact us.</p></footer>
+    </div>
+    <form id="myrTokenForm" hidden>@Html.AntiForgeryToken()</form>
+</section>
+
+<dialog class="myr-detail-dialog" id="myrDetails" aria-labelledby="myrDetailsTitle">
+    <div class="myr-detail-shell">
+        <article class="myr-detail-ticket">
+            <div class="myr-detail-main">
+                <header class="myr-ticket-header"><div class="myr-brand"><span>YORU <b lang="ja">夜</b></span><small>IZAKAYA</small></div><span class="myr-brand-rule"></span><h2 id="myrDetailsTitle" tabindex="-1" autofocus>Reservation Details</h2></header>
+                <div class="myr-detail-grid">
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-user" /></svg><div><span class="myr-label">Guest name</span><strong data-fill="customerName"></strong></div></div>
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-calendar" /></svg><div><span class="myr-label">Date</span><strong data-fill="date"></strong><small data-fill="weekday"></small></div></div>
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-clock" /></svg><div><span class="myr-label">Arrival time</span><strong data-fill="time"></strong></div></div>
+                </div>
+                <div class="myr-detail-grid myr-detail-grid-two">
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-users" /></svg><div><span class="myr-label">Guests</span><strong data-fill="guestText"></strong></div></div>
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong data-fill="seating"></strong></div></div>
+                </div>
+                <div class="myr-detail-grid myr-detail-grid-spend">
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-message" /></svg><div><div class="myr-request-head"><span class="myr-label">Special requests</span><button type="button" class="myr-readmore" id="myrReadMore" aria-expanded="false" hidden>Read more</button></div><div class="myr-request-box" id="myrRequestBox" tabindex="-1"><strong data-fill="request" class="myr-request"></strong></div></div></div>
+                    <div class="myr-detail-cell"><svg class="myr-gold" aria-hidden="true"><use href="#myr-crown" /></svg><div><span class="myr-label">Minimum spend (per booking)</span><strong data-fill="spend"></strong><small class="myr-spend-accepted" id="myrSpendAccepted"><svg aria-hidden="true"><use href="#myr-check" /></svg>Minimum spend accepted.</small></div></div>
+                </div>
+                <div class="myr-arrival"><svg aria-hidden="true"><use href="#myr-info" /></svg><div><span class="myr-label">Arrival reminder</span><p>Please arrive on time. If you will be late, contact the restaurant.<br>Without notice, your table is held for @Model.NoShowGraceMinutes minutes only; after that, your table will be released.</p></div></div>
+            </div>
+            <aside class="myr-detail-stub"><div class="myr-stub-inner"><p class="myr-stub-label">BOOKING<br>REFERENCE</p><strong class="myr-stub-reference" data-fill="reference"></strong><span class="myr-stub-rule"></span><svg class="myr-stub-symbol" aria-hidden="true"><use id="myrStatusLargeIcon" href="#myr-hourglass" /></svg><span id="myrDetailsStatus" class="myr-status is-pending"><svg aria-hidden="true"><use id="myrStatusIcon" href="#myr-hourglass" /></svg><span data-fill="status"></span></span><span class="myr-stub-rule"></span><p id="myrStatusCaption"></p><div class="myr-stub-brand">YORU<small>IZAKAYA</small><b lang="ja">夜</b></div></div></aside>
+        </article>
+        <p class="myr-cancel-note" id="myrCancelNote" hidden></p>
+        <p class="myr-rule-note" id="myrRuleNote">You can cancel any time before the booking time.</p>
+        <div class="myr-dialog-actions"><button type="button" class="myr-cancel-button" id="myrOpenCancel">Cancel Reservation</button><button type="button" class="myr-close-button" id="myrCloseDetails">Close</button></div>
+    </div>
+</dialog>
+
+<dialog class="myr-confirm-dialog" id="myrConfirm" aria-labelledby="myrConfirmTitle">
+    <div class="myr-confirm-inner"><span class="myr-confirm-mark" aria-hidden="true"><svg><use href="#myr-ticket" /></svg></span><p class="myr-confirm-eyebrow">CHANGE OF PLANS</p><h2 id="myrConfirmTitle">Cancel this reservation?</h2><p>Your table will be released for other guests, and one of your upcoming bookings will be freed. You can make a new reservation when your plans settle.</p><div class="myr-confirm-summary"><strong id="myrConfirmReference"></strong><span id="myrConfirmDate"></span></div><p class="myr-confirm-error" id="myrCancelError" role="alert" hidden></p><form id="myrCancelForm"><input type="hidden" name="id" id="myrCancelId" /><button type="submit" class="myr-confirm-submit" id="myrConfirmSubmit">Yes, cancel reservation</button><button type="button" class="myr-close-button" id="myrKeepReservation">Keep my reservation</button></form></div>
+</dialog>
+<script type="application/json" id="myrConfig">@Html.Raw(config)</script>
+<script src="~/js/my-reservations.js" asp-append-version="true" defer></script>

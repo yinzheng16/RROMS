@@ -21,6 +21,7 @@ namespace RROMS.Data
         public DbSet<OperatingHour> OperatingHours => Set<OperatingHour>();
         public DbSet<SpecialDate> SpecialDates => Set<SpecialDate>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
+        public DbSet<ReservationStatusLog> ReservationStatusLogs => Set<ReservationStatusLog>();
 
         // Member 3: Menu & Orders
         public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
@@ -111,6 +112,18 @@ namespace RROMS.Data
                 e.HasOne(r => r.Table)
                  .WithMany(t => t.Reservations)
                  .HasForeignKey(r => r.TableId)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<ReservationStatusLog>(e =>
+            {
+                e.Property(x => x.ChangedByRole).HasMaxLength(20);
+                e.Property(x => x.Note).HasMaxLength(200);
+                e.HasIndex(x => new { x.ReservationId, x.ChangedAt });
+                // History must never disappear with a reservation, so no cascade delete.
+                e.HasOne(x => x.Reservation)
+                 .WithMany()
+                 .HasForeignKey(x => x.ReservationId)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
