@@ -48,4 +48,6 @@ public class TableTypeDefinition
         = new List<RestaurantTable>();
 
     public bool AllowBelowMinGuests { get; set; }
+
+    [StringLength(50)] public string? JapaneseName { get; set; }
 }

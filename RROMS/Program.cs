@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using RROMS.Data;
 using RROMS.Models;
@@ -62,6 +63,11 @@ builder.Services.AddRazorPages(options =>
 });
 
 // ---------- Business logic tier (register each module's services here) ----------
+// EN07 (Member 1): shared email sender. Settings in appsettings.json ("Email"),
+// the Gmail App password ONLY in User Secrets ("Email:Password"). No password = emails go to the Output window.
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection(EmailSettings.Section));
+builder.Services.AddSingleton<EmailOutbox>();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();   // EN06 / Member 4
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();   // Member 1: US03 / US04 My profile
@@ -71,6 +77,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 
 //Member 5
 builder.Services.AddScoped<IReportService, ReportService>();

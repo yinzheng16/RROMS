@@ -1,0 +1,7 @@
+.customer-cart .checkout-review__lines li {grid-template-columns:60px minmax(0,1fr) auto;align-items:center;}
+.customer-cart .checkout-review__photo {display:block;inline-size:60px;block-size:60px;object-fit:cover;border-radius:.4rem;border:1px solid #d5b88a;}
+.customer-cart .checkout-review__photo--placeholder {display:grid;place-items:center;background:#f5e7ce;color:#a2773e;font-family:serif;font-size:1.5rem;}
+@media(max-width:35.99rem) {
+ .customer-cart .checkout-review__lines li {grid-template-columns:48px minmax(0,1fr) auto;}
+ .customer-cart .checkout-review__photo {inline-size:48px;block-size:48px;}
+}

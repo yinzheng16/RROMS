@@ -3157,6 +3157,30 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
         color: var(--yoru-red-text);
     }
 
+    /* US50: each opening period on its own line, special dates as "date" + small name */
+    .hm-hours td {
+        vertical-align: top;
+        white-space: nowrap;
+        padding-bottom: .45rem;
+    }
+
+    .hm-hours td span,
+    .hm-hours td small {
+        display: block;
+    }
+
+    .hm-hours td small {
+        font-size: .78rem;
+        color: var(--yoru-muted, #8a7e72);
+        white-space: normal;
+        max-width: 10rem;
+    }
+
+    .hm-hours tr:not(.special) + tr.special td {
+        padding-top: .55rem;
+        border-top: 1px dashed rgba(0, 0, 0, .12);
+    }
+
 .hm-book {
     position: relative;
     z-index: 1;

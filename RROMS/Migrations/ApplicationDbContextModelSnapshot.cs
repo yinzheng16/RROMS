@@ -364,6 +364,51 @@ namespace RROMS.Migrations
                     b.ToTable("DiningAreas");
                 });
 
+            modelBuilder.Entity("RROMS.Models.DiningSession", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TableId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ReservationId")
+                        .IsUnique()
+                        .HasFilter("[ReservationId] IS NOT NULL");
+
+                    b.HasIndex("TableId")
+                        .IsUnique()
+                        .HasFilter("[Status] = 'Open'");
+
+                    b.HasIndex("TableId", "Status");
+
+                    b.ToTable("DiningSessions");
+                });
+
             modelBuilder.Entity("RROMS.Models.Feedback", b =>
                 {
                     b.Property<int>("Id")
@@ -579,6 +624,9 @@ namespace RROMS.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DiningSessionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -625,6 +673,8 @@ namespace RROMS.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DiningSessionId");
 
                     b.HasIndex("OrderNo")
                         .IsUnique();
@@ -765,6 +815,12 @@ namespace RROMS.Migrations
                     b.Property<int>("Guests")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("MinimumSpendAccepted")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("MinimumSpendAcceptedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ReferenceNo")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -781,6 +837,10 @@ namespace RROMS.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SubmissionToken")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<int?>("TableId")
                         .HasColumnType("int");
@@ -987,6 +1047,10 @@ namespace RROMS.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<string>("JapaneseName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1102,6 +1166,31 @@ namespace RROMS.Migrations
                     b.Navigation("MenuItem");
                 });
 
+            modelBuilder.Entity("RROMS.Models.DiningSession", b =>
+                {
+                    b.HasOne("RROMS.Models.ApplicationUser", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RROMS.Models.Reservation", "Reservation")
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RROMS.Models.RestaurantTable", "Table")
+                        .WithMany()
+                        .HasForeignKey("TableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Reservation");
+
+                    b.Navigation("Table");
+                });
+
             modelBuilder.Entity("RROMS.Models.Feedback", b =>
                 {
                     b.HasOne("RROMS.Models.Order", "Order")
@@ -1137,6 +1226,11 @@ namespace RROMS.Migrations
 
             modelBuilder.Entity("RROMS.Models.Order", b =>
                 {
+                    b.HasOne("RROMS.Models.DiningSession", "DiningSession")
+                        .WithMany("Orders")
+                        .HasForeignKey("DiningSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RROMS.Models.Reservation", "Reservation")
                         .WithMany("Orders")
                         .HasForeignKey("ReservationId")
@@ -1147,6 +1241,8 @@ namespace RROMS.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("DiningSession");
 
                     b.Navigation("Reservation");
 
@@ -1258,6 +1354,11 @@ namespace RROMS.Migrations
             modelBuilder.Entity("RROMS.Models.DiningArea", b =>
                 {
                     b.Navigation("Tables");
+                });
+
+            modelBuilder.Entity("RROMS.Models.DiningSession", b =>
+                {
+                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuCategory", b =>

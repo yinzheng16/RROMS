@@ -19,7 +19,12 @@ namespace RROMS.Models
         public int? ReservationId { get; set; }
         public Reservation? Reservation { get; set; }
 
-        // US32: Multiple orders can belong to one combined bill.
+        // Added by Member 2 (dine-in workflow decision, 27 Oct): the dining session this order belongs to.
+        // Null for takeaway orders and for dine-in orders placed before the guests are seated.
+        public int? DiningSessionId { get; set; }
+        public DiningSession? DiningSession { get; set; }
+
+        // US32 (Member 4): Multiple orders can belong to one combined bill.
         public int? BillId { get; set; }
         public Bill? Bill { get; set; }
 

@@ -33,7 +33,8 @@ public sealed record CartTotals(decimal Subtotal, decimal TaxRate, decimal Tax,
     decimal ServiceRate, decimal ServiceCharge, decimal Total);
 public sealed record CartView(Guid Revision, IReadOnlyList<CartLineView> Lines,
     OrderType OrderType, int? ReservationId, string? Notes, CartTotals Totals,
-    IReadOnlyList<CartReservation> Reservations)
+    IReadOnlyList<CartReservation> Reservations, bool RemarksFromProfile = false,
+    string? SeparateProfilePreferences = null)
 {
     public int Quantity => Lines.Sum(line => line.Quantity);
     public bool HasUnavailable => Lines.Any(line => !line.IsAvailable);
