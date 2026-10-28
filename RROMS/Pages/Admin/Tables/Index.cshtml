@@ -624,6 +624,7 @@
     /* Compact Table Type Cards */
     .yoru-type-body {padding:14px 16px 15px;}
     .yoru-type-title {margin-bottom:10px;}
+    .yoru-type-jp {margin:-6px 0 10px; color:#8a7566; font-size:12px; letter-spacing:.12em;}
     .yoru-type-details {gap:7px; margin-bottom:12px;}
     .yoru-type-actions {margin-top:auto;}
     @@media (min-width:761px) {.yoru-type-workspace.drawer-open #yoruTypeDrawer,.yoru-type-workspace.table-drawer-open #tableModal {position:sticky; top:18px; align-self:start; height:calc(100dvh - 36px); max-height:calc(100dvh - 36px);}}
@@ -1278,6 +1279,11 @@
 
                 <h3 class="yoru-type-title">@type.Name</h3>
 
+                @if (!string.IsNullOrWhiteSpace(type.JapaneseName))
+                {
+                    <p class="yoru-type-jp" lang="ja">@type.JapaneseName</p>
+                }
+
                 <div class="yoru-type-details">
                     <div>
                         <i data-lucide="armchair"></i>
@@ -1326,6 +1332,7 @@
                             aria-label="Edit @type.Name"
                             data-id="@type.Id"
                             data-name="@type.Name"
+                            data-jp="@type.JapaneseName"
                             data-prefix="@type.Code"
                             data-padding="@type.NumberPadding"
                             data-area="@type.DefaultDiningAreaId"
@@ -1592,6 +1599,18 @@
                                    class="form-control"
                                    maxlength="50"
                                    required />
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="TableTypeForm.JapaneseName" class="form-label">
+                                Japanese Name <small class="text-muted">(optional)</small>
+                            </label>
+                            <input asp-for="TableTypeForm.JapaneseName"
+                                   class="form-control"
+                                   maxlength="50"
+                                   lang="ja"
+                                   placeholder="e.g. 二名席" />
+                            <div class="form-text">Shown to customers beside the English name when they book.</div>
                         </div>
 
                         <div class="col-12">
@@ -3051,6 +3070,7 @@
             removePhotoFlag.value = 'false';
             setTypeFormValue('Id', '0');
             setTypeFormValue('Name', '');
+            setTypeFormValue('JapaneseName', '');
             setTypeFormValue('NumberPadding', '3');
             setTypeFormValue('DefaultDiningAreaId', '');
             setTypeFormValue('DefaultMinGuests', '1');
@@ -3076,6 +3096,7 @@
 
             setTypeFormValue('Id', d.id);
             setTypeFormValue('Name', d.name);
+            setTypeFormValue('JapaneseName', d.jp);
             setTypeFormValue('NumberPadding', d.padding);
             setTypeFormValue('DefaultDiningAreaId', d.area);
             setTypeFormValue('DefaultMinGuests', d.min);

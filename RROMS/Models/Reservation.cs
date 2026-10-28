@@ -35,5 +35,11 @@ namespace RROMS.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        public decimal? MinimumSpendAccepted { get; set; }
+
+        public DateTime? MinimumSpendAcceptedAt { get; set; }
+
+        [StringLength(40)] public string? SubmissionToken { get; set; }
     }
 }
