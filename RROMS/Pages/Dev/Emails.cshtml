@@ -1,0 +1,98 @@
+@page
+@model RROMS.Pages.Dev.EmailsModel
+@{
+    // EN07 (Member 1): Development only. Lists the emails the app tried to send since it started.
+    ViewData["Title"] = "Email outbox (dev)";
+}
+
+<style>
+    .em-wrap { max-width: 60rem; margin: 2.5rem auto; }
+    .em-mode { border: 1px solid var(--yoru-line); background: var(--yoru-paper); border-radius: .75rem; padding: 1rem 1.25rem; }
+    .em-mode.off { border-left: .3rem solid var(--yoru-gold); }
+    .em-mode.on { border-left: .3rem solid #2E7D4F; }
+    .em-card { border: 1px solid var(--yoru-line); background: var(--yoru-paper); border-radius: .75rem; padding: 1rem 1.25rem; margin-bottom: .75rem; }
+    .em-card.fail { border-left: .3rem solid var(--yoru-red); }
+    .em-meta { color: var(--yoru-olive-text); font-size: .85rem; }
+    .em-links a { word-break: break-all; }
+    .em-frame { width: 100%; min-height: 22rem; border: 1px solid var(--yoru-line); border-radius: .5rem; background: #fff; }
+</style>
+
+<div class="em-wrap">
+    <p class="text-uppercase small mb-1" style="letter-spacing:.2em;color:var(--yoru-red-text)">EN07 · Developer</p>
+    <h1 class="mb-3">Email outbox</h1>
+
+    @if (!string.IsNullOrEmpty(Model.Message))
+    {
+        <div class="alert alert-info">@Model.Message</div>
+    }
+
+    <div class="em-mode @(Model.CanSend ? "on" : "off") mb-4">
+        @if (Model.CanSend)
+        {
+            <strong>Sending for real</strong>
+            <div class="em-meta">Emails go out through Gmail from @Model.FromAddress.</div>
+        }
+        else
+        {
+            <strong>Output only: emails are not sent</strong>
+            <div class="em-meta">
+                No Gmail App password in User Secrets, so every email is written to the Output window and listed below.
+                Add <code>"Email": {"Password": "…"}</code> to User Secrets to send for real. No code change needed.
+            </div>
+        }
+    </div>
+
+    <form method="post" asp-page-handler="Test" class="row g-2 align-items-start mb-4">
+        <div class="col-sm">
+            <input asp-for="To" class="form-control" placeholder="you@example.com" />
+            <span asp-validation-for="To" class="text-danger small"></span>
+        </div>
+        <div class="col-sm-auto">
+            <button class="btn btn-danger">Send test email</button>
+        </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 m-0">Last @Model.Emails.Count @(Model.Emails.Count == 1 ? "email" : "emails")</h2>
+        @if (Model.Emails.Count > 0)
+        {
+            <form method="post" asp-page-handler="Clear"><button class="btn btn-sm btn-outline-secondary">Clear</button></form>
+        }
+    </div>
+
+    @if (Model.Emails.Count == 0)
+    {
+        <p class="em-meta">Nothing yet. Emails appear here as soon as the app sends one (they are cleared when the app restarts).</p>
+    }
+
+    @foreach (var e in Model.Emails)
+    {
+        <div class="em-card @(e.Ok ? "" : "fail")">
+            <div class="d-flex justify-content-between flex-wrap gap-2">
+                <strong>@e.Subject</strong>
+                <span class="em-meta">@e.At.ToString("d MMM, h:mm:ss tt")</span>
+            </div>
+            <div class="em-meta mb-2">To @e.To · @e.Status</div>
+
+            @if (e.Links.Count > 0)
+            {
+                <div class="em-links mb-2">
+                    @foreach (var link in e.Links)
+                    {
+                        <div><a href="@link">@link</a></div>
+                    }
+                </div>
+            }
+
+            <details>
+                <summary class="em-meta">Show the email</summary>
+                @* sandbox: the email is shown as it would look, but cannot run scripts *@
+                <iframe class="em-frame mt-2" sandbox srcdoc="@e.Html"></iframe>
+            </details>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
