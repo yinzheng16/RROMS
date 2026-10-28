@@ -38,17 +38,17 @@
 
     [data-menu-studio] [data-menu-summary-row] [data-category-summary]:nth-child(1) [data-summary-surface] {
         background-color: #141515 !important;
-        background-image: linear-gradient(90deg,rgba(0,0,0,.1),transparent),url('../images/menu/studio/yoru-studio-summary-night.png');
+        background-image: linear-gradient(90deg,rgba(0,0,0,.1),transparent),url('../images/menu/studio/yoru-studio-summary-night.webp');
     }
 
     [data-menu-studio] [data-menu-summary-row] [data-category-summary]:nth-child(2) [data-summary-surface] {
         background-color: #a5190e !important;
-        background-image: linear-gradient(90deg,rgba(80,0,0,.12),transparent),url('../images/menu/studio/yoru-studio-summary-sushi.png');
+        background-image: linear-gradient(90deg,rgba(80,0,0,.12),transparent),url('../images/menu/studio/yoru-studio-summary-sushi.webp');
     }
 
     [data-menu-studio] [data-menu-summary-row] [data-category-summary]:nth-child(3) [data-summary-surface] {
         background-color: #fbf4e7 !important;
-        background-image: url('../images/menu/studio/yoru-studio-summary-tea.png');
+        background-image: url('../images/menu/studio/yoru-studio-summary-tea.webp');
     }
 
     [data-menu-studio] [data-menu-summary-row] [data-summary-art] {
@@ -340,20 +340,20 @@
 
 /* Separate textured artwork for the two editors. Category has no red sun. */
 [data-menu-studio] .yoru-item-drawer > [data-menu-drawer-header] {
-    background-image: url('../images/menu/studio/yoru-studio-category-drawer.png');
+    background-image: url('../images/menu/studio/yoru-studio-category-drawer.webp');
     background-position: right top;
     background-size: 46% auto;
     background-repeat: no-repeat;
 }
 
 [data-menu-studio] .yoru-item-drawer:has(#item-editor-title) > [data-menu-drawer-header] {
-    background-image: url('../images/menu/studio/yoru-studio-item-drawer.png');
+    background-image: url('../images/menu/studio/yoru-studio-item-drawer.webp');
     background-size: 43% auto;
     background-position: right .5rem top .15rem;
 }
 
 [data-menu-studio] [data-category-drawer] > [data-menu-drawer-header] {
-    background-image: url('../images/menu/studio/yoru-studio-category-drawer.png');
+    background-image: url('../images/menu/studio/yoru-studio-category-drawer.webp');
     background-size: 46% auto;
     background-position: right top;
 }

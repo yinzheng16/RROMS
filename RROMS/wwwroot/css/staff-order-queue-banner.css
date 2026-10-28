@@ -169,7 +169,7 @@
         inset-inline-end: -1.2rem;
         inline-size: min(62%, 20rem);
         block-size: 11rem;
-        background: url('../images/staff/yoru-order-drawer-sakura.png') right top / contain no-repeat;
+        background: url('../images/staff/yoru-order-drawer-sakura.webp') right top / contain no-repeat;
         opacity: .68;
     }
 
@@ -534,7 +534,7 @@
             block-size: max(181.4536341%, calc(83cqw + 3rem));
             aspect-ratio: 2172 / 724;
             transform: translateY(-48.1353591%);
-            background: url('../images/staff/yoru-order-queue-banner.png') left top / 100% 100% no-repeat;
+            background: url('../images/staff/yoru-order-queue-banner.webp') left top / 100% 100% no-repeat;
         }
 
         .sq-masthead--illustrated .sq-masthead__title::after {

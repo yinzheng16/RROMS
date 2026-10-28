@@ -4,7 +4,7 @@ body:has(.cart-confirmation) {
 }
 
     body:has(.cart-confirmation) .site-main {
-        background: #fcf5e8 url('../images/confirmation/yoru-confirmation-scene-clean.png') center top/cover no-repeat;
+        background: #fcf5e8 url('../images/confirmation/yoru-confirmation-scene-clean.webp') center top/cover no-repeat;
         background-attachment: scroll;
     }
 
@@ -220,7 +220,7 @@ body:has(.cart-confirmation) {
         margin: 0 -2rem;
         width: calc(100% + 4rem);
         height: 7rem;
-        background: url('../images/confirmation/yoru-confirmation-scene.png') right bottom/200% auto no-repeat;
+        background: url('../images/confirmation/yoru-confirmation-scene.webp') right bottom/200% auto no-repeat;
         mask-image: linear-gradient(transparent,#000 35%)
     }
 
@@ -352,7 +352,7 @@ body:has(.cart-confirmation) {
    never slides the scene through the translucent details or text. */
 .cart-confirmation__welcome {
     background-color: #101112;
-    background-image: linear-gradient(90deg,rgba(6,8,9,.70),rgba(6,8,9,.45)),url('../images/confirmation/yoru-confirmation-scene.png');
+    background-image: linear-gradient(90deg,rgba(6,8,9,.70),rgba(6,8,9,.45)),url('../images/confirmation/yoru-confirmation-scene.webp');
     background-position: center,left top;
     background-size: auto,220% auto;
     background-repeat: no-repeat;
@@ -453,7 +453,7 @@ body:has(.cart-confirmation) {
     aspect-ratio: 3/1;
     margin: .4rem -2rem 0;
     pointer-events: none;
-    background: #fcf5e8 url('../images/confirmation/yoru-confirmation-receipt-footer.png') center bottom/100% auto no-repeat;
+    background: #fcf5e8 url('../images/confirmation/yoru-confirmation-receipt-footer.webp') center bottom/100% auto no-repeat;
     -webkit-mask-image: linear-gradient(to bottom,transparent,#000 22%);
     mask-image: linear-gradient(to bottom,transparent,#000 22%);
 }
@@ -535,7 +535,7 @@ body:has(.cart-confirmation) {
 .cart-confirmation .cart-receipt {
     isolation: isolate;
     background-color: #fcf5e8;
-    background-image: linear-gradient(rgba(255,251,242,.3),rgba(255,251,242,.3)),url('../images/menu/yoru-menu-washi.png');
+    background-image: linear-gradient(rgba(255,251,242,.3),rgba(255,251,242,.3)),url('../images/menu/yoru-menu-washi.webp');
     background-position: left top,left top;
     background-size: auto,34rem 34rem;
     background-repeat: no-repeat,repeat;

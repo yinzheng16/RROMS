@@ -3,7 +3,7 @@
    to the category drawer, dish-card content or floating controls. */
 .customer-menu {
     background-color: var(--yoru-cream);
-    background-image: url('../images/menu/yoru-menu-gold-sakura.png'), url('../images/menu/yoru-menu-washi.png');
+    background-image: url('../images/menu/yoru-menu-gold-sakura.webp'), url('../images/menu/yoru-menu-washi.webp');
     background-repeat: no-repeat, repeat;
     background-size: min(100vw, 110rem) auto, 34rem 34rem;
     background-position: center clamp(20rem, 26vw, 30rem), left top;
@@ -42,7 +42,7 @@
             content: '';
             position: absolute;
             inset-block-end: 0;
-            background-image: url('../images/menu/yoru-menu-hero-blossoms.png');
+            background-image: url('../images/menu/yoru-menu-hero-blossoms.webp');
             background-repeat: no-repeat;
             background-size: auto 100%;
         }
@@ -69,7 +69,7 @@
         inset-inline: 0;
         inset-block-end: -1px;
         block-size: clamp(1rem, 1.5vw, 1.75rem);
-        background: var(--yoru-cream) url('../images/menu/yoru-menu-washi.png') left top / 34rem 34rem repeat;
+        background: var(--yoru-cream) url('../images/menu/yoru-menu-washi.webp') left top / 34rem 34rem repeat;
         clip-path: polygon(0 35%, 3% 42%, 6% 26%, 9% 39%, 12% 31%, 15% 44%, 19% 25%, 23% 38%, 27% 30%, 31% 46%, 35% 35%, 39% 48%, 43% 30%, 47% 43%, 51% 33%, 55% 46%, 59% 29%, 63% 39%, 67% 27%, 71% 45%, 75% 31%, 79% 42%, 83% 28%, 87% 44%, 91% 33%, 95% 40%, 98% 25%, 100% 36%, 100% 100%, 0 100%);
     }
 
