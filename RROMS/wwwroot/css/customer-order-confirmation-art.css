@@ -1,0 +1,556 @@
+body:has(.cart-confirmation) {
+    background: #fcf5e8;
+    overflow-x: clip
+}
+
+    body:has(.cart-confirmation) .site-main {
+        background: #fcf5e8 url('../images/confirmation/yoru-confirmation-scene-clean.png') center top/cover no-repeat;
+        background-attachment: scroll;
+    }
+
+    body:has(.cart-confirmation) main > div:has(>.cart-confirmation) {
+        padding-top: 1rem !important
+    }
+
+.cart-confirmation {
+    inline-size: min(86vw,82rem);
+    max-inline-size: none;
+    position: relative;
+    inset-inline-start: 50%;
+    transform: translateX(-46%);
+    margin: 0
+}
+
+.cart-confirmation__layout {
+    grid-template-columns: minmax(0,.72fr) minmax(0,1fr);
+    gap: 1.2rem;
+    align-items: start
+}
+
+.cart-confirmation__welcome {
+    padding: clamp(1.2rem,2.4vw,2rem);
+    border: 2px solid #b88b42;
+    border-radius: .65rem;
+    background: linear-gradient(90deg,rgba(6,8,9,.75),rgba(6,8,9,.42));
+    box-shadow: inset 0 0 0 3px #171410,inset 0 0 0 4px #8e6a30,0 .3rem 1rem #0003
+}
+
+    .cart-confirmation__welcome::before {
+        background: none
+    }
+
+    .cart-confirmation__welcome::after {
+        opacity: .25
+    }
+
+.cart-confirmation__japanese, .cart-confirmation__mark {
+    display: none
+}
+
+.cart-confirmation__eyebrow {
+    justify-content: start;
+    margin: 1.6rem 0 .7rem;
+    color: #e3c389;
+    font-size: .7rem;
+    letter-spacing: .1em
+}
+
+    .cart-confirmation__eyebrow::before, .cart-confirmation__eyebrow::after {
+        display: none
+    }
+
+.cart-confirmation__heading {
+    padding: 0
+}
+
+    .cart-confirmation__heading h1 {
+        font-size: clamp(2.2rem,3.8vw,3.6rem);
+        line-height: 1.04;
+        letter-spacing: -.025em
+    }
+
+        .cart-confirmation__heading h1 strong {
+            color: #c73323;
+            font-weight: inherit
+        }
+
+    .cart-confirmation__heading > p {
+        font-size: clamp(1rem,1.8vw,1.45rem);
+        line-height: 1.4
+    }
+
+.cart-confirmation__status {
+    display: flex;
+    flex-direction: column;
+    margin: 1.2rem 0 1rem
+}
+
+    .cart-confirmation__status::before {
+        display: none
+    }
+
+    .cart-confirmation__status [data-order-status-message] {
+        order: 0;
+        margin: 0 0 .65rem;
+        font-size: .82rem;
+        color: #f7eedf
+    }
+
+    .cart-confirmation__status .order-status-heading {
+        order: 1
+    }
+
+    .cart-confirmation__status .status-Pending {
+        color: #f4bd50;
+        border-color: #dfaa42;
+        background: #211705b8;
+        min-inline-size: 8rem;
+        text-align: center;
+        border-radius: 2rem
+    }
+
+        .cart-confirmation__status .status-Pending::before {
+            content: '⌛';
+            margin-inline-end: .7rem
+        }
+
+    .cart-confirmation__status .order-status-feedback {
+        order: 2
+    }
+
+.cart-confirmation__details {
+    display: block;
+    padding: .4rem .8rem;
+    border: 1px solid #ad833c;
+    border-radius: .5rem;
+    background: #090b0b80
+}
+
+    .cart-confirmation__details > div {
+        position: relative;
+        padding: .65rem 0 .65rem 1.9rem
+    }
+
+        .cart-confirmation__details > div + div {
+            border-top: 1px solid #ad833c66
+        }
+
+        .cart-confirmation__details > div::before {
+            position: absolute;
+            left: 0;
+            top: .7rem;
+            content: '▤';
+            color: #dfac53;
+            font-size: 1.3rem
+        }
+
+        .cart-confirmation__details > div:nth-child(2)::before {
+            content: '♧'
+        }
+
+        .cart-confirmation__details > div:nth-child(3)::before {
+            content: '▦'
+        }
+
+    .cart-confirmation__details dt {
+        color: #dfb66e;
+        font-size: .75rem
+    }
+
+    .cart-confirmation__details dd {
+        font-size: .85rem
+    }
+
+.cart-confirmation__order-number {
+    font-family: var(--font-body) !important;
+    letter-spacing: 0
+}
+
+.cart-confirmation__remarks {
+    border-color: #ad833c;
+    background: #090b0b90;
+    border-radius: .4rem
+}
+
+.cart-confirmation__actions {
+    margin-top: .9rem;
+    max-inline-size: none
+}
+
+    .cart-confirmation__actions .confirmation-back {
+        background: linear-gradient(110deg,#ae2417,#ca3020);
+        border: 1px solid #d34a2d;
+        color: #fff8ea;
+        order: -1;
+        border-radius: .4rem
+    }
+
+        .cart-confirmation__actions .confirmation-back:hover {
+            background: #962014
+        }
+
+    .cart-confirmation__actions a:not(.confirmation-back) {
+        background: transparent;
+        border: 0;
+        min-block-size: 1.5rem;
+        padding: .1rem;
+        text-decoration: underline;
+        color: #e6c48a;
+        font-size: .8rem
+    }
+
+.cart-confirmation .cart-receipt {
+    margin-top: 1rem;
+    padding: 1.5rem 2rem 0;
+    border: 2px solid #bf944f;
+    border-radius: .45rem;
+    background: rgba(255,250,238,.87);
+    box-shadow: inset 0 0 0 2px #fff6dd,inset 0 0 0 3px #d1ad71;
+    overflow: hidden
+}
+
+    .cart-confirmation .cart-receipt::before {
+        display: none
+    }
+
+    .cart-confirmation .cart-receipt::after {
+        position: relative;
+        display: block;
+        inset: auto;
+        margin: 0 -2rem;
+        width: calc(100% + 4rem);
+        height: 7rem;
+        background: url('../images/confirmation/yoru-confirmation-scene.png') right bottom/200% auto no-repeat;
+        mask-image: linear-gradient(transparent,#000 35%)
+    }
+
+.cart-confirmation .cart-receipt__heading h2 {
+    font-size: clamp(1.7rem,3vw,2.5rem);
+    font-weight: 600
+}
+
+.cart-confirmation .cart-receipt__heading p {
+    font-size: .7rem;
+    letter-spacing: .08em
+}
+
+.cart-confirmation .cart-receipt__heading {
+    border-color: #c9a66b88
+}
+
+.cart-confirmation .cart-dishes__count {
+    background: #f3dfba;
+    border-color: #c99d57;
+    color: #5e421e
+}
+
+.cart-confirmation .cart-receipt__line {
+    grid-template-columns: 2rem 5.4rem minmax(0,1fr) auto;
+    gap: .8rem;
+    padding: .8rem 0;
+    border-color: #c9a66b88
+}
+
+    .cart-confirmation .cart-receipt__line > img, .cart-confirmation .cart-receipt__line > .cart-line__placeholder {
+        width: 5.4rem;
+        height: 4.4rem
+    }
+
+    .cart-confirmation .cart-receipt__line h3 {
+        font-family: var(--font-display,Georgia,serif);
+        font-size: .95rem;
+        font-weight: 600
+    }
+
+.cart-confirmation .cart-receipt__number {
+    border-color: #b88946;
+    border-radius: .2rem;
+    color: #765026
+}
+
+.cart-confirmation .cart-receipt__totals {
+    border-top: 1px solid #c9a66b88;
+    padding-top: 1rem
+}
+
+    .cart-confirmation .cart-receipt__totals .cart-totals__total {
+        border-top: 1px dashed #b88946;
+        margin-top: .8rem;
+        padding-top: .6rem;
+        font-size: 1.6rem
+    }
+
+        .cart-confirmation .cart-receipt__totals .cart-totals__total dd {
+            color: #b52b1c;
+            font-weight: 700
+        }
+
+.cart-confirmation__hint {
+    color: #705539;
+    margin-top: 1.5rem;
+    padding-bottom: 1rem
+}
+
+    .cart-confirmation__hint::before {
+        content: '夜';
+        display: block;
+        margin: 0 auto .5rem;
+        border-radius: 50%;
+        background: #b82b20;
+        color: #fff1d5;
+        width: 1.8rem;
+        height: 1.8rem;
+        font-family: serif;
+        font-size: 1.2rem
+    }
+
+@media(max-width:61.99rem) {
+    .cart-confirmation {
+        width: 94vw;
+        transform: translateX(-50%)
+    }
+
+    .cart-confirmation__layout {
+        grid-template-columns: 1fr
+    }
+
+    .cart-confirmation__welcome {
+        background: #101211e8
+    }
+
+    .cart-confirmation .cart-receipt {
+        margin-top: 0
+    }
+}
+
+@media(max-width:35.99rem) {
+    .cart-confirmation .cart-receipt {
+        padding: 1rem 1rem 0
+    }
+
+    .cart-confirmation .cart-receipt__line {
+        grid-template-columns: 1.7rem 3.4rem minmax(0,1fr);
+        gap: .4rem
+    }
+
+        .cart-confirmation .cart-receipt__line > img {
+            width: 3.4rem;
+            height: 3.4rem
+        }
+
+    .cart-confirmation .cart-receipt::after {
+        margin-inline: -1rem;
+        width: calc(100% + 2rem)
+    }
+
+    .cart-confirmation__heading h1 {
+        font-size: 2.5rem
+    }
+}
+
+/* The illustrated left panel has its own background, so scrolling the page
+   never slides the scene through the translucent details or text. */
+.cart-confirmation__welcome {
+    background-color: #101112;
+    background-image: linear-gradient(90deg,rgba(6,8,9,.70),rgba(6,8,9,.45)),url('../images/confirmation/yoru-confirmation-scene.png');
+    background-position: center,left top;
+    background-size: auto,220% auto;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+}
+
+.cart-confirmation__heading > .cart-confirmation__eyebrow {
+    font-family: var(--font-body,sans-serif);
+    font-size: .7rem;
+    line-height: 1.5;
+    color: #e3c389;
+}
+
+.cart-confirmation__status .status-Pending {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+}
+
+    .cart-confirmation__status .status-Pending::before {
+        content: "";
+        display: inline-block;
+        flex: 0 0 1rem;
+        inline-size: 1rem;
+        block-size: 1.1rem;
+        margin: 0;
+        background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%202h12M6%2022h12M7%202v4c0%203%205%206%205%206s5-3%205-6V2M7%2022v-4c0-3%205-6%205-6s5%203%205%206v4%22%2F%3E%3Cpath%20d%3D%22M9%205h6l-3%203zM9%2020h6l-3-4z%22%20fill%3D%22black%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%202h12M6%2022h12M7%202v4c0%203%205%206%205%206s5-3%205-6V2M7%2022v-4c0-3%205-6%205-6s5%203%205%206v4%22%2F%3E%3Cpath%20d%3D%22M9%205h6l-3%203zM9%2020h6l-3-4z%22%20fill%3D%22black%22%20stroke%3D%22none%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+    }
+
+.cart-confirmation__details > div:nth-child(n)::before {
+    content: "";
+    display: block;
+    inline-size: 1.3rem;
+    block-size: 1.4rem;
+    inset-inline-start: 0;
+    inset-block-start: .85rem;
+    background: #e2b767;
+    -webkit-mask: var(--confirmation-detail-icon) center/contain no-repeat;
+    mask: var(--confirmation-detail-icon) center/contain no-repeat;
+}
+
+.cart-confirmation__details > div:nth-child(1) {
+    --confirmation-detail-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%202h9l5%205v15H5zM14%202v6h5M8%2012h7M8%2016h5M11%2010l3%202-3%202%22%2F%3E%3C%2Fsvg%3E");
+}
+
+.cart-confirmation__details > div:nth-child(2) {
+    --confirmation-detail-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%202v6a3%203%200%200%200%206%200V2M6%202v20M15%202c-3%204-3%209%200%2010h3V2zM18%2012v10%22%2F%3E%3C%2Fsvg%3E");
+}
+
+.cart-confirmation__details > div:nth-child(3) {
+    --confirmation-detail-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%2218%22%20height%3D%2217%22%20rx%3D%221%22%2F%3E%3Cpath%20d%3D%22M7%202v6M17%202v6M3%2010h18M7%2014h1M12%2014h1M17%2014h1M7%2018h1M12%2018h1M17%2018h1%22%2F%3E%3C%2Fsvg%3E");
+}
+
+.cart-confirmation__details > div:nth-child(4) {
+    --confirmation-detail-icon: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%2218%22%20height%3D%2217%22%20rx%3D%221%22%2F%3E%3Cpath%20d%3D%22M7%202v6M17%202v6M3%2010h18M7%2014h1M12%2014h1M17%2014h1M7%2018h1M12%2018h1M17%2018h1%22%2F%3E%3C%2Fsvg%3E");
+}
+
+.cart-confirmation__remarks > i {
+    color: #e2b767;
+}
+
+    .cart-confirmation__remarks > i::before {
+        content: "";
+        display: block;
+        inline-size: 1.3rem;
+        block-size: 1.4rem;
+        background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%202h9l5%205v15H5zM14%202v6h5M8%2012h7M8%2016h7M8%2019h4%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%202h9l5%205v15H5zM14%202v6h5M8%2012h7M8%2016h7M8%2019h4%22%2F%3E%3C%2Fsvg%3E") center/contain no-repeat;
+    }
+
+/* The cards share a top edge but retain independent content heights. */
+.cart-confirmation__layout {
+    align-items: start;
+}
+
+.cart-confirmation .cart-receipt {
+    margin-block-start: 0;
+    align-self: start;
+    background: #fcf5e8;
+}
+/* An opaque sheet stops the outer landscape showing behind names and totals. */
+.cart-confirmation .cart-receipt__totals {
+    position: relative;
+    background: #fcf5e8;
+}
+
+.cart-confirmation .cart-receipt::after {
+    content: "";
+    position: relative;
+    display: block;
+    inset: auto;
+    inline-size: calc(100% + 4rem);
+    block-size: auto;
+    aspect-ratio: 3/1;
+    margin: .4rem -2rem 0;
+    pointer-events: none;
+    background: #fcf5e8 url('../images/confirmation/yoru-confirmation-receipt-footer.png') center bottom/100% auto no-repeat;
+    -webkit-mask-image: linear-gradient(to bottom,transparent,#000 22%);
+    mask-image: linear-gradient(to bottom,transparent,#000 22%);
+}
+
+@media(max-width:35.99rem) {
+    .cart-confirmation .cart-receipt::after {
+        inline-size: calc(100% + 2rem);
+        margin-inline: -1rem;
+    }
+}
+
+/* A quiet, opaque strip keeps this message readable over either side of the scene. */
+.cart-confirmation__hint {
+    box-sizing: border-box;
+    inline-size: min(100%,38rem);
+    margin: 1.4rem auto 0;
+    padding: .5rem 1rem 1rem;
+    background: #fcf5e8;
+    color: #513923;
+    font-family: var(--font-body,sans-serif);
+    font-size: .8rem;
+    font-weight: 500;
+    line-height: 1.6;
+    text-align: center;
+}
+
+    .cart-confirmation__hint::before {
+        content: "";
+        display: block;
+        inline-size: min(100%,32rem);
+        block-size: 2.4rem;
+        margin: 0 auto .25rem;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        background: transparent url('../images/confirmation/yoru-confirmation-seal-divider.svg') center/contain no-repeat;
+    }
+
+/* Crop only the footer asset's unused upper paper, keeping its proportions.
+   The landscape remains in flow after Total for every order length. */
+.cart-confirmation .cart-receipt::after {
+    aspect-ratio: 5/1;
+    margin-block-start: .2rem;
+    background-position: center bottom;
+    background-size: 100% auto;
+    -webkit-mask-image: linear-gradient(to bottom,transparent,#000 8%);
+    mask-image: linear-gradient(to bottom,transparent,#000 8%);
+}
+/* Text only, beneath the cards, on the quiet paper side of the page. */
+.cart-confirmation__hint {
+    inline-size: calc((100% - 1.2rem) / 1.72);
+    max-inline-size: 100%;
+    margin: 1.1rem 0 .5rem auto;
+    padding: .25rem 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    color: #513923;
+    text-align: center;
+}
+
+    .cart-confirmation__hint::before,
+    .cart-confirmation__hint::after {
+        content: none;
+        display: none;
+        background: none;
+    }
+
+@media(max-width:61.99rem) {
+    .cart-confirmation__hint {
+        inline-size: 100%;
+        margin-inline: 0;
+        text-shadow: 0 1px 2px #fcf5e8,0 0 5px #fcf5e8,0 0 9px #fcf5e8;
+    }
+}
+
+/* One opaque paper surface under the whole receipt, including its illustration. */
+.cart-confirmation .cart-receipt {
+    isolation: isolate;
+    background-color: #fcf5e8;
+    background-image: linear-gradient(rgba(255,251,242,.3),rgba(255,251,242,.3)),url('../images/menu/yoru-menu-washi.png');
+    background-position: left top,left top;
+    background-size: auto,34rem 34rem;
+    background-repeat: no-repeat,repeat;
+}
+
+.cart-confirmation .cart-receipt__totals {
+    background: transparent;
+}
+/* Multiply lets the card's paper show through the image's cream pixels.
+   A gradual mask removes the rectangular top edge without moving the image
+   behind live totals or prices. */
+.cart-confirmation .cart-receipt::after {
+    background-color: transparent;
+    mix-blend-mode: multiply;
+    opacity: .93;
+    -webkit-mask-image: linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 22%,#000 62%);
+    mask-image: linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 22%,#000 62%);
+}
