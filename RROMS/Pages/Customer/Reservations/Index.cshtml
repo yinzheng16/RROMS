@@ -19,7 +19,7 @@
             reference = r.ReferenceNo,
             date = r.ReservedAt.ToString("dd MMM yyyy", en),
             weekday = r.ReservedAt.ToString("ddd", en),
-            time = r.ReservedAt.ToString("HH:mm", en),
+            time = IndexModel.Clock(r.ReservedAt),
             reservedAtMs = IndexModel.RestaurantEpoch(r.ReservedAt),
             guests = r.Guests,
             seating = IndexModel.Seating(r),
@@ -62,7 +62,7 @@
                             <span class="myr-day">@next.ReservedAt.ToString("dd", en)</span>
                             <span class="myr-month">@next.ReservedAt.ToString("MMM yyyy", en).ToUpperInvariant()</span>
                             <span class="myr-date-rule"></span>
-                            <time>@next.ReservedAt.ToString("HH:mm", en)</time>
+                            <time>@IndexModel.Clock(next.ReservedAt)</time>
                         </div>
                         <div class="myr-row-body">
                             <div class="myr-facts">
@@ -77,7 +77,7 @@
                                     <div class="myr-table-seal@(nextTable.Length >= 6 ? " is-long" : "")" role="img" aria-label="Table @nextTable"><img src="~/images/reservations/table-seal.webp" alt="" /><span class="myr-seal-text"><small>TABLE</small><b class="@IndexModel.SealSize(nextTable)">@nextTable</b></span></div>
                                 }
                                 <span class="myr-status @(confirmed ? "is-confirmed" : "is-pending")"><svg aria-hidden="true"><use href="@(confirmed ? "#myr-check" : "#myr-hourglass")" /></svg>@next.Status</span>
-                                <p>@(!next.CanCancel ? $"Your table is held until {next.ReservedAt.AddMinutes(Model.NoShowGraceMinutes).ToString("HH:mm", en)}." : nextTable is not null ? "Your table may change on the day." : confirmed ? "We look forward to welcoming you." : "Awaiting restaurant confirmation.")</p>
+                                <p>@(!next.CanCancel ? $"Your table is held until {IndexModel.Clock(next.ReservedAt.AddMinutes(Model.NoShowGraceMinutes))}." : nextTable is not null ? "Your table may change on the day." : confirmed ? "We look forward to welcoming you." : "Awaiting restaurant confirmation.")</p>
                                 <div class="myr-actions">
                                     @if (next.CanCancel)
                                     {
@@ -108,7 +108,7 @@
                                     <small>@r.ReservedAt.ToString("MMM", en).ToUpperInvariant()</small>
                                 </div>
                                 <div class="myr-later-main">
-                                    <strong class="myr-later-time"><time>@r.ReservedAt.ToString("HH:mm", en)</time><span>@IndexModel.When(r.ReservedAt)</span></strong>
+                                    <strong class="myr-later-time"><time>@IndexModel.Clock(r.ReservedAt)</time><span>@IndexModel.When(r.ReservedAt)</span></strong>
                                     <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@r.Guests @(r.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@IndexModel.Seating(r)@if (rowArea is not null){<i></i><span>@rowArea</span>}@if (rowTable is not null){<i></i><strong class="myr-later-table">Table @rowTable</strong>}</p>
                                     @if (r.MinimumSpend > 0m)
                                     {

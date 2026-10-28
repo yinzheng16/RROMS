@@ -90,6 +90,8 @@ public class IndexModel(
     public static string Seating(MyReservationItem r) => string.IsNullOrWhiteSpace(r.JapaneseName)
         ? r.TableTypeName : $"{r.TableTypeName} / {r.JapaneseName}";
 
+    // 12-hour clock with AM/PM everywhere, so 12:00 can never be mistaken for midnight.
+    public static string Clock(DateTime at) => at.ToString("h:mm tt", CultureInfo.InvariantCulture);
     public static string When(DateTime at)
     {
         var days = (at.Date - DateTime.Now.Date).Days;
