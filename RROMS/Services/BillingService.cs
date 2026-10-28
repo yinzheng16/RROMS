@@ -8,7 +8,6 @@ namespace RROMS.Services
     public class BillingService : IBillingService
     {
         private readonly IRepository<Order> _orders;
-        private readonly IRepository<RestaurantSetting> _settings;
         private readonly IRepository<Payment> _payments;
         private readonly IRepository<Bill> _bills;
 
@@ -16,13 +15,11 @@ namespace RROMS.Services
 
         public BillingService(
             IRepository<Order> orders,
-            IRepository<RestaurantSetting> settings,
             IRepository<Payment> payments,
             IRepository<Bill> bills,
             IBillingTransactionRepository billingTransaction)
         {
             _orders = orders;
-            _settings = settings;
             _payments = payments;
             _bills = bills;
             _billingTransaction = billingTransaction;
@@ -225,7 +222,7 @@ namespace RROMS.Services
                     "Cannot confirm a bill with an existing pending or completed payment.");
 
             bill.Status = BillStatus.Confirmed;
-            bill.ConfirmedAt = DateTime.UtcNow;
+            bill.ConfirmedAt = DateTime.Now;
             bill.ConfirmedByUserId = staffUserId.Trim();
 
             await _bills.SaveChangesAsync();
@@ -289,69 +286,6 @@ namespace RROMS.Services
         }
 
 
-        // =====================================================
-        // US24 INTEGRATION POINT - MEMBER 3
-        // =====================================================
-        // Provide checkout calculation method
-        // Call CalculateCheckoutAsync() from OrderService or
-        // the Checkout PageModel BEFORE creating an Order.
-        //
-        // Example:
-        // var checkout = await _billingService.CalculateCheckoutAsync(
-        //     checkoutItems);
-        //
-        // checkout.TotalAmount contains:
-        // Subtotal + SST + Service Charge.
-        //
-        // IMPORTANT:
-        // - Prices must be retrieved and verified server-side.
-        // - Do NOT trust prices sent from the customer's browser.
-        // - This method only calculates amounts.
-        // - It does NOT save an Order or confirm a bill.
-        // - Recalculate when the customer confirms the order.
-        // =====================================================
-        public async Task<CheckoutSummary> CalculateCheckoutAsync(
-            IReadOnlyList<CheckoutItemInput> items)
-        {
-            if (items == null || items.Count == 0)
-                throw new ArgumentException(
-                    "Checkout must contain at least one item.");
-
-            if (items.Any(item =>
-                item.MenuItemId <= 0 ||
-                item.Quantity <= 0 ||
-                item.UnitPrice < 0))
-            {
-                throw new ArgumentException(
-                    "Checkout contains invalid item values.");
-            }
-
-            decimal subtotal = items.Sum(item =>
-                item.Quantity * item.UnitPrice);
-
-            if (subtotal <= 0)
-                throw new InvalidOperationException(
-                    "Checkout subtotal must be positive.");
-
-            var settings = await GetSettingsAsync();
-
-
-            var amounts = CalculateAmounts(
-                subtotal,
-                settings.TaxRatePercent,
-                settings.ServiceChargePercent);
-
-
-            return new CheckoutSummary(
-                amounts.Subtotal,
-                settings.TaxRatePercent,
-                amounts.TaxAmount,
-                settings.ServiceChargePercent,
-                amounts.ServiceCharge,
-                amounts.TotalAmount);
-        }
-
-
         public async Task<bool> CanGenerateBillAsync(int orderId)
         {
             if (orderId <= 0)
@@ -411,13 +345,7 @@ namespace RROMS.Services
             // US32: Historical rates are not stored in Order.
             // Derive display percentages from saved amounts only.
             // Never use current restaurant settings for an existing order.
-            decimal taxRate = order.Subtotal > 0
-                ? Math.Round(order.TaxAmount / order.Subtotal * 100m, 2)
-                : 0m;
-
-            decimal serviceChargeRate = order.Subtotal > 0
-                ? Math.Round(order.ServiceCharge / order.Subtotal * 100m, 2)
-                : 0m;
+            var (taxRate, serviceChargeRate) = DeriveDisplayRates(order);
 
             return CreateSummary(
                 order,
@@ -453,15 +381,7 @@ namespace RROMS.Services
 
             // Display-only percentages derived from saved amounts.
             // These are estimates, not stored historical tax rates.
-            decimal taxRate = order.Subtotal > 0
-                ? Math.Round(
-                    order.TaxAmount / order.Subtotal * 100m, 2)
-                : 0m;
-
-            decimal serviceChargeRate = order.Subtotal > 0
-                ? Math.Round(
-                    order.ServiceCharge / order.Subtotal * 100m, 2)
-                : 0m;
+            var (taxRate, serviceChargeRate) = DeriveDisplayRates(order);
 
             return CreateSummary(
                 order,
@@ -525,40 +445,12 @@ namespace RROMS.Services
 
             // Display-only percentages derived from saved amounts.
             // Do not use current restaurant settings.
-            decimal taxRate = Math.Round(
-                order.TaxAmount / order.Subtotal * 100m, 2);
-
-            decimal serviceChargeRate = Math.Round(
-                order.ServiceCharge / order.Subtotal * 100m, 2);
+            var (taxRate, serviceChargeRate) = DeriveDisplayRates(order);
 
             return CreateSummary(
                 order,
                 taxRate,
                 serviceChargeRate);
-        }
-
-
-        private async Task<RestaurantSetting> GetSettingsAsync()
-        {
-            var settings = await _settings.Query()
-                .AsNoTracking()
-                .OrderBy(s => s.Id)
-                .FirstOrDefaultAsync();
-
-            if (settings == null)
-                throw new InvalidOperationException(
-                    "Restaurant settings have not been configured.");
-
-            if (settings.TaxRatePercent < 0 ||
-                settings.TaxRatePercent > 100 ||
-                settings.ServiceChargePercent < 0 ||
-                settings.ServiceChargePercent > 100)
-            {
-                throw new InvalidOperationException(
-                    "Restaurant settings contain invalid rates.");
-            }
-
-            return settings;
         }
 
 
@@ -594,46 +486,25 @@ namespace RROMS.Services
         }
 
 
-        // SHARED BILLING CALCULATION:
-        // Used by US24 Checkout and US32 Bill Generation.
-        // Keep all SST and Service Charge calculations here.
-        private static BillingAmounts CalculateAmounts(
-            decimal subtotal,
-            decimal taxRate,
-            decimal serviceChargeRate)
+        // US32 / US49: Display-only percentages derived from saved amounts.
+        // Orders do not store their historical rates, so derive them here.
+        // Team rule (leader, US49): service = subtotal x service%;
+        //                           SST     = (subtotal + service) x tax%.
+        // Example: RM100 dine-in, 10% / 6% -> service RM10.00, SST RM6.60.
+        private static (decimal TaxRate, decimal ServiceChargeRate)
+            DeriveDisplayRates(Order order)
         {
-            subtotal = RoundMoney(subtotal);
+            decimal serviceChargeRate = order.Subtotal > 0
+                ? Math.Round(order.ServiceCharge / order.Subtotal * 100m, 2)
+                : 0m;
 
-            if (subtotal <= 0)
-                throw new InvalidOperationException(
-                    "Order subtotal must be positive.");
+            decimal taxBase = order.Subtotal + order.ServiceCharge;
 
-            decimal taxAmount = RoundMoney(
-                subtotal * taxRate / 100m);
+            decimal taxRate = taxBase > 0
+                ? Math.Round(order.TaxAmount / taxBase * 100m, 2)
+                : 0m;
 
-            decimal serviceCharge = RoundMoney(
-                subtotal * serviceChargeRate / 100m);
-
-            decimal totalAmount =
-                subtotal + taxAmount + serviceCharge;
-
-            return new BillingAmounts(
-                subtotal,
-                taxAmount,
-                serviceCharge,
-                totalAmount);
-        }
-
-
-        // Apply calculated amounts to an Order object.
-        private static void ApplyAmounts(
-            Order order,
-            BillingAmounts amounts)
-        {
-            order.Subtotal = amounts.Subtotal;
-            order.TaxAmount = amounts.TaxAmount;
-            order.ServiceCharge = amounts.ServiceCharge;
-            order.TotalAmount = amounts.TotalAmount;
+            return (taxRate, serviceChargeRate);
         }
 
         private static decimal RoundMoney(decimal amount)
@@ -670,11 +541,5 @@ namespace RROMS.Services
                 order.ServiceCharge,
                 order.TotalAmount);
         }
-
-        private sealed record BillingAmounts(
-            decimal Subtotal,
-            decimal TaxAmount,
-            decimal ServiceCharge,
-            decimal TotalAmount);
     }
 }

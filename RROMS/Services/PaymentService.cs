@@ -94,7 +94,7 @@ namespace RROMS.Services
                 Method = method,
                 Status = PaymentStatus.Pending,
                 TransactionRef = transactionRef,
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,   // team rule: local server time
                 PaidAt = null
             };
 
@@ -137,7 +137,7 @@ namespace RROMS.Services
                     "This order already has a successful payment.");
 
             payment.Status = PaymentStatus.Paid;
-            payment.PaidAt = DateTime.UtcNow;
+            payment.PaidAt = DateTime.Now;   // team rule: local server time
 
             await _payments.SaveChangesAsync();
 
