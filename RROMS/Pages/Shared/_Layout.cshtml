@@ -1,45 +1,11 @@
 @using Microsoft.AspNetCore.Identity
 @using RROMS.Models
-@using RROMS.Services.Interfaces
-
 @inject SignInManager<ApplicationUser> SignInManager
-@inject IReportService ReportService
 @inject RROMS.Services.Interfaces.IHomeService HomeData
+@inject RROMS.Services.Interfaces.IReportService ReportService
 @{
     // EN04 Shared layout (Owner: Member 1). Ask Member 1 before changing this file.
-    // Brand name: change it here only.
-    const string BrandName = "YORU";
-    const string BrandSub = "IZAKAYA";
-    const string TaglineJp = "夜はこれから";
-    const string Tagline = "The night is still young.";
-    // US49: restaurant branding saved by the administrator.
-    var restaurantSettings = await ReportService.GetRestaurantSettingsAsync();
-
-    var restaurantName = string.IsNullOrWhiteSpace(restaurantSettings.RestaurantName)
-        ? $"{BrandName} {BrandSub}"
-        : restaurantSettings.RestaurantName;
-
-    var restaurantLogo = string.IsNullOrWhiteSpace(restaurantSettings.LogoPath)
-        ? "/images/yoru-logo-dark.png"
-        : restaurantSettings.LogoPath;
-
-    var useFullBrandImage =
-        restaurantSettings.BrandingMode == "FullBrandImage";
-    
-    
-    // US49: second name line, navbar text sizes (S/M/L), footer image and tab icon.
-    var restaurantNameLine2 = restaurantSettings.RestaurantNameLine2;
-    var nameLine1Size = (restaurantSettings.NameLine1Size ?? "M").ToLowerInvariant();
-    var nameLine2Size = (restaurantSettings.NameLine2Size ?? "S").ToLowerInvariant();
-    var fullRestaurantName = string.IsNullOrWhiteSpace(restaurantNameLine2)
-        ? restaurantName
-        : $"{restaurantName} {restaurantNameLine2}";
-    var footerImage = string.IsNullOrWhiteSpace(restaurantSettings.FooterImagePath)
-        ? restaurantLogo
-        : restaurantSettings.FooterImagePath;
-    var faviconPath = string.IsNullOrWhiteSpace(restaurantSettings.FaviconPath)
-        ? "/images/yoru-icon.png"
-        : restaurantSettings.FaviconPath;
+    // Brand name, taglines and logo: Models/Brand.cs (one place for the whole site).
 
     var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
     var signedIn = SignInManager.IsSignedIn(User);
@@ -72,8 +38,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · @fullRestaurantName</title>
-    <link rel="icon" href="@faviconPath" />
+    <title>@ViewData["Title"] · @Brand.FullName</title>
+    <link rel="icon" type="image/png" href="@Brand.Favicon" />
     <link rel="apple-touch-icon" href="~/images/yoru-icon-180.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -82,7 +48,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/brand.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RROMS.styles.css" asp-append-version="true" />
 </head>
 <body class="@(isBackOffice ? "back-office" : "front-of-house")">
@@ -90,29 +55,7 @@
         <nav class="navbar navbar-expand-lg site-nav" data-bs-theme="dark">
             <div class="@containerClass">
                 <a class="navbar-brand brand" href="@brandHref">
-
-                    @if (useFullBrandImage)
-                    {
-                        <img class="brand-logo"
-                             src="@restaurantLogo"
-                             alt="@restaurantName" />
-                    }
-                    else
-                    {
-                        <img class="brand-logo"
-                             src="@restaurantLogo"
-                             alt="@restaurantName" />
-
-                        @* US49: line 1 + optional line 2, with the S/M/L sizes from Restaurant Settings *@
-                        <span class="brand-names">
-                            <span class="brand-restaurant-name brand-line1 brand-size-@nameLine1Size">@restaurantName</span>
-                            @if (!string.IsNullOrWhiteSpace(restaurantNameLine2))
-                            {
-                                <span class="brand-line2 brand-size-@nameLine2Size">@restaurantNameLine2</span>
-                            }
-                        </span>
-                    }
-
+                    <img class="brand-logo" src="@Brand.Logo" alt="@Brand.FullName" />
                     @if (isAdmin)
                     {
                         <span class="role-pill">Admin</span>
@@ -248,7 +191,7 @@
     {
         <footer class="site-footer site-footer-slim">
             <div class="@containerClass d-flex justify-content-between flex-wrap gap-2">
-                <span>@fullRestaurantName · Back office</span>
+                <span>@Brand.FullName · Back office</span>
                 <span>&copy; @DateTime.Now.Year RROMS</span>
             </div>
         </footer>
@@ -260,28 +203,25 @@
             <div class="container-xl">
                 <div class="row gy-4">
                     <div class="col-md-5">
-                        <img class="footer-logo" src="@footerImage" alt="@fullRestaurantName" />
-                        <p class="footer-tagline-jp">@TaglineJp</p>
-                        <p class="footer-tagline">@Tagline</p>
+                        <img class="footer-logo" src="@Brand.Logo" alt="@Brand.FullName" />
+                        <p class="footer-tagline-jp">@Brand.TaglineJp</p>
+                        <p class="footer-tagline">@Brand.Tagline</p>
                     </div>
                     @{
                         // Same data as the Home page: Member 5's settings + Member 2's opening hours.
+                        var footerInfo = await HomeData.GetInfoAsync();
                         var footerHours = await HomeData.GetOpeningHoursAsync();
+                        // US49: email is only in Restaurant Settings (HomeInfo has address + phone).
+                        var footerEmail = (await ReportService.GetRestaurantSettingsAsync()).Email;
                     }
                     <div class="col-6 col-md-3">
                         <h2 class="footer-heading">Visit</h2>
-                        @* US49: contact details from Restaurant Settings *@
-                        @if (!string.IsNullOrWhiteSpace(restaurantSettings.Address))
+                        @* US49: address keeps the admin's line breaks; phone is already formatted by HomeService *@
+                        <p class="footer-address">@footerInfo.Address</p>
+                        <p><a class="footer-link" href="tel:@footerInfo.Phone.Replace(" ", "")">@footerInfo.Phone</a></p>
+                        @if (!string.IsNullOrWhiteSpace(footerEmail))
                         {
-                            <p class="footer-address">@restaurantSettings.Address</p>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(restaurantSettings.Phone))
-                        {
-                            <p><a class="footer-link" href="tel:@restaurantSettings.Phone">@restaurantSettings.Phone</a></p>
-                        }
-                        @if (!string.IsNullOrWhiteSpace(restaurantSettings.Email))
-                        {
-                            <p><a class="footer-link" href="mailto:@restaurantSettings.Email">@restaurantSettings.Email</a></p>
+                            <p><a class="footer-link" href="mailto:@footerEmail">@footerEmail</a></p>
                         }
                     </div>
                     <div class="col-6 col-md-4">
@@ -296,7 +236,7 @@
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <span>&copy; @DateTime.Now.Year @fullRestaurantName</span>
+                    <span>&copy; @DateTime.Now.Year @Brand.FullName</span>
                     <span>5026CMD Software Engineering · RROMS</span>
                 </div>
             </div>
