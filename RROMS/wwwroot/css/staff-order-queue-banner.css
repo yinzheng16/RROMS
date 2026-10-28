@@ -319,7 +319,7 @@
 /* Current PNG: 2172 x 724, illustrated band at rows 149 through 547.
    Use its native 2172:399 band ratio instead of stretching it into a fixed height.
    Image and HTML share that same coordinate space; white margins stay clipped. */
-@media (min-width: 62rem) {
+@media (min-width: 48rem) {
     .staff-queue .sq-masthead--illustrated {
         padding: 0;
         box-sizing: content-box;
@@ -429,11 +429,7 @@
     }
 }
 
-@media (min-width: 62rem) and (max-width: 79.99rem) {
-    .sq-masthead--illustrated .sq-dispenser__state {
-        display: none;
-    }
-
+@media (min-width: 48rem) and (max-width: 79.99rem) {
     .sq-masthead--illustrated .sq-hero-emblem--chopsticks {
         display: none;
     }
@@ -451,16 +447,109 @@
     }
 }
 
-/* Use the existing responsive paper/dispenser assets below desktop width,
-   rather than squeezing the landscape artwork and labels into a phone. */
-@media (max-width: 61.99rem) {
+@media (min-width: 48rem) and (max-width: 61.99rem) {
+    .sq-masthead--illustrated .sq-masthead__title {
+        gap: .5rem;
+        padding-inline: .75rem .4rem;
+    }
+
+    .sq-masthead--illustrated .sq-masthead__jp {
+        font-size: clamp(1.2rem, 2.45vw, 1.8rem);
+        padding-inline-end: .5rem;
+    }
+
+    .sq-masthead--illustrated .eyebrow {
+        font-size: .45rem;
+        letter-spacing: .08em;
+    }
+
+    .sq-masthead--illustrated h1 {
+        font-size: clamp(1.8rem, 4.2vw, 2.55rem);
+    }
+
+    .sq-masthead--illustrated .sq-masthead__intro {
+        font-size: .7rem;
+        margin-bottom: .35rem;
+    }
+
+    .sq-masthead--illustrated .sq-dispenser__label {
+        min-block-size: 1.1rem;
+        flex-wrap: nowrap;
+        gap: .25rem;
+        margin-bottom: .1rem;
+    }
+
+        .sq-masthead--illustrated .sq-dispenser__label p {
+            font-size: .65rem;
+        }
+
+        .sq-masthead--illustrated .sq-dispenser__label > i {
+            font-size: .7rem;
+        }
+
+    .sq-masthead--illustrated .sq-hero-number > strong {
+        font-size: clamp(1.6rem, 3.7vw, 2.3rem);
+    }
+
+    .sq-masthead--illustrated .sq-hero-emblem {
+        inline-size: 1.1rem;
+    }
+
+    .sq-masthead--illustrated .sq-dispenser__stamp {
+        font-size: .4rem;
+        padding: .2rem;
+    }
+}
+
+/* Stack the title and receipt below desktop width. Keep the landscape visible
+   behind the title by cropping the LEFT illustrated region of the same PNG.
+   Its native aspect ratio is retained; neither white canvas margins nor the
+   desktop black receipt are allowed into this title crop. */
+@media (max-width: 47.99rem) {
     .sq-masthead--illustrated .sq-masthead__inner {
         grid-template-columns: minmax(0, 1fr);
-        gap: 1rem;
+        gap: .5rem;
+        max-inline-size: none;
+        padding-inline: 0;
     }
 
     .sq-masthead--illustrated .sq-masthead__title {
+        position: relative;
+        isolation: isolate;
+        container-type: inline-size;
+        overflow: hidden;
         justify-content: flex-start;
+        min-block-size: clamp(10rem, 25vw, 15rem);
+        padding: clamp(.85rem, 2vw, 1.2rem) 1rem;
+    }
+
+        .sq-masthead--illustrated .sq-masthead__title::before {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            pointer-events: none;
+            inset-inline-start: 0;
+            inset-block-start: 50%;
+            inline-size: auto;
+            block-size: max(181.4536341%, calc(83cqw + 3rem));
+            aspect-ratio: 2172 / 724;
+            transform: translateY(-48.1353591%);
+            background: url('../images/staff/yoru-order-queue-banner.png') left top / 100% 100% no-repeat;
+        }
+
+        .sq-masthead--illustrated .sq-masthead__title::after {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            pointer-events: none;
+            inset-inline: 0;
+            inset-block-end: 0;
+            block-size: 3rem;
+            background: linear-gradient(to bottom, transparent, var(--yoru-cream));
+        }
+
+    .sq-masthead--illustrated .sq-dispenser {
+        margin-inline: .75rem;
     }
 
     .sq-masthead--illustrated .sq-masthead__copy {

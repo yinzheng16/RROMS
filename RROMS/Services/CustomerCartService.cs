@@ -20,15 +20,18 @@ public sealed class CustomerCartService : ICustomerCartService
     private readonly TimeProvider _clock;
     private readonly ILogger<CustomerCartService> _logger;
     private readonly IProfileService _profiles;
+    private readonly IReportService _reportService;
     private const int MaxLines = 100;
 
     public CustomerCartService(ApplicationDbContext db, IDataProtectionProvider protection,
-        ILogger<CustomerCartService> logger, IProfileService profiles, TimeProvider? clock = null)
+        ILogger<CustomerCartService> logger, IProfileService profiles, IReportService reportService,
+        TimeProvider? clock = null)
     {
         _db = db;
         _protector = protection.CreateProtector("RROMS.US24.Checkout.v1");
         _logger = logger;
         _profiles = profiles;
+        _reportService = reportService;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -303,11 +306,22 @@ public sealed class CustomerCartService : ICustomerCartService
                     item?.IsAvailable == true && item.Price > 0);
             }).ToArray() ?? Array.Empty<CartLineView>();
         var orderType = cart?.OrderType ?? OrderType.DineIn;
-        // YORU policy: takeaway has no service charge. Keep all checkout stages consistent.
-        decimal serviceRate = orderType == OrderType.Takeaway
-            ? 0m : settings?.ServiceChargePercent ?? 0m;
-        var totals = OrderPricingRules.Calculate(lines.Sum(line => line.LineTotal),
-            settings?.TaxRatePercent ?? 0m, serviceRate);
+        // US49 owns the charge formula. Use its loaded-settings overload so this
+        // fresh, untracked read also stays inside PlaceAsync's save transaction.
+        // If settings are absent, preserve the existing zero-charge fallback.
+        var charges = _reportService.CalculateCharges(settings ?? new RestaurantSetting
+        {
+            TaxRatePercent = 0m,
+            ServiceChargePercent = 0m,
+            ServiceChargeOnTakeaway = false
+        }, lines.Sum(line => line.LineTotal), orderType == OrderType.Takeaway);
+        var totals = new CartTotals(
+            Subtotal: charges.Subtotal,
+            TaxRate: charges.TaxRatePercent,
+            Tax: charges.Tax,
+            ServiceRate: charges.ServiceChargePercent,
+            ServiceCharge: charges.ServiceCharge,
+            Total: charges.Total);
 
         string? remarks = cart?.Notes;
         bool fromProfile = false;

@@ -36,14 +36,16 @@
 </script>
 <link rel="stylesheet" href="~/css/customer-menu.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/customer-cart.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/customer-menu-art.css" asp-append-version="true" />
 <div class="customer-menu" data-customer-menu data-cart-customer="@(User.IsInRole(RROMS.Models.Roles.Customer) ? "true" : "false")" data-cart-signed-in="@(User.Identity?.IsAuthenticated == true ? "true" : "false")">
     <section class="customer-menu-hero" aria-labelledby="menu-hero-title">
-        <img class="customer-menu-hero__art" src="~/images/menu/yoru-customer-menu-evening.png" alt="" fetchpriority="high" width="2172" height="724" />
+        <img class="customer-menu-hero__art" src="~/images/menu/yoru-customer-menu-evening.png" asp-append-version="true" alt="" fetchpriority="high" width="2172" height="724" />
         <div class="customer-menu-container customer-menu-hero__content">
             <p class="eyebrow">YORU IZAKAYA · THE MENU</p>
-            <h1 id="menu-hero-title">Your evening<br />starts here.</h1>
+            <h1 id="menu-hero-title">Your evening<br /><span class="customer-menu-hero__gold">starts here.</span></h1>
             <p class="customer-menu-hero__subtitle">Small plates, comforting favourites, and drinks worth lingering over.</p>
         </div>
+        <div class="customer-menu-hero__blossoms" aria-hidden="true"></div>
     </section>
 
     <div class="customer-menu-container customer-menu-browser" id="menu-browser" data-menu-browser>

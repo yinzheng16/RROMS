@@ -1,0 +1,265 @@
+/* Owner: Member 3. Menu artwork and control styling. Load after customer-menu.css/customer-cart.css.
+   Keep artwork in background layers; preserve click targets and layering
+   to the category drawer, dish-card content or floating controls. */
+.customer-menu {
+    background-color: var(--yoru-cream);
+    background-image: url('../images/menu/yoru-menu-gold-sakura.png'), url('../images/menu/yoru-menu-washi.png');
+    background-repeat: no-repeat, repeat;
+    background-size: min(100vw, 110rem) auto, 34rem 34rem;
+    background-position: center clamp(20rem, 26vw, 30rem), left top;
+    background-blend-mode: soft-light, normal;
+}
+
+    /* Let the new illustration meet the paper instead of ending at a red rule. */
+    .customer-menu .customer-menu-hero {
+        border-bottom: 0;
+        /* Foreground flowers may cross the paper edge. The artwork itself stays
+       clipped to its own box; its natural proportions are preserved. */
+        overflow: visible;
+    }
+
+    .customer-menu .customer-menu-hero__art {
+        clip-path: inset(0);
+    }
+
+    .customer-menu .customer-menu-hero__content {
+        inline-size: 100%;
+        max-inline-size: none;
+        padding-inline: clamp(3rem, 5.6vw, 7rem);
+    }
+
+    .customer-menu .customer-menu-hero__blossoms {
+        position: absolute;
+        z-index: 2;
+        pointer-events: none;
+        inset-inline: 0;
+        inset-block-end: -1.25rem;
+        block-size: clamp(8rem, 13vw, 15rem);
+    }
+
+        .customer-menu .customer-menu-hero__blossoms::before,
+        .customer-menu .customer-menu-hero__blossoms::after {
+            content: '';
+            position: absolute;
+            inset-block-end: 0;
+            background-image: url('../images/menu/yoru-menu-hero-blossoms.png');
+            background-repeat: no-repeat;
+            background-size: auto 100%;
+        }
+
+        .customer-menu .customer-menu-hero__blossoms::before {
+            inset-inline-start: 0;
+            inline-size: clamp(2.5rem, 5vw, 6rem);
+            block-size: clamp(2.5rem, 5vw, 6rem);
+            background-position: left bottom;
+        }
+
+        .customer-menu .customer-menu-hero__blossoms::after {
+            inset-inline-end: 0;
+            inline-size: clamp(5rem, 10vw, 12rem);
+            block-size: clamp(5rem, 10vw, 12rem);
+            background-position: right bottom;
+        }
+
+    .customer-menu .customer-menu-hero::after {
+        content: '';
+        position: absolute;
+        z-index: 0;
+        pointer-events: none;
+        inset-inline: 0;
+        inset-block-end: -1px;
+        block-size: clamp(1rem, 1.5vw, 1.75rem);
+        background: var(--yoru-cream) url('../images/menu/yoru-menu-washi.png') left top / 34rem 34rem repeat;
+        clip-path: polygon(0 35%, 3% 42%, 6% 26%, 9% 39%, 12% 31%, 15% 44%, 19% 25%, 23% 38%, 27% 30%, 31% 46%, 35% 35%, 39% 48%, 43% 30%, 47% 43%, 51% 33%, 55% 46%, 59% 29%, 63% 39%, 67% 27%, 71% 45%, 75% 31%, 79% 42%, 83% 28%, 87% 44%, 91% 33%, 95% 40%, 98% 25%, 100% 36%, 100% 100%, 0 100%);
+    }
+
+@media (min-width: 48rem) {
+    .customer-menu .customer-menu-hero__art {
+        object-position: center 20%;
+    }
+}
+
+@media (max-width: 47.99rem) {
+    .customer-menu {
+        background-size: 62rem auto, 28rem 28rem;
+        background-position: center 22rem, left top;
+    }
+
+        .customer-menu .customer-menu-hero::after {
+            background-size: 28rem 28rem;
+        }
+}
+
+/* Secondary search action: muted gold, with dark text for contrast. */
+.customer-menu .menu-search__submit {
+    color: #211c16;
+    background-color: #c5a06a;
+    border-color: #b99157;
+    --bs-btn-color: #211c16;
+    --bs-btn-bg: #c5a06a;
+    --bs-btn-border-color: #b99157;
+    --bs-btn-hover-color: #211c16;
+    --bs-btn-hover-bg: #b58e55;
+    --bs-btn-hover-border-color: #a67f47;
+    --bs-btn-active-color: #211c16;
+    --bs-btn-active-bg: #b58e55;
+    --bs-btn-active-border-color: #a67f47;
+    --bs-btn-disabled-color: #211c16;
+    --bs-btn-disabled-bg: #c5a06a;
+    --bs-btn-disabled-border-color: #b99157;
+    --bs-btn-focus-shadow-rgb: 185, 145, 87;
+}
+
+    .customer-menu .menu-search__submit:is(:hover, :active) {
+        color: #211c16;
+        background-color: #b58e55;
+        border-color: #a67f47;
+    }
+
+/* One pair of real buttons, preserving the existing carousel data hooks. */
+.customer-menu .menu-new-arrivals {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 1rem;
+}
+/* Flatten only the non-interactive heading wrapper. This also supports the
+   original Index where controls are still nested inside that header. */
+.customer-menu .menu-new-arrivals__heading {
+    display: contents;
+}
+
+    .customer-menu .menu-new-arrivals__heading > div:first-child {
+        grid-area: 1 / 1;
+        min-inline-size: 0;
+        margin-block-end: 1rem;
+    }
+
+.customer-menu .menu-new-arrivals__controls {
+    grid-area: 1 / 2;
+    align-self: end;
+    margin-block-end: 1rem;
+}
+
+.customer-menu .menu-new-arrivals__viewport {
+    grid-area: 2 / 1 / auto / -1;
+}
+
+.customer-menu .menu-new-arrivals__arrow {
+    background: #fcf6e9;
+    border-color: #b99157;
+    color: #211c16;
+}
+
+    .customer-menu .menu-new-arrivals__arrow:hover:not(:disabled) {
+        background: #c5a06a;
+        border-color: #a67f47;
+        color: #211c16;
+    }
+
+    .customer-menu .menu-new-arrivals__arrow:focus-visible {
+        outline: .15rem solid #735322;
+        outline-offset: .2rem;
+    }
+
+@media (min-width: 62rem) {
+    /* Dedicated side gutters prevent buttons from covering food or card text.
+       Without JavaScript, keep the full-width native scrolling fallback. */
+    .customer-menu .menu-new-arrivals:has([data-menu-recent-controls]:not([hidden])) {
+        grid-template-columns: 2.65rem minmax(0, 1fr) 2.65rem;
+        column-gap: .65rem;
+    }
+
+    .customer-menu .menu-new-arrivals__heading > div:first-child {
+        grid-area: 1 / 1 / auto / -1;
+        padding-inline-end: 8rem;
+    }
+
+    .customer-menu .menu-new-arrivals__controls:not([hidden]) {
+        display: contents;
+    }
+
+    .customer-menu .menu-new-arrivals__count {
+        grid-area: 1 / 2 / auto / -1;
+        align-self: end;
+        justify-self: end;
+        margin: 0 0 1rem;
+    }
+
+    .customer-menu .menu-new-arrivals__arrow {
+        grid-row: 2;
+        align-self: center;
+        justify-self: center;
+    }
+
+    .customer-menu [data-menu-recent-previous] {
+        grid-column: 1;
+    }
+
+    .customer-menu [data-menu-recent-next] {
+        grid-column: 3;
+    }
+
+    .customer-menu .menu-new-arrivals:has([data-menu-recent-controls]:not([hidden])) > .menu-new-arrivals__viewport {
+        grid-area: 2 / 2;
+    }
+}
+
+@media (max-width: 39.999rem) {
+    .customer-menu .menu-new-arrivals__controls {
+        inline-size: 5.85rem;
+        flex-wrap: wrap;
+        justify-content: end;
+        gap: .35rem .55rem;
+    }
+
+    .customer-menu .menu-new-arrivals__count {
+        inline-size: 100%;
+        margin-inline-end: 0;
+        font-size: .7rem;
+    }
+}
+
+@media (max-width: 47.99rem) {
+    .customer-menu .customer-menu-hero__content {
+        padding-inline: 2rem;
+    }
+
+    .customer-menu .customer-menu-hero__blossoms {
+        block-size: 5rem;
+        inset-block-end: -.75rem;
+    }
+
+        .customer-menu .customer-menu-hero__blossoms::before {
+            inline-size: 1.8rem;
+            block-size: 1.8rem;
+        }
+
+        .customer-menu .customer-menu-hero__blossoms::after {
+            inline-size: 3.5rem;
+            block-size: 3.5rem;
+        }
+}
+
+/* Warm gold for the second heading line only. */
+.customer-menu .customer-menu-hero h1 .customer-menu-hero__gold {
+    color: #D8B47A;
+}
+
+/* Decorative trolley icon; preserve the real button text and cart handlers. */
+.customer-menu :is(.tasting-card__add, .dish-detail__cart button[type="submit"]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+}
+
+    .customer-menu :is(.tasting-card__add, .dish-detail__cart button[type="submit"])::before {
+        content: "";
+        display: inline-block;
+        flex: 0 0 auto;
+        inline-size: 1.1em;
+        block-size: 1.1em;
+        background-color: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%203h2l2.4%2012.4a2%202%200%200%200%202%201.6h8.9a2%202%200%200%200%202-1.6L22%207H6%22%2F%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2221%22%20r%3D%221%22%2F%3E%3Ccircle%20cx%3D%2219%22%20cy%3D%2221%22%20r%3D%221%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%221.8%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%203h2l2.4%2012.4a2%202%200%200%200%202%201.6h8.9a2%202%200%200%200%202-1.6L22%207H6%22%2F%3E%3Ccircle%20cx%3D%2210%22%20cy%3D%2221%22%20r%3D%221%22%2F%3E%3Ccircle%20cx%3D%2219%22%20cy%3D%2221%22%20r%3D%221%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;
+    }
