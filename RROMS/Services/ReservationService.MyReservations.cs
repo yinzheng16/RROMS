@@ -28,6 +28,12 @@ public partial class ReservationService : IMyReservationsService
             .ThenBy(r => r.Id)
             .ToListAsync(cancellationToken);
 
+        // Area names are read once (the table only stores the area id).
+        var areaIds = rows.Where(r => r.Table != null).Select(r => r.Table!.DiningAreaId).Distinct().ToList();
+        var areaNames = await _db.DiningAreas.AsNoTracking()
+            .Where(a => areaIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, a => a.Name, cancellationToken);
+
         return rows.Select(r => new MyReservationItem(
             r.Id,
             r.ReferenceNo,
@@ -39,7 +45,10 @@ public partial class ReservationService : IMyReservationsService
             r.MinimumSpendAccepted ?? 0m,
             r.MinimumSpendAcceptedAt.HasValue,
             r.Status.ToString(),
-            r.ReservedAt > now)).ToArray();
+            r.ReservedAt > now,
+            r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var area) ? area : null,
+            // The customer only sees the table number once staff have confirmed the booking.
+            r.Status == ReservationStatus.Confirmed ? r.Table?.TableNumber : null)).ToArray();
     }
 
     public async Task<MyReservationCancelResult> CancelMyReservationAsync(

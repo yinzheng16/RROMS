@@ -12,7 +12,9 @@ public sealed record MyReservationItem(
     decimal MinimumSpend,
     bool MinimumSpendWasAccepted,
     string Status,
-    bool CanCancel);
+    bool CanCancel,
+    string? AreaName = null,
+    string? TableNumber = null);
 
 public sealed record MyReservationCancelResult(bool Success, string Code, string Message);
 

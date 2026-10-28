@@ -23,6 +23,8 @@
     let busy = false;
 
     const restaurantNow = () => Date.now() + clockOffset;
+    // The wax seal shrinks its text for longer table numbers (the server only sends a number once staff have confirmed).
+    const sealSize = n => n.length <= 3 ? 's3' : n.length === 4 ? 's4' : n.length === 5 ? 's5' : n.length === 6 ? 's6' : 's7';
     const canCancel = item => Boolean(item && item.canCancel &&
         ['Pending', 'Confirmed'].includes(item.status) && item.reservedAtMs > restaurantNow());
     // Lock page scroll while a dialog is open, but keep the page from jumping sideways
@@ -108,6 +110,17 @@
         byId('myrStatusLargeIcon').setAttribute('href', icon);
         byId('myrStatusCaption').textContent = confirmed
             ? 'We look forward to welcoming you.' : 'Awaiting restaurant confirmation.';
+        const seal = byId('myrDetailSeal');
+        const table = item.tableNumber ? String(item.tableNumber) : '';
+        seal.hidden = !table;
+        byId('myrTableNote').hidden = !table;
+        if (table) {
+            const no = byId('myrDetailSealNo');
+            no.textContent = table;
+            no.className = sealSize(table);
+            seal.classList.toggle('is-long', table.length >= 6);
+            seal.setAttribute('aria-label', 'Table ' + table);
+        }
         byId('myrSpendAccepted').hidden = !(item.hasMinimumSpend && item.spendAccepted);
         refreshCancellationState();
         details.classList.remove('is-closing');

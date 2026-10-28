@@ -3,7 +3,7 @@
     --myr-gold: #d8b26b;
     --myr-gold-bright: #ffd387;
     --myr-cream: #f6ecda;
-    --myr-muted: #c3b9a7;
+    --myr-muted: #b8a898;
     --myr-red: #e44032;
     --myr-line: rgba(214,177,111,.58);
     color: var(--myr-cream);
@@ -50,8 +50,25 @@
     position: relative;
     min-height: calc(100svh - 70px);
     padding: 35px clamp(20px,4.2vw,70px) 35px;
-    background: linear-gradient(180deg,rgba(0,0,0,.22),rgba(0,0,0,.5)),url('../images/reservations/courtyard-night.png') center top/cover no-repeat #0a0908
+    background: #150d0b;
+    isolation: isolate
 }
+
+    /* the photo only fills the top of the page and fades into the lacquer colour below it */
+    .myr::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: -1;
+        aspect-ratio: 1981 / 277;
+        min-height: 170px;
+        background: url('../images/reservations/my-reservations-banner.webp') center top/cover no-repeat;
+        -webkit-mask-image: linear-gradient(180deg,#000 0%,#000 50%,transparent 100%);
+        mask-image: linear-gradient(180deg,#000 0%,#000 50%,transparent 100%);
+        pointer-events: none
+    }
 
 .myr-wrap {
     max-width: 1450px;
@@ -145,7 +162,7 @@
     display: grid;
     grid-template-columns: 17% minmax(0,1fr);
     min-height: 192px;
-    background: #0c0c0b;
+    background: linear-gradient(135deg,#241816,#1b1210);
     border: 1px solid var(--myr-gold);
     isolation: isolate;
     mask-image: radial-gradient(circle at 0 50%,transparent 6px,#000 6.6px),radial-gradient(circle at 100% 50%,transparent 6px,#000 6.6px),radial-gradient(circle at 17% 0,transparent 15px,#000 16px),radial-gradient(circle at 17% 100%,transparent 15px,#000 16px);
@@ -201,14 +218,14 @@
 .myr-row-body {
     display: grid;
     grid-template-columns: minmax(0,1fr) 33%;
-    background: url('../images/reservations/ticket-list.png') right bottom/cover #0b0c0b;
+    background: url('../images/reservations/ticket-list.png') right bottom/cover #1b1210;
     min-width: 0
 }
 
 .myr-facts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    align-items: center;
+    align-items: stretch;
     padding: 18px 23px 18px 40px;
     min-width: 0
 }
@@ -303,9 +320,9 @@
     }
 
     .myr-status.is-confirmed {
-        background: linear-gradient(110deg,#9a9d50,#d9d590 52%,#878f46);
-        border-color: #c7c87f;
-        color: #19220d
+        background: linear-gradient(115deg,#8fc283,#d6edc6 48%,#8fc283);
+        border-color: #a8d49a;
+        color: #10300f
     }
 
 .myr-status-area > p {
@@ -1478,7 +1495,7 @@ html.myr-has-dialog {
     border: 1px solid #d6b16f42;
     border-left: 4px solid var(--myr-gold);
     border-radius: 12px;
-    background: linear-gradient(105deg,#14110ff0,#0d0b0af2),url('../images/reservations/ticket-black.png') center/cover #0d0b0a;
+    background: linear-gradient(105deg,#241816f2,#1b1210f2),url('../images/reservations/ticket-black.png') center/cover #1f1411;
     box-shadow: 0 8px 22px #0006;
     transition: border-color .15s,transform .15s
 }
@@ -1725,7 +1742,7 @@ html.myr-has-dialog {
 }
 
 .myr-row-body {
-    background: linear-gradient(90deg,rgba(7,8,7,.9) 0,rgba(7,8,7,.72) 60%,rgba(7,8,7,.5) 100%),url('../images/reservations/ticket-list.png') right bottom/cover no-repeat #0b0c0b
+    background: linear-gradient(90deg,rgba(30,20,17,.92) 0,rgba(27,18,16,.76) 60%,rgba(27,18,16,.55) 100%),url('../images/reservations/ticket-list.png') right bottom/cover no-repeat #1b1210
 }
 /* ---- Request box: collapsed = 2 lines + Read more; open = fixed-height box that scrolls ---- */
 .myr-detail-cell .myr-request-box strong {
@@ -2315,4 +2332,195 @@ html.myr-has-dialog {
         transition: none !important;
         scroll-behavior: auto !important
     }
+}
+
+/* ---- Dining area under the table type; wax seal with the table number (shown only after staff confirm) ---- */
+.myr-area {
+    display: block;
+    margin-top: 2px;
+    font-size: clamp(12px,.95vw,14px);
+    color: var(--myr-muted)
+}
+
+.myr-detail-cell small:empty {
+    display: none
+}
+
+.myr-table-seal {
+    --s: 1;
+    position: absolute;
+    top: 6px;
+    right: 14px;
+    z-index: 2;
+    width: calc(92px * var(--s));
+    height: calc(94px * var(--s));
+    transform: rotate(-8deg);
+    filter: drop-shadow(0 6px 8px rgba(0,0,0,.55));
+    pointer-events: none
+}
+
+    .myr-table-seal.is-long {
+        --s: 1.15
+    }
+
+    .myr-table-seal img {
+        display: block;
+        width: 100%;
+        height: 100%
+    }
+
+.myr-seal-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-right: calc(3px * var(--s));
+    padding-bottom: calc(9px * var(--s));
+    line-height: 1;
+    font-weight: 700;
+    color: #ecc56c;
+    text-shadow: 0 1px 0 #f7dc9a,0 2px 2px rgba(60,12,8,.9)
+}
+
+    .myr-seal-text small {
+        display: block;
+        margin: 0 -.28em 0 0;
+        font-size: calc(9px * var(--s));
+        letter-spacing: .28em;
+        color: #e6bf6a;
+        text-shadow: 0 1px 0 rgba(60,12,8,.9)
+    }
+
+    .myr-seal-text b {
+        font-weight: 700;
+        font-size: calc(34px * var(--s));
+        white-space: nowrap
+    }
+
+        .myr-seal-text b.s4 {
+            font-size: calc(26px * var(--s))
+        }
+
+        .myr-seal-text b.s5 {
+            font-size: calc(20px * var(--s))
+        }
+
+        .myr-seal-text b.s6 {
+            font-size: calc(16px * var(--s))
+        }
+
+        .myr-seal-text b.s7 {
+            font-size: calc(14px * var(--s))
+        }
+
+/* next-up ticket: keep the chip and the note clear of the seal */
+.myr-status-area.has-seal > .myr-status, .myr-status-area.has-seal > p {
+    max-width: calc(100% - 118px)
+}
+
+.myr-later-main p .myr-later-table {
+    color: var(--myr-gold-bright);
+    font-weight: 600
+}
+
+/* details ticket: the seal sits at the top right of the black part */
+.myr-detail-seal {
+    top: 18px;
+    right: 30px
+}
+
+.myr-detail-stub .myr-stub-inner > p.myr-stub-note {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: #f4d9b3
+}
+
+@media(max-width:1100px) {
+    .myr-table-seal {
+        --s: .8
+    }
+
+        .myr-table-seal.is-long {
+            --s: .92
+        }
+
+    .myr-status-area.has-seal > .myr-status, .myr-status-area.has-seal > p {
+        max-width: calc(100% - 92px)
+    }
+}
+
+@media(max-width:800px) {
+    /* the status area becomes a grid: the seal takes the right column and the buttons move below */
+    .myr-status-area.has-seal .myr-table-seal {
+        --s: .7;
+        position: static;
+        grid-column: 2;
+        grid-row: 1/3;
+        justify-self: end;
+        align-self: center
+    }
+
+    .myr-status-area.has-seal > .myr-status, .myr-status-area.has-seal > p {
+        max-width: none
+    }
+
+    .myr-status-area.has-seal .myr-actions {
+        grid-column: 1/-1;
+        grid-row: 3;
+        flex-direction: row;
+        justify-content: flex-start
+    }
+
+    .myr-detail-seal {
+        --s: .75;
+        top: 14px;
+        right: 16px
+    }
+}
+
+@media(max-width:500px) {
+    .myr-status-area.has-seal .myr-table-seal {
+        --s: .62;
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: end;
+        order: -1
+    }
+}
+
+
+/* The wax seal replaces the small stamp when a table number is shown. */
+.has-seal .myr-small-seal {
+    display: none;
+}
+
+/* Details ticket: dark halo so the seal stands out from the red moon and blossoms behind it */
+.myr-detail-seal {
+    filter: drop-shadow(0 0 7px rgba(244,204,120,.55)) drop-shadow(0 6px 8px rgba(0,0,0,.55))
+}
+
+    .myr-detail-seal::before {
+        content: "";
+        position: absolute;
+        inset: -16px;
+        z-index: -1;
+        border-radius: 50%;
+        background: radial-gradient(circle,rgba(10,5,4,.88) 48%,rgba(10,5,4,0) 74%)
+    }
+
+/* Details stub: keep the caption and the note inside the red ticket */
+.myr-detail-stub .myr-stub-inner > p:not(.myr-stub-label):not(.myr-stub-note) {
+    font-size: clamp(13px,1.35vw,17px);
+    max-width: 100%;
+    padding: 0 6px;
+    overflow-wrap: anywhere
+}
+
+.myr-detail-stub .myr-stub-inner > p.myr-stub-note {
+    font-size: clamp(12px,1.15vw,14.5px);
+    max-width: 100%;
+    padding: 0 6px;
+    overflow-wrap: anywhere
 }

@@ -96,6 +96,24 @@ public class IndexModel(
         return days <= 0 ? "Today" : days == 1 ? "Tomorrow" : $"In {days} days";
     }
 
+    // The dining area (e.g. "Main hall") of the table type, shown under the table type name.
+    public static string? Area(MyReservationItem r) =>
+        string.IsNullOrWhiteSpace(r.AreaName) ? null : r.AreaName.Trim();
+
+    // The table number is shown only after staff confirm the booking. It can still change on the day.
+    public static string? TableNumber(MyReservationItem r) =>
+        r.Status == "Confirmed" && !string.IsNullOrWhiteSpace(r.TableNumber) ? r.TableNumber.Trim() : null;
+
+    // The wax seal shrinks its text for longer table numbers (up to about 7 characters).
+    public static string SealSize(string number) => number.Length switch
+    {
+        <= 3 => "s3",
+        4 => "s4",
+        5 => "s5",
+        6 => "s6",
+        _ => "s7"
+    };
+
     public static string Spend(MyReservationItem r) => r.MinimumSpend > 0m
         ? $"RM {r.MinimumSpend.ToString("N0", DisplayCulture)} per booking" : "No minimum spend";
 }

@@ -23,6 +23,8 @@
             reservedAtMs = IndexModel.RestaurantEpoch(r.ReservedAt),
             guests = r.Guests,
             seating = IndexModel.Seating(r),
+            area = IndexModel.Area(r),
+            tableNumber = IndexModel.TableNumber(r),
             request = string.IsNullOrWhiteSpace(r.SpecialRequest) ? "None" : r.SpecialRequest,
             spend = IndexModel.Spend(r),
             hasMinimumSpend = r.MinimumSpend > 0m,
@@ -52,6 +54,8 @@
                     <p class="myr-next-label"><span class="myr-next-pill">NEXT UP</span><span>@IndexModel.When(next.ReservedAt)</span></p>
                     @{
                         var confirmed = next.Status == "Confirmed";
+                        var nextArea = IndexModel.Area(next);
+                        var nextTable = IndexModel.TableNumber(next);
                     }
                     <article class="myr-ticket" data-reservation-id="@next.Id" aria-label="Reservation @next.ReferenceNo">
                         <div class="myr-date">
@@ -62,14 +66,18 @@
                         </div>
                         <div class="myr-row-body">
                             <div class="myr-facts">
-                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong>@IndexModel.Seating(next)</strong></div></div>
+                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong>@IndexModel.Seating(next)</strong>@if (nextArea is not null){<span class="myr-area">@nextArea</span>}</div></div>
                                 <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-users" /></svg><div><span class="myr-label">Guests</span><strong>@next.Guests @(next.Guests == 1 ? "guest" : "guests")</strong></div></div>
                                 <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-ticket" /></svg><div><span class="myr-label">Reservation reference</span><strong>@next.ReferenceNo</strong></div></div>
                                 <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-coins" /></svg><div><span class="myr-label">Minimum spend (per booking)</span><strong>@IndexModel.Spend(next)</strong></div></div>
                             </div>
-                            <div class="myr-status-area">
+                            <div class="myr-status-area@(nextTable is null ? "" : " has-seal")">
+                                @if (nextTable is not null)
+                                {
+                                    <div class="myr-table-seal@(nextTable.Length >= 6 ? " is-long" : "")" role="img" aria-label="Table @nextTable"><img src="~/images/reservations/table-seal.webp" alt="" /><span class="myr-seal-text"><small>TABLE</small><b class="@IndexModel.SealSize(nextTable)">@nextTable</b></span></div>
+                                }
                                 <span class="myr-status @(confirmed ? "is-confirmed" : "is-pending")"><svg aria-hidden="true"><use href="@(confirmed ? "#myr-check" : "#myr-hourglass")" /></svg>@next.Status</span>
-                                <p>@(!next.CanCancel ? $"Your table is held until {next.ReservedAt.AddMinutes(Model.NoShowGraceMinutes).ToString("HH:mm", en)}." : confirmed ? "We look forward to welcoming you." : "Awaiting restaurant confirmation.")</p>
+                                <p>@(!next.CanCancel ? $"Your table is held until {next.ReservedAt.AddMinutes(Model.NoShowGraceMinutes).ToString("HH:mm", en)}." : nextTable is not null ? "Your table may change on the day." : confirmed ? "We look forward to welcoming you." : "Awaiting restaurant confirmation.")</p>
                                 <div class="myr-actions">
                                     @if (next.CanCancel)
                                     {
@@ -91,6 +99,8 @@
                         @foreach (var r in later)
                         {
                             var ok = r.Status == "Confirmed";
+                            var rowArea = IndexModel.Area(r);
+                            var rowTable = IndexModel.TableNumber(r);
                             <article class="myr-later" data-reservation-id="@r.Id" aria-label="Reservation @r.ReferenceNo">
                                 <div class="myr-later-date" aria-hidden="true">
                                     <small>@r.ReservedAt.ToString("ddd", en).ToUpperInvariant()</small>
@@ -99,7 +109,7 @@
                                 </div>
                                 <div class="myr-later-main">
                                     <strong class="myr-later-time"><time>@r.ReservedAt.ToString("HH:mm", en)</time><span>@IndexModel.When(r.ReservedAt)</span></strong>
-                                    <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@r.Guests @(r.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@IndexModel.Seating(r)</p>
+                                    <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@r.Guests @(r.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@IndexModel.Seating(r)@if (rowArea is not null){<i></i><span>@rowArea</span>}@if (rowTable is not null){<i></i><strong class="myr-later-table">Table @rowTable</strong>}</p>
                                     @if (r.MinimumSpend > 0m)
                                     {
                                         <p class="myr-later-spend"><svg aria-hidden="true"><use href="#myr-coins" /></svg>Minimum spend @IndexModel.Spend(r)</p>
@@ -126,7 +136,7 @@
             <p>You have no upcoming reservations. Reserve a table and join us at YORU.</p>
             <a class="myr-make" asp-page="/Customer/Reservations/Create">Make a Reservation<svg aria-hidden="true"><use href="#myr-arrow" /></svg></a>
         </div>
-        <footer class="myr-reminder"><svg aria-hidden="true"><use href="#myr-info" /></svg><p><strong>Cancel any time before the booking time.</strong> The table is held for @Model.NoShowGraceMinutes minutes after the booking time. If you will be late, please contact us.</p></footer>
+        <footer class="myr-reminder"><svg aria-hidden="true"><use href="#myr-info" /></svg><p><strong>Cancel any time before the booking time.</strong> The table is held for @Model.NoShowGraceMinutes minutes after the booking time. If you will be late, please contact us. A reservation that our team has not confirmed is cancelled @Model.NoShowGraceMinutes minutes after the booking time.</p></footer>
     </div>
     <form id="myrTokenForm" hidden>@Html.AntiForgeryToken()</form>
 </section>
@@ -135,6 +145,7 @@
     <div class="myr-detail-shell">
         <article class="myr-detail-ticket">
             <div class="myr-detail-main">
+                <div class="myr-table-seal myr-detail-seal" id="myrDetailSeal" role="img" hidden><img src="~/images/reservations/table-seal.webp" alt="" /><span class="myr-seal-text"><small>TABLE</small><b id="myrDetailSealNo"></b></span></div>
                 <header class="myr-ticket-header"><div class="myr-brand"><span>YORU <b lang="ja">夜</b></span><small>IZAKAYA</small></div><span class="myr-brand-rule"></span><h2 id="myrDetailsTitle" tabindex="-1" autofocus>Reservation Details</h2></header>
                 <div class="myr-detail-grid">
                     <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-user" /></svg><div><span class="myr-label">Guest name</span><strong data-fill="customerName"></strong></div></div>
@@ -143,7 +154,7 @@
                 </div>
                 <div class="myr-detail-grid myr-detail-grid-two">
                     <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-users" /></svg><div><span class="myr-label">Guests</span><strong data-fill="guestText"></strong></div></div>
-                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong data-fill="seating"></strong></div></div>
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong data-fill="seating"></strong><small data-fill="area"></small></div></div>
                 </div>
                 <div class="myr-detail-grid myr-detail-grid-spend">
                     <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-message" /></svg><div><div class="myr-request-head"><span class="myr-label">Special requests</span><button type="button" class="myr-readmore" id="myrReadMore" aria-expanded="false" hidden>Read more</button></div><div class="myr-request-box" id="myrRequestBox" tabindex="-1"><strong data-fill="request" class="myr-request"></strong></div></div></div>
@@ -151,7 +162,7 @@
                 </div>
                 <div class="myr-arrival"><svg aria-hidden="true"><use href="#myr-info" /></svg><div><span class="myr-label">Arrival reminder</span><p>Please arrive on time. If you will be late, contact the restaurant.<br>Without notice, your table is held for @Model.NoShowGraceMinutes minutes only; after that, your table will be released.</p></div></div>
             </div>
-            <aside class="myr-detail-stub"><div class="myr-stub-inner"><p class="myr-stub-label">BOOKING<br>REFERENCE</p><strong class="myr-stub-reference" data-fill="reference"></strong><span class="myr-stub-rule"></span><svg class="myr-stub-symbol" aria-hidden="true"><use id="myrStatusLargeIcon" href="#myr-hourglass" /></svg><span id="myrDetailsStatus" class="myr-status is-pending"><svg aria-hidden="true"><use id="myrStatusIcon" href="#myr-hourglass" /></svg><span data-fill="status"></span></span><span class="myr-stub-rule"></span><p id="myrStatusCaption"></p><div class="myr-stub-brand">YORU<small>IZAKAYA</small><b lang="ja">夜</b></div></div></aside>
+            <aside class="myr-detail-stub"><div class="myr-stub-inner"><p class="myr-stub-label">BOOKING<br>REFERENCE</p><strong class="myr-stub-reference" data-fill="reference"></strong><span class="myr-stub-rule"></span><svg class="myr-stub-symbol" aria-hidden="true"><use id="myrStatusLargeIcon" href="#myr-hourglass" /></svg><span id="myrDetailsStatus" class="myr-status is-pending"><svg aria-hidden="true"><use id="myrStatusIcon" href="#myr-hourglass" /></svg><span data-fill="status"></span></span><span class="myr-stub-rule"></span><p id="myrStatusCaption"></p><p class="myr-stub-note" id="myrTableNote" hidden>Your table may change on the day.</p><div class="myr-stub-brand">YORU<small>IZAKAYA</small><b lang="ja">夜</b></div></div></aside>
         </article>
         <p class="myr-cancel-note" id="myrCancelNote" hidden></p>
         <p class="myr-rule-note" id="myrRuleNote">You can cancel any time before the booking time.</p>
