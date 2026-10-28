@@ -9,13 +9,164 @@ namespace RROMS.Services
     {
         private readonly IRepository<Payment> _payments;
         private readonly IRepository<Order> _orders;
+        private readonly IRepository<Bill> _bills;
+        private readonly IBillingTransactionRepository _billingTransaction;
 
         public PaymentService(
             IRepository<Payment> payments,
-            IRepository<Order> orders)
+            IRepository<Order> orders,
+            IRepository<Bill> bills,
+            IBillingTransactionRepository billingTransaction)
         {
             _payments = payments;
             _orders = orders;
+            _bills = bills;
+            _billingTransaction = billingTransaction;
+        }
+
+        // US32: Counter payment against a Confirmed bill (one step).
+        // At the counter the money is received immediately, so the
+        // payment is recorded as Paid and the bill becomes Paid in the
+        // same transaction. Pending/Failed are for online payments (US33).
+        // Full payment only (split / partial payments are future work).
+        public async Task<Payment> RecordCounterPaymentAsync(
+            int billId,
+            PaymentMethod method,
+            string staffUserId,
+            string? transactionRef = null)
+        {
+            if (billId <= 0)
+                throw new ArgumentException("Invalid bill ID.");
+
+            if (method != PaymentMethod.Cash &&
+                method != PaymentMethod.Card)
+            {
+                throw new ArgumentException(
+                    "Counter payments must be Cash or Card. " +
+                    "Online payments are handled by online checkout.");
+            }
+
+            if (string.IsNullOrWhiteSpace(staffUserId))
+                throw new ArgumentException("Staff user ID is required.");
+
+            string recordedBy = staffUserId.Trim();
+
+            transactionRef = transactionRef?.Trim();
+
+            if (string.IsNullOrWhiteSpace(transactionRef))
+                transactionRef = null;
+
+            if (transactionRef?.Length > 100)
+                throw new ArgumentException(
+                    "Transaction reference cannot exceed 100 characters.");
+
+            return await _billingTransaction.ExecuteForBillPaymentAsync(
+                billId,
+                async () =>
+                {
+                    var bill = await _bills.Query()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(b => b.Id == billId);
+
+                    if (bill == null)
+                        throw new InvalidOperationException(
+                            "Bill does not exist.");
+
+                    if (bill.Status == BillStatus.Paid)
+                        throw new InvalidOperationException(
+                            "This bill has already been paid.");
+
+                    if (bill.Status != BillStatus.Confirmed)
+                        throw new InvalidOperationException(
+                            "Only confirmed bills can be paid. Please confirm the bill first.");
+
+                    if (bill.TotalAmount <= 0)
+                        throw new InvalidOperationException(
+                            "Bill total is not valid.");
+
+                    // Payment-time check: the bill must still equal the
+                    // saved totals of its (non-cancelled) orders.
+                    var orderTotals = await _orders.Query()
+                        .AsNoTracking()
+                        .Where(o =>
+                            o.BillId == billId &&
+                            o.Status != OrderStatus.Cancelled)
+                        .Select(o => o.TotalAmount)
+                        .ToListAsync();
+
+                    if (orderTotals.Count == 0 ||
+                        orderTotals.Sum() != bill.TotalAmount)
+                    {
+                        throw new InvalidOperationException(
+                            "The bill amount no longer matches its orders. " +
+                            "Payment cannot be recorded for this bill.");
+                    }
+
+                    bool onlinePaymentInProgress = await _payments.Query()
+                        .AsNoTracking()
+                        .AnyAsync(p =>
+                            p.BillId == billId &&
+                            p.Status == PaymentStatus.Pending);
+
+                    if (onlinePaymentInProgress)
+                        throw new InvalidOperationException(
+                            "An online payment for this bill is still in progress.");
+
+                    if (transactionRef != null)
+                    {
+                        bool referenceExists = await _payments.Query()
+                            .AsNoTracking()
+                            .AnyAsync(p => p.TransactionRef == transactionRef);
+
+                        if (referenceExists)
+                            throw new InvalidOperationException(
+                                "Transaction reference already exists.");
+                    }
+
+                    DateTime now = DateTime.Now;   // team rule: local server time
+
+                    var payment = new Payment
+                    {
+                        BillId = billId,
+                        OrderId = null,
+                        Amount = bill.TotalAmount,
+                        Method = method,
+                        Status = PaymentStatus.Paid,
+                        TransactionRef = transactionRef,
+                        CreatedAt = now,
+                        PaidAt = now,
+                        RecordedByUserId = recordedBy
+                    };
+
+                    await _payments.AddAsync(payment);
+                    await _payments.SaveChangesAsync();
+
+                    // Conditional update: only one request can move the
+                    // bill from Confirmed to Paid. If it fails, throwing
+                    // rolls back the payment inserted above.
+                    int updated = await _bills.Query()
+                        .Where(b =>
+                            b.Id == billId &&
+                            b.Status == BillStatus.Confirmed)
+                        .ExecuteUpdateAsync(setters => setters
+                            .SetProperty(b => b.Status, BillStatus.Paid));
+
+                    if (updated != 1)
+                        throw new InvalidOperationException(
+                            "This bill has already been paid.");
+
+                    return payment;
+                });
+        }
+
+        public Task<List<Payment>> GetPaymentsByBillIdAsync(int billId)
+        {
+            return _payments.Query()
+                .AsNoTracking()
+                .Where(p => p.BillId == billId)
+                .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .ToListAsync();
         }
 
         public async Task<Payment> RecordPaymentAsync(
@@ -116,7 +267,13 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "Only pending payments can be confirmed.");
 
-            var order = await _orders.GetByIdAsync(payment.OrderId);
+            // US32: Bill payments (OrderId = null) are confirmed through
+            // the bill payment workflow, not this order-based method.
+            if (payment.OrderId is not int orderId)
+                throw new InvalidOperationException(
+                    "This payment belongs to a bill. Use the bill payment workflow.");
+
+            var order = await _orders.GetByIdAsync(orderId);
 
             if (order == null || order.Status == OrderStatus.Cancelled)
                 throw new InvalidOperationException(

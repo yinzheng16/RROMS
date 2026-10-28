@@ -239,6 +239,54 @@ namespace RROMS.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("RROMS.Models.Bill", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ConfirmedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("DiningSessionId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("ServiceCharge")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiningSessionId")
+                        .IsUnique()
+                        .HasFilter("[DiningSessionId] IS NOT NULL");
+
+                    b.ToTable("Bills");
+                });
+
             modelBuilder.Entity("RROMS.Models.ChatFaq", b =>
                 {
                     b.Property<int>("Id")
@@ -621,6 +669,9 @@ namespace RROMS.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BillId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -673,6 +724,8 @@ namespace RROMS.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BillId");
 
                     b.HasIndex("DiningSessionId");
 
@@ -732,6 +785,9 @@ namespace RROMS.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
+                    b.Property<int?>("BillId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -740,11 +796,15 @@ namespace RROMS.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("OrderId")
+                    b.Property<int?>("OrderId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("PaidAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("RecordedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -756,6 +816,8 @@ namespace RROMS.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BillId");
 
                     b.HasIndex("OrderId");
 
@@ -1136,6 +1198,16 @@ namespace RROMS.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RROMS.Models.Bill", b =>
+                {
+                    b.HasOne("RROMS.Models.DiningSession", "DiningSession")
+                        .WithMany()
+                        .HasForeignKey("DiningSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("DiningSession");
+                });
+
             modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
                 {
                     b.HasOne("RROMS.Models.ApplicationUser", "User")
@@ -1226,6 +1298,11 @@ namespace RROMS.Migrations
 
             modelBuilder.Entity("RROMS.Models.Order", b =>
                 {
+                    b.HasOne("RROMS.Models.Bill", "Bill")
+                        .WithMany("Orders")
+                        .HasForeignKey("BillId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RROMS.Models.DiningSession", "DiningSession")
                         .WithMany("Orders")
                         .HasForeignKey("DiningSessionId")
@@ -1241,6 +1318,8 @@ namespace RROMS.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Bill");
 
                     b.Navigation("DiningSession");
 
@@ -1270,11 +1349,17 @@ namespace RROMS.Migrations
 
             modelBuilder.Entity("RROMS.Models.Payment", b =>
                 {
+                    b.HasOne("RROMS.Models.Bill", "Bill")
+                        .WithMany("Payments")
+                        .HasForeignKey("BillId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RROMS.Models.Order", "Order")
                         .WithMany("Payments")
                         .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Bill");
 
                     b.Navigation("Order");
                 });
@@ -1344,6 +1429,13 @@ namespace RROMS.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("RROMS.Models.Bill", b =>
+                {
+                    b.Navigation("Orders");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("RROMS.Models.CustomerCart", b =>

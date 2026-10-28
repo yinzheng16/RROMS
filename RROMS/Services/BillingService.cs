@@ -11,17 +11,30 @@ namespace RROMS.Services
         private readonly IRepository<Payment> _payments;
         private readonly IRepository<Bill> _bills;
 
+        // Member 2's DiningSession (read only here).
+        private readonly IRepository<DiningSession> _sessions;
+
         private readonly IBillingTransactionRepository _billingTransaction;
+
+        // US32: Kitchen statuses that trigger the confirmation warning.
+        private static readonly OrderStatus[] KitchenStatuses =
+        {
+            OrderStatus.Pending,
+            OrderStatus.Preparing,
+            OrderStatus.ReadyToServe
+        };
 
         public BillingService(
             IRepository<Order> orders,
             IRepository<Payment> payments,
             IRepository<Bill> bills,
+            IRepository<DiningSession> sessions,
             IBillingTransactionRepository billingTransaction)
         {
             _orders = orders;
             _payments = payments;
             _bills = bills;
+            _sessions = sessions;
             _billingTransaction = billingTransaction;
         }
 
@@ -297,16 +310,306 @@ namespace RROMS.Services
                      b.Status == BillStatus.Paid));
         }
 
-        // TODO (US32 - MEMBER 2 INTEGRATION):
-        // Implement after Order.DiningSessionId is merged.
-        // Verify all chargeable orders belong to Paid bills
-        // and no payments remain Pending.
-        public Task<bool> IsSessionFinanciallySettledAsync(int sessionId)
+        // US32 (for Member 2's CloseSessionAsync):
+        // A session is financially settled when every non-cancelled order
+        // in it is linked to a Paid bill, each of those bills still matches
+        // the saved totals of its orders, and no payment is still Pending.
+        // An order with no bill never counts as paid.
+        // A session with no chargeable orders (e.g. guests left without
+        // ordering) has nothing to pay, so it is settled.
+        public async Task<bool> IsSessionFinanciallySettledAsync(int sessionId)
         {
             if (sessionId <= 0)
-                return Task.FromResult(false);
+                return false;
 
-            return Task.FromResult(false);
+            bool sessionExists = await _sessions.Query()
+                .AsNoTracking()
+                .AnyAsync(s => s.Id == sessionId);
+
+            if (!sessionExists)
+                return false;
+
+            var orders = await _orders.Query()
+                .AsNoTracking()
+                .Where(o =>
+                    o.DiningSessionId == sessionId &&
+                    o.Status != OrderStatus.Cancelled)
+                .Select(o => new
+                {
+                    o.BillId,
+                    o.TotalAmount,
+                    BillStatus = o.Bill != null
+                        ? (BillStatus?)o.Bill.Status
+                        : null,
+                    BillTotal = o.Bill != null
+                        ? (decimal?)o.Bill.TotalAmount
+                        : null
+                })
+                .ToListAsync();
+
+            if (orders.Count == 0)
+                return true;
+
+            // Every chargeable order must be on a Paid bill.
+            if (orders.Any(o =>
+                o.BillId == null ||
+                o.BillStatus != BillStatus.Paid))
+            {
+                return false;
+            }
+
+            // Each bill total must still equal its orders' saved totals
+            // (protects against a change after the bill was confirmed).
+            bool totalsMatch = orders
+                .GroupBy(o => o.BillId!.Value)
+                .All(g => g.First().BillTotal == g.Sum(o => o.TotalAmount));
+
+            if (!totalsMatch)
+                return false;
+
+            var billIds = orders
+                .Select(o => o.BillId!.Value)
+                .Distinct()
+                .ToList();
+
+            bool paymentInProgress = await _payments.Query()
+                .AsNoTracking()
+                .AnyAsync(p =>
+                    p.BillId != null &&
+                    billIds.Contains(p.BillId.Value) &&
+                    p.Status == PaymentStatus.Pending);
+
+            return !paymentInProgress;
+        }
+
+
+        // US32: Read-only preview of the combined bill for one session.
+        // Totals = sum of the saved Order amounts. No recalculation.
+        public async Task<SessionBillPreview> PreviewSessionBillAsync(
+            int sessionId)
+        {
+            ValidateSessionId(sessionId);
+
+            var session = await _sessions.Query()
+                .AsNoTracking()
+                .Include(s => s.Table)
+                .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+            if (session == null)
+                throw new InvalidOperationException(
+                    "Dining session does not exist.");
+
+            var orders = await LoadChargeableSessionOrdersAsync(
+                sessionId,
+                includeItems: true);
+
+            var existingBill = await _bills.Query()
+                .AsNoTracking()
+                .Where(b => b.DiningSessionId == sessionId)
+                .Select(b => new { b.Id, b.Status })
+                .SingleOrDefaultAsync();
+
+            decimal subtotal = orders.Sum(o => o.Subtotal);
+            decimal taxAmount = orders.Sum(o => o.TaxAmount);
+            decimal serviceCharge = orders.Sum(o => o.ServiceCharge);
+            decimal totalAmount = orders.Sum(o => o.TotalAmount);
+
+            var (taxRate, serviceChargeRate) = DeriveDisplayRates(
+                subtotal,
+                taxAmount,
+                serviceCharge);
+
+            var lines = orders
+                .Select(o => new SessionBillOrderLine(
+                    o.Id,
+                    o.OrderNo,
+                    o.Status,
+                    CreateItemSummaries(o),
+                    o.Subtotal,
+                    o.TaxAmount,
+                    o.ServiceCharge,
+                    o.TotalAmount))
+                .ToList();
+
+            return new SessionBillPreview(
+                session.Id,
+                session.TableId,
+                session.Table?.TableNumber ?? string.Empty,
+                session.Status,
+                lines,
+                subtotal,
+                taxRate,
+                taxAmount,
+                serviceChargeRate,
+                serviceCharge,
+                totalAmount,
+                GetOrdersInKitchen(orders),
+                existingBill?.Id,
+                existingBill?.Status,
+                CreateOrderSnapshot(orders));
+        }
+
+
+        // US32: Staff confirm the combined bill for one dining session.
+        // Agreed design: the session bill is created at confirmation
+        // (no stored Draft), in one transaction holding the session lock:
+        //   1. session must be Open and have no bill yet;
+        //   2. orders must still match the preview (OrderSnapshot);
+        //   3. orders still in the kitchen need acknowledgeKitchenWarning;
+        //   4. create the Confirmed bill from the saved order amounts;
+        //   5. link the orders with a conditional update;
+        //   6. re-check totals and that no new order slipped in.
+        // Any failure rolls back everything.
+        public async Task<SessionBillConfirmResult> ConfirmSessionBillAsync(
+            int sessionId,
+            string staffUserId,
+            string orderSnapshot,
+            bool acknowledgeKitchenWarning)
+        {
+            ValidateSessionId(sessionId);
+
+            if (string.IsNullOrWhiteSpace(staffUserId))
+                throw new ArgumentException(
+                    "Staff user ID is required.", nameof(staffUserId));
+
+            if (string.IsNullOrWhiteSpace(orderSnapshot))
+                throw new ArgumentException(
+                    "Bill preview is missing. Please refresh the bill preview.",
+                    nameof(orderSnapshot));
+
+            string confirmedBy = staffUserId.Trim();
+
+            return await _billingTransaction.ExecuteForSessionBillAsync(
+                sessionId,
+                async () =>
+                {
+                    // 1. Session must exist, be Open and have no bill yet.
+                    var session = await _sessions.Query()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+                    if (session == null)
+                        throw new InvalidOperationException(
+                            "Dining session does not exist.");
+
+                    if (session.Status != DiningSessionStatus.Open)
+                        throw new InvalidOperationException(
+                            "This dining session is already closed.");
+
+                    bool billExists = await _bills.Query()
+                        .AsNoTracking()
+                        .AnyAsync(b => b.DiningSessionId == sessionId);
+
+                    if (billExists)
+                        throw new InvalidOperationException(
+                            "This table's bill has already been confirmed. " +
+                            "Please refresh the page.");
+
+                    // 2. Orders must still match what staff previewed.
+                    var orders = await LoadChargeableSessionOrdersAsync(
+                        sessionId,
+                        includeItems: false);
+
+                    if (orders.Count == 0)
+                        throw new InvalidOperationException(
+                            "This dining session has no orders to bill.");
+
+                    if (CreateOrderSnapshot(orders) != orderSnapshot)
+                        throw new InvalidOperationException(
+                            "The orders for this table have changed since the preview. " +
+                            "Please refresh the bill preview and confirm again.");
+
+                    if (orders.Any(o => o.BillId.HasValue))
+                        throw new InvalidOperationException(
+                            "Some orders in this session are already linked to a bill.");
+
+                    // 3. Kitchen warning (US32 acceptance criteria: warn, not block).
+                    var ordersInKitchen = GetOrdersInKitchen(orders);
+
+                    if (ordersInKitchen.Count > 0 && !acknowledgeKitchenWarning)
+                    {
+                        return new SessionBillConfirmResult(
+                            SessionBillConfirmStatus.KitchenWarningRequired,
+                            null,
+                            ordersInKitchen);
+                    }
+
+                    // 4. Create the Confirmed bill from saved amounts only.
+                    var bill = new Bill
+                    {
+                        DiningSessionId = sessionId,
+                        Subtotal = orders.Sum(o => o.Subtotal),
+                        TaxAmount = orders.Sum(o => o.TaxAmount),
+                        ServiceCharge = orders.Sum(o => o.ServiceCharge),
+                        TotalAmount = orders.Sum(o => o.TotalAmount),
+                        Status = BillStatus.Confirmed,
+                        ConfirmedAt = DateTime.Now,
+                        ConfirmedByUserId = confirmedBy
+                    };
+
+                    if (bill.Subtotal <= 0 || bill.TotalAmount <= 0)
+                        throw new InvalidOperationException(
+                            "Cannot confirm a bill with invalid amounts.");
+
+                    await _bills.AddAsync(bill);
+                    await _bills.SaveChangesAsync();
+
+                    int billId = bill.Id;
+
+                    var orderIds = orders
+                        .Select(o => o.Id)
+                        .ToList();
+
+                    // 5. Conditional update (compare-and-set): link only
+                    // orders that are still in this session, unbilled and
+                    // not cancelled. Same pattern as Member 3's
+                    // AcceptStaffOrderAsync; no concurrency exceptions
+                    // for other modules.
+                    int linked = await _orders.Query()
+                        .Where(o =>
+                            orderIds.Contains(o.Id) &&
+                            o.DiningSessionId == sessionId &&
+                            o.BillId == null &&
+                            o.Status != OrderStatus.Cancelled)
+                        .ExecuteUpdateAsync(setters => setters
+                            .SetProperty(o => o.BillId, (int?)billId));
+
+                    if (linked != orderIds.Count)
+                        throw new InvalidOperationException(
+                            "The orders for this table changed while the bill was being confirmed. " +
+                            "Please refresh the bill preview and try again.");
+
+                    // 6a. The linked orders' saved totals must still equal
+                    // the bill (e.g. no partial cancellation in between).
+                    var linkedTotals = await _orders.Query()
+                        .AsNoTracking()
+                        .Where(o => o.BillId == billId)
+                        .Select(o => o.TotalAmount)
+                        .ToListAsync();
+
+                    if (linkedTotals.Sum() != bill.TotalAmount)
+                        throw new InvalidOperationException(
+                            "Order amounts changed while the bill was being confirmed. " +
+                            "Please refresh the bill preview and try again.");
+
+                    // 6b. No new chargeable order may be left unbilled.
+                    bool unbilledOrderExists = await _orders.Query()
+                        .AsNoTracking()
+                        .AnyAsync(o =>
+                            o.DiningSessionId == sessionId &&
+                            o.BillId == null &&
+                            o.Status != OrderStatus.Cancelled);
+
+                    if (unbilledOrderExists)
+                        throw new InvalidOperationException(
+                            "A new order was added to this table while the bill was being confirmed. " +
+                            "Please refresh the bill preview and confirm again.");
+
+                    return new SessionBillConfirmResult(
+                        SessionBillConfirmStatus.Confirmed,
+                        bill,
+                        ordersInKitchen);
+                });
         }
 
         public async Task<int?> FindOrderIdByOrderNoAsync(
@@ -526,6 +829,84 @@ namespace RROMS.Services
         }
 
 
+        private static void ValidateSessionId(int sessionId)
+        {
+            if (sessionId <= 0)
+                throw new ArgumentException("Invalid dining session ID.");
+        }
+
+        // US32: Non-cancelled orders of a session, oldest first.
+        // Every order must have items and consistent saved amounts.
+        private async Task<List<Order>> LoadChargeableSessionOrdersAsync(
+            int sessionId,
+            bool includeItems)
+        {
+            var query = _orders.Query()
+                .AsNoTracking()
+                .Where(o =>
+                    o.DiningSessionId == sessionId &&
+                    o.Status != OrderStatus.Cancelled);
+
+            if (includeItems)
+            {
+                query = query
+                    .Include(o => o.Items)
+                        .ThenInclude(item => item.MenuItem);
+            }
+
+            var orders = await query
+                .OrderBy(o => o.Id)
+                .ToListAsync();
+
+            foreach (var order in orders)
+            {
+                if (includeItems)
+                    ValidateOrderItems(order);
+
+                ValidateSavedAmounts(order);
+            }
+
+            return orders;
+        }
+
+        private static void ValidateSavedAmounts(Order order)
+        {
+            if (order.Subtotal <= 0 ||
+                order.TaxAmount < 0 ||
+                order.ServiceCharge < 0 ||
+                order.TotalAmount <= 0 ||
+                order.TotalAmount !=
+                    order.Subtotal + order.TaxAmount + order.ServiceCharge)
+            {
+                throw new InvalidOperationException(
+                    $"Order {order.OrderNo} does not have valid saved amounts.");
+            }
+        }
+
+        private static IReadOnlyList<string> GetOrdersInKitchen(
+            IEnumerable<Order> orders)
+        {
+            return orders
+                .Where(o => KitchenStatuses.Contains(o.Status))
+                .Select(o => o.OrderNo)
+                .ToList();
+        }
+
+        // US32: Fingerprint of the orders shown in the preview.
+        // Confirmation is refused if this changes (new order,
+        // cancellation or changed amounts).
+        private static string CreateOrderSnapshot(IEnumerable<Order> orders)
+        {
+            return string.Join("|", orders
+                .OrderBy(o => o.Id)
+                .Select(o => string.Join(":",
+                    o.Id,
+                    o.Subtotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    o.TaxAmount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    o.ServiceCharge.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                    o.TotalAmount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))));
+        }
+
         // US32 / US49: Display-only percentages derived from saved amounts.
         // Orders do not store their historical rates, so derive them here.
         // Team rule (leader, US49): service = subtotal x service%;
@@ -534,14 +915,27 @@ namespace RROMS.Services
         private static (decimal TaxRate, decimal ServiceChargeRate)
             DeriveDisplayRates(Order order)
         {
-            decimal serviceChargeRate = order.Subtotal > 0
-                ? Math.Round(order.ServiceCharge / order.Subtotal * 100m, 2)
+            return DeriveDisplayRates(
+                order.Subtotal,
+                order.TaxAmount,
+                order.ServiceCharge);
+        }
+
+        // Same rule for combined totals (session bill preview).
+        private static (decimal TaxRate, decimal ServiceChargeRate)
+            DeriveDisplayRates(
+                decimal subtotal,
+                decimal taxAmount,
+                decimal serviceCharge)
+        {
+            decimal serviceChargeRate = subtotal > 0
+                ? Math.Round(serviceCharge / subtotal * 100m, 2)
                 : 0m;
 
-            decimal taxBase = order.Subtotal + order.ServiceCharge;
+            decimal taxBase = subtotal + serviceCharge;
 
             decimal taxRate = taxBase > 0
-                ? Math.Round(order.TaxAmount / taxBase * 100m, 2)
+                ? Math.Round(taxAmount / taxBase * 100m, 2)
                 : 0m;
 
             return (taxRate, serviceChargeRate);
@@ -553,12 +947,10 @@ namespace RROMS.Services
                 amount, 2, MidpointRounding.AwayFromZero);
         }
 
-        private static BillSummary CreateSummary(
-            Order order,
-            decimal taxRate,
-            decimal serviceChargeRate)
+        private static IReadOnlyList<BillItemSummary> CreateItemSummaries(
+            Order order)
         {
-            var items = order.Items
+            return order.Items
                 .OrderBy(item => item.Id)
                 .Select(item => new BillItemSummary(
                     item.MenuItemId,
@@ -569,6 +961,14 @@ namespace RROMS.Services
                     item.MenuItem?.Name
                         ?? $"Menu Item #{item.MenuItemId}"))
                 .ToList();
+        }
+
+        private static BillSummary CreateSummary(
+            Order order,
+            decimal taxRate,
+            decimal serviceChargeRate)
+        {
+            var items = CreateItemSummaries(order);
 
             return new BillSummary(
                 order.Id,

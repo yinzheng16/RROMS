@@ -243,14 +243,28 @@ namespace RROMS.Data
                     .WithOne(p => p.Bill)
                     .HasForeignKey(p => p.BillId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // US32: One combined bill per dining session.
+                // Takeaway bills have no session (NULL), so they are not limited.
+                e.HasIndex(b => b.DiningSessionId)
+                    .IsUnique()
+                    .HasFilter("[DiningSessionId] IS NOT NULL");
+
+                e.HasOne(b => b.DiningSession)
+                    .WithMany()
+                    .HasForeignKey(b => b.DiningSessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<Payment>(e =>
             {
                 e.Property(p => p.Amount).HasPrecision(10, 2);
+                // US32: OrderId is optional. Bill payments have no single order;
+                // older (US31) payments keep their OrderId.
                 e.HasOne(p => p.Order)
                  .WithMany(o => o.Payments)
                  .HasForeignKey(p => p.OrderId)
+                 .IsRequired(false)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
