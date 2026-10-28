@@ -19,6 +19,10 @@ namespace RROMS.Models
         public int? ReservationId { get; set; }
         public Reservation? Reservation { get; set; }
 
+        // Added by Member 2 (dine-in workflow decision, 27 Oct): the dining session this order belongs to.
+        // Null for takeaway orders and for dine-in orders placed before the guests are seated.
+        public int? DiningSessionId { get; set; }
+        public DiningSession? DiningSession { get; set; }
         public OrderType OrderType { get; set; } = OrderType.DineIn;
 
         public OrderStatus Status { get; set; } = OrderStatus.Pending;

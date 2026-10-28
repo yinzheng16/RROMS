@@ -21,6 +21,7 @@ namespace RROMS.Data
         public DbSet<OperatingHour> OperatingHours => Set<OperatingHour>();
         public DbSet<SpecialDate> SpecialDates => Set<SpecialDate>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
+        public DbSet<DiningSession> DiningSessions => Set<DiningSession>();
         public DbSet<ReservationStatusLog> ReservationStatusLogs => Set<ReservationStatusLog>();
 
         // Member 3: Menu & Orders
@@ -57,6 +58,7 @@ namespace RROMS.Data
             builder.Properties<DayOfWeek>().HaveConversion<string>().HaveMaxLength(10);
             builder.Properties<TableType>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<TableStatus>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<DiningSessionStatus>().HaveConversion<string>().HaveMaxLength(20);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -184,6 +186,10 @@ namespace RROMS.Data
                  .WithMany(r => r.Orders)
                  .HasForeignKey(o => o.ReservationId)
                  .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(o => o.DiningSession)
+                 .WithMany(s => s.Orders)
+                 .HasForeignKey(o => o.DiningSessionId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<OrderItem>(e =>
@@ -196,6 +202,32 @@ namespace RROMS.Data
                 e.HasOne(i => i.MenuItem)
                  .WithMany()
                  .HasForeignKey(i => i.MenuItemId)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<DiningSession>(e =>
+            {
+                e.HasIndex(s => new { s.TableId, s.Status });
+                // A table can have only one open session at a time.
+                e.HasIndex(s => s.TableId)
+                 .IsUnique()
+                 .HasFilter("[Status] = 'Open'");
+                // A reservation opens at most one session.
+                e.HasIndex(s => s.ReservationId)
+                 .IsUnique()
+                 .HasFilter("[ReservationId] IS NOT NULL");
+
+                e.HasOne(s => s.Table)
+                 .WithMany()
+                 .HasForeignKey(s => s.TableId)
+                 .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(s => s.Reservation)
+                 .WithMany()
+                 .HasForeignKey(s => s.ReservationId)
+                 .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(s => s.Customer)
+                 .WithMany()
+                 .HasForeignKey(s => s.CustomerId)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
