@@ -33,6 +33,7 @@ namespace RROMS.Data
         public DbSet<CustomerCartLine> CustomerCartLines => Set<CustomerCartLine>();
 
         // Member 4: Payments & Notifications
+        public DbSet<Bill> Bills => Set<Bill>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -52,6 +53,7 @@ namespace RROMS.Data
             builder.Properties<OrderStatus>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<PaymentMethod>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<PaymentStatus>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<BillStatus>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<NotificationType>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<DayOfWeek>().HaveConversion<string>().HaveMaxLength(10);
             builder.Properties<TableType>().HaveConversion<string>().HaveMaxLength(20);
@@ -155,6 +157,8 @@ namespace RROMS.Data
             builder.Entity<Order>(e =>
             {
                 e.HasIndex(o => o.OrderNo).IsUnique();
+                // US32: Improve lookup performance for Orders linked to a Bill.
+                e.HasIndex(o => o.BillId);
                 e.Property(o => o.Subtotal).HasPrecision(10, 2);
                 e.Property(o => o.TaxAmount).HasPrecision(10, 2);
                 e.Property(o => o.ServiceCharge).HasPrecision(10, 2);
@@ -183,6 +187,28 @@ namespace RROMS.Data
             });
 
             // ---------- Payments & Notifications ----------
+            builder.Entity<Bill>(e =>
+            {
+                e.Property(b => b.Subtotal).HasPrecision(10, 2);
+                e.Property(b => b.TaxAmount).HasPrecision(10, 2);
+                e.Property(b => b.ServiceCharge).HasPrecision(10, 2);
+                e.Property(b => b.TotalAmount).HasPrecision(10, 2);
+
+                e.Property(b => b.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                e.HasMany(b => b.Orders)
+                    .WithOne(o => o.Bill)
+                    .HasForeignKey(o => o.BillId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(b => b.Payments)
+                    .WithOne(p => p.Bill)
+                    .HasForeignKey(p => p.BillId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             builder.Entity<Payment>(e =>
             {
                 e.Property(p => p.Amount).HasPrecision(10, 2);

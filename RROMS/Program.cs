@@ -17,6 +17,11 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
+// US32: Database transaction and locking for Bill creation.
+builder.Services.AddScoped<
+    IBillingTransactionRepository,
+    BillingTransactionRepository>();
+
 // ---------- Identity: login, roles, lockout (Member 1) ----------
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     {
@@ -64,9 +69,7 @@ builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
-builder.Services.AddScoped<IBillingService, BillingService>();
-builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
-builder.Services.AddScoped<IBillingService, BillingService>();
+builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 //Member 5

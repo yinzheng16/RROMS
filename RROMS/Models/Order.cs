@@ -19,6 +19,14 @@ namespace RROMS.Models
         public int? ReservationId { get; set; }
         public Reservation? Reservation { get; set; }
 
+        // US32: Multiple orders can belong to one combined bill.
+        public int? BillId { get; set; }
+        public Bill? Bill { get; set; }
+
+        // US32: Detect concurrent updates when linking an Order to a Bill.
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
+
         public OrderType OrderType { get; set; } = OrderType.DineIn;
 
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
