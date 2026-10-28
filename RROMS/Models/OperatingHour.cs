@@ -12,5 +12,7 @@ namespace RROMS.Models
         public TimeOnly CloseTime { get; set; }
 
         public bool IsClosed { get; set; }
+        public TimeOnly? BreakStart { get; set; }
+        public TimeOnly? BreakEnd { get; set; }
     }
 }

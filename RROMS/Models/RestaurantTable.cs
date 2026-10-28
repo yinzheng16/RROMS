@@ -44,6 +44,10 @@ namespace RROMS.Models
         // Live state shown on the table board (Sprint 2).
         public TableStatus Status { get; set; } = TableStatus.Available;
 
+        // Remembers the status this table had before its dining area was
+        // marked Occupied, so it can be restored when the area opens again.
+        // Null when the area is not Occupied.
+        public TableStatus? StatusBeforeAreaOccupied { get; set; }
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 }

@@ -24,7 +24,6 @@ namespace RROMS.Services
 
             var newSettings = new RestaurantSetting
             {
-                RestaurantName = "YORU IZAKAYA",
                 TaxRatePercent = 0,
                 ServiceChargePercent = 0
             };
@@ -40,5 +39,35 @@ namespace RROMS.Services
             _restaurantSettingRepository.Update(settings);
             await _restaurantSettingRepository.SaveChangesAsync();
         }
+
+        // ---------- US49: bill maths ----------
+
+        public async Task<BillCharges> CalculateChargesAsync(decimal subtotal, bool isTakeaway)
+        {
+            var settings = await GetRestaurantSettingsAsync();
+            return CalculateCharges(settings, subtotal, isTakeaway);
+        }
+
+        public BillCharges CalculateCharges(RestaurantSetting settings, decimal subtotal, bool isTakeaway)
+        {
+            var servicePercent = isTakeaway && !settings.ServiceChargeOnTakeaway
+                ? 0m
+                : settings.ServiceChargePercent;
+
+            var service = Money(subtotal * servicePercent / 100m);
+            var tax = Money((subtotal + service) * settings.TaxRatePercent / 100m);
+
+            return new BillCharges(
+                Subtotal: Money(subtotal),
+                ServiceChargePercent: servicePercent,
+                ServiceCharge: service,
+                TaxRatePercent: settings.TaxRatePercent,
+                Tax: tax,
+                Total: Money(subtotal) + service + tax);
+        }
+
+        // RM to 2 decimal places, 0.005 rounds up
+        private static decimal Money(decimal value) =>
+            Math.Round(value, 2, MidpointRounding.AwayFromZero);
     }
 }
