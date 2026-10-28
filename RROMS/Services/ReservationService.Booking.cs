@@ -126,7 +126,9 @@ public partial class ReservationService
                 return "Please choose a time in 5-minute steps.";
 
             if (OverlapsBreak(s, start, end))
-                return "That time falls in our break. Please choose another time.";
+                return $"A {BookingRules.DurationMinutes}-minute sitting from {start.ToString("h:mm tt", CultureInfo.InvariantCulture)} " +
+                       $"would run into our break ({s.BreakStart!.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)} - " +
+                       $"{s.BreakEnd!.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)}). Please choose another time.";
 
             return null;
         }
@@ -135,6 +137,49 @@ public partial class ReservationService
         if (sameDay.ClosedReason != null) return sameDay.ClosedReason;
 
         return "That time is outside our opening hours, or too close to closing for a full sitting.";
+    }
+
+    // ---------- shared opening-time rules (for every member's pages) ----------
+
+    // The session that is open at this moment, or null (closed, outside hours, in a break, closed special date).
+    private static BookingSession? OpenSessionAt(
+        DateTime when, List<OperatingHour> hours, List<SpecialDate> specials)
+    {
+        // The moment belongs to today's session, or to yesterday's if that one runs past midnight.
+        foreach (var day in new[] { when.Date, when.Date.AddDays(-1) })
+        {
+            var s = SessionFor(day, hours, specials);
+            if (s.ClosedReason != null) continue;
+            if (when < s.Open || when >= s.Close) continue;
+            if (s.BreakStart.HasValue && s.BreakEnd.HasValue &&
+                when >= s.BreakStart.Value && when < s.BreakEnd.Value) return null;
+            return s;
+        }
+
+        return null;
+    }
+
+    // True when the restaurant is open at this moment: inside opening hours, not in a break,
+    // and not on a closed special date.
+    public async Task<bool> IsOpenAtAsync(DateTime when)
+    {
+        var (hours, specials) = await LoadScheduleAsync();
+        return OpenSessionAt(when, hours, specials) != null;
+    }
+
+    // True when the kitchen still takes orders at this moment: the restaurant is open and it is at least
+    // BookingTimeRules.LastOrderMinutes before closing, or before the next break starts.
+    public async Task<bool> CanOrderAtAsync(DateTime when)
+    {
+        var (hours, specials) = await LoadScheduleAsync();
+        var s = OpenSessionAt(when, hours, specials);
+        if (s == null) return false;
+
+        var limit = s.Close;
+        if (s.BreakStart.HasValue && when < s.BreakStart.Value)
+            limit = s.BreakStart.Value;
+
+        return when.AddMinutes(BookingTimeRules.LastOrderMinutes) <= limit;
     }
 
     // ---------- step 1: dates and times ----------

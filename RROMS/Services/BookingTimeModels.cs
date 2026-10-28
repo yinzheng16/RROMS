@@ -11,6 +11,9 @@ public static class BookingTimeRules
     // MaxPerWindow upcoming bookings inside any RollingWindowDays days in a row.
     public const int RollingWindowDays = 7;
     public const int MaxPerWindow = 3;
+
+    // The kitchen stops taking orders this many minutes before closing, or before a break.
+    public const int LastOrderMinutes = 30;
 }
 
 // Kind: "earlier" and "later" (same sitting) or "nextday".

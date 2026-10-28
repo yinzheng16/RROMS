@@ -66,4 +66,6 @@ public interface IReservationService
     Task<TimeCheckResult> CheckTimeAsync(DateTime start, int guests);
     Task<bool> HasOverlapAsync(string userId, DateTime start);
     Task<string?> GetLimitMessageAsync(string userId, DateTime start);
+    Task<bool> IsOpenAtAsync(DateTime when);
+    Task<bool> CanOrderAtAsync(DateTime when);
 }
