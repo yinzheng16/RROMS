@@ -16,10 +16,14 @@ namespace RROMS.Pages.Customer.Reservations;
 public class CreateModel(
     IReservationService reservations,
     INotificationService notifications,
-    UserManager<ApplicationUser> users) : PageModel
+    UserManager<ApplicationUser> users,
+    IProfileService profiles) : PageModel
 {
     public string CustomerName { get; private set; } = "";
     public string? CustomerPhone { get; private set; }
+
+    // From My profile (Member 1, US03): allergies, diet and notes. Used only to pre-fill an empty request box.
+    public string? DiningSummary { get; private set; }
     public List<string> BookableDates { get; private set; } = new();
     public int MaxGuests { get; private set; } = 2;
 
@@ -27,6 +31,11 @@ public class CreateModel(
     public int DurationMinutes => BookingRules.DurationMinutes;
     public int MaxActiveBookings => BookingRules.MaxActiveBookings;
     public int NoShowGraceMinutes => BookingRules.NoShowGraceMinutes;
+
+    // "1 hour" / "90 minutes", for the hint under the calendar.
+    public string MinLeadText => BookingRules.MinLeadMinutes % 60 == 0
+        ? $"{BookingRules.MinLeadMinutes / 60} hour{(BookingRules.MinLeadMinutes / 60 == 1 ? "" : "s")}"
+        : $"{BookingRules.MinLeadMinutes} minutes";
 
     public class SubmitDto
     {
@@ -48,6 +57,18 @@ public class CreateModel(
         CustomerName = user?.FullName ?? "";
         CustomerPhone = user?.PhoneNumber;
 
+        // Read-only and always for the logged-in customer. A failure here must never stop the booking page.
+        try
+        {
+            var summary = (await profiles.GetDiningSummaryAsync(UserId))?.Trim();
+            DiningSummary = string.IsNullOrEmpty(summary) ? null
+                : summary.Length > 500 ? summary[..500] : summary;   // the request box holds 500 characters
+        }
+        catch
+        {
+            DiningSummary = null;
+        }
+
         await reservations.ReleaseOverdueReservationsAsync();
         BookableDates = await reservations.GetBookableDatesAsync();
         MaxGuests = await reservations.GetMaxPartySizeAsync();
@@ -62,6 +83,37 @@ public class CreateModel(
 
         var slots = await reservations.GetTimeSlotsAsync(day);
         return new JsonResult(new { slots });
+    }
+
+    // Step 1: "set your own time" - is there a table at this exact time, and if not, what is nearby.
+    public async Task<IActionResult> OnGetCheckTimeAsync(string? date, string? time, int guests)
+    {
+        if (!TryStart(date, time, out var start))
+            return new JsonResult(new { valid = false, available = false, message = "Choose a valid date and time.", suggestions = Array.Empty<object>() });
+
+        var r = await reservations.CheckTimeAsync(start, guests);
+
+        return new JsonResult(new
+        {
+            valid = r.Valid,
+            available = r.Available,
+            message = r.Message,
+            suggestions = r.Suggestions.Select(x => new { date = x.Date, time = x.Time, label = x.Label, kind = x.Kind })
+        });
+    }
+
+    // Step 1: does this customer already hold a booking that overlaps the chosen time?
+    public async Task<IActionResult> OnGetOverlapAsync(string? date, string? time)
+    {
+        if (!TryStart(date, time, out var start))
+            return new JsonResult(new { overlap = false });
+
+        // Blocked when the customer already has a booking then, or would go over the booking limit.
+        string? message = await reservations.HasOverlapAsync(UserId, start)
+            ? "You already have a reservation at this time. Please choose another time."
+            : await reservations.GetLimitMessageAsync(UserId, start);
+
+        return new JsonResult(new { overlap = message != null, message });
     }
 
     // Step 2: every table type with its availability for the chosen date, time and guests.
@@ -88,7 +140,10 @@ public class CreateModel(
                 belowMinimum = o.BelowMinimum,
                 status = o.Status.ToString().ToLowerInvariant(),
                 reason = o.Reason,
-                tablesLeft = o.TablesLeft
+                tablesLeft = o.TablesLeft,
+                areaName = o.AreaName,
+                suggestions = (o.Suggestions ?? new List<TimeSuggestion>())
+                    .Select(x => new { date = x.Date, time = x.Time, label = x.Label, kind = x.Kind })
             })
         });
     }

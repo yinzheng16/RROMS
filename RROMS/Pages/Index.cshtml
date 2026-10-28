@@ -49,6 +49,7 @@
     // Hero words for each mood (the mood comes from today's opening hours).
     var (eyebrow, title) = Model.Info.Mood switch
     {
+        "before" when Model.Info.MoodText.StartsWith("On a short break") => ("休憩 · Short break", "Back in a<br /><em>moment.</em>"),
         "before" => ("夕暮れ · Opening soon", "Tokyo wakes up<br /><em>soon.</em>"),
         "last" => ("ラストオーダー · Last orders", "One more<br /><em>round?</em>"),
         "closed" => ("お休み · Resting tonight", "Resting tonight,<br />back <em>tomorrow.</em>"),
@@ -303,7 +304,12 @@
                     <table class="hm-hours">
                         @foreach (var row in Model.Hours)
                         {
-                            <tr class="@(row.IsClosed ? "closed" : "")"><td>@row.Days</td><td>@row.Hours</td></tr>
+                            @* "Fri 30 Oct · Holiday" -> date + small name; "10 AM – 3 PM · 5 PM – 10 PM" -> one line per period *@
+                            var dayParts = row.Days.Split(" · ", 2);
+                            <tr class="@(row.IsClosed ? "closed" : "") @(dayParts.Length > 1 ? "special" : "")">
+                                <td>@dayParts[0]@if (dayParts.Length > 1) {<small>@dayParts[1]</small>}</td>
+                                <td>@foreach (var period in row.Hours.Split(" · ")) {<span>@period</span>}</td>
+                            </tr>
                         }
                     </table>
                 </div>
@@ -392,7 +398,7 @@
 
 </div>
 
-@* Opening hours, guest limit and rules for the booking box *@
+@* Bookable dates and guest limit for the booking box (Member 2's booking rules) *@
 <script type="application/json" id="bkData">@Html.Raw(JsonSerializer.Serialize(Model.Booking))</script>
 
 @* Dishes for the omikuji box (JsonSerializer escapes < > & so this is safe inside a script tag) *@
@@ -400,55 +406,82 @@
 
 @section Scripts {
     <script>
-        // US50 quick booking box. All rules come from HomeService (bkData): opening hours per weekday,
-        // biggest table, days ahead, last booking time. The clock is the server's, so every visitor sees restaurant time.
-        // This box only helps the customer choose sensible values. Member 2's booking page still does the real checks.
+        // US50 quick booking box. The rules are Member 2's booking rules (US12), so this box offers exactly
+        // what her booking page accepts: bookable dates and the guest limit come in bkData, and the times
+        // for a date are loaded from ?handler=Slots (IReservationService.GetTimeSlotsAsync): opening hours,
+        // breaks, special dates, the 90-minute sitting and the 1-hour notice are all handled there.
+        // This box saves nothing; Member 2's page still does the real checks (free tables, limits).
         (function () {
             var box = document.getElementById('bk'), raw = document.getElementById('bkData');
             if (!box || !raw) return;
             var cfg = JSON.parse(raw.textContent);
-            var HOURS = cfg.Hours, MAX = cfg.MaxGuests, LAST_BOOKING = cfg.LastBookingMinutes, STEP = cfg.StepMinutes, DAYS_AHEAD = cfg.DaysAhead;
+            var MAX = cfg.MaxGuests, STEP = cfg.StepMinutes || 5, DAYS_AHEAD = cfg.DaysAhead;
+            var DATES = new Set(cfg.Dates || []), SHUT = new Set(cfg.ClosedDates || []), SHUT_DAYS = new Set(cfg.ClosedWeekdays || []);
             var p = cfg.Now.split(/[-T:]/).map(Number), NOW = new Date(p[0], p[1] - 1, p[2], p[3], p[4]);
-            var NOW_MIN = NOW.getHours() * 60 + NOW.getMinutes(), MIN_NOTICE = 30;   // today: at least 30 minutes from now
             var W = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             var MN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
             var $ = function (id) { return document.getElementById(id); };
-        
+
             var today0 = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
             var lastDay = new Date(today0); lastDay.setDate(today0.getDate() + DAYS_AHEAD);
             var st = { date: null, time: null, timeError: '', guests: 2, guestError: '' };
             var view = new Date(today0.getFullYear(), today0.getMonth(), 1);
-        
+            var list = [];          // times for the chosen date, minutes from midnight (after-midnight times go past 1440)
+            var cache = {};         // date -> list, so going back to a date does not ask the server again
+            var request = 0;
+
             // ---------- helpers ----------
             function fmt(m) { var h = Math.floor(m / 60) % 24, n = m % 60; return ((h % 12) || 12) + ':' + (n < 10 ? '0' : '') + n + ' ' + (h < 12 ? 'AM' : 'PM'); }
             function iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
             function hhmm(m) { return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); }
             function nice(d) { return W[d.getDay()] + ', ' + d.getDate() + ' ' + M[d.getMonth()]; }
             function isToday(d) { return +d === +today0; }
-            // [open, last booking] for a day in minutes; closing at/after midnight counts as 24:00+
-            function windowFor(d) {
-                var h = HOURS[d.getDay()]; if (!h) return null;
-                var close = h[1] <= h[0] ? h[1] + 1440 : h[1];
-                return { open: h[0], last: close - LAST_BOOKING };
-            }
-            function slots(d) {
-                var w = windowFor(d), out = []; if (!w) return out;
-                for (var t = w.open; t <= w.last; t += STEP) if (!isToday(d) || t >= NOW_MIN + MIN_NOTICE) out.push(t);
+            function bookable(d) { return DATES.has(iso(d)); }
+            function shut(d) { return SHUT.has(iso(d)) || SHUT_DAYS.has(d.getDay()); }
+
+            // Runs of times without a gap, e.g. [10:00 → 1:30 PM] and [5:00 → 8:30 PM] around a 3–5 PM break.
+            // Any time inside a run (in 5-minute steps) is accepted by Member 2's page.
+            function runs() {
+                var out = [];
+                list.forEach(function (t, i) {
+                    if (i === 0 || t - list[i - 1] > 30) out.push([t, t]); else out[out.length - 1][1] = t;
+                });
                 return out;
             }
-            function bookable(d) { return d >= today0 && d <= lastDay && slots(d).length > 0; }
-        
-            // The same rules for a time the customer typed: returns '' when OK, otherwise the message to show.
-            function checkTime(d, t) {
-                var w = windowFor(d);
-                if (!w) return "We're closed on " + nice(d) + '.';
-                if (t < w.open && t + 1440 <= w.last) t += 1440;              // e.g. 12:30 AM when we close at 2 AM
-                if (t < w.open) return 'We open at ' + fmt(w.open) + ' on this day.';
-                if (t > w.last) return 'The last booking on this day is ' + fmt(w.last) + '.';
-                if (isToday(d) && t < NOW_MIN + MIN_NOTICE) return 'Please choose a time at least 30 minutes from now.';
-                return '';
+
+            // '' when the time is allowed, otherwise the message to show.
+            function checkTime(t) {
+                var r = runs();
+                if (!r.length) return 'No times left on this day.';
+                for (var i = 0; i < r.length; i++) if (t >= r[i][0] && t <= r[i][1]) return '';
+                if (t < r[0][0]) return 'The first booking time on this day is ' + fmt(r[0][0]) + '.';
+                if (t > r[r.length - 1][1]) return 'The last booking on this day is ' + fmt(r[r.length - 1][1]) + '.';
+                for (var j = 0; j + 1 < r.length; j++) {
+                    if (t > r[j][1] && t < r[j + 1][0])
+                        return 'A 90-minute sitting then would run into our break. Choose up to ' + fmt(r[j][1]) + ', or from ' + fmt(r[j + 1][0]) + '.';
+                }
+                return 'Please choose another time.';
             }
-        
+
+            // Times for one date from Member 2's rules ("HH:mm" values; a time earlier than the one before is after midnight).
+            function loadSlots(d) {
+                var key = iso(d);
+                if (cache[key]) return Promise.resolve(cache[key]);
+                return fetch('?handler=Slots&date=' + key, { headers: { Accept: 'application/json' } })
+                    .then(function (r) { return r.ok ? r.json() : []; })
+                    .then(function (rows) {
+                        var out = [], prev = -1;
+                        rows.forEach(function (row) {
+                            var q = row.value.split(':').map(Number), m = q[0] * 60 + q[1];
+                            if (m < prev) m += 1440;
+                            out.push(m); prev = m;
+                        });
+                        cache[key] = out;
+                        return out;
+                    })
+                    .catch(function () { return null; });
+            }
+
             // ---------- open / close the small pickers ----------
             function open(name) {
                 [].forEach.call(box.querySelectorAll('.bk-f'), function (f) {
@@ -466,7 +499,7 @@
             document.addEventListener('click', function (e) { if (!box.contains(e.target)) open(null); });
             document.addEventListener('keydown', function (e) { if (e.key === 'Escape') open(null); });
             [].forEach.call(box.querySelectorAll('.bk-done'), function (b) { b.addEventListener('click', function () { open(null); }); });
-        
+
             // ---------- 日 date: one month at a time ----------
             function drawMonth() {
                 var cal = $('bkCal'); cal.innerHTML = '';
@@ -478,9 +511,9 @@
                     var c = document.createElement('button');
                     c.type = 'button'; c.disabled = !ok;
                     c.className = 'bk-day' + (st.date && +d === +st.date ? ' is-on' : '') + (isToday(d) ? ' is-today' : '');
-                    c.title = ok ? nice(d) : past ? '' : far ? 'Too far ahead' : (HOURS[d.getDay()] ? 'No times left' : 'Closed');
-                    c.innerHTML = i + (isToday(d) ? '<small>Today</small>' : (!ok && !past && !far ? '<small>' + (HOURS[d.getDay()] ? 'Full' : 'Shut') + '</small>' : ''));
-                    (function (dd) { c.addEventListener('click', function () { pickDate(dd); open('time'); }); })(d);
+                    c.title = ok ? nice(d) : past ? '' : far ? 'Too far ahead' : (shut(d) ? 'Closed' : 'No times left');
+                    c.innerHTML = i + (isToday(d) ? '<small>Today</small>' : (!ok && !past && !far ? '<small>' + (shut(d) ? 'Shut' : 'Full') + '</small>' : ''));
+                    (function (dd) { c.addEventListener('click', function () { pickDate(dd).then(function () { open('time'); }); }); })(d);
                     cal.appendChild(c);
                 }
                 $('bkMonthName').textContent = MN[view.getMonth()] + ' ' + view.getFullYear();
@@ -490,22 +523,30 @@
             $('bkPrev').addEventListener('click', function () { view.setMonth(view.getMonth() - 1); drawMonth(); });
             $('bkNext').addEventListener('click', function () { view.setMonth(view.getMonth() + 1); drawMonth(); });
             $('bkRange').textContent = 'Book up to ' + DAYS_AHEAD + ' days ahead · until ' + nice(lastDay);
-        
+
             function pickDate(d) {
+                var mine = ++request;
                 st.date = d; drawMonth();
-                var list = slots(d), w = windowFor(d);
-                // keep the time if it is still allowed on the new day, otherwise 7 PM or the first free time
-                if (st.time === null || checkTime(d, st.time)) st.time = list.indexOf(1140) >= 0 ? 1140 : (list.length ? list[0] : null);
-                st.timeError = '';
                 $('bkTimeDay').textContent = nice(d);
-                $('bkLast').textContent = w ? 'Last booking ' + fmt(w.last) : '';
-                resetOwn();
-                drawSlots(list);
+                $('bkLast').textContent = '';
+                $('bkSlots').innerHTML = '<div class="bk-empty">Loading times…</div>';
                 update();
+                return loadSlots(d).then(function (got) {
+                    if (mine !== request) return;          // a newer date was picked meanwhile
+                    if (got === null) { list = []; $('bkSlots').innerHTML = '<div class="bk-empty">Could not load the times. Please try again.</div>'; update(); return; }
+                    list = got;
+                    // keep the time if it is still allowed on the new day, otherwise 7 PM or the first free time
+                    if (st.time === null || checkTime(st.time)) st.time = list.indexOf(1140) >= 0 ? 1140 : (list.length ? list[0] : null);
+                    st.timeError = '';
+                    $('bkLast').textContent = list.length ? 'Last booking ' + fmt(list[list.length - 1]) : '';
+                    resetOwn();
+                    drawSlots();
+                    update();
+                });
             }
-        
-            // ---------- 時 time: chips every 30 minutes, or type your own ----------
-            function drawSlots(list) {
+
+            // ---------- 時 time: chips every 30 minutes, or set your own ----------
+            function drawSlots() {
                 var s = $('bkSlots'); s.innerHTML = '';
                 if (!list.length) { s.innerHTML = '<div class="bk-empty">No times left this day.</div>'; return; }
                 [['Lunch', 0, 900], ['Afternoon', 900, 1080], ['Evening', 1080, 3000]].forEach(function (g) {
@@ -519,11 +560,11 @@
                     s.appendChild(wrap);
                 });
             }
+
             // ---------- your own time: hour and minute steppers + "Use this time" ----------
-            // The steppers stay inside the day's opening hours, so most wrong times are impossible.
-            // checkTime still runs, e.g. for a time too close to now on today's date.
-            var own = null;   // minutes from midnight (can go past 24:00 when closing after midnight)
-            function ownLimits() { var w = st.date ? windowFor(st.date) : null; return w ? [w.open, w.last] : null; }
+            // The steppers stay between the first and last time of the day; a time inside a break is refused.
+            var own = null;
+            function ownLimits() { return list.length ? [list[0], list[list.length - 1]] : null; }
             function resetOwn() {
                 var lim = ownLimits(); if (!lim) { own = null; drawOwn(); return; }
                 own = st.time !== null ? st.time : lim[0];
@@ -544,21 +585,21 @@
                 $('bkOwnM').textContent = (m < 10 ? '0' : '') + m;
                 $('bkOwnAp').textContent = h < 12 ? 'AM' : 'PM';
                 $('bkOwnHDown').disabled = own - 60 < lim[0]; $('bkOwnHUp').disabled = own + 60 > lim[1];
-                $('bkOwnMDown').disabled = own - 5 < lim[0];  $('bkOwnMUp').disabled = own + 5 > lim[1];
-                var err = checkTime(st.date, own);
+                $('bkOwnMDown').disabled = own - STEP < lim[0]; $('bkOwnMUp').disabled = own + STEP > lim[1];
+                var err = checkTime(own);
                 $('bkOwnErr').textContent = err;
                 $('bkOwnUse').disabled = !!err;
                 $('bkOwnUse').textContent = err ? 'Not available' : 'Use ' + fmt(own);
             }
             $('bkOwnHUp').addEventListener('click', function () { moveOwn(60); });
             $('bkOwnHDown').addEventListener('click', function () { moveOwn(-60); });
-            $('bkOwnMUp').addEventListener('click', function () { moveOwn(5); });
-            $('bkOwnMDown').addEventListener('click', function () { moveOwn(-5); });
+            $('bkOwnMUp').addEventListener('click', function () { moveOwn(STEP); });
+            $('bkOwnMDown').addEventListener('click', function () { moveOwn(-STEP); });
             $('bkOwnUse').addEventListener('click', function () {
-                if (own === null || checkTime(st.date, own)) return;
+                if (own === null || checkTime(own)) return;
                 st.time = own; st.timeError = ''; update(); open(null);
             });
-        
+
             // ---------- 人 guests: + / −, quick buttons, or type a number ----------
             function setGuests(n) { st.guests = n; st.guestError = ''; $('bkCount').value = n; update(); }
             function checkGuests(text) {
@@ -581,19 +622,19 @@
                 st.guestError = err; if (!err) st.guests = parseInt(this.value, 10);
                 update();
             });
-        
+
             // ---------- show the current choice and enable Book now ----------
             function update() {
                 var d = st.date;
                 $('bkDateTxt').textContent = d ? nice(d) + (isToday(d) ? ' · Today' : (d - today0) === 864e5 ? ' · Tomorrow' : '') : 'Choose a date';
                 $('bkDateTxt').classList.toggle('is-empty', !d);
-        
+
                 $('bkTimeTxt').textContent = st.timeError ? 'Check the time' : st.time !== null ? fmt(st.time) : 'Choose a time';
                 $('bkTimeTxt').classList.toggle('is-empty', st.time === null && !st.timeError);
                 $('bkTimeTxt').classList.toggle('is-bad', !!st.timeError);
                 $('bkTimeErr').textContent = st.timeError;
                 [].forEach.call($('bkSlots').querySelectorAll('.bk-time'), function (c) { c.classList.toggle('is-on', +c.dataset.t === st.time); });
-        
+
                 $('bkGuestTxt').textContent = st.guestError ? 'Check guests' : st.guests + (st.guests === 1 ? ' guest' : ' guests');
                 $('bkGuestTxt').classList.toggle('is-bad', !!st.guestError);
                 $('bkGuestErr').textContent = st.guestError;
@@ -601,20 +642,24 @@
                 $('bkMinus').disabled = !st.guestError && st.guests <= 1;
                 $('bkPlus').disabled = !st.guestError && st.guests >= MAX;
                 [].forEach.call($('bkQuick').children, function (q) { q.classList.toggle('is-on', !st.guestError && +q.textContent === st.guests); });
-        
+
                 var ready = d && st.time !== null && !st.timeError && !st.guestError;
                 $('bkDate').value = d ? iso(d) : '';
                 $('bkTime').value = st.time !== null ? hhmm(st.time) : '';
                 $('bkGuests').value = st.guestError ? '' : st.guests;
                 $('bkGo').disabled = !ready;
             }
-        
-            // start with the first day that still has times (usually today or tomorrow), 7 PM, 2 guests
+
+            // start with the first bookable day (usually today or tomorrow), 7 PM, 2 guests
             setGuests(2);
             drawMonth();
-            for (var k = 0; k <= DAYS_AHEAD; k++) {
-                var t = new Date(today0); t.setDate(today0.getDate() + k);
-                if (bookable(t)) { pickDate(t); break; }
+            var first = (cfg.Dates || []).slice().sort()[0];
+            if (first) {
+                var q = first.split('-').map(Number), fd = new Date(q[0], q[1] - 1, q[2]);
+                view = new Date(fd.getFullYear(), fd.getMonth(), 1);
+                pickDate(fd);
+            } else {
+                $('bkSlots').innerHTML = '<div class="bk-empty">No booking dates are open right now. Please call us.</div>';
             }
             update();
         })();

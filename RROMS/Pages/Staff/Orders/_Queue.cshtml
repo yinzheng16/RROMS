@@ -68,22 +68,16 @@
             <div class="sq-filters" role="group" aria-label="Filter by dining option">
                 @foreach (var option in new[] { ("All", "All"), ("DineIn", "Dine-in"), ("Takeaway", "Takeaway") })
                 {
+                    var pendingCount = option.Item1 == "All" ? Model.Signal.Pending
+                        : option.Item1 == "DineIn" ? Model.Signal.DineIn : Model.Signal.Takeaway;
                     <a asp-page="/Staff/Orders/Index" asp-route-search="@Model.Search" asp-route-dining="@option.Item1" asp-route-sort="@Model.Sort" asp-route-showAll="@Model.ShowAll"
                        class="sq-filter @(Model.Dining == option.Item1 ? "is-active" : "")"
-                       aria-current="@(Model.Dining == option.Item1 ? "true" : null)" data-sq-filter>@option.Item2</a>
+                       aria-current="@(Model.Dining == option.Item1 ? "true" : null)" data-sq-filter>@option.Item2 (@pendingCount)</a>
                 }
             </div>
-            <p class="sq-match-count">
-                @Model.MatchingCount pending @(Model.MatchingCount == 1 ? "order" : "orders") <span aria-hidden="true">·</span>
-                @if (Model.ShowAll)
-                {
-                    <text>Showing all @Model.MatchingCount</text>
-                }
-                else
-                {
-
-                    <text>Showing @Model.First–@Model.Last</text>
-                }
+            <p class="sq-match-count">@Model.MatchingCount pending @(Model.MatchingCount == 1 ? "order" : "orders") <span aria-hidden="true">·</span>
+                @if (Model.ShowAll) { <text>Showing all @Model.MatchingCount</text> }
+                else { <text>Showing @Model.First–@Model.Last</text> }
             </p>
         </div>
         @if (Model.Search.Length > 0)
@@ -100,14 +94,10 @@
                     var preview = order.DishPreview ?? Array.Empty<StaffOrderPreview>();
                     <article class="sq-ticket" data-sq-row="@order.Id" data-sq-ticket aria-labelledby="sq-ticket-title-@order.Id">
                         <header class="sq-ticket__header">
-                            <div class="sq-ticket__top">
-                                <h3 id="sq-ticket-title-@order.Id">@order.OrderNo</h3>
-                                <span class="status-badge status-Pending">Pending</span>
-                            </div>
-                            <p class="sq-ticket__customer">
-                                <strong>@order.CustomerName</strong><span aria-hidden="true">·</span>
-                                <time datetime="@order.CreatedAt.ToString("s", CultureInfo.InvariantCulture)">@order.CreatedAt.ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture)</time>
-                            </p>
+                            <div class="sq-ticket__top"><h3 id="sq-ticket-title-@order.Id">@order.OrderNo</h3>
+                                <span class="status-badge status-Pending">Pending</span></div>
+                            <p class="sq-ticket__customer"><strong>@order.CustomerName</strong><span aria-hidden="true">·</span>
+                                <time datetime="@order.CreatedAt.ToString("s", CultureInfo.InvariantCulture)">@order.CreatedAt.ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture)</time></p>
                         </header>
                         <div class="sq-ticket__meta">
                             <span class="sq-dining sq-dining--@(order.Dining == OrderType.Takeaway ? "takeaway" : "dinein")"><i class="bi @(order.Dining == OrderType.Takeaway ? "bi-bag" : "bi-people")" aria-hidden="true"></i>@StaffQueueRules.DiningLabel(order.Dining)</span>
@@ -143,8 +133,7 @@
             </div>
             @if (Model.Rows.Count == 0)
             {
-                <div class="sq-empty">
-                    <i class="bi bi-cup-hot" aria-hidden="true"></i>
+                <div class="sq-empty"><i class="bi bi-cup-hot" aria-hidden="true"></i>
                     <h3>@(Model.Search.Length == 0 && Model.Dining == "All" ? "All caught up" : "No matching orders")</h3>
                     <p>@(Model.Signal.Pending == 0 ? "New orders will appear here when customers place them." : "Try another order number, customer name or dining option.")</p>
                 </div>
@@ -165,11 +154,7 @@
                             <a asp-page="/Staff/Orders/Index" asp-route-search="@Model.Search" asp-route-dining="@Model.Dining" asp-route-sort="@Model.Sort"
                                asp-route-pageNumber="@(Model.PageNumber - 1)" data-sq-page rel="prev">Previous</a>
                         }
-                        else
-                        {
-
-                            <span class="sq-page-disabled" aria-disabled="true">Previous</span>
-                        }
+                        else { <span class="sq-page-disabled" aria-disabled="true">Previous</span> }
                         @for (int number = Math.Max(1, Model.PageNumber - 2); number <= Math.Min(Model.TotalPages, Model.PageNumber + 2); number++)
                         {
                             if (number == Model.PageNumber)
@@ -187,11 +172,7 @@
                             <a asp-page="/Staff/Orders/Index" asp-route-search="@Model.Search" asp-route-dining="@Model.Dining" asp-route-sort="@Model.Sort"
                                asp-route-pageNumber="@(Model.PageNumber + 1)" data-sq-page rel="next">Next <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                         }
-                        else
-                        {
-
-                            <span class="sq-page-disabled" aria-disabled="true">Next</span>
-                        }
+                        else { <span class="sq-page-disabled" aria-disabled="true">Next</span> }
                         <a asp-page="/Staff/Orders/Index" asp-route-search="@Model.Search" asp-route-dining="@Model.Dining"
                            asp-route-sort="@Model.Sort" asp-route-pageNumber="1" asp-route-showAll="true"
                            class="sq-page-mode" data-sq-page>Show all</a>

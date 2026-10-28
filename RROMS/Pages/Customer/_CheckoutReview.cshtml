@@ -36,7 +36,14 @@
                 {
                     var line = Model.Cart.Lines[i];
                     <li>
-                        <span class="checkout-review__number" aria-hidden="true">@((i + 1).ToString("D2", CultureInfo.InvariantCulture))</span>
+                        @if (!string.IsNullOrWhiteSpace(line.ImageUrl))
+                        {
+                            <img class="checkout-review__photo" src="@Url.Content(line.ImageUrl)" alt="" width="60" height="60" decoding="async" />
+                        }
+                        else
+                        {
+                            <span class="checkout-review__photo checkout-review__photo--placeholder" aria-hidden="true">夜</span>
+                        }
                         <div class="checkout-review__line-details">
                             <div class="checkout-review__dish-name"><strong>@line.Name</strong><span class="checkout-review__quantity"><span class="visually-hidden">Quantity </span>× @line.Quantity</span></div>
                             @if (line.Notes is not null)
@@ -57,8 +64,8 @@
             <h3 id="checkout-totals-title">Order total</h3>
             <dl class="cart-totals">
                 <div><dt>Subtotal</dt><dd>RM @Money(Model.Cart.Totals.Subtotal)</dd></div>
-                <div><dt>Tax (@Rate(Model.Cart.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Cart.Totals.Tax)</dd></div>
                 <div><dt>Service charge (@Rate(Model.Cart.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Cart.Totals.ServiceCharge)</dd></div>
+                <div><dt>Tax (@Rate(Model.Cart.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Cart.Totals.Tax)</dd></div>
                 <div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Cart.Totals.Total)</dd></div>
             </dl>
             <p class="checkout-review__pending">Your order will be sent to the restaurant with <strong>Pending</strong> status.</p>

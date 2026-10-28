@@ -70,8 +70,20 @@
                     <div class="cart-fulfilment__remarks">
                         <label for="cart-remarks" class="form-label">Overall remarks <span class="cart-note__optional">(optional)</span></label>
                         <textarea id="cart-remarks" class="form-control" name="Input.Notes" maxlength="500" rows="2" placeholder="Any special requests for your order?" data-cart-autosave>@Model.Notes</textarea>
+                        @if (Model.RemarksFromProfile)
+                        {
+                            <small class="cart-note__optional d-block mt-1">From your profile. Edit or remove for this order.</small>
+                        }
                     </div>
                 </div>
+                @if (!string.IsNullOrWhiteSpace(Model.SeparateProfilePreferences))
+                {
+                    <aside class="alert alert-light mt-3 mb-0" aria-label="Saved allergies and preferences">
+                        <strong>Allergies &amp; preferences</strong>
+                        <p class="mb-1 text-break">@Model.SeparateProfilePreferences</p>
+                        <small>Your saved preferences are shown here. Add any extra requests in Overall remarks.</small>
+                    </aside>
+                }
             </section>
             <div class="cart-main-grid">
                 <div>
@@ -129,7 +141,7 @@
                     <aside class="card cart-summary" aria-labelledby="cart-summary-title">
                         <header class="cart-summary__heading"><div><h2 id="cart-summary-title">Order summary</h2><p>@Model.Quantity @(Model.Quantity == 1 ? "item" : "items")</p></div><i class="bi bi-bag" aria-hidden="true"></i></header>
                         <div class="cart-summary__body">
-                            <dl class="cart-totals"><div><dt>Subtotal</dt><dd>RM @Money(Model.Totals.Subtotal)</dd></div><div><dt>Tax (@Rate(Model.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Totals.Tax)</dd></div><div><dt>Service charge (@Rate(Model.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Totals.ServiceCharge)</dd></div><div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Totals.Total)</dd></div></dl>
+                            <dl class="cart-totals"><div><dt>Subtotal</dt><dd>RM @Money(Model.Totals.Subtotal)</dd></div><div><dt>Service charge (@Rate(Model.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Totals.ServiceCharge)</dd></div><div><dt>Tax (@Rate(Model.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Totals.Tax)</dd></div><div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Totals.Total)</dd></div></dl>
                             <div class="cart-summary__dining">
                                 <p class="cart-summary__type"><i class="bi @(Model.OrderType == OrderType.DineIn ? "bi-shop" : "bi-bag")" aria-hidden="true"></i> @(Model.OrderType == OrderType.DineIn ? (Model.ReservationId.HasValue ? "Dine-in · Reservation" : "Dine-in · Walk-in") : "Takeaway")</p>
                             </div>

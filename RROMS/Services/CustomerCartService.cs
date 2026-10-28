@@ -19,14 +19,19 @@ public sealed class CustomerCartService : ICustomerCartService
     private readonly IDataProtector _protector;
     private readonly TimeProvider _clock;
     private readonly ILogger<CustomerCartService> _logger;
+    private readonly IProfileService _profiles;
+    private readonly IReportService _reportService;
     private const int MaxLines = 100;
 
     public CustomerCartService(ApplicationDbContext db, IDataProtectionProvider protection,
-        ILogger<CustomerCartService> logger, TimeProvider? clock = null)
+        ILogger<CustomerCartService> logger, IProfileService profiles, IReportService reportService,
+        TimeProvider? clock = null)
     {
         _db = db;
         _protector = protection.CreateProtector("RROMS.US24.Checkout.v1");
         _logger = logger;
+        _profiles = profiles;
+        _reportService = reportService;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -143,7 +148,10 @@ public sealed class CustomerCartService : ICustomerCartService
                 { cart.Lines.Remove(extra); changed = true; }
                 keep.Quantity = sum;
             }
-            string? remarks = OrderPricingRules.NormalizeNote(input.Notes);
+            // Empty string means this draft's remarks were explicitly submitted
+            // empty. Keep it distinct from null (not filled in yet), so clearing
+            // the suggested profile text survives refreshes and later cart edits.
+            string remarks = OrderPricingRules.NormalizeNote(input.Notes) ?? string.Empty;
             changed |= cart.Notes != remarks || cart.OrderType != input.OrderType || cart.ReservationId != reservation;
             cart.Notes = remarks;
             cart.OrderType = input.OrderType;
@@ -162,6 +170,8 @@ public sealed class CustomerCartService : ICustomerCartService
         var validation = ValidateForCheckout(view);
         if (view.Revision != revision) validation = Changed();
         if (!validation.Succeeded) return new(validation.Status, validation.Message, view);
+        string? orderingError = await GetOrderingHoursError(cancellationToken);
+        if (orderingError is not null) return new(CartResult.Invalid, orderingError, view);
         // 20-character order number, independently protected from client editing.
         string orderNo = "YR" + Now.ToString("yyMMdd", CultureInfo.InvariantCulture) +
             Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
@@ -202,6 +212,11 @@ public sealed class CustomerCartService : ICustomerCartService
             if (!validation.Succeeded) return validation;
             if (Stamp(view) != quote.Stamp)
                 return new(CartResult.Changed, "Prices, charges or reservation details changed. Review the updated cart and confirm again.");
+
+            // A quote prepared before last orders does not bypass the cutoff.
+            // Check fresh restaurant hours and the current clock inside the save transaction.
+            string? orderingError = await GetOrderingHoursError(ct);
+            if (orderingError is not null) return Invalid(orderingError);
 
             var order = new Order
             {
@@ -290,10 +305,49 @@ public sealed class CustomerCartService : ICustomerCartService
                     item is null ? 0 : OrderPricingRules.DiscountedPrice(item.Price, discounts.GetValueOrDefault(line.MenuItemId)),
                     item?.IsAvailable == true && item.Price > 0);
             }).ToArray() ?? Array.Empty<CartLineView>();
-        var totals = OrderPricingRules.Calculate(lines.Sum(line => line.LineTotal),
-            settings?.TaxRatePercent ?? 0, settings?.ServiceChargePercent ?? 0);
-        return new(cart?.Revision ?? Guid.Empty, lines, cart?.OrderType ?? OrderType.DineIn,
-            cart?.ReservationId, cart?.Notes, totals, reservations);
+        var orderType = cart?.OrderType ?? OrderType.DineIn;
+        // US49 owns the charge formula. Use its loaded-settings overload so this
+        // fresh, untracked read also stays inside PlaceAsync's save transaction.
+        // If settings are absent, preserve the existing zero-charge fallback.
+        var charges = _reportService.CalculateCharges(settings ?? new RestaurantSetting
+        {
+            TaxRatePercent = 0m,
+            ServiceChargePercent = 0m,
+            ServiceChargeOnTakeaway = false
+        }, lines.Sum(line => line.LineTotal), orderType == OrderType.Takeaway);
+        var totals = new CartTotals(
+            Subtotal: charges.Subtotal,
+            TaxRate: charges.TaxRatePercent,
+            Tax: charges.Tax,
+            ServiceRate: charges.ServiceChargePercent,
+            ServiceCharge: charges.ServiceCharge,
+            Total: charges.Total);
+
+        string? remarks = cart?.Notes;
+        bool fromProfile = false;
+        string? separatePreferences = null;
+        if (lines.Length > 0)
+        {
+            // userId has already been validated as the current customer. Never
+            // use a client-supplied profile ID or overwrite an existing draft.
+            string? summary = await _profiles.GetDiningSummaryAsync(userId);
+            string? suggested = OrderDiningPreferencesRules.RemarksDefault(summary);
+            if (remarks is null && suggested is not null)
+            {
+                remarks = suggested;
+            }
+            fromProfile = OrderDiningPreferencesRules.IsProfileCopy(remarks, summary);
+            if (!string.IsNullOrWhiteSpace(summary) && suggested is null)
+                separatePreferences = summary;
+        }
+        return new(cart?.Revision ?? Guid.Empty, lines, orderType,
+            cart?.ReservationId, remarks, totals, reservations, fromProfile, separatePreferences);
+    }
+
+    private async Task<string?> GetOrderingHoursError(CancellationToken ct)
+    {
+        var hours = await _db.OperatingHours.AsNoTracking().ToArrayAsync(ct);
+        return OrderOpeningHoursRules.GetCheckoutError(_clock.GetUtcNow(), hours);
     }
 
     private Task<Dictionary<int, decimal>> ActiveDiscounts(int[] ids, DateTime now, CancellationToken ct)

@@ -121,12 +121,14 @@ public partial class ReservationService
             if (s.ClosedReason != null) continue;
             if (start < s.Open || end > s.Close) continue;
 
-            var offset = (start - s.Open).TotalMinutes;
-            if (start.Second != 0 || offset % BookingRules.SlotMinutes != 0)
-                return "Please choose one of the listed times.";
+            // Customers may pick any time on a 5-minute step (the buttons still list every 30 minutes).
+            if (start.Second != 0 || start.Minute % BookingTimeRules.ExactStepMinutes != 0)
+                return "Please choose a time in 5-minute steps.";
 
             if (OverlapsBreak(s, start, end))
-                return "That time falls in our break. Please choose another time.";
+                return $"A {BookingRules.DurationMinutes}-minute sitting from {start.ToString("h:mm tt", CultureInfo.InvariantCulture)} " +
+                       $"would run into our break ({s.BreakStart!.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)} - " +
+                       $"{s.BreakEnd!.Value.ToString("h:mm tt", CultureInfo.InvariantCulture)}). Please choose another time.";
 
             return null;
         }
@@ -135,6 +137,49 @@ public partial class ReservationService
         if (sameDay.ClosedReason != null) return sameDay.ClosedReason;
 
         return "That time is outside our opening hours, or too close to closing for a full sitting.";
+    }
+
+    // ---------- shared opening-time rules (for every member's pages) ----------
+
+    // The session that is open at this moment, or null (closed, outside hours, in a break, closed special date).
+    private static BookingSession? OpenSessionAt(
+        DateTime when, List<OperatingHour> hours, List<SpecialDate> specials)
+    {
+        // The moment belongs to today's session, or to yesterday's if that one runs past midnight.
+        foreach (var day in new[] { when.Date, when.Date.AddDays(-1) })
+        {
+            var s = SessionFor(day, hours, specials);
+            if (s.ClosedReason != null) continue;
+            if (when < s.Open || when >= s.Close) continue;
+            if (s.BreakStart.HasValue && s.BreakEnd.HasValue &&
+                when >= s.BreakStart.Value && when < s.BreakEnd.Value) return null;
+            return s;
+        }
+
+        return null;
+    }
+
+    // True when the restaurant is open at this moment: inside opening hours, not in a break,
+    // and not on a closed special date.
+    public async Task<bool> IsOpenAtAsync(DateTime when)
+    {
+        var (hours, specials) = await LoadScheduleAsync();
+        return OpenSessionAt(when, hours, specials) != null;
+    }
+
+    // True when the kitchen still takes orders at this moment: the restaurant is open and it is at least
+    // BookingTimeRules.LastOrderMinutes before closing, or before the next break starts.
+    public async Task<bool> CanOrderAtAsync(DateTime when)
+    {
+        var (hours, specials) = await LoadScheduleAsync();
+        var s = OpenSessionAt(when, hours, specials);
+        if (s == null) return false;
+
+        var limit = s.Close;
+        if (s.BreakStart.HasValue && when < s.BreakStart.Value)
+            limit = s.BreakStart.Value;
+
+        return when.AddMinutes(BookingTimeRules.LastOrderMinutes) <= limit;
     }
 
     // ---------- step 1: dates and times ----------
@@ -239,6 +284,7 @@ public partial class ReservationService
         var types = await _db.TableTypeDefinitions
             .AsNoTracking()
             .Include(t => t.Tables)
+            .Include(t => t.DefaultDiningArea)
             .Where(t => t.IsActive)
             .ToListAsync();
 
@@ -295,7 +341,30 @@ public partial class ReservationService
                 below && type.AllowBelowMinGuests,
                 status,
                 reason,
-                left));
+                left,
+                type.DefaultDiningArea?.Name));
+        }
+
+        // A fully booked type gets its own nearest free times, so the customer knows where to go next.
+        var cache = new Dictionary<DateTime, HashSet<int>>();
+
+        foreach (var o in options.Where(o => o.Status == TypeAvailability.FullyBooked).ToList())
+        {
+            var type = types.First(t => t.Id == o.Id);
+
+            async Task<bool> FreeAsync(DateTime when)
+            {
+                if (!cache.TryGetValue(when, out var busyAt))
+                {
+                    busyAt = await BusyTableIdsAsync(when, when.AddMinutes(BookingRules.DurationMinutes));
+                    cache[when] = busyAt;
+                }
+
+                return type.Tables.Any(t => TableFits(t, type, guests) && !busyAt.Contains(t.Id));
+            }
+
+            var found = await BuildSuggestionsAsync(FreeAsync, start, hours, specials, DateTime.Now);
+            options[options.IndexOf(o)] = o with { Suggestions = found };
         }
 
         return new TypeOptionsResult(
@@ -305,6 +374,180 @@ public partial class ReservationService
                 .ThenBy(o => o.MinGuests)
                 .ThenBy(o => o.Name)
                 .ToList());
+    }
+
+    // ---------- step 1: "set your own time" check ----------
+
+    // Tells the page whether a customer-chosen time (any 5 minutes) has a table for this party,
+    // and, when it does not, which nearby times do.
+    public async Task<TimeCheckResult> CheckTimeAsync(DateTime start, int guests)
+    {
+        await ReleaseOverdueReservationsAsync();
+
+        if (guests < 1 || guests > 20)
+            return new TimeCheckResult(false, false, "Choose between 1 and 20 guests.", new());
+
+        var now = DateTime.Now;
+        start = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
+
+        var (hours, specials) = await LoadScheduleAsync();
+        var error = ValidateSlot(start, hours, specials, now);
+
+        if (error != null)
+            return new TimeCheckResult(false, false, error, new());
+
+        var types = await _db.TableTypeDefinitions
+            .AsNoTracking()
+            .Include(t => t.Tables)
+            .Where(t => t.IsActive)
+            .ToListAsync();
+
+        // True when at least one table type can seat this party at that start time.
+        async Task<bool> HasTableAsync(DateTime when)
+        {
+            var busy = await BusyTableIdsAsync(when, when.AddMinutes(BookingRules.DurationMinutes));
+
+            return types.Any(type =>
+                type.Tables.Any(t => TableFits(t, type, guests) && !busy.Contains(t.Id)));
+        }
+
+        if (await HasTableAsync(start))
+            return new TimeCheckResult(true, true, null, new());
+
+        var timeText = start.ToString("h:mm tt", CultureInfo.InvariantCulture);
+        var message = $"All tables for {(guests == 1 ? "1 guest" : guests + " guests")} are booked at {timeText}.";
+        var suggestions = await BuildSuggestionsAsync(HasTableAsync, start, hours, specials, now);
+
+        return new TimeCheckResult(true, false, message, suggestions);
+    }
+
+    // Booking limits. Every upcoming (Pending or Confirmed) booking counts, even several on one day.
+    //  1. In total at most BookingRules.MaxActiveBookings upcoming bookings.
+    //  2. In any BookingTimeRules.RollingWindowDays days in a row, at most BookingTimeRules.MaxPerWindow.
+    // Returns the message to show, or null when the new booking is allowed.
+    private async Task<string?> LimitMessageAsync(string userId, DateTime start, DateTime now)
+    {
+        var upcoming = await _db.Reservations
+            .AsNoTracking()
+            .Where(r => r.UserId == userId &&
+                        (r.Status == ReservationStatus.Pending ||
+                         r.Status == ReservationStatus.Confirmed) &&
+                        r.ReservedAt > now)
+            .Select(r => r.ReservedAt)
+            .ToListAsync();
+
+        var days = upcoming
+            .Select(d => d.Date)
+            .Append(start.Date)
+            .OrderBy(d => d)
+            .ToList();
+
+        if (upcoming.Count >= BookingRules.MaxActiveBookings)
+            return $"You can have up to {BookingRules.MaxActiveBookings} upcoming reservations. " +
+                   "Cancel one before booking another.";
+
+        var max = BookingTimeRules.MaxPerWindow;
+
+        for (var i = 0; i + max < days.Count; i++)
+        {
+            if ((days[i + max] - days[i]).TotalDays <= BookingTimeRules.RollingWindowDays - 1)
+                return $"You can have up to {max} reservations within any {BookingTimeRules.RollingWindowDays} days. " +
+                       "Please choose another date, or cancel one of your reservations first.";
+        }
+
+        return null;
+    }
+
+    public Task<string?> GetLimitMessageAsync(string userId, DateTime start) =>
+        LimitMessageAsync(
+            userId,
+            new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0),
+            DateTime.Now);
+
+    // True when this customer already has a live booking that overlaps a sitting starting at "start".
+    public async Task<bool> HasOverlapAsync(string userId, DateTime start)
+    {
+        start = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
+        var end = start.AddMinutes(BookingRules.DurationMinutes);
+
+        var mine = await _db.Reservations
+            .AsNoTracking()
+            .Where(r => r.UserId == userId &&
+                        (r.Status == ReservationStatus.Pending ||
+                         r.Status == ReservationStatus.Confirmed ||
+                         r.Status == ReservationStatus.Seated) &&
+                        r.ReservedAt > start.AddHours(-12) &&
+                        r.ReservedAt < end.AddHours(12))
+            .Select(r => new { r.ReservedAt, r.DurationMinutes })
+            .ToListAsync();
+
+        return mine.Any(r => r.ReservedAt < end &&
+                             r.ReservedAt.AddMinutes(r.DurationMinutes) > start);
+    }
+
+    // Nearest alternatives around a wanted start time: the closest earlier and later listed time in the same
+    // sitting, and the closest time of day on the next day that has room. hasTable says whether a start time works.
+    // The next-day search stops after this many days, so a fully booked type never runs dozens of queries.
+    private const int NextDaysToSearch = 2;
+
+    private async Task<List<TimeSuggestion>> BuildSuggestionsAsync(
+        Func<DateTime, Task<bool>> hasTable, DateTime start,
+        List<OperatingHour> hours, List<SpecialDate> specials, DateTime now)
+    {
+        var suggestions = new List<TimeSuggestion>();
+
+        static TimeSuggestion Make(DateTime t, string kind) => new(
+            t.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            t.ToString("HH:mm", CultureInfo.InvariantCulture),
+            t.ToString("h:mm tt", CultureInfo.InvariantCulture),
+            kind);
+
+        // Same sitting: the nearest earlier and the nearest later listed time.
+        foreach (var day in new[] { start.Date, start.Date.AddDays(-1) })
+        {
+            var session = SessionFor(day, hours, specials);
+            if (session.ClosedReason != null || start < session.Open ||
+                start.AddMinutes(BookingRules.DurationMinutes) > session.Close)
+                continue;
+
+            var slots = SlotTimes(session, now);
+
+            foreach (var t in slots.Where(t => t < start).OrderByDescending(t => t))
+            {
+                if (!await hasTable(t)) continue;
+                suggestions.Add(Make(t, "earlier"));
+                break;
+            }
+
+            foreach (var t in slots.Where(t => t > start).OrderBy(t => t))
+            {
+                if (!await hasTable(t)) continue;
+                suggestions.Add(Make(t, "later"));
+                break;
+            }
+
+            break;
+        }
+
+        // Another day: the closest time of day to the one requested, on the next day that has room.
+        for (var d = 1; d <= NextDaysToSearch && suggestions.All(x => x.Kind != "nextday"); d++)
+        {
+            var day = start.Date.AddDays(d);
+            if (day > now.Date.AddDays(BookingRules.MaxAdvanceDays)) break;
+
+            var nearest = SlotTimes(SessionFor(day, hours, specials), now)
+                .OrderBy(t => Math.Abs((t.TimeOfDay - start.TimeOfDay).TotalMinutes))
+                .Take(4);
+
+            foreach (var t in nearest)
+            {
+                if (!await hasTable(t)) continue;
+                suggestions.Add(Make(t, "nextday"));
+                break;
+            }
+        }
+
+        return suggestions;
     }
 
     // ---------- step 3: save the reservation ----------
@@ -390,18 +633,12 @@ public partial class ReservationService
                     "You already have a reservation at this time.");
             }
 
-            var upcoming = await _db.Reservations.CountAsync(r =>
-                r.UserId == req.UserId &&
-                (r.Status == ReservationStatus.Pending ||
-                 r.Status == ReservationStatus.Confirmed) &&
-                r.ReservedAt > now);
+            var limitMessage = await LimitMessageAsync(req.UserId, start, now);
 
-            if (upcoming >= BookingRules.MaxActiveBookings)
+            if (limitMessage != null)
             {
                 await tx.RollbackAsync();
-                return BookingResult.Fail("limit",
-                    $"You can have up to {BookingRules.MaxActiveBookings} upcoming reservations. " +
-                    "Cancel one before booking another.");
+                return BookingResult.Fail("limit", limitMessage);
             }
 
             var type = await _db.TableTypeDefinitions
@@ -544,8 +781,11 @@ public partial class ReservationService
 
     // ---------- no-show release ----------
 
-    // A Pending or Confirmed booking that nobody has seated 15 minutes after its time
-    // becomes No-show, which frees the table. Seated bookings are never touched.
+    // 15 minutes after its time, a booking nobody has seated is released and the table is freed:
+    //  - Confirmed -> No-show (the customer did not come).
+    //  - Pending   -> Cancelled (staff never confirmed it in time, so it is not the customer's fault
+    //                 and must not count as a no-show in the reports).
+    // Seated bookings are never touched.
     public async Task<int> ReleaseOverdueReservationsAsync()
     {
         var cutoff = DateTime.Now.AddMinutes(-BookingRules.NoShowGraceMinutes);
@@ -559,7 +799,9 @@ public partial class ReservationService
         if (overdue.Count == 0) return 0;
 
         foreach (var r in overdue)
-            r.Status = ReservationStatus.NoShow;
+            r.Status = r.Status == ReservationStatus.Pending
+                ? ReservationStatus.Cancelled
+                : ReservationStatus.NoShow;
 
         await _db.SaveChangesAsync();
         return overdue.Count;
