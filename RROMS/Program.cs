@@ -65,6 +65,7 @@ builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 
 //Member 5
 builder.Services.AddScoped<IReportService, ReportService>();
