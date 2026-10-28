@@ -20,17 +20,19 @@ public sealed class CustomerCartService : ICustomerCartService
     private readonly TimeProvider _clock;
     private readonly ILogger<CustomerCartService> _logger;
     private readonly IProfileService _profiles;
+    private readonly IReservationService _reservations;
     private readonly IReportService _reportService;
     private const int MaxLines = 100;
 
     public CustomerCartService(ApplicationDbContext db, IDataProtectionProvider protection,
         ILogger<CustomerCartService> logger, IProfileService profiles, IReportService reportService,
-        TimeProvider? clock = null)
+        IReservationService reservations, TimeProvider? clock = null)
     {
         _db = db;
         _protector = protection.CreateProtector("RROMS.US24.Checkout.v1");
         _logger = logger;
         _profiles = profiles;
+        _reservations = reservations;
         _reportService = reportService;
         _clock = clock ?? TimeProvider.System;
     }
@@ -346,8 +348,14 @@ public sealed class CustomerCartService : ICustomerCartService
 
     private async Task<string?> GetOrderingHoursError(CancellationToken ct)
     {
-        var hours = await _db.OperatingHours.AsNoTracking().ToArrayAsync(ct);
-        return OrderOpeningHoursRules.GetCheckoutError(_clock.GetUtcNow(), hours);
+        ct.ThrowIfCancellationRequested();
+        // The shared schedule expects restaurant-local wall time. Keep the existing
+        // Malaysian time conversion independent of the server's local time zone.
+        DateTime restaurantNow = _clock.GetUtcNow().ToOffset(TimeSpan.FromHours(8)).DateTime;
+        bool canOrder = await _reservations.CanOrderAtAsync(restaurantNow);
+        ct.ThrowIfCancellationRequested();
+        return canOrder ? null
+            : "Online ordering is currently closed. You can still browse the menu and keep items in your cart. Please try again during ordering hours.";
     }
 
     private Task<Dictionary<int, decimal>> ActiveDiscounts(int[] ids, DateTime now, CancellationToken ct)
