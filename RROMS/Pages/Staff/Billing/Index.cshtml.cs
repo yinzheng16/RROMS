@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RROMS.Services.Interfaces;
 using RROMS.Models;
@@ -10,12 +11,17 @@ namespace RROMS.Pages.Staff.Billing
         private readonly IBillingService _billingService;
         private readonly IPaymentService _paymentService;
 
+        // US49 (Member 5): restaurant settings for the printed bill.
+        private readonly IReportService _reportService;
+
         public IndexModel(
             IBillingService billingService,
-            IPaymentService paymentService)
+            IPaymentService paymentService,
+            IReportService reportService)
         {
             _billingService = billingService;
             _paymentService = paymentService;
+            _reportService = reportService;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -41,6 +47,37 @@ namespace RROMS.Pages.Staff.Billing
 
         // True when displaying a preview instead of a saved bill.
         public bool IsPreview { get; private set; }
+
+        // US32 / US49: Receipt details printed on the bill.
+        // Shown under the restaurant name; null = not configured.
+        public string? SstRegistrationNo { get; private set; }
+
+        // US32 / US49: Message printed at the bottom of the bill.
+        // Null = use the default thank-you message.
+        public string? ReceiptFooterNote { get; private set; }
+
+        // Runs before every handler (GET and POST), so the printed bill
+        // always has the latest receipt details from Restaurant Settings.
+        public override async Task OnPageHandlerExecutionAsync(
+            PageHandlerExecutingContext context,
+            PageHandlerExecutionDelegate next)
+        {
+            await LoadReceiptSettingsAsync();
+            await next();
+        }
+
+        private async Task LoadReceiptSettingsAsync()
+        {
+            var settings = await _reportService.GetRestaurantSettingsAsync();
+
+            SstRegistrationNo = string.IsNullOrWhiteSpace(settings.SstRegistrationNo)
+                ? null
+                : settings.SstRegistrationNo.Trim();
+
+            ReceiptFooterNote = string.IsNullOrWhiteSpace(settings.ReceiptFooterNote)
+                ? null
+                : settings.ReceiptFooterNote.Trim();
+        }
 
         public async Task OnGetAsync()
         {

@@ -1,5 +1,6 @@
 ﻿@page
 @model RROMS.Pages.Staff.Billing.IndexModel
+@using RROMS.Models
 
 @{
     ViewData["Title"] = "Billing & Payment Management";
@@ -11,7 +12,7 @@
     <div class="mb-4">
         <h2 class="mb-1">Billing & Payment Management</h2>
         <p class="text-muted mb-0">
-            YORU IZAKAYA — Staff Billing & Payments
+            @Brand.FullName — Staff Billing & Payments
         </p>
     </div>
 
@@ -74,13 +75,21 @@
                     <div class="yoru-print-brand">
                         <img src="~/images/yoru-icon.png"
                              asp-append-version="true"
-                             alt="YORU IZAKAYA Logo"
+                             alt="@Brand.FullName Logo"
                              class="yoru-print-logo" />
 
-                        <h1>YORU</h1>
+                        <h1>@Brand.Name</h1>
                         <div class="yoru-print-subtitle">
-                            I Z A K A Y A
+                            @(string.Join(" ", Brand.Sub.ToCharArray()))
                         </div>
+
+                        @* US49: SST registration no. under the restaurant name *@
+                        @if (!string.IsNullOrWhiteSpace(Model.SstRegistrationNo))
+                        {
+                            <p class="yoru-print-sst">
+                                SST No. @Model.SstRegistrationNo
+                            </p>
+                        }
                     </div>
 
                     <div class="yoru-print-divider"></div>
@@ -229,8 +238,13 @@
                         ありがとうございます
                     </p>
 
-                    <p>Thank you for dining with us.</p>
-                    <strong>YORU IZAKAYA</strong>
+                    @* US49: receipt footer message from Restaurant Settings *@
+                    <p>
+                        @(string.IsNullOrWhiteSpace(Model.ReceiptFooterNote)
+                            ? "Thank you for dining with us."
+                            : Model.ReceiptFooterNote)
+                    </p>
+                    <strong>@Brand.FullName</strong>
 
                     @if (Model.IsPreview)
                     {
@@ -559,8 +573,8 @@
 
 <style>
     /* =====================================================
-           YORU IZAKAYA — US32 SCREEN STYLES
-           ===================================================== */
+               YORU IZAKAYA — US32 SCREEN STYLES
+               ===================================================== */
 
     @@media screen {
 
@@ -717,8 +731,8 @@
     }
 
     /* =====================================================
-           PAYMENT MANAGEMENT
-           ===================================================== */
+               PAYMENT MANAGEMENT
+               ===================================================== */
 
     /* Reduce spacing below Payment Management heading */
     .us32-billing .payment-management-card
@@ -819,8 +833,8 @@
     }
 
     /* =====================================================
-           PRINT-ONLY ELEMENTS
-           ===================================================== */
+               PRINT-ONLY ELEMENTS
+               ===================================================== */
 
     .yoru-print-header,
     .yoru-print-footer {
@@ -836,8 +850,8 @@
     }
 
     /* =====================================================
-           PRINT BILL — A4
-           ===================================================== */
+               PRINT BILL — A4
+               ===================================================== */
 
     @@media print {
 
