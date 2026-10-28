@@ -63,4 +63,7 @@ public interface IReservationService
     Task<TypeOptionsResult> GetTypeOptionsAsync(DateTime start, int guests);
     Task<BookingResult> CreateReservationAsync(CreateReservationRequest request);
     Task<int> ReleaseOverdueReservationsAsync();
+    Task<TimeCheckResult> CheckTimeAsync(DateTime start, int guests);
+    Task<bool> HasOverlapAsync(string userId, DateTime start);
+    Task<string?> GetLimitMessageAsync(string userId, DateTime start);
 }

@@ -93,10 +93,41 @@
                         </div>
 
                         <div class="rsv-side">
-                            <div class="rsv-card">
+                            <div class="rsv-card rsv-time-card" id="rsvTimeCard">
                                 <p class="rsv-label">Time</p>
                                 <div class="rsv-slots" id="rsvSlots" role="radiogroup" aria-label="Arrival time">
                                     <p class="rsv-empty">Pick a date first.</p>
+                                </div>
+                                <button type="button" class="rsv-other" id="rsvOtherBtn" aria-haspopup="dialog" aria-expanded="false" disabled>
+                                    <i class="bi bi-clock" aria-hidden="true"></i> <span id="rsvOtherLabel">Other time</span>
+                                </button>
+
+                                @* "Set your own time": any 5 minutes, with a live check for free tables *@
+                                <div class="rsv-pop" id="rsvPop" role="dialog" aria-labelledby="rsvPopTitle" hidden>
+                                    <div class="rsv-pop-head">
+                                        <strong id="rsvPopTitle">Set your own time</strong>
+                                        <button type="button" class="rsv-icon-btn" id="rsvPopClose" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+                                    </div>
+                                    <div class="rsv-pop-row">
+                                        <div class="rsv-spin">
+                                            <button type="button" id="rsvHourUp" aria-label="Hour up"><i class="bi bi-chevron-up"></i></button>
+                                            <output id="rsvHourVal" aria-label="Hour">6</output>
+                                            <button type="button" id="rsvHourDown" aria-label="Hour down"><i class="bi bi-chevron-down"></i></button>
+                                        </div>
+                                        <span class="rsv-colon" aria-hidden="true">:</span>
+                                        <div class="rsv-spin">
+                                            <button type="button" id="rsvMinUp" aria-label="Minutes up 5"><i class="bi bi-chevron-up"></i></button>
+                                            <output id="rsvMinVal" aria-label="Minutes">00</output>
+                                            <button type="button" id="rsvMinDown" aria-label="Minutes down 5"><i class="bi bi-chevron-down"></i></button>
+                                        </div>
+                                        <button type="button" class="rsv-ampm" id="rsvAmPm" aria-label="Switch AM or PM">PM</button>
+                                        <button type="button" class="rsv-btn rsv-btn-primary rsv-pop-use" id="rsvPopUse" disabled>Use this time</button>
+                                    </div>
+                                    <p class="rsv-pop-status" id="rsvPopStatus" role="status" aria-live="polite"></p>
+                                    <div class="rsv-pop-sug" id="rsvPopSug" hidden>
+                                        <p class="rsv-pop-sug-title">Try one of these</p>
+                                        <div class="rsv-pop-sug-list" id="rsvPopSugList"></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -202,7 +233,7 @@
                         </header>
 
                         <ul class="rsv-sum-list">
-                            <li data-sum="type"><i class="bi bi-grid-3x3-gap"></i><div><small>Table type</small><strong id="sumType">Not chosen yet</strong><span id="sumTypeJp" lang="ja"></span></div><button type="button" class="rsv-link" data-goto="2" hidden>Edit</button></li>
+                            <li data-sum="type"><i class="bi bi-grid-3x3-gap"></i><div><small>Table type</small><strong id="sumType">Not chosen yet</strong><span class="rsv-sum-sub"><span id="sumTypeJp" lang="ja"></span><span id="sumTypeArea"></span></span></div><button type="button" class="rsv-link" data-goto="2" hidden>Edit</button></li>
                             <li data-sum="date"><i class="bi bi-calendar3"></i><div><small>Date</small><strong id="sumDate">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
                             <li data-sum="time"><i class="bi bi-clock"></i><div><small>Arrival time</small><strong id="sumTime">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
                             <li data-sum="guests"><i class="bi bi-people"></i><div><small>Guests</small><strong id="sumGuests">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>

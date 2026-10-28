@@ -24,7 +24,9 @@
         accepted: false,  // minimum spend accepted
         token: null,      // one id per booking attempt, so a double click cannot book twice
         busy: false,
-        view: null        // {y, m} month shown by the calendar
+        view: null,       // {y, m} month shown by the calendar
+        overlap: false,   // the customer already has a booking at the chosen time
+        custom: false     // the time came from "Other time" (not one of the 30-minute buttons)
     };
 
     const dateSet = new Set(cfg.dates);
@@ -125,6 +127,7 @@
         setSum('sumType', state.type ? state.type.name : 'Not chosen yet');
         const jp = $('sumTypeJp');
         jp.textContent = state.type && state.type.japaneseName ? state.type.japaneseName : '';
+        $('sumTypeArea').textContent = state.type && state.type.areaName ? state.type.areaName : '';
         setSum('sumDate', state.date ? fmtDate(state.date) : '-');
         setSum('sumTime', state.timeLabel || '-');
         setSum('sumGuests', plural(state.guests, 'guest', 'guests'));
@@ -185,6 +188,9 @@
         state.date = value;
         state.time = null;
         state.timeLabel = null;
+        state.custom = false;
+        state.overlap = false;
+        closePop();
         touch();
         renderCalendar();
         updateSummary();
@@ -219,7 +225,8 @@
             state.time = null; state.timeLabel = null;
         } else {
             const stillThere = slots.find(s => s.time === state.time);
-            if (!stillThere) { state.time = null; state.timeLabel = null; } else { state.timeLabel = stillThere.label; }
+            if (stillThere) { state.timeLabel = stillThere.label; state.custom = false; }
+            else if (!state.custom) { state.time = null; state.timeLabel = null; }
 
             slots.forEach(s => {
                 const btn = el('button', 'rsv-slot', s.label);
@@ -230,23 +237,197 @@
                 if (on) btn.classList.add('is-selected');
                 btn.addEventListener('click', () => {
                     state.time = s.time; state.timeLabel = s.label;
+                    state.custom = false;
+                    syncOther();
                     touch();
                     box.querySelectorAll('.rsv-slot').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-checked', 'false'); });
                     btn.classList.add('is-selected'); btn.setAttribute('aria-checked', 'true');
                     updateSummary(); updateNext1();
+                    checkOverlap();
+                    syncPopToTime();
                 });
                 box.appendChild(btn);
             });
         }
+        syncOther();
         updateSummary();
         updateNext1();
+        checkOverlap();
+    }
+
+    // ---------- step 1: "Other time" (any 5 minutes) ----------
+    const STEP = 5;
+    const pop = { total: 18 * 60, request: 0, timer: 0, ok: false };   // minutes after midnight
+
+    const hhmm = t => String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0');
+    function label12(t) {
+        const h = Math.floor(t / 60), m = t % 60;
+        return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
+    }
+
+    function syncOther() {
+        const btn = $('rsvOtherBtn');
+        btn.disabled = !state.date;
+        btn.classList.toggle('is-selected', state.custom && !!state.time);
+        $('rsvOtherLabel').textContent = state.custom && state.timeLabel ? state.timeLabel : 'Other time';
+        if (state.custom) {
+            document.querySelectorAll('#rsvSlots .rsv-slot').forEach(b => { b.classList.remove('is-selected'); b.setAttribute('aria-checked', 'false'); });
+        }
+    }
+
+    function renderPop() {
+        const h = Math.floor(pop.total / 60);
+        $('rsvHourVal').textContent = String(h % 12 === 0 ? 12 : h % 12);
+        $('rsvMinVal').textContent = String(pop.total % 60).padStart(2, '0');
+        $('rsvAmPm').textContent = h >= 12 ? 'PM' : 'AM';
+        $('rsvPopUse').textContent = `Use ${label12(pop.total)}`;
+    }
+
+    function setPopStatus(kind, text) {
+        const box = $('rsvPopStatus');
+        box.className = 'rsv-pop-status' + (kind ? ' is-' + kind : '');
+        box.textContent = text || '';
+    }
+
+    function movePop(delta) {
+        pop.total = (pop.total + delta + 1440) % 1440;
+        renderPop();
+        scheduleCheck();
+    }
+
+    function scheduleCheck() {
+        pop.ok = false;
+        $('rsvPopUse').disabled = true;
+        $('rsvPopSug').hidden = true;
+        setPopStatus('wait', 'Checking tables...');
+        window.clearTimeout(pop.timer);
+        pop.timer = window.setTimeout(checkPopTime, reduceMotion ? 0 : 350);
+    }
+
+    async function checkPopTime() {
+        const mine = ++pop.request;
+        try {
+            const url = `?handler=CheckTime&date=${encodeURIComponent(state.date)}&time=${encodeURIComponent(hhmm(pop.total))}&guests=${state.guests}`;
+            const res = await fetch(url, { headers: { Accept: 'application/json' } });
+            const json = await res.json();
+            if (mine !== pop.request) return;
+            showPopResult(json);
+        } catch {
+            if (mine !== pop.request) return;
+            setPopStatus('bad', 'Could not check this time. Please try again.');
+        }
+    }
+
+    function showPopResult(r) {
+        const list = $('rsvPopSugList');
+        list.replaceChildren();
+        pop.ok = !!(r.valid && r.available);
+        $('rsvPopUse').disabled = !pop.ok;
+
+        if (pop.ok) {
+            setPopStatus('ok', `Tables available at ${label12(pop.total)}`);
+            $('rsvPopSug').hidden = true;
+            return;
+        }
+        setPopStatus('bad', r.message || 'This time is not available.');
+
+        const sugg = r.suggestions || [];
+        $('rsvPopSug').hidden = sugg.length === 0;
+        sugg.forEach(s => {
+            const btn = el('button', 'rsv-sug');
+            btn.type = 'button';
+            const kind = s.kind === 'earlier' ? 'Earlier' : s.kind === 'later' ? 'Later' : 'Next day';
+            const text = s.kind === 'nextday' ? `${fmtDate(s.date).replace(/, \d{4}$/, '')} \u00B7 ${s.label}` : s.label;
+            btn.append(el('strong', '', text), el('small', '', kind));
+            btn.addEventListener('click', () => applySuggestion(s));
+            list.appendChild(btn);
+        });
+    }
+
+    function applySuggestion(s) {
+        if (s.date !== state.date) {
+            // another day: the time is kept through the date change
+            state.date = s.date;
+            state.view = { y: parseDate(s.date).getFullYear(), m: parseDate(s.date).getMonth() };
+            renderCalendar();
+            loadSlots();
+        }
+        chooseTime(s.time, s.label, true);
+        closePop(true);
+    }
+
+    function chooseTime(time, labelText, custom) {
+        state.time = time; state.timeLabel = labelText; state.custom = custom;
+        // a 30-minute button is highlighted when the time matches one
+        const match = Array.from(document.querySelectorAll('#rsvSlots .rsv-slot')).find(b => b.textContent === labelText);
+        if (match) state.custom = false;
+        touch();
+        syncOther();
+        document.querySelectorAll('#rsvSlots .rsv-slot').forEach(b => {
+            const on = b.textContent === labelText && !state.custom;
+            b.classList.toggle('is-selected', on); b.setAttribute('aria-checked', String(on));
+        });
+        updateSummary(); updateNext1();
+        checkOverlap();
+    }
+
+    // If the "Other time" box is open while a 30-minute button is picked, it follows that button.
+    function syncPopToTime() {
+        if ($('rsvPop').hidden || !state.time) return;
+        pop.total = parseInt(state.time.slice(0, 2), 10) * 60 + parseInt(state.time.slice(3), 10);
+        renderPop();
+        scheduleCheck();
+    }
+
+    function openPop() {
+        if (!state.date) return;
+        const start = state.time ? parseInt(state.time.slice(0, 2), 10) * 60 + parseInt(state.time.slice(3), 10) : pop.total;
+        pop.total = Math.round(start / STEP) * STEP % 1440;
+        $('rsvPop').hidden = false;
+        $('rsvOtherBtn').setAttribute('aria-expanded', 'true');
+        renderPop();
+        scheduleCheck();
+        $('rsvPop').scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+        $('rsvPopUse').focus({ preventScroll: true });
+    }
+
+    function closePop(skipFocus) {
+        const box = $('rsvPop');
+        if (box.hidden) return;
+        box.hidden = true;
+        window.clearTimeout(pop.timer);
+        pop.request++;
+        $('rsvOtherBtn').setAttribute('aria-expanded', 'false');
+        if (!skipFocus) $('rsvOtherBtn').focus({ preventScroll: true });
+    }
+
+    function initPop() {
+        $('rsvOtherBtn').addEventListener('click', () => { if ($('rsvPop').hidden) openPop(); else closePop(); });
+        $('rsvPopClose').addEventListener('click', () => closePop());
+        $('rsvHourUp').addEventListener('click', () => movePop(60));
+        $('rsvHourDown').addEventListener('click', () => movePop(-60));
+        $('rsvMinUp').addEventListener('click', () => movePop(STEP));
+        $('rsvMinDown').addEventListener('click', () => movePop(-STEP));
+        $('rsvAmPm').addEventListener('click', () => movePop(720));
+        $('rsvPopUse').addEventListener('click', () => {
+            if (!pop.ok) return;
+            chooseTime(hhmm(pop.total), label12(pop.total), true);
+            closePop();
+        });
+        $('rsvPop').addEventListener('keydown', e => {
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePop(); }
+        });
+        document.addEventListener('click', e => {
+            if ($('rsvPop').hidden) return;
+            if (!$('rsvTimeCard').contains(e.target)) closePop(true);
+        });
     }
 
     function setGuests(n) {
         n = Math.max(1, Math.min(cfg.maxGuests, n));
         const changed = n !== state.guests;
         state.guests = n;
-        if (changed) touch();
+        if (changed) { touch(); if (!$('rsvPop').hidden) scheduleCheck(); }
         renderGuests(true);
         updateSummary();
         updateNext1();
@@ -273,7 +454,7 @@
         }
         $('rsvGuestsDown').disabled = !ok || n <= 1;
         $('rsvGuestsUp').disabled = !ok || n >= cfg.maxGuests;
-        $('rsvNext1').disabled = !(ok && state.date && state.time);
+        $('rsvNext1').disabled = !(ok && state.date && state.time) || state.overlap;
     }
 
     function onGuestsCommit() {
@@ -290,7 +471,41 @@
         $('rsvGuestsHint').textContent = `Up to ${cfg.maxGuests} guests per booking.`;
     }
 
-    function updateNext1() { $('rsvNext1').disabled = !(state.date && state.time && state.guests >= 1); }
+    function updateNext1() {
+        $('rsvNext1').disabled = !(state.date && state.time && state.guests >= 1) || state.overlap;
+    }
+
+    // The customer's own booking at the same time is found as soon as the time is chosen, not at the last step.
+    let overlapRequest = 0;
+    let overlapShown = false;
+
+    async function checkOverlap() {
+        const mine = ++overlapRequest;
+        const clear = () => {
+            state.overlap = false;
+            if (overlapShown) { showError(1, ''); showError(2, ''); overlapShown = false; }
+            updateNext1();
+        };
+        if (!state.date || !state.time) { clear(); return false; }
+
+        try {
+            const url = `?handler=Overlap&date=${encodeURIComponent(state.date)}&time=${encodeURIComponent(state.time)}`;
+            const res = await fetch(url, { headers: { Accept: 'application/json' } });
+            const json = await res.json();
+            if (mine !== overlapRequest) return state.overlap;
+            if (json.overlap) {
+                state.overlap = true;
+                overlapShown = true;
+                showError(state.step === 2 ? 2 : 1, json.message || 'You already have a reservation at this time.');
+                updateNext1();
+                return true;
+            }
+            clear();
+        } catch {
+            if (mine === overlapRequest) clear();   // the server checks again on submit
+        }
+        return false;
+    }
 
     // ---------- step 2: table types ----------
     const STATUS_TEXT = { available: 'Available', fullybooked: 'Fully booked', notsuitable: 'Not suitable', unavailable: 'Unavailable' };
@@ -325,22 +540,61 @@
         photo.appendChild(tick);
         card.appendChild(photo);
 
+        // status sits on the photo, so the text below stays short
+        photo.appendChild(el('span', 'rsv-status rsv-status-pin ' + o.status, STATUS_TEXT[o.status] || o.status));
+
         const body = el('div', 'rsv-type-body');
-        body.appendChild(el('h3', 'rsv-type-name', o.name));
-        if (o.japaneseName) { const jp = el('p', 'rsv-type-jp', o.japaneseName); jp.lang = 'ja'; body.appendChild(jp); }
-        body.appendChild(el('p', 'rsv-type-seats', seatsText(o)));
+
+        const head = el('div', 'rsv-type-head');
+        head.appendChild(el('h3', 'rsv-type-name', o.name));
+        if (o.japaneseName) { const jp = el('span', 'rsv-type-jp', o.japaneseName); jp.lang = 'ja'; head.appendChild(jp); }
+        body.appendChild(head);
+
+        // one line: dining area and party size
+        const meta = el('p', 'rsv-type-meta');
+        const metaItem = (icon, text, title) => {
+            const item = el('span', 'rsv-type-meta-item');
+            item.title = title;
+            const ic = document.createElement('i');
+            ic.className = 'bi bi-' + icon; ic.setAttribute('aria-hidden', 'true');
+            item.append(ic, document.createTextNode(text));
+            return item;
+        };
+        if (o.areaName) meta.appendChild(metaItem('geo-alt', o.areaName, 'Dining area'));
+        meta.appendChild(metaItem('people', o.minGuests === o.maxGuests
+            ? plural(o.maxGuests, 'guest', 'guests')
+            : `${o.minGuests}\u2013${o.maxGuests} guests`, 'Seats'));
+        body.appendChild(meta);
+
         if (o.description) body.appendChild(el('p', 'rsv-type-desc', o.description));
-        if (o.minimumSpend > 0) body.appendChild(el('p', 'rsv-type-spend', `Minimum spend ${fmtMoney(o.minimumSpend)}`));
 
-        body.appendChild(el('span', 'rsv-status ' + o.status, STATUS_TEXT[o.status] || o.status));
-
+        // footer: minimum spend on the left, availability on the right
+        const foot = el('div', 'rsv-type-foot');
+        foot.appendChild(el('span', 'rsv-type-spend', o.minimumSpend > 0 ? `Min. spend ${fmtMoney(o.minimumSpend)}` : 'No minimum spend'));
         let line = o.reason;
-        if (usable) {
-            line = o.tablesLeft <= 2 ? `Only ${plural(o.tablesLeft, 'table', 'tables')} left.` : `${o.tablesLeft} tables available.`;
-            if (o.belowMinimum) line += ' Smaller party: the minimum spend applies.';
-        }
-        if (line) body.appendChild(el('p', 'rsv-type-reason', line));
+        if (usable) line = o.tablesLeft <= 2 ? `Only ${o.tablesLeft} left` : `${o.tablesLeft} tables left`;
+        if (line) foot.appendChild(el('span', 'rsv-type-reason', line));
+        body.appendChild(foot);
+        if (usable && o.belowMinimum) body.appendChild(el('p', 'rsv-type-note', 'Smaller party: the minimum spend applies.'));
 
+        // A fully booked type shows its own nearest free times; one press moves the booking there.
+        if (o.status === 'fullybooked' && (o.suggestions || []).length) {
+            const box = el('div', 'rsv-type-sugs');
+            box.appendChild(el('span', 'rsv-type-sugs-title', 'Next available'));
+            o.suggestions.forEach(s => {
+                const kind = s.kind === 'earlier' ? 'Earlier' : s.kind === 'later' ? 'Later' : 'Next day';
+                const text = s.kind === 'nextday' ? `${fmtDate(s.date).replace(/, \d{4}$/, '')} \u00B7 ${s.label}` : s.label;
+                const chip = el('span', 'rsv-type-sug', text);
+                chip.setAttribute('role', 'button');
+                chip.setAttribute('aria-label', `${kind}: ${text}`);
+                chip.tabIndex = 0;
+                const go = e => { e.preventDefault(); e.stopPropagation(); moveBooking(s, o.id); };
+                chip.addEventListener('click', go);
+                chip.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') go(e); });
+                box.appendChild(chip);
+            });
+            body.appendChild(box);
+        }
         card.appendChild(body);
         card.addEventListener('click', () => { if (usable) pickType(o); });
         return card;
@@ -351,6 +605,31 @@
         box.innerHTML = '<i class="bi bi-image" aria-hidden="true"></i>';
         box.appendChild(el('span', '', 'No photo'));
         return box;
+    }
+
+    // Step 2: take a suggested time (maybe on another day) and look at the table types again.
+    function moveBooking(s, typeId) {
+        if (state.busy) return;
+        if (s.date !== state.date) {
+            state.date = s.date;
+            const d = parseDate(s.date);
+            state.view = { y: d.getFullYear(), m: d.getMonth() };
+            renderCalendar();
+        }
+        state.time = s.time; state.timeLabel = s.label; state.custom = false;
+        // the table type that offered this time is chosen again once it is free there
+        state.typeId = typeId; state.type = null;
+        touch();
+        loadSlots();   // step 1 shows the same date and time if the customer goes back
+        $('rsvChipDate').textContent = fmtDate(state.date);
+        $('rsvChipTime').textContent = state.timeLabel;
+        $('rsvStepNote1').textContent = `${fmtDate(state.date)}, ${state.timeLabel}, ${plural(state.guests, 'guest', 'guests')}`;
+        updateSummary();
+        checkOverlap();
+        loadTypes().then(() => {
+            const chosen = document.querySelector('#rsvTypes .rsv-type.is-selected');
+            if (chosen) chosen.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+        });
     }
 
     function pickType(o) {
@@ -610,6 +889,8 @@
         switch (json.code) {
             case 'slot':
             case 'guests':
+            case 'overlap':
+            case 'limit':
                 state.token = null;
                 await goStep(1, true);
                 showError(1, message);
@@ -761,6 +1042,7 @@
         initView();
         renderCalendar();
         renderGuests();
+        initPop();
         $('rsvSpecial').value = state.special;
         $('rsvSpecialCount').textContent = state.special.length;
         if (state.date) loadSlots();

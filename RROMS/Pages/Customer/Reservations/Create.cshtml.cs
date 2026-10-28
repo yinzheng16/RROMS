@@ -85,6 +85,37 @@ public class CreateModel(
         return new JsonResult(new { slots });
     }
 
+    // Step 1: "set your own time" - is there a table at this exact time, and if not, what is nearby.
+    public async Task<IActionResult> OnGetCheckTimeAsync(string? date, string? time, int guests)
+    {
+        if (!TryStart(date, time, out var start))
+            return new JsonResult(new { valid = false, available = false, message = "Choose a valid date and time.", suggestions = Array.Empty<object>() });
+
+        var r = await reservations.CheckTimeAsync(start, guests);
+
+        return new JsonResult(new
+        {
+            valid = r.Valid,
+            available = r.Available,
+            message = r.Message,
+            suggestions = r.Suggestions.Select(x => new { date = x.Date, time = x.Time, label = x.Label, kind = x.Kind })
+        });
+    }
+
+    // Step 1: does this customer already hold a booking that overlaps the chosen time?
+    public async Task<IActionResult> OnGetOverlapAsync(string? date, string? time)
+    {
+        if (!TryStart(date, time, out var start))
+            return new JsonResult(new { overlap = false });
+
+        // Blocked when the customer already has a booking then, or would go over the booking limit.
+        string? message = await reservations.HasOverlapAsync(UserId, start)
+            ? "You already have a reservation at this time. Please choose another time."
+            : await reservations.GetLimitMessageAsync(UserId, start);
+
+        return new JsonResult(new { overlap = message != null, message });
+    }
+
     // Step 2: every table type with its availability for the chosen date, time and guests.
     public async Task<IActionResult> OnGetTypesAsync(string? date, string? time, int guests)
     {
@@ -109,7 +140,10 @@ public class CreateModel(
                 belowMinimum = o.BelowMinimum,
                 status = o.Status.ToString().ToLowerInvariant(),
                 reason = o.Reason,
-                tablesLeft = o.TablesLeft
+                tablesLeft = o.TablesLeft,
+                areaName = o.AreaName,
+                suggestions = (o.Suggestions ?? new List<TimeSuggestion>())
+                    .Select(x => new { date = x.Date, time = x.Time, label = x.Label, kind = x.Kind })
             })
         });
     }
