@@ -2462,35 +2462,6 @@ html {
         color: var(--rsv-muted);
     }
 
-/* dining area on the table type cards */
-.rsv-type-area {
-    margin: 4px 0 0;
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 5px 9px;
-    border-radius: 8px;
-    background: rgba(143, 31, 23, .1);
-    font-size: 13px;
-    color: #55443a;
-}
-
-    .rsv-type-area i {
-        color: #8f1f17;
-    }
-
-.rsv-type-area-label {
-    font-size: 11px;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: #8f1f17;
-}
-
-.rsv-type-area strong {
-    color: var(--rsv-paper-ink);
-}
-
 /* status chip on the photo */
 .rsv-status-pin {
     position: absolute;
