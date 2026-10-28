@@ -442,6 +442,9 @@ public partial class ReservationService
 
     // Nearest alternatives around a wanted start time: the closest earlier and later listed time in the same
     // sitting, and the closest time of day on the next day that has room. hasTable says whether a start time works.
+    // The next-day search stops after this many days, so a fully booked type never runs dozens of queries.
+    private const int NextDaysToSearch = 2;
+
     private async Task<List<TimeSuggestion>> BuildSuggestionsAsync(
         Func<DateTime, Task<bool>> hasTable, DateTime start,
         List<OperatingHour> hours, List<SpecialDate> specials, DateTime now)
@@ -482,7 +485,7 @@ public partial class ReservationService
         }
 
         // Another day: the closest time of day to the one requested, on the next day that has room.
-        for (var d = 1; d <= 7 && suggestions.All(x => x.Kind != "nextday"); d++)
+        for (var d = 1; d <= NextDaysToSearch && suggestions.All(x => x.Kind != "nextday"); d++)
         {
             var day = start.Date.AddDays(d);
             if (day > now.Date.AddDays(BookingRules.MaxAdvanceDays)) break;
@@ -733,8 +736,11 @@ public partial class ReservationService
 
     // ---------- no-show release ----------
 
-    // A Pending or Confirmed booking that nobody has seated 15 minutes after its time
-    // becomes No-show, which frees the table. Seated bookings are never touched.
+    // 15 minutes after its time, a booking nobody has seated is released and the table is freed:
+    //  - Confirmed -> No-show (the customer did not come).
+    //  - Pending   -> Cancelled (staff never confirmed it in time, so it is not the customer's fault
+    //                 and must not count as a no-show in the reports).
+    // Seated bookings are never touched.
     public async Task<int> ReleaseOverdueReservationsAsync()
     {
         var cutoff = DateTime.Now.AddMinutes(-BookingRules.NoShowGraceMinutes);
@@ -748,7 +754,9 @@ public partial class ReservationService
         if (overdue.Count == 0) return 0;
 
         foreach (var r in overdue)
-            r.Status = ReservationStatus.NoShow;
+            r.Status = r.Status == ReservationStatus.Pending
+                ? ReservationStatus.Cancelled
+                : ReservationStatus.NoShow;
 
         await _db.SaveChangesAsync();
         return overdue.Count;
