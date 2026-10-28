@@ -674,6 +674,24 @@ body:has([data-customer-cart]) main > div:has(> [data-customer-cart]) {
     border-color: #b79b72;
 }
 
+/* Match the compact scale of the dining-option capsule. */
+.customer-cart .checkout-review__booking {
+    box-sizing: border-box;
+    inline-size: fit-content;
+    max-inline-size: 100%;
+    margin-block: .5rem 0;
+    padding: .25rem .8rem;
+    border: 1px solid #b79b72;
+    border-radius: 999px;
+    background: rgba(255,249,237,.85);
+    color: #30251f;
+    font-size: .8rem;
+    font-weight: 600;
+    line-height: 1.5;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 .customer-cart .checkout-review__body {
     background: transparent;
 }
