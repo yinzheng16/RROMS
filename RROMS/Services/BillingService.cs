@@ -107,29 +107,47 @@ namespace RROMS.Services
                         Status = BillStatus.Draft
                     };
 
-                    // Explicitly track the new Bill.
+                    // Save the Bill first so it gets an Id.
+                    // This runs inside the same transaction and lock as the
+                    // link below, so if the link fails the Bill is rolled back.
                     await _bills.AddAsync(bill);
+                    await _bills.SaveChangesAsync();
 
-                    // Load the Order as a tracked entity.
-                    var trackedOrder = await _orders.Query()
-                        .FirstAsync(o => o.Id == orderId);
+                    int billId = bill.Id;
+                    decimal subtotal = bill.Subtotal;
+                    decimal taxAmount = bill.TaxAmount;
+                    decimal serviceCharge = bill.ServiceCharge;
+                    decimal totalAmount = bill.TotalAmount;
 
-                    // Verify that the saved Order amounts have not changed
-                    // since the Bill was prepared.
-                    if (trackedOrder.Subtotal != bill.Subtotal ||
-                        trackedOrder.TaxAmount != bill.TaxAmount ||
-                        trackedOrder.ServiceCharge != bill.ServiceCharge ||
-                        trackedOrder.TotalAmount != bill.TotalAmount)
+                    // US32: Conditional update (compare-and-set).
+                    // Link the Order only if it is still a takeaway order,
+                    // not cancelled, not billed yet, and its saved amounts
+                    // are exactly the amounts copied into the Bill.
+                    // Same pattern as Member 3's AcceptStaffOrderAsync, so
+                    // other modules never get a concurrency exception.
+                    int linked = await _orders.Query()
+                        .Where(o =>
+                            o.Id == orderId &&
+                            o.OrderType == OrderType.Takeaway &&
+                            o.BillId == null &&
+                            o.Status != OrderStatus.Cancelled &&
+                            o.Subtotal == subtotal &&
+                            o.TaxAmount == taxAmount &&
+                            o.ServiceCharge == serviceCharge &&
+                            o.TotalAmount == totalAmount)
+                        .ExecuteUpdateAsync(setters => setters
+                            .SetProperty(o => o.BillId, (int?)billId));
+
+                    // 0 rows = the Order changed after it was read
+                    // (cancelled, amounts updated or billed elsewhere).
+                    // Throwing here skips the commit, so the new Bill
+                    // is rolled back together with the failed link.
+                    if (linked != 1)
                     {
                         throw new InvalidOperationException(
-                            "Order amounts changed during Bill creation. Please retry.");
+                            "The order changed while the bill was being created. " +
+                            "Please refresh and try again.");
                     }
-
-                    // Link only the Bill relationship.
-                    trackedOrder.Bill = bill;
-
-                    // Save Bill and Order in the same transaction.
-                    await _orders.SaveChangesAsync();
 
                     return bill;
                 });
@@ -137,10 +155,10 @@ namespace RROMS.Services
 
 
 
-        // TODO (US32 - MEMBER 2 INTEGRATION):
-        // Verify all chargeable Orders in this DiningSession
-        // are included in the Bill before confirmation.
-        // Reject Orders belonging to another DiningSession.
+        // US32: Confirm a Draft Bill (used by takeaway bills created by
+        // CreateTakeawayBillAsync). Dine-in session bills will use a
+        // separate session confirmation method after Member 2's
+        // DiningSession (PR #96) is merged.
         public async Task<Bill> ConfirmBillAsync(
             int billId,
             string staffUserId)
@@ -153,7 +171,10 @@ namespace RROMS.Services
                 throw new ArgumentException(
                     "Staff user ID is required.", nameof(staffUserId));
 
+            // Read-only copy for validation. The status change below is a
+            // conditional update, so nothing is saved through this entity.
             var bill = await _bills.Query()
+                .AsNoTracking()
                 .Include(b => b.Orders)
                 .FirstOrDefaultAsync(b => b.Id == billId);
 
@@ -221,11 +242,30 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "Cannot confirm a bill with an existing pending or completed payment.");
 
-            bill.Status = BillStatus.Confirmed;
-            bill.ConfirmedAt = DateTime.Now;
-            bill.ConfirmedByUserId = staffUserId.Trim();
+            DateTime confirmedAt = DateTime.Now;
+            string confirmedBy = staffUserId.Trim();
 
-            await _bills.SaveChangesAsync();
+            // US32: Conditional update (compare-and-set).
+            // Only one request can move this Bill from Draft to Confirmed.
+            // A double click or a second staff member gets a clear message
+            // instead of silently overwriting ConfirmedAt / ConfirmedByUserId.
+            int confirmed = await _bills.Query()
+                .Where(b => b.Id == billId && b.Status == BillStatus.Draft)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(b => b.Status, BillStatus.Confirmed)
+                    .SetProperty(b => b.ConfirmedAt, (DateTime?)confirmedAt)
+                    .SetProperty(b => b.ConfirmedByUserId, confirmedBy));
+
+            if (confirmed != 1)
+            {
+                throw new InvalidOperationException(
+                    "This bill has already been confirmed. Please refresh the page.");
+            }
+
+            // Return the confirmed values to the caller.
+            bill.Status = BillStatus.Confirmed;
+            bill.ConfirmedAt = confirmedAt;
+            bill.ConfirmedByUserId = confirmedBy;
 
             return bill;
         }
