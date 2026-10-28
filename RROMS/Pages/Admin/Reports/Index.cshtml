@@ -1,6 +1,5 @@
 @page
 @model RROMS.Pages.Admin.Reports.Index
-@inject RROMS.Services.Interfaces.IReportService RestaurantSettings
 @using System.Globalization
 @using RROMS.Models
 @{
@@ -94,8 +93,7 @@
 
 @if (Model.IsPrint)
 {
-    var settings = await RestaurantSettings.GetRestaurantSettingsAsync();
-    var restaurant = string.IsNullOrWhiteSpace(settings.RestaurantName) ? "YORU IZAKAYA" : settings.RestaurantName;
+    var restaurant = Brand.FullName;
 
     <text>@Html.Raw("<!DOCTYPE html>")</text>
     <html lang="en">
