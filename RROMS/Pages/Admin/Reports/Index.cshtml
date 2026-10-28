@@ -1,0 +1,566 @@
+@page
+@model RROMS.Pages.Admin.Reports.Index
+@inject RROMS.Services.Interfaces.IReportService RestaurantSettings
+@using System.Globalization
+@using RROMS.Models
+@{
+    // US44 Filtered reports (Member 5)
+    // Styles: wwwroot/css/admin-reports.css · Script: wwwroot/js/admin-reports.js
+    ViewData["Title"] = "Reports";
+
+    var R = Model.Report;
+    var Q = Model.Query;
+    var inv = CultureInfo.InvariantCulture;
+    var typeIndex = (int)Q.Type;
+    var currentType = RROMS.Pages.Admin.Reports.Index.Types[typeIndex];
+    var tabNames = new[] { "Reservations", "Customer orders", "Sales transactions", "Menu items" };
+    var isMenu = Q.Type == ReportType.Menu;
+
+    string DeltaClass(ReportKpi k) => (k.GoodWhenDown ? k.Change < 0 : k.Change > 0) ? "rp-up" : "rp-down";
+    string DeltaText(ReportKpi k) => (k.Change > 0 ? "▲ " : k.Change < 0 ? "▼ " : "") + Math.Abs(k.Change ?? 0) + "%";
+    var compareText = Q.Days == 1 ? "vs the day before" : $"vs previous {Q.Days} days";
+
+    // ---- The three summary cards ----
+    // Card 1: the main number with a small bar for each of the last 7 days.
+    var main = R.Kpis[R.MainKpi];
+    var bars = R.Chart.TakeLast(7).ToList();
+    var barMax = Math.Max(1m, bars.Count > 0 ? bars.Max(p => p.Value) : 1m);
+
+    // Card 2: a count with a ring (how many completed / showed up / were paid).
+    var secondIndex = Q.Type switch
+    {
+        ReportType.Sales => 3,
+        ReportType.Menu => 1,
+        _ => 0
+    };
+    var second = R.Kpis[secondIndex];
+    var extra = R.Kpis.Where((k, i) => i != R.MainKpi && i != secondIndex).ToList();
+
+    decimal ringPct;
+    string ringCaption;
+    if (isMenu)
+    {
+        var best = R.Rows.FirstOrDefault(r => r.Cells[0].Text == R.Kpis[3].Display);
+        ringPct = (decimal)(best?.Cells[5].Share ?? 0);
+        ringCaption = best == null ? "no sales yet" : "top: " + best.Cells[0].Text;
+    }
+    else
+    {
+        var good = Q.Type == ReportType.Sales ? "Paid" : "Completed";
+        var groupTotal = R.Groups.Sum(g => g.Value);
+        ringPct = groupTotal == 0 ? 0 : R.Groups.Where(g => g.Name == good).Sum(g => g.Value) * 100 / groupTotal;
+        ringCaption = Q.Type switch
+        {
+            ReportType.Reservations => "showed up",
+            ReportType.Sales => "paid",
+            _ => "completed"
+        };
+    }
+    var ringLength = 2 * Math.PI * 36;
+    var ringOffset = ringLength * (1 - (double)Math.Clamp(ringPct, 0, 100) / 100);
+
+    // Card 3: one coloured bar split by status (or category).
+    var stackTotal = R.Groups.Sum(g => g.Value);
+    var anySelected = R.Groups.Any(g => g.Selected);
+    int Pct(decimal v) => stackTotal == 0 ? 0 : (int)Math.Round(v * 100 / stackTotal);
+    // Show the 6 biggest (plus any that are chosen); the rest open with "+N more".
+    bool IsExtra(int index) => index >= 6 && !R.Groups[index].Selected;
+    var hiddenGroups = Enumerable.Range(0, R.Groups.Count).Count(IsExtra);
+
+    // ---- Date range drop-down ----
+    var isCustom = !RROMS.Pages.Admin.Reports.Index.Presets.Any(p => Model.IsPreset(p.Days));
+
+    // ---- Table helpers ----
+    var codeColumns = new[] { "Reference", "Order", "Payment" };
+    var avatarColors = new[] { "#C9392B", "#3D5A80", "#3F7A4C", "#A8741A", "#6B4E8A", "#5A3322" };
+    string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "?";
+        return (parts[0][..1] + (parts.Length > 1 ? parts[^1][..1] : "")).ToUpperInvariant();
+    }
+    string AvatarColor(string name) => avatarColors[name.Sum(c => (int)c) % avatarColors.Length];
+
+    var filterParts = new List<string> { R.GroupLabel + ": " + (Q.Groups.Count > 0 ? string.Join(", ", Q.Groups) : "all") };
+    if (R.KindOptions.Count > 0) { filterParts.Add(R.KindLabel + ": " + (Q.Kind ?? "all")); }
+    filterParts.Add("Customer: " + (Q.Customer ?? "all"));
+    if (Q.Day.HasValue) { filterParts.Add("Day: " + Q.Day.Value.ToString("d MMM yyyy")); }
+
+    if (Model.IsPrint)
+    {
+        Layout = null;
+    }
+}
+
+@if (Model.IsPrint)
+{
+    var settings = await RestaurantSettings.GetRestaurantSettingsAsync();
+    var restaurant = string.IsNullOrWhiteSpace(settings.RestaurantName) ? "YORU IZAKAYA" : settings.RestaurantName;
+
+    <text>@Html.Raw("<!DOCTYPE html>")</text>
+    <html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>@R.Title report · @Model.PeriodText</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Josefin+Sans:wght@400;600;700&display=swap" />
+        <link rel="stylesheet" href="~/css/admin-reports.css" asp-append-version="true" />
+    </head>
+    <body class="rp-print-body">
+        <div class="rp-print-bar">
+            <span>This is the PDF version. In the print window, choose <b>Save as PDF</b>.</span>
+            <button type="button" class="rp-btn rp-red" data-rp-print>Save as PDF</button>
+            <a class="rp-btn" href="@Model.BackLink()">Back to the report</a>
+        </div>
+
+        <main class="rp-sheet">
+            <header class="rp-sheet-head">
+                <div class="rp-sheet-brand">
+                    <span class="rp-sheet-seal" aria-hidden="true">夜</span>
+                    <div>
+                        <h1>@restaurant</h1>
+                        <p>@R.Title report</p>
+                    </div>
+                </div>
+                <div class="rp-sheet-meta">
+                    <b>@Model.PeriodText</b><br />
+                    @(string.Join(" · ", filterParts))<br />
+                    Exported @DateTime.Now.ToString("d MMM yyyy, HH:mm") by @(User.Identity?.Name ?? "Admin")
+                </div>
+            </header>
+
+            <div class="rp-sheet-kpis">
+                @foreach (var k in R.Kpis)
+                {
+                    <div><b>@k.Display</b><small>@k.Label</small></div>
+                }
+            </div>
+
+            @if (R.Rows.Count == 0)
+            {
+                <p>No @R.RowNoun match these filters.</p>
+            }
+            else
+            {
+                <table class="rp-sheet-table">
+                    <thead>
+                        <tr>
+                            @foreach (var c in R.Columns)
+                            {
+                                <th>@c.Title</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in R.Rows)
+                        {
+                            <tr>
+                                @foreach (var cell in row.Cells)
+                                {
+                                    <td>@cell.Text</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            @foreach (var cell in R.Total.Cells)
+                            {
+                                <td>@cell.Text</td>
+                            }
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+
+            <footer class="rp-sheet-foot">
+                <span>@restaurant · Back office</span>
+                <span>@R.Rows.Count @R.RowNoun</span>
+            </footer>
+        </main>
+
+        <script src="~/js/admin-reports.js" asp-append-version="true"></script>
+    </body>
+    </html>
+}
+else
+{
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Josefin+Sans:wght@400;500;600;700&display=swap" />
+    <link rel="stylesheet" href="~/css/admin-reports.css" asp-append-version="true" />
+
+    <div class="rp-page" data-rp>
+
+        <!-- ===== Header ===== -->
+        <header class="rp-hero">
+            <div class="rp-noren" aria-hidden="true">
+                <div class="rp-noren-panels"><span>営</span><span>業</span><span>報</span><span>告</span></div>
+            </div>
+
+            <div class="rp-tagline" lang="ja">数字で見る、今夜の店</div>
+            <h1 class="rp-title">@R.Title <em>report</em></h1>
+            <p class="rp-sub">@Model.PeriodText · Updated @DateTime.Now.ToString("HH:mm")</p>
+
+            <div class="rp-hero-bar">
+                <nav class="rp-tabs" aria-label="Choose a report">
+                    @for (var i = 0; i < RROMS.Pages.Admin.Reports.Index.Types.Length; i++)
+                    {
+                        var t = RROMS.Pages.Admin.Reports.Index.Types[i];
+                        <a href="@Model.ReportLink(t.Key)" class="rp-tab @(i == typeIndex ? "is-on" : "")"
+                           aria-current="@(i == typeIndex ? "page" : null)"><span class="rp-k" lang="ja">@t.Kanji</span>@tabNames[i]</a>
+                    }
+                </nav>
+
+                <div class="rp-when">
+                    <form method="get" action="/Admin/Reports" class="rp-custom" data-rp-form data-rp-custom hidden="@(!isCustom)">
+                        @foreach (var h in Model.HiddenFields("from", "to", "day"))
+                        {
+                            <input type="hidden" name="@h.Key" value="@h.Value" />
+                        }
+                        <input type="date" name="from" value="@Q.From.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" aria-label="From" data-rp-auto />
+                        <span class="rp-custom-to">to</span>
+                        <input type="date" name="to" value="@Q.To.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" aria-label="To" data-rp-auto />
+                        <noscript><button type="submit" class="rp-btn">Go</button></noscript>
+                    </form>
+
+                    <div class="rp-dd rp-dd-cal">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+                        <select aria-label="Date range" data-rp-period data-rp-kanji="期間">
+                            @foreach (var p in RROMS.Pages.Admin.Reports.Index.Presets)
+                            {
+                                <option value="@Model.PresetLink(p.Days)" selected="@Model.IsPreset(p.Days)">@p.Name</option>
+                            }
+                            <option value="custom" selected="@isCustom">Custom range…</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        @if (Model.Notice != null)
+        {
+            <p class="rp-notice" role="status">@Model.Notice</p>
+        }
+
+        <!-- ===== Summary cards ===== -->
+        <section class="rp-kpis" aria-label="Summary">
+            <div class="rp-kpi rp-kpi-dark">
+                <div>
+                    <div class="rp-kpi-l">@main.Label</div>
+                    <div class="rp-kpi-v">
+                        @if (main.Display.StartsWith("RM "))
+                        {
+                            <small>RM</small>@main.Display.Substring(3)
+                        }
+                        else
+                        {
+                            @main.Display
+                        }
+                    </div>
+                    <div class="rp-kpi-d">
+                        @if (main.Change.HasValue)
+                        {
+                            <b class="@DeltaClass(main)">@DeltaText(main)</b> @compareText
+                        }
+                        else if (Q.Day.HasValue)
+                        {
+                            <text>On @Q.Day.Value.ToString("d MMM")</text>
+                        }
+                    </div>
+                </div>
+                <div class="rp-mini" aria-label="@R.ChartLabel, last @bars.Count days">
+                    @for (var i = 0; i < bars.Count; i++)
+                    {
+                        var p = bars[i];
+                        var h = Math.Max(6, (int)Math.Round(p.Value * 84 / barMax));
+                        var cls = Q.Day == p.Day.Date ? "is-on" : (!Q.Day.HasValue && i == bars.Count - 1 ? "is-last" : "");
+                        <a href="@Model.DayLink(p.Day)" class="@cls" style="height:@(h)px" title="@p.Day.ToString("d MMM"): @p.Display (click to show only this day)"></a>
+                    }
+                </div>
+            </div>
+
+            <div class="rp-kpi">
+                <div>
+                    <div class="rp-kpi-l">@second.Label</div>
+                    <div class="rp-kpi-v">
+                        @if (second.Display.StartsWith("RM "))
+                        {
+                            <small>RM</small>@second.Display.Substring(3)
+                        }
+                        else
+                        {
+                            @second.Display
+                        }
+                    </div>
+                    <div class="rp-kpi-d">
+                        @if (second.Change.HasValue)
+                        {
+                            <b class="@DeltaClass(second)">@DeltaText(second)</b> @compareText
+                        }
+                    </div>
+                    <div class="rp-kpi-more">
+                        @foreach (var k in extra)
+                        {
+                            <span>@k.Label <b>@k.Display</b></span>
+                        }
+                    </div>
+                </div>
+                <div class="rp-ring">
+                    <svg viewBox="0 0 90 90" role="img" aria-label="@Math.Round(ringPct)% @ringCaption">
+                        <circle class="rp-ring-t" cx="45" cy="45" r="36" />
+                        <circle class="rp-ring-p" cx="45" cy="45" r="36"
+                                stroke-dasharray="@ringLength.ToString("0.##", inv)" stroke-dashoffset="@ringOffset.ToString("0.##", inv)" />
+                        <text x="45" y="51" text-anchor="middle">@Math.Round(ringPct)%</text>
+                    </svg>
+                    <span>@ringCaption</span>
+                </div>
+            </div>
+
+            <div class="rp-kpi rp-kpi-split">
+                <div class="rp-kpi-l">@(isMenu ? "Sales by category" : "By status") <span>· click to filter</span></div>
+                @if (stackTotal == 0)
+                {
+                    <p class="rp-kpi-none">Nothing in this period yet.</p>
+                }
+                else
+                {
+                    <div class="rp-stack @(anySelected ? "is-dim" : "")">
+                        @foreach (var g in R.Groups.Where(x => x.Value > 0))
+                        {
+                            <a href="@Model.GroupLink(g.Name)" class="@(g.Selected ? "is-on" : "")"
+                               style="flex:@g.Value.ToString(inv);background:@g.Color" title="@g.Name: @Pct(g.Value)%"></a>
+                        }
+                    </div>
+                    <div class="rp-stack-l">
+                        @for (var i = 0; i < R.Groups.Count; i++)
+                        {
+                            var g = R.Groups[i];
+                            <a href="@Model.GroupLink(g.Name)" class="@(g.Selected ? "is-on" : "") @(IsExtra(i) ? "rp-extra" : "")"><i style="background:@g.Color"></i>@g.Name <b>@Pct(g.Value)%</b></a>
+                        }
+                        @if (hiddenGroups > 0)
+                        {
+                            <button type="button" class="rp-stack-more" data-rp-more data-more="+@hiddenGroups more" data-less="Show less" aria-expanded="false">+@hiddenGroups more</button>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <!-- ===== Details ===== -->
+        <section class="rp-panel" aria-label="@R.Title">
+            <div class="rp-ph">
+                <div>
+                    <h2>@R.Title</h2>
+                    <p>Every record in this period. Click a column title to sort.</p>
+                </div>
+                <div class="rp-exports">
+                    <a class="rp-btn" href="@Model.CsvLink()" data-rp-plain title="Downloads a .csv file that opens in Excel">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18" /></svg>Export Excel
+                    </a>
+                    <a class="rp-btn rp-red" href="@Model.PrintLink()" target="_blank" rel="noopener" data-rp-plain>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15H6z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></svg>Export PDF
+                    </a>
+                </div>
+            </div>
+
+            <form method="get" action="/Admin/Reports" class="rp-bar" data-rp-form>
+                @foreach (var h in Model.HiddenFields("st", "kind", "q"))
+                {
+                    <input type="hidden" name="@h.Key" value="@h.Value" />
+                }
+                <label class="rp-search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                    <input type="search" name="q" value="@Q.Customer" maxlength="100" placeholder="Search customer name…"
+                           aria-label="Search customer" list="rpCustomers" autocomplete="off" data-rp-search />
+                </label>
+                <datalist id="rpCustomers">
+                    @foreach (var n in R.CustomerNames)
+                    {
+                        <option value="@n"></option>
+                    }
+                </datalist>
+
+                <div class="rp-dd">
+                    <select name="st" aria-label="@R.GroupLabel" data-rp-auto data-rp-kanji="@(isMenu ? "分類" : "状態")" class="@(Q.Groups.Count > 0 ? "is-set" : "")">
+                        <option value="">@(isMenu ? "All categories" : "All statuses")</option>
+                        @foreach (var g in R.Groups)
+                        {
+                            <option value="@g.Name" data-color="@g.Color" selected="@(Q.Groups.Contains(g.Name))">@g.Name</option>
+                        }
+                    </select>
+                </div>
+
+                @if (R.KindOptions.Count > 0)
+                {
+                    <div class="rp-dd">
+                        <select name="kind" aria-label="@R.KindLabel" data-rp-auto data-rp-kanji="種類" class="@(Q.Kind != null ? "is-set" : "")">
+                            <option value="">@(Q.Type == ReportType.Sales ? "All methods" : "All types")</option>
+                            @foreach (var k in R.KindOptions)
+                            {
+                                <option value="@k" selected="@(Q.Kind == k)">@k</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                @if (Q.Day.HasValue)
+                {
+                    <a class="rp-pill" href="@Model.RemoveLink("day")" title="Show every day again">@Q.Day.Value.ToString("d MMM") <span aria-hidden="true">×</span></a>
+                }
+                @if (Model.HasFilters)
+                {
+                    <a class="rp-clear" href="@Model.ResetLink()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>Clear filters
+                    </a>
+                }
+                <noscript><button type="submit" class="rp-btn">Apply</button></noscript>
+            </form>
+
+            <p class="rp-count">Showing @R.Rows.Count @R.RowNoun · @Model.PeriodText</p>
+
+            @if (R.Rows.Count == 0)
+            {
+                <div class="rp-empty">
+                    <b>Nothing to show</b>
+                    No @R.RowNoun match these filters. Try a longer date range or press Clear filters.
+                </div>
+            }
+            else
+            {
+                <div class="rp-tw">
+                    <table class="rp-table">
+                        <thead>
+                            <tr>
+                                @for (var i = 0; i < R.Columns.Count; i++)
+                                {
+                                    var sorted = Q.SortColumn == i;
+                                    <th aria-sort="@(sorted ? (Q.SortDescending ? "descending" : "ascending") : null)"
+                                        class="@((R.Columns[i].Title == "Customer" || R.Columns[i].Title == "Item") ? "rp-wide" : "")">
+                                        <a href="@Model.SortLink(i)">@R.Columns[i].Title<span class="rp-sort">@(sorted ? (Q.SortDescending ? "▼" : "▲") : "")</span></a>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.PageRows)
+                            {
+                                <tr>
+                                    @for (var i = 0; i < row.Cells.Count; i++)
+                                    {
+                                        var cell = row.Cells[i];
+                                        var title = R.Columns[i].Title;
+                                        if (cell.Badge == "rp-b-cat")
+                                        {
+                                            <td><span class="rp-cat">@cell.Text</span></td>
+                                        }
+                                        else if (cell.Badge != null)
+                                        {
+                                            <td><span class="rp-st @cell.Badge">@cell.Text</span></td>
+                                        }
+                                        else if (title == "Customer")
+                                        {
+                                            <td>
+                                                <span class="rp-who" title="@cell.Text">
+                                                    <i style="background:@AvatarColor(cell.Text)" aria-hidden="true">@Initials(cell.Text)</i>
+                                                    <span>@cell.Text</span>
+                                                    @if (!string.IsNullOrWhiteSpace(row.Warning))
+                                                    {
+                                                        <b class="rp-warn" title="@row.Warning" aria-label="Dining note: @row.Warning">!</b>
+                                                    }
+                                                </span>
+                                            </td>
+                                        }
+                                        else if (codeColumns.Contains(title))
+                                        {
+                                            <td><span class="rp-code">@cell.Text</span></td>
+                                        }
+                                        else if (cell.Text is "0" or "0.00" or "0%")
+                                        {
+                                            <td class="rp-zero">@cell.Text</td>
+                                        }
+                                        else if (title == "Item" || title.Contains("(RM)"))
+                                        {
+                                            <td title="@cell.Text"><b>@cell.Text</b></td>
+                                        }
+                                        else
+                                        {
+                                            <td title="@cell.Text">@cell.Text</td>
+                                        }
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                @foreach (var cell in R.Total.Cells)
+                                {
+                                    <td>@cell.Text</td>
+                                }
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="rp-tfoot">
+                    @{
+                        var first = (Model.PageNo - 1) * Model.Per + 1;
+                        var last = Math.Min(Model.PageNo * Model.Per, R.Rows.Count);
+                        var pageNumbers = Enumerable.Range(1, Model.PageCount)
+                            .Where(i => i == 1 || i == Model.PageCount || Math.Abs(i - Model.PageNo) <= 1)
+                            .ToList();
+                        var previous = 0;
+                    }
+                    <span>Showing @first–@last of @R.Rows.Count</span>
+
+                    <nav class="rp-pager" aria-label="Pages">
+                        @if (Model.PageNo > 1)
+                        {
+                            <a href="@Model.PageLink(Model.PageNo - 1)" class="rp-pn">Previous</a>
+                        }
+                        else
+                        {
+                            <span class="rp-pn is-disabled">Previous</span>
+                        }
+                        @foreach (var i in pageNumbers)
+                        {
+                            if (i - previous > 1)
+                            {
+                                <span class="rp-gap">…</span>
+                            }
+                            <a href="@Model.PageLink(i)" class="@(i == Model.PageNo ? "is-on" : "")" aria-current="@(i == Model.PageNo ? "page" : null)">@i</a>
+                            previous = i;
+                        }
+                        @if (Model.PageNo < Model.PageCount)
+                        {
+                            <a href="@Model.PageLink(Model.PageNo + 1)" class="rp-pn">Next</a>
+                        }
+                        else
+                        {
+                            <span class="rp-pn is-disabled">Next</span>
+                        }
+                    </nav>
+
+                    <form method="get" action="/Admin/Reports" class="rp-per" data-rp-form>
+                        @foreach (var h in Model.HiddenFields("per"))
+                        {
+                            <input type="hidden" name="@h.Key" value="@h.Value" />
+                        }
+                        <span>Rows</span>
+                        <div class="rp-dd rp-dd-up">
+                            <select name="per" aria-label="Rows per page" data-rp-auto data-rp-kanji="行">
+                                @foreach (var s in RROMS.Pages.Admin.Reports.Index.PageSizes)
+                                {
+                                    <option value="@s" selected="@(Model.Per == s)">@s</option>
+                                }
+                            </select>
+                        </div>
+                        <noscript><button type="submit" class="rp-btn">Go</button></noscript>
+                    </form>
+                </div>
+            }
+        </section>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/admin-reports.js" asp-append-version="true"></script>
+}
