@@ -38,7 +38,7 @@
             </div>
             <dl class="cart-confirmation__details">
                 <div><dt>Order number</dt><dd class="cart-confirmation__order-number">@receipt.OrderNo</dd></div>
-                <div><dt>Order type</dt><dd>@(receipt.OrderType == OrderType.DineIn ? (receipt.ReservationReference is null ? "Dine-in · Walk-in" : "Dine-in · Reservation") : "Takeaway")</dd></div>
+                <div><dt>Order type</dt><dd>@(receipt.OrderType == OrderType.DineIn ? "Dine-in · Reservation" : "Takeaway")</dd></div>
                 <div><dt>Placed</dt><dd>@receipt.CreatedAt.ToString("dd MMM yyyy · h:mm tt", CultureInfo.InvariantCulture)</dd></div>
                 @if (receipt.ReservationReference is not null)
                 {

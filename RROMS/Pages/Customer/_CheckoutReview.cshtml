@@ -18,10 +18,19 @@
             <p class="eyebrow">YORU IZAKAYA</p>
             <h2 id="checkout-title">Review your order</h2>
             <p class="checkout-review__intro">One last look before you confirm.</p>
-            <span class="checkout-review__type">@(Model.Cart.OrderType == OrderType.DineIn ? (reservation is null ? "Dine-in · Walk-in" : "Dine-in · Reservation") : "Takeaway")</span>
+            <span class="checkout-review__type">@(Model.Cart.OrderType == OrderType.DineIn ? "Dine-in · Reservation" : "Takeaway")</span>
             @if (Model.Cart.OrderType == OrderType.DineIn && reservation is not null)
             {
-                <p class="checkout-review__booking">@reservation.ReservedAt.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture) · @reservation.Guests @(reservation.Guests == 1 ? "guest" : "guests") · @reservation.ReferenceNo</p>
+                <p class="checkout-review__booking">@reservation.ReservedAt.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture) · @reservation.Guests @(reservation.Guests == 1 ? "guest" : "guests") · @reservation.ReferenceNo
+                    @if (Model.Cart.SelectedSession is not null)
+                    {
+                        <text> · Table @Model.Cart.SelectedSession.TableNumber</text>
+                    }
+                </p>
+            }
+            else if (Model.Cart.OrderType == OrderType.DineIn && Model.Cart.SelectedSession is not null)
+            {
+                <p class="checkout-review__booking">Table @Model.Cart.SelectedSession.TableNumber</p>
             }
         </div>
     </header>

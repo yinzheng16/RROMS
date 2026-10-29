@@ -21,18 +21,20 @@ public sealed class CustomerCartService : ICustomerCartService
     private readonly ILogger<CustomerCartService> _logger;
     private readonly IProfileService _profiles;
     private readonly IReservationService _reservations;
+    private readonly IDiningSessionService _sessions;
     private readonly IReportService _reportService;
     private const int MaxLines = 100;
 
     public CustomerCartService(ApplicationDbContext db, IDataProtectionProvider protection,
         ILogger<CustomerCartService> logger, IProfileService profiles, IReportService reportService,
-        IReservationService reservations, TimeProvider? clock = null)
+        IReservationService reservations, IDiningSessionService sessions, TimeProvider? clock = null)
     {
         _db = db;
         _protector = protection.CreateProtector("RROMS.US24.Checkout.v1");
         _logger = logger;
         _profiles = profiles;
         _reservations = reservations;
+        _sessions = sessions;
         _reportService = reportService;
         _clock = clock ?? TimeProvider.System;
     }
@@ -112,12 +114,12 @@ public sealed class CustomerCartService : ICustomerCartService
             if (removeLineId.HasValue && !cart.Lines.Any(line => line.Id == removeLineId))
                 return Invalid("That cart row no longer exists.");
 
-            // Walk-ins have no reservation. Validate any selected booking against
-            // the current customer's eligible bookings before changing the cart.
+            // Drafts may be saved before a booking is selected. Both review and
+            // final placement require an owned, eligible reservation for dine-in.
             int? reservation = input.OrderType == OrderType.DineIn ? input.ReservationId : null;
             if (reservation.HasValue && !await EligibleReservations(userId, now)
                 .AnyAsync(row => row.Id == reservation.Value, ct))
-                return Invalid("That reservation is no longer available. Choose another or select No reservation · Walk-in.");
+                return Invalid("That reservation is no longer available. Choose another reservation or switch to Takeaway.");
 
             string? removalMessage = null;
             if (removeLineId.HasValue)
@@ -154,7 +156,8 @@ public sealed class CustomerCartService : ICustomerCartService
             // empty. Keep it distinct from null (not filled in yet), so clearing
             // the suggested profile text survives refreshes and later cart edits.
             string remarks = OrderPricingRules.NormalizeNote(input.Notes) ?? string.Empty;
-            changed |= cart.Notes != remarks || cart.OrderType != input.OrderType || cart.ReservationId != reservation;
+            changed |= cart.Notes != remarks || cart.OrderType != input.OrderType ||
+                cart.ReservationId != reservation;
             cart.Notes = remarks;
             cart.OrderType = input.OrderType;
             cart.ReservationId = reservation;
@@ -220,12 +223,26 @@ public sealed class CustomerCartService : ICustomerCartService
             string? orderingError = await GetOrderingHoursError(ct);
             if (orderingError is not null) return Invalid(orderingError);
 
+            if (view.DiningSessionId.HasValue)
+            {
+                // The shared scoped DbContext puts this immediate UPDATE inside
+                // WriteAsync's transaction. A later failure rolls the claim back too.
+                ct.ThrowIfCancellationRequested();
+                var claim = await _sessions.ClaimOrValidateSessionAsync(view.DiningSessionId.Value, userId);
+                if (!claim.Success) return Invalid(claim.Message);
+                bool stillValid = await _db.DiningSessions.AsNoTracking().AnyAsync(session =>
+                    session.Id == view.DiningSessionId.Value && session.Status == DiningSessionStatus.Open &&
+                    session.CustomerId == userId && session.ReservationId == view.ReservationId, ct);
+                if (!stillValid) return Invalid("Your reservation or dining session changed. Please review your reservation again.");
+            }
+
             var order = new Order
             {
                 OrderNo = quote.OrderNo,
                 UserId = userId,
                 OrderType = view.OrderType,
                 ReservationId = view.OrderType == OrderType.DineIn ? view.ReservationId : null,
+                DiningSessionId = view.OrderType == OrderType.DineIn ? view.DiningSessionId : null,
                 Status = OrderStatus.Pending,
                 Subtotal = view.Totals.Subtotal,
                 TaxAmount = view.Totals.Tax,
@@ -342,8 +359,33 @@ public sealed class CustomerCartService : ICustomerCartService
             if (!string.IsNullOrWhiteSpace(summary) && suggested is null)
                 separatePreferences = summary;
         }
+        var selectedBooking = reservations.FirstOrDefault(row => row.Id == cart?.ReservationId);
+        var selection = orderType == OrderType.DineIn
+            ? await ResolveDiningSessionAsync(userId, selectedBooking, ct)
+            : new DiningSelection(null, null);
         return new(cart?.Revision ?? Guid.Empty, lines, orderType,
-            cart?.ReservationId, remarks, totals, reservations, fromProfile, separatePreferences);
+            cart?.ReservationId, remarks, totals, reservations, fromProfile, separatePreferences,
+            selection.Session?.Id, Array.Empty<CartDiningSession>(), selection.Session, selection.Error);
+    }
+
+    private sealed record DiningSelection(CartDiningSession? Session, string? Error);
+
+    private async Task<DiningSelection> ResolveDiningSessionAsync(string userId, CartReservation? booking,
+        CancellationToken ct)
+    {
+        if (booking is null) return new(null, null); // Incomplete draft; checkout rejects it.
+        // Query all statuses: a closed visit must never become a preorder again.
+        var session = await _db.DiningSessions.AsNoTracking().Include(row => row.Table)
+            .SingleOrDefaultAsync(row => row.ReservationId == booking.Id, ct);
+        if (session is null)
+            return booking.Status == ReservationStatus.Seated
+                ? new(null, "Your table session is not ready. Please ask staff for help.")
+                : new(null, null); // Pending/Confirmed reservation, before seating.
+        if (session.Status != DiningSessionStatus.Open)
+            return new(null, "This table session has ended. Please ask staff for help.");
+        if (session.CustomerId is not null && session.CustomerId != userId)
+            return new(null, "This reservation's dining session is unavailable. Please ask staff for help.");
+        return new(new CartDiningSession(session.Id, session.TableId, session.Table.TableNumber, session.ReservationId), null);
     }
 
     private async Task<string?> GetOrderingHoursError(CancellationToken ct)
@@ -426,7 +468,11 @@ public sealed class CustomerCartService : ICustomerCartService
     {
         if (view.Lines.Count == 0) return Invalid("Add a dish before placing your order.");
         if (view.HasUnavailable) return new(CartResult.Unavailable, "Remove unavailable dishes before placing your order.");
-        if (!view.ReservationValid) return Invalid("The selected reservation is no longer eligible. Choose another or select No reservation · Walk-in.");
+        if (view.OrderType == OrderType.DineIn && !view.ReservationId.HasValue)
+            return Invalid("Dine-in needs a reservation. Book a table or choose Takeaway.");
+        if (!view.ReservationValid) return Invalid("The selected reservation is no longer eligible. Choose another reservation or switch to Takeaway.");
+        if (!view.SessionValid) return Invalid(view.SessionError ??
+            "Your reservation's dining session is not ready. Please ask staff for help.");
         if (view.Totals.Total > 99999999.99m) return Invalid("This order exceeds the supported total. Please reduce the quantities.");
         return new(CartResult.Success, "Ready to confirm.");
     }
@@ -440,6 +486,8 @@ public sealed class CustomerCartService : ICustomerCartService
             view.Revision,
             view.OrderType,
             view.ReservationId,
+            view.DiningSessionId,
+            Session = view.SelectedSession,
             view.Notes,
             view.Totals,
             Reservation = reservation,

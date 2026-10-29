@@ -5,16 +5,17 @@
     string Money(decimal amount) => amount.ToString("F2", CultureInfo.InvariantCulture);
     string Rate(decimal amount) => amount.ToString("0.##", CultureInfo.InvariantCulture);
     var selectedReservation = Model.Reservations.FirstOrDefault(row => row.Id == Model.ReservationId);
-    var reservationUnavailable = !Model.ReservationValid;
+    var reservationUnavailable = Model.ReservationId.HasValue && !Model.ReservationValid;
 }
 <div data-cart-content data-cart-quantity="@Model.Quantity" data-cart-revision="@Model.Revision">
     @if (Model.Lines.Count == 0)
     {
-        <section class="card cart-empty text-center p-4 p-lg-5">
-            <i class="bi bi-bag fs-1" aria-hidden="true"></i>
-            <h2>A good meal starts with a dish.</h2>
-            <p>Your cart is empty. Explore the menu and find a favourite.</p>
-            <a class="btn btn-primary align-self-center" asp-page="/Menu/Index">Explore the menu →</a>
+        <link rel="stylesheet" href="~/css/customer-cart-empty.css" asp-append-version="true" />
+        <section class="card cart-empty cart-empty--illustrated" aria-labelledby="cart-empty-title">
+            <img class="cart-empty__art" src="~/images/cart/yoru-empty-cart-bowl.webp" asp-append-version="true" alt="" width="1536" height="1024" />
+            <h2 id="cart-empty-title">Your cart is <span>empty</span></h2>
+            <p class="cart-empty__description"><span>Looks like you haven't added anything to your cart yet.</span><span>Explore our delicious menu and find something you'll love!</span></p>
+            <a class="cart-empty__menu" asp-page="/Menu/Index"><span>Explore the menu</span><span aria-hidden="true">→</span></a>
         </section>
     }
     else
@@ -36,12 +37,12 @@
                     </fieldset>
                     <div class="cart-fulfilment__reservation">
                         <div class="cart-reservation" data-cart-reservation hidden="@(Model.OrderType != OrderType.DineIn)">
-                            <label for="cart-reservation" id="cart-reservation-label" class="form-label">Reservation <span class="cart-note__optional">(optional)</span></label>
+                            <label for="cart-reservation" id="cart-reservation-label" class="form-label">Reservation</label>
                             <select class="form-select cart-reservation__native" id="cart-reservation" name="Input.ReservationId" data-cart-autosave disabled="@(Model.OrderType != OrderType.DineIn)">
-                                <option value="" selected="@(!Model.ReservationId.HasValue)">No reservation · Walk-in</option>
-                                @if (!Model.ReservationValid)
+                                <option value="" selected="@(!Model.ReservationId.HasValue)">Choose your reservation</option>
+                                @if (reservationUnavailable)
                                 {
-                                    <option value="@Model.ReservationId" data-unavailable="true" selected>Reservation no longer available — choose another or Walk-in</option>
+                                    <option value="@Model.ReservationId" data-unavailable="true" selected>Reservation unavailable — choose another reservation or switch to Takeaway</option>
                                 }
                                 @foreach (var reservation in Model.Reservations)
                                 {
@@ -50,9 +51,9 @@
                             </select>
                             <div class="cart-reservation-picker" data-cart-reservation-rendered>
                                 <button type="button" id="cart-reservation-trigger" class="cart-reservation__trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="cart-reservation-label cart-reservation-value" disabled>
-                                    <i class="bi bi-@(reservationUnavailable ? "exclamation-circle" : selectedReservation is null ? "shop" : "calendar4")" aria-hidden="true"></i>
+                                    <i class="bi bi-@(reservationUnavailable ? "exclamation-circle" : "calendar4")" aria-hidden="true"></i>
                                     <span id="cart-reservation-value" class="cart-reservation__value">
-                                        <span>@(reservationUnavailable ? "Reservation no longer available — choose another or Walk-in" : selectedReservation is null ? "No reservation · Walk-in" : selectedReservation.ReservedAt.ToString("ddd, dd MMM · h:mm tt", CultureInfo.InvariantCulture))</span>
+                                        <span>@(reservationUnavailable ? "Reservation unavailable — choose another reservation or switch to Takeaway" : selectedReservation is null ? "Choose your reservation" : selectedReservation.ReservedAt.ToString("ddd, dd MMM · h:mm tt", CultureInfo.InvariantCulture))</span>
                                         @if (selectedReservation is not null)
                                         {
                                             <small>@selectedReservation.Guests @(selectedReservation.Guests == 1 ? "guest" : "guests") · @selectedReservation.ReferenceNo</small>
@@ -61,7 +62,19 @@
                                     <span class="cart-reservation__chevron" aria-hidden="true"></span>
                                 </button>
                             </div>
+                            @if (Model.Reservations.Count == 0)
+                            {
+                                <small class="cart-note__optional d-block mt-2">Dine-in needs a reservation. <a asp-page="/Customer/Reservations/Create">Book a table</a> or choose Takeaway.</small>
+                            }
                         </div>
+                        @if (Model.ReservationId.HasValue && Model.SelectedSession is not null)
+                        {
+                            <p class="cart-note__optional mt-2 mb-0">Seated at table @Model.SelectedSession.TableNumber</p>
+                        }
+                        @if (Model.SessionError is not null)
+                        {
+                            <p class="cart-line__warning mt-2 mb-0">@Model.SessionError</p>
+                        }
                         <div class="cart-takeaway" data-cart-takeaway-message hidden="@(Model.OrderType != OrderType.Takeaway)">
                             <p class="form-label">Takeaway</p>
                             <p class="cart-takeaway__message"><i class="bi bi-bag" aria-hidden="true"></i><span>No reservation needed for takeaway.</span></p>
@@ -143,8 +156,12 @@
                         <div class="cart-summary__body">
                             <dl class="cart-totals"><div><dt>Subtotal</dt><dd>RM @Money(Model.Totals.Subtotal)</dd></div><div><dt>Service charge (@Rate(Model.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Totals.ServiceCharge)</dd></div><div><dt>Tax (@Rate(Model.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Totals.Tax)</dd></div><div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Totals.Total)</dd></div></dl>
                             <div class="cart-summary__dining">
-                                <p class="cart-summary__type"><i class="bi @(Model.OrderType == OrderType.DineIn ? "bi-shop" : "bi-bag")" aria-hidden="true"></i> @(Model.OrderType == OrderType.DineIn ? (Model.ReservationId.HasValue ? "Dine-in · Reservation" : "Dine-in · Walk-in") : "Takeaway")</p>
+                                <p class="cart-summary__type"><i class="bi @(Model.OrderType == OrderType.DineIn ? "bi-shop" : "bi-bag")" aria-hidden="true"></i> @(Model.OrderType == OrderType.DineIn ? "Dine-in · Reservation" : "Takeaway")</p>
                             </div>
+                            @if (Model.SelectedSession is not null)
+                            {
+                                <p class="cart-summary__hint">Table @Model.SelectedSession.TableNumber</p>
+                            }
                             @if (Model.HasUnavailable)
                             {
                                 <p class="cart-line__warning">Remove unavailable dishes before ordering.</p>
@@ -152,9 +169,9 @@
                             else if (!Model.ReservationValid)
                             {
 
-                                <p class="cart-summary__hint">Choose another reservation or continue as a walk-in.</p>
+                                <p class="cart-summary__hint">Choose an eligible reservation or switch to Takeaway.</p>
                             }
-                            <button type="submit" class="btn btn-primary w-100" asp-page-handler="Review" data-cart-review disabled="@(Model.HasUnavailable)">Place order</button>
+                            <button type="submit" class="btn btn-primary w-100" asp-page-handler="Review" data-cart-review disabled="@(Model.HasUnavailable || (Model.OrderType == OrderType.DineIn && !Model.ReservationValid))">Place order</button>
                             <p class="cart-summary__hint mt-2">Review and confirm before your order is sent. Prices and availability are checked again.</p>
                         </div>
                     </aside>
