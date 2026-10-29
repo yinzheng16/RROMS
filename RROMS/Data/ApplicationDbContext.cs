@@ -22,6 +22,7 @@ namespace RROMS.Data
         public DbSet<SpecialDate> SpecialDates => Set<SpecialDate>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
         public DbSet<DiningSession> DiningSessions => Set<DiningSession>();
+        public DbSet<ReservationStatusLog> ReservationStatusLogs => Set<ReservationStatusLog>();
 
         // Member 3: Menu & Orders
         public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
@@ -116,6 +117,18 @@ namespace RROMS.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<ReservationStatusLog>(e =>
+            {
+                e.Property(x => x.ChangedByRole).HasMaxLength(20);
+                e.Property(x => x.Note).HasMaxLength(200);
+                e.HasIndex(x => new { x.ReservationId, x.ChangedAt });
+                // History must never disappear with a reservation, so no cascade delete.
+                e.HasOne(x => x.Reservation)
+                 .WithMany()
+                 .HasForeignKey(x => x.ReservationId)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // ---------- Menu & Orders ----------
             builder.Entity<CustomerCart>(e =>
             {
@@ -123,8 +136,6 @@ namespace RROMS.Data
                 e.Property(c => c.Revision).IsConcurrencyToken();
                 e.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
-                e.HasOne<DiningSession>().WithMany().HasForeignKey(c => c.DiningSessionId)
-                    .OnDelete(DeleteBehavior.Restrict);
             });
             builder.Entity<CustomerCartLine>(e =>
             {

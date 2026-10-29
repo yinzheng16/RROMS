@@ -275,9 +275,6 @@ namespace RROMS.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("DiningSessionId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -298,8 +295,6 @@ namespace RROMS.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("UserId");
-
-                    b.HasIndex("DiningSessionId");
 
                     b.ToTable("CustomerCarts");
                 });
@@ -866,6 +861,49 @@ namespace RROMS.Migrations
                     b.ToTable("Reservations");
                 });
 
+            modelBuilder.Entity("RROMS.Models.ReservationStatusLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ChangedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ChangedByRole")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ChangedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FromStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("ReservationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ToStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReservationId", "ChangedAt");
+
+                    b.ToTable("ReservationStatusLogs");
+                });
+
             modelBuilder.Entity("RROMS.Models.RestaurantSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -1143,11 +1181,6 @@ namespace RROMS.Migrations
 
             modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
                 {
-                    b.HasOne("RROMS.Models.DiningSession", null)
-                        .WithMany()
-                        .HasForeignKey("DiningSessionId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("RROMS.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1316,6 +1349,17 @@ namespace RROMS.Migrations
                     b.Navigation("Table");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RROMS.Models.ReservationStatusLog", b =>
+                {
+                    b.HasOne("RROMS.Models.Reservation", "Reservation")
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Reservation");
                 });
 
             modelBuilder.Entity("RROMS.Models.RestaurantTable", b =>

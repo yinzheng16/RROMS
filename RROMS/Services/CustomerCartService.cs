@@ -121,9 +121,6 @@ public sealed class CustomerCartService : ICustomerCartService
                 .AnyAsync(row => row.Id == reservation.Value, ct))
                 return Invalid("That reservation is no longer available. Choose another reservation or switch to Takeaway.");
 
-            // Sessions come only from the selected reservation, never a posted table ID.
-            int? sessionId = null;
-
             string? removalMessage = null;
             if (removeLineId.HasValue)
             {
@@ -160,11 +157,10 @@ public sealed class CustomerCartService : ICustomerCartService
             // the suggested profile text survives refreshes and later cart edits.
             string remarks = OrderPricingRules.NormalizeNote(input.Notes) ?? string.Empty;
             changed |= cart.Notes != remarks || cart.OrderType != input.OrderType ||
-                cart.ReservationId != reservation || cart.DiningSessionId != sessionId;
+                cart.ReservationId != reservation;
             cart.Notes = remarks;
             cart.OrderType = input.OrderType;
             cart.ReservationId = reservation;
-            cart.DiningSessionId = sessionId;
             if (changed) Touch(cart, now);
             return new CartOperation(CartResult.Success, removalMessage ?? "Cart saved.");
         }, cancellationToken);
@@ -267,7 +263,6 @@ public sealed class CustomerCartService : ICustomerCartService
             cart.Lines.Clear();
             cart.Notes = null;
             cart.ReservationId = null;
-            cart.DiningSessionId = null;
             cart.OrderType = OrderType.DineIn;
             Touch(cart, now);
             // Save together so a failure leaves BOTH the cart and order unchanged.
