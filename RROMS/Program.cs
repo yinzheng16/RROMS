@@ -72,6 +72,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();   // EN
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();   // Member 1: US03 / US04 My profile
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<IMyReservationsService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
