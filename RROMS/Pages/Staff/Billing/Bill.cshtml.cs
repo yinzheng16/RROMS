@@ -119,6 +119,39 @@ namespace RROMS.Pages.Staff.Billing
 
         public string BillNo(int billId) => IndexModel.FormatBillNo(billId);
 
+        // One line of the bill. All ordering rounds are combined: the same
+        // dish at the same unit price is added up into one line. Amounts are
+        // the saved order item amounts; nothing is recalculated.
+        public sealed record ReceiptLine(
+            string Name,
+            int Quantity,
+            decimal UnitPrice,
+            decimal LineTotal);
+
+        public IReadOnlyList<ReceiptLine> ReceiptLines
+        {
+            get
+            {
+                IEnumerable<BillItemSummary> items = SessionBill != null
+                    ? SessionBill.Orders.SelectMany(o => o.Items)
+                    : TakeawaySummary?.Items ?? Enumerable.Empty<BillItemSummary>();
+
+                // GroupBy keeps the order in which dishes first appear.
+                return items
+                    .GroupBy(i => (
+                        Name: string.IsNullOrWhiteSpace(i.MenuItemName)
+                            ? $"Item #{i.MenuItemId}"
+                            : i.MenuItemName,
+                        i.UnitPrice))
+                    .Select(g => new ReceiptLine(
+                        g.Key.Name,
+                        g.Sum(i => i.Quantity),
+                        g.Key.UnitPrice,
+                        g.Sum(i => i.LineTotal)))
+                    .ToList();
+            }
+        }
+
         // Runs before every handler (GET and POST).
         public override async Task OnPageHandlerExecutionAsync(
             PageHandlerExecutingContext context,

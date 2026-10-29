@@ -773,6 +773,102 @@
     font-size: 14px;
 }
 
+/* Orders (rounds) behind a dine-in bill, in the action panel */
+.us32-billing .billing-rounds {
+    border: 1px solid #e0d8cc;
+    border-radius: 6px;
+    background: #faf8f4;
+}
+
+    .us32-billing .billing-rounds summary {
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+.us32-billing .billing-rounds-count {
+    display: inline-block;
+    min-width: 20px;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .08);
+    font-size: 11px;
+    text-align: center;
+}
+
+.us32-billing .billing-rounds-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 12px 8px;
+}
+
+    .us32-billing .billing-rounds-list > li {
+        border-top: 1px dashed #e0d8cc;
+        font-size: 12px;
+    }
+
+/* One round: click the row to see its dishes */
+.us32-billing .billing-round-head {
+    display: grid;
+    grid-template-columns: 12px auto 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    cursor: pointer;
+    list-style: none;
+}
+
+    .us32-billing .billing-round-head::-webkit-details-marker {
+        display: none;
+    }
+
+    .us32-billing .billing-round-head::before {
+        content: "\25B8";
+        color: var(--yoru-olive-text);
+        font-size: 10px;
+        transition: transform .15s;
+    }
+
+.us32-billing .billing-round[open] > .billing-round-head::before {
+    transform: rotate(90deg);
+}
+
+.us32-billing .billing-round-items {
+    list-style: none;
+    margin: 0 0 8px 20px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: #fff;
+}
+
+    .us32-billing .billing-round-items li {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        gap: 6px;
+        padding: 3px 0;
+        font-size: 12px;
+    }
+
+        .us32-billing .billing-round-items li span:last-child {
+            white-space: nowrap;
+        }
+
+.us32-billing .billing-round-no {
+    font-weight: 600;
+}
+
+.us32-billing .billing-round-orderno {
+    color: var(--yoru-olive-text);
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.us32-billing .billing-round-amount {
+    white-space: nowrap;
+}
+
 @media print {
     .us32-billing .billing-side {
         display: none !important;

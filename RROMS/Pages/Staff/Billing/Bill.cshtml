@@ -171,59 +171,17 @@
                             }
                         </p>
 
-                        <!-- Ordered items -->
-                        @if (Model.IsDineIn)
+                        <!-- Ordered items: all ordering rounds combined into one list.
+                             The same dish at the same price is added up into one line.
+                             The rounds themselves are listed for staff on the right. -->
+                        <h6>Ordered Items</h6>
+
+                        @if (!Model.ReceiptLines.Any())
                         {
-                            if (!Model.SessionBill!.Orders.Any())
-                            {
-                                <p class="text-muted">No orders for this table yet.</p>
-                            }
-
-                            var round = 0;
-
-                            foreach (var order in Model.SessionBill.Orders)
-                            {
-                                round++;
-
-                                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 mb-2">
-                                    <h6 class="mb-0">
-                                        Round @round
-                                        <span class="bill-round-orderno">· @order.OrderNo</span>
-                                    </h6>
-                                    <span class="status-badge status-@order.Status d-print-none">
-                                        @IndexModel.OrderStatusLabel(order.Status)
-                                    </span>
-                                </div>
-
-                                <div class="table-responsive">
-                                    <table class="table table-bordered table-hover align-middle">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Menu Item</th>
-                                                <th class="text-center">Quantity</th>
-                                                <th class="text-end">Unit Price (RM)</th>
-                                                <th class="text-end">Line Total (RM)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var item in order.Items)
-                                            {
-                                                <tr>
-                                                    <td>@item.MenuItemName</td>
-                                                    <td class="text-center">@item.Quantity</td>
-                                                    <td class="text-end">@item.UnitPrice.ToString("F2")</td>
-                                                    <td class="text-end">@item.LineTotal.ToString("F2")</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
+                            <p class="text-muted">No orders for this table yet.</p>
                         }
                         else
                         {
-                            <h6>Ordered Items</h6>
-
                             <div class="table-responsive">
                                 <table class="table table-bordered table-hover align-middle">
                                     <thead class="table-light">
@@ -235,13 +193,13 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var item in Model.TakeawaySummary!.Items)
+                                        @foreach (var line in Model.ReceiptLines)
                                         {
                                             <tr>
-                                                <td>@item.MenuItemName</td>
-                                                <td class="text-center">@item.Quantity</td>
-                                                <td class="text-end">@item.UnitPrice.ToString("F2")</td>
-                                                <td class="text-end">@item.LineTotal.ToString("F2")</td>
+                                                <td>@line.Name</td>
+                                                <td class="text-center">@line.Quantity</td>
+                                                <td class="text-end">@line.UnitPrice.ToString("F2")</td>
+                                                <td class="text-end">@line.LineTotal.ToString("F2")</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -358,6 +316,50 @@
                                 <div class="payment-result payment-result-failed mb-3" role="alert">
                                     @Model.ErrorMessage
                                 </div>
+                            }
+
+                            <!-- Dine-in: the ordering rounds behind this bill (staff only, not printed) -->
+                            @if (Model.IsDineIn && Model.SessionBill!.Orders.Any())
+                            {
+                                <details class="billing-rounds mb-3" open="@(Model.CurrentStep == 1)">
+                                    <summary>
+                                        Orders in this bill
+                                        <span class="billing-rounds-count">@Model.SessionBill.Orders.Count</span>
+                                    </summary>
+
+                                    <ul class="billing-rounds-list">
+                                        @{
+                                            var round = 0;
+                                        }
+                                        @foreach (var order in Model.SessionBill.Orders)
+                                        {
+                                            round++;
+
+                                            <li>
+                                                @* Each round opens to show the dishes of that order. *@
+                                                <details class="billing-round">
+                                                    <summary class="billing-round-head">
+                                                        <span class="billing-round-no">Round @round</span>
+                                                        <span class="billing-round-orderno">@order.OrderNo</span>
+                                                        <span class="status-badge status-@order.Status">@IndexModel.OrderStatusLabel(order.Status)</span>
+                                                        <span class="billing-round-amount">RM @order.TotalAmount.ToString("F2")</span>
+                                                    </summary>
+
+                                                    <ul class="billing-round-items">
+                                                        @foreach (var item in order.Items)
+                                                        {
+                                                            <li>
+                                                                <span>@item.Quantity ×</span>
+                                                                <span>@(string.IsNullOrWhiteSpace(item.MenuItemName) ? $"Item #{item.MenuItemId}" : item.MenuItemName)</span>
+                                                                <span>@item.LineTotal.ToString("F2")</span>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </details>
+                                            </li>
+                                        }
+                                    </ul>
+                                </details>
                             }
 
                             <!-- ---------- Step 1: review and confirm ---------- -->
