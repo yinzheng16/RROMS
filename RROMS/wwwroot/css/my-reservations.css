@@ -1,0 +1,2527 @@
+﻿/* Owner: Member 2 — US13. All rules are scoped; uses the shared YORU layout. */
+.myr, .myr-detail-dialog, .myr-confirm-dialog {
+    --myr-gold: #d8b26b;
+    --myr-gold-bright: #ffd387;
+    --myr-cream: #f6ecda;
+    --myr-muted: #b8a898;
+    --myr-red: #e44032;
+    --myr-line: rgba(214,177,111,.58);
+    color: var(--myr-cream);
+    font-family: Georgia,"Times New Roman",serif;
+    box-sizing: border-box
+}
+
+    .myr *, .myr *::before, .myr *::after, .myr-detail-dialog *, .myr-detail-dialog *::before, .myr-detail-dialog *::after, .myr-confirm-dialog * {
+        box-sizing: border-box
+    }
+
+    .myr [hidden], .myr-detail-dialog [hidden], .myr-confirm-dialog [hidden] {
+        display: none !important
+    }
+
+    .myr svg, .myr-detail-dialog svg, .myr-confirm-dialog svg {
+        width: 26px;
+        height: 26px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        flex: none;
+        vertical-align: middle
+    }
+
+    .myr button, .myr-detail-dialog button, .myr-confirm-dialog button {
+        font: inherit;
+        cursor: pointer
+    }
+
+        .myr button:disabled, .myr-detail-dialog button:disabled, .myr-confirm-dialog button:disabled {
+            opacity: .55;
+            cursor: not-allowed
+        }
+
+        .myr a:focus-visible, .myr button:focus-visible, .myr-detail-dialog button:focus-visible, .myr-confirm-dialog button:focus-visible {
+            outline: 3px solid var(--myr-gold-bright);
+            outline-offset: 5px
+        }
+
+.myr {
+    position: relative;
+    min-height: calc(100svh - 70px);
+    padding: 35px clamp(20px,4.2vw,70px) 35px;
+    background: #150d0b;
+    isolation: isolate
+}
+
+    /* the photo only fills the top of the page and fades into the lacquer colour below it */
+    .myr::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: -1;
+        aspect-ratio: 1981 / 277;
+        min-height: 170px;
+        background: url('../images/Reservations/my-reservations-banner.webp') center top/cover no-repeat;
+        -webkit-mask-image: linear-gradient(180deg,#000 0%,#000 50%,transparent 100%);
+        mask-image: linear-gradient(180deg,#000 0%,#000 50%,transparent 100%);
+        pointer-events: none
+    }
+
+.myr-wrap {
+    max-width: 1450px;
+    margin: 0 auto
+}
+
+.myr-heading {
+    padding: 0 clamp(0px,2.5vw,35px);
+    margin: 0 0 36px
+}
+
+    .myr-heading h1 {
+        font-size: clamp(35px,4.1vw,62px);
+        font-weight: 600;
+        letter-spacing: -1.1px;
+        line-height: 1.12;
+        margin: 0 0 2px;
+        text-shadow: 0 2px 14px #000
+    }
+
+        .myr-heading h1 span {
+            color: #de3026
+        }
+
+    .myr-heading > p {
+        font-size: clamp(16px,1.6vw,25px);
+        line-height: 1.5;
+        margin: 0;
+        text-shadow: 0 2px 8px #000
+    }
+
+.myr-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+    border-bottom: 1px solid var(--myr-line);
+    margin-bottom: 28px;
+    min-height: 53px
+}
+
+.myr-upcoming {
+    position: relative;
+    margin: 0;
+    padding: 0 32px 13px;
+    color: var(--myr-gold-bright);
+    font-size: 25px;
+    font-weight: 400;
+    line-height: 1.3
+}
+
+    .myr-upcoming:after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg,#c8943d,#ffe3a5,#d8a453)
+    }
+
+.myr-make {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #fff2df;
+    background: linear-gradient(145deg,rgba(207,40,28,.6),rgba(109,9,5,.8)),url('../images/Reservations/ticket-red.webp') center/cover;
+    border: 1px solid #f24a36;
+    box-shadow: inset 0 0 0 2px #b72d2c66,0 6px 20px #0004;
+    border-radius: 8px;
+    padding: 12px 26px;
+    font-size: 20px;
+    text-decoration: none;
+    margin-bottom: 9px;
+    transition: filter .16s
+}
+
+    .myr-make:hover {
+        color: #fff;
+        filter: brightness(1.15)
+    }
+
+.myr-list {
+    display: grid;
+    gap: 18px
+}
+
+.myr-ticket {
+    position: relative;
+    display: grid;
+    grid-template-columns: 17% minmax(0,1fr);
+    min-height: 192px;
+    background: linear-gradient(135deg,#241816,#1b1210);
+    border: 1px solid var(--myr-gold);
+    isolation: isolate;
+    mask-image: radial-gradient(circle at 0 50%,transparent 6px,#000 6.6px),radial-gradient(circle at 100% 50%,transparent 6px,#000 6.6px),radial-gradient(circle at 17% 0,transparent 15px,#000 16px),radial-gradient(circle at 17% 100%,transparent 15px,#000 16px);
+    mask-size: 100% 22px,100% 22px,100% 100%,100% 100%;
+    mask-repeat: repeat-y,repeat-y,no-repeat,no-repeat;
+    mask-composite: intersect
+}
+
+.myr-date {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(#3e00002b,#38000035),url('../images/Reservations/ticket-red.webp') center/100% 100%;
+    padding: 16px 16px;
+    border-right: 1px dashed var(--myr-gold)
+}
+
+    .myr-date:before {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border: 1px solid #ffd68a45;
+        pointer-events: none
+    }
+
+.myr-day {
+    font-size: clamp(48px,5.2vw,80px);
+    line-height: .95;
+    font-weight: 400;
+    letter-spacing: -3px
+}
+
+.myr-month {
+    font-size: clamp(15px,1.55vw,24px);
+    letter-spacing: 1px;
+    margin-top: 4px
+}
+
+.myr-date-rule {
+    width: 43px;
+    height: 1px;
+    background: var(--myr-gold-bright);
+    margin: 12px 0
+}
+
+.myr-date time {
+    font-size: clamp(18px,1.75vw,28px);
+    line-height: 1.15;
+    white-space: nowrap
+}
+
+.myr-row-body {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) 33%;
+    background: url('../images/Reservations/ticket-list.webp') right bottom/cover #1b1210;
+    min-width: 0
+}
+
+.myr-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    padding: 18px 23px 18px 40px;
+    min-width: 0
+}
+
+.myr-fact {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    min-width: 0;
+    padding: 12px 10px;
+    position: relative
+}
+
+    .myr-fact:nth-child(-n+2) {
+        border-bottom: 1px solid var(--myr-line)
+    }
+
+    .myr-fact:nth-child(even):before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 20%;
+        bottom: 20%;
+        width: 1px;
+        background: var(--myr-line)
+    }
+
+    .myr-fact:nth-child(even) {
+        padding-left: 23px
+    }
+
+    .myr-fact > svg {
+        width: 34px;
+        height: 34px;
+        color: var(--myr-gold-bright)
+    }
+
+.myr-label {
+    display: block;
+    font-size: clamp(13px,1.1vw,17px);
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--myr-muted);
+    margin-bottom: 3px
+}
+
+.myr-fact strong {
+    display: block;
+    font-size: clamp(16px,1.6vw,24px);
+    font-weight: 400;
+    line-height: 1.3;
+    overflow-wrap: anywhere
+}
+
+.myr-fact > div {
+    min-width: 0
+}
+
+.myr-status-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    border-left: 1px dashed var(--myr-gold);
+    padding: 17px 35px;
+    min-width: 0
+}
+
+.myr-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    max-width: 100%;
+    padding: 7px 19px;
+    border: 1px solid #e4b45b;
+    border-radius: 30px;
+    background: linear-gradient(115deg,#f2af49,#ffe09d 48%,#e9ae51);
+    box-shadow: inset 0 1px 2px #fff5;
+    color: #211504;
+    font-size: clamp(17px,1.5vw,23px);
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap
+}
+
+    .myr-status svg {
+        width: 23px;
+        height: 23px;
+        color: inherit
+    }
+
+    .myr-status.is-confirmed {
+        background: linear-gradient(115deg,#8fc283,#d6edc6 48%,#8fc283);
+        border-color: #a8d49a;
+        color: #10300f
+    }
+
+.myr-status-area > p {
+    font-size: clamp(14px,1.25vw,19px);
+    max-width: 230px;
+    line-height: 1.3;
+    margin: 8px 0 12px;
+    padding-right: 10px
+}
+
+.myr-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    align-self: flex-end;
+    padding: 8px 23px;
+    color: var(--myr-cream);
+    background: #090807cf;
+    border: 1px solid var(--myr-gold);
+    border-radius: 25px;
+    max-width: 100%;
+    font-size: clamp(14px,1.25vw,19px);
+    white-space: nowrap;
+    transition: background .15s
+}
+
+    .myr-view svg {
+        width: 24px;
+        height: 24px;
+        color: var(--myr-gold-bright)
+    }
+
+    .myr-view:hover {
+        background: #39291b
+    }
+
+.myr-small-seal {
+    position: absolute;
+    bottom: 11px;
+    right: 13px;
+    border: 2px solid #b82922;
+    color: #ca3025;
+    font-size: 20px;
+    padding: 0 2px;
+    line-height: 1.2;
+    opacity: .85;
+    pointer-events: none
+}
+
+.myr-reminder {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-top: 1px solid var(--myr-line);
+    margin-top: 27px;
+    padding-top: 18px;
+    font-size: 17px
+}
+
+    .myr-reminder p {
+        margin: 0
+    }
+
+.myr-feedback {
+    margin: 0 0 18px;
+    border: 1px solid var(--myr-gold);
+    border-radius: 7px;
+    padding: 14px 20px;
+    background: #15120ef0;
+    color: #ffe0a0;
+    font-size: 17px
+}
+
+.myr-empty {
+    padding: 55px 20px;
+    text-align: center;
+    border: 1px solid var(--myr-line);
+    background: url('../images/Reservations/ticket-black.webp') center/cover;
+    border-radius: 10px
+}
+
+.myr-empty-seal {
+    display: inline-block;
+    border: 2px solid #c52a24;
+    color: #e63c32;
+    font-size: 36px;
+    padding: 0 8px;
+    margin-bottom: 18px
+}
+
+.myr-empty h2 {
+    font-size: 34px;
+    color: var(--myr-cream);
+    margin: 0 0 12px
+}
+
+.myr-empty p {
+    font-size: 18px;
+    color: var(--myr-muted);
+    margin: 0 0 23px
+}
+/* Native dialogs: focus containment, Escape handling and inert background are native. */
+/* While a dialog animates in or out, never show its scrollbar (the sliding content briefly overflows). */
+@keyframes myr-no-scroll {
+    from, to {
+        overflow: hidden
+    }
+}
+
+.myr-detail-dialog[open], .myr-confirm-dialog[open] {
+    animation: myr-no-scroll .7s step-end both
+}
+
+.myr-detail-dialog.is-closing, .myr-confirm-dialog.is-closing {
+    overflow: hidden !important
+}
+
+html.myr-has-dialog {
+    overflow: hidden;
+    padding-right: var(--myr-sbw,0px)
+}
+
+.myr-detail-dialog, .myr-confirm-dialog {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    overflow: auto
+}
+
+    .myr-detail-dialog::backdrop, .myr-confirm-dialog::backdrop {
+        background: rgba(0,0,0,.72);
+        backdrop-filter: blur(4px)
+    }
+
+.myr-detail-dialog {
+    width: min(1180px,calc(100vw - 42px));
+    margin: auto
+}
+
+.myr-detail-shell {
+    padding: 5px 8px 12px
+}
+
+.myr-detail-ticket {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0,1fr) 27%;
+    filter: drop-shadow(0 12px 30px #0008);
+    mask-image: radial-gradient(circle at 0 50%,transparent 5px,#000 5.7px),radial-gradient(circle at 100% 50%,transparent 5px,#000 5.7px),radial-gradient(circle at 73% 0,transparent 21px,#000 22px),radial-gradient(circle at 73% 100%,transparent 21px,#000 22px);
+    mask-size: 100% 23px,100% 23px,100% 100%,100% 100%;
+    mask-repeat: repeat-y,repeat-y,no-repeat,no-repeat;
+    mask-composite: intersect
+}
+
+.myr-detail-main {
+    position: relative;
+    min-width: 0;
+    padding: 32px 38px 32px 50px;
+    background: url('../images/Reservations/ticket-black.webp') right bottom/cover #090a09;
+    border: 1px solid var(--myr-gold);
+    box-shadow: inset 0 0 0 13px #070807,inset 0 0 0 14px #bc8c42,inset 0 0 0 18px #070807,inset 0 0 0 19px #9d7436
+}
+
+.myr-ticket-header {
+    padding: 13px 0 7px;
+    border-bottom: 1px solid var(--myr-line)
+}
+
+.myr-brand {
+    margin-bottom: 18px
+}
+
+    .myr-brand > span {
+        font-size: 48px;
+        font-weight: 500;
+        letter-spacing: 10px;
+        line-height: 1;
+        white-space: nowrap
+    }
+
+    .myr-brand b {
+        display: inline-block;
+        border: 1px solid #df3426;
+        background: #a81810;
+        color: #ffe2c8;
+        padding: 3px 2px;
+        font-size: 29px;
+        letter-spacing: 0;
+        font-weight: 400;
+        vertical-align: middle;
+        line-height: 1
+    }
+
+    .myr-brand small {
+        display: block;
+        letter-spacing: 10px;
+        font-family: Arial,sans-serif;
+        font-size: 13px;
+        margin-top: 7px;
+        margin-left: 17px
+    }
+
+.myr-brand-rule {
+    display: block;
+    width: 65px;
+    height: 2px;
+    background: linear-gradient(90deg,#ebba58,#b37826);
+    margin-bottom: 12px
+}
+
+.myr-ticket-header h2 {
+    font-size: clamp(28px,3.5vw,48px);
+    line-height: 1.15;
+    font-weight: 600;
+    margin: 0 0 3px
+}
+
+.myr-detail-grid {
+    display: grid;
+    grid-template-columns: 1.12fr 1fr .85fr;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--myr-line);
+    gap: 0
+}
+
+.myr-detail-cell {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    min-width: 0;
+    padding: 0 15px;
+    position: relative
+}
+
+    .myr-detail-cell:first-child {
+        padding-left: 0
+    }
+
+    .myr-detail-cell + .myr-detail-cell {
+        border-left: 1px solid var(--myr-line)
+    }
+
+    .myr-detail-cell:last-child {
+        padding-right: 0
+    }
+
+    .myr-detail-cell > svg {
+        width: 32px;
+        height: 32px;
+        margin-top: 3px
+    }
+
+    .myr-detail-cell > div {
+        min-width: 0;
+        flex: 1
+    }
+
+    .myr-detail-cell strong {
+        display: block;
+        font-size: clamp(17px,1.9vw,24px);
+        font-weight: 400;
+        line-height: 1.25;
+        overflow-wrap: anywhere
+    }
+
+    .myr-detail-cell small {
+        display: block;
+        font-size: 14px;
+        margin-top: 2px
+    }
+
+.myr-detail-grid-two {
+    grid-template-columns: 1.12fr 1.85fr
+}
+
+.myr-detail-grid-spend {
+    grid-template-columns: 1.2fr 1.25fr
+}
+
+.myr-request {
+    white-space: pre-wrap
+}
+
+.myr-gold {
+    color: #ffc357
+}
+
+.myr-spend-accepted {
+    color: #ffc357;
+    font-size: 14px !important;
+    display: flex !important;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px !important
+}
+
+    .myr-spend-accepted svg {
+        width: 19px;
+        height: 19px
+    }
+
+.myr-arrival {
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+    padding: 14px 8px 9px 13px
+}
+
+    .myr-arrival > svg {
+        color: #ffc254;
+        width: 30px;
+        height: 30px;
+        margin-top: 3px
+    }
+
+    .myr-arrival p {
+        font-size: clamp(14px,1.45vw,18px);
+        line-height: 1.4;
+        margin: 0;
+        color: var(--myr-cream)
+    }
+
+.myr-detail-stub {
+    position: relative;
+    min-width: 0;
+    background: linear-gradient(90deg,#41000020,transparent),url('../images/Reservations/ticket-red.webp') center/100% 100%;
+    border: 1px solid var(--myr-gold);
+    border-left-style: dashed;
+    padding: 26px 24px;
+    color: #fff0d9;
+    box-shadow: inset 0 0 0 12px #730a0799,inset 0 0 0 13px #d1a047,inset 0 0 0 17px #730a0799,inset 0 0 0 18px #b68c3d
+}
+
+.myr-stub-inner {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    height: 100%;
+    padding: 32px 0 25px
+}
+
+.myr-stub-label {
+    letter-spacing: 3px;
+    line-height: 1.45;
+    font-size: 15px;
+    margin: 0 0 18px
+}
+
+.myr-stub-reference {
+    font-size: clamp(18px,2vw,29px);
+    font-weight: 400;
+    overflow-wrap: anywhere;
+    max-width: 100%;
+    line-height: 1.25
+}
+
+.myr-stub-rule {
+    height: 1px;
+    width: 55px;
+    background: #e3b457;
+    margin: 30px 0
+}
+
+.myr-stub-symbol {
+    width: 45px !important;
+    height: 45px !important;
+    color: #e8bd61;
+    margin: 0 0 19px
+}
+
+.myr-detail-stub .myr-status {
+    padding: 10px 18px;
+    font-size: clamp(18px,2vw,27px)
+}
+
+    .myr-detail-stub .myr-status svg {
+        width: 26px;
+        height: 26px
+    }
+
+.myr-stub-inner > p:not(.myr-stub-label) {
+    font-size: 21px;
+    line-height: 1.3;
+    margin: 0
+}
+
+.myr-stub-brand {
+    font-size: 32px;
+    letter-spacing: 6px;
+    color: #f4c76e;
+    margin-top: auto;
+    padding-top: 30px
+}
+
+    .myr-stub-brand small {
+        display: block;
+        font-family: Arial,sans-serif;
+        font-size: 10px;
+        letter-spacing: 5px
+    }
+
+    .myr-stub-brand b {
+        display: table;
+        font-size: 27px;
+        line-height: 1.25;
+        margin: 14px auto 0;
+        border: 2px solid #f33726;
+        color: #f33726;
+        font-weight: 400;
+        letter-spacing: 0;
+        padding: 0 3px
+    }
+
+.myr-dialog-actions {
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+    padding: 28px 0 0
+}
+
+.myr-cancel-button, .myr-close-button {
+    min-width: 210px;
+    padding: 13px 26px;
+    border-radius: 7px;
+    background: linear-gradient(#170b0b,#240e0d);
+    color: #ff5745;
+    border: 1px solid #ff5b4d;
+    font-size: 21px
+}
+
+.myr-close-button {
+    background: #171716b8;
+    border-color: #bbb7af;
+    color: #ede9df
+}
+
+.myr-cancel-button:hover {
+    background: #511612
+}
+
+.myr-close-button:hover {
+    background: #33302b
+}
+
+.myr-cancel-note {
+    font-size: 16px;
+    color: #ffd68d;
+    text-align: center;
+    margin: 14px 0 -9px
+}
+
+.myr-confirm-dialog {
+    width: min(460px,calc(100vw - 32px));
+    margin: auto
+}
+
+.myr-confirm-inner {
+    border: 1px solid var(--myr-gold);
+    padding: 30px 31px;
+    border-radius: 10px;
+    background: linear-gradient(#100d0de0,#130c0ceb),url('../images/Reservations/ticket-black.webp') center/cover;
+    box-shadow: inset 0 0 0 5px #100b09,inset 0 0 0 6px #b7914a66
+}
+
+.myr-confirm-mark {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border: 1px solid #c89749;
+    border-radius: 50%;
+    color: #edc578;
+    margin-bottom: 18px
+}
+
+.myr-confirm-eyebrow {
+    font-family: Arial,sans-serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #e4b56b;
+    margin: 0 0 8px
+}
+
+.myr-confirm-inner h2 {
+    font-size: 31px;
+    line-height: 1.15;
+    margin: 0 0 13px;
+    color: #fff0db
+}
+
+.myr-confirm-inner > p:not(.myr-confirm-eyebrow) {
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--myr-muted);
+    margin: 0 0 18px
+}
+
+.myr-confirm-summary {
+    display: grid;
+    gap: 5px;
+    padding: 15px 0;
+    margin: 12px 0 21px;
+    border-block: 1px solid var(--myr-line);
+    font-size: 16px
+}
+
+    .myr-confirm-summary strong {
+        color: #f2ce8a;
+        overflow-wrap: anywhere
+    }
+
+    .myr-confirm-summary span {
+        font-size: 15px
+    }
+
+.myr-confirm-inner form {
+    display: grid;
+    gap: 10px
+}
+
+.myr-confirm-submit {
+    padding: 13px;
+    border: 1px solid #ed513e;
+    border-radius: 6px;
+    background: linear-gradient(#b52b20,#7c160f);
+    color: #fff1d8;
+    font-size: 17px
+}
+
+.myr-confirm-inner .myr-close-button {
+    font-size: 17px;
+    min-width: 0;
+    padding: 11px
+}
+
+.myr-confirm-error {
+    padding: 11px;
+    border: 1px solid #b84939;
+    color: #ffc0b0 !important;
+    background: #5f1c1666;
+    font-size: 15px !important
+}
+
+@media(min-width:1700px) {
+    .myr-ticket {
+        min-height: 200px
+    }
+}
+
+@media(max-width:1100px) {
+    .myr-facts {
+        padding: 15px 13px 15px 20px
+    }
+
+    .myr-fact {
+        gap: 12px;
+        padding: 10px 8px
+    }
+
+        .myr-fact:nth-child(even) {
+            padding-left: 17px
+        }
+
+        .myr-fact > svg {
+            width: 27px;
+            height: 27px
+        }
+
+    .myr-status-area {
+        padding: 14px 20px
+    }
+
+    .myr-view {
+        padding: 7px 13px;
+        font-size: 15px
+    }
+
+    .myr-row-body {
+        grid-template-columns: minmax(0,1fr) 32%
+    }
+
+    .myr-status {
+        gap: 6px;
+        padding: 7px 14px
+    }
+
+    .myr-status-area > p {
+        font-size: 16px
+    }
+
+    .myr-detail-main {
+        padding-left: 35px;
+        padding-right: 30px
+    }
+
+    .myr-detail-cell {
+        gap: 10px;
+        padding: 0 11px
+    }
+
+        .myr-detail-cell > svg {
+            width: 25px;
+            height: 25px
+        }
+
+    .myr-detail-stub {
+        padding-inline: 20px
+    }
+
+    .myr-stub-label {
+        font-size: 12px
+    }
+
+    .myr-stub-inner > p:not(.myr-stub-label) {
+        font-size: 18px
+    }
+
+    .myr-arrival {
+        gap: 13px
+    }
+}
+
+@media(max-width:800px) {
+    .myr {
+        padding: 25px 20px
+    }
+
+    .myr-heading {
+        padding: 0;
+        margin-bottom: 24px
+    }
+
+    .myr-upcoming {
+        padding: 0 14px 13px;
+        font-size: 22px
+    }
+
+    .myr-make {
+        font-size: 16px;
+        padding: 10px 14px;
+        gap: 8px
+    }
+
+        .myr-make svg {
+            width: 21px;
+            height: 21px
+        }
+
+    .myr-ticket {
+        grid-template-columns: 20% minmax(0,1fr);
+        mask-image: radial-gradient(circle at 0 50%,transparent 4px,#000 4.5px),radial-gradient(circle at 100% 50%,transparent 4px,#000 4.5px),radial-gradient(circle at 20% 0,transparent 12px,#000 13px),radial-gradient(circle at 20% 100%,transparent 12px,#000 13px)
+    }
+
+    .myr-row-body {
+        grid-template-columns: 1fr
+    }
+
+    .myr-status-area {
+        border-left: 0;
+        border-top: 1px dashed var(--myr-gold);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 9px;
+        padding: 12px 18px
+    }
+
+        .myr-status-area > p {
+            margin: 0;
+            grid-row: 2;
+            max-width: none;
+            font-size: 14px
+        }
+
+        .myr-status-area .myr-view {
+            grid-column: 2;
+            grid-row: 1/3;
+            align-self: center;
+            font-size: 14px;
+            gap: 10px
+        }
+
+        .myr-status-area .myr-status {
+            justify-self: start;
+            font-size: 16px;
+            padding: 5px 13px
+        }
+
+    .myr-small-seal {
+        display: none
+    }
+
+    .myr-facts {
+        padding: 12px 16px
+    }
+
+    .myr-fact {
+        gap: 10px
+    }
+
+        .myr-fact strong {
+            font-size: 17px
+        }
+
+    .myr-label {
+        font-size: 13px
+    }
+
+    .myr-detail-dialog {
+        width: calc(100vw - 20px)
+    }
+
+    .myr-detail-shell {
+        padding-inline: 3px
+    }
+
+    .myr-detail-ticket {
+        grid-template-columns: 1fr;
+        mask: none
+    }
+
+    .myr-detail-main {
+        padding: 25px 28px 17px;
+        box-shadow: inset 0 0 0 7px #070807,inset 0 0 0 8px #bc8c42
+    }
+
+    .myr-detail-stub {
+        border-top: 1px dashed var(--myr-gold);
+        border-left-style: solid;
+        padding: 19px 27px;
+        box-shadow: inset 0 0 0 7px #730a0799,inset 0 0 0 8px #d1a047
+    }
+
+    .myr-stub-inner {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px 20px;
+        text-align: left;
+        padding: 0;
+        align-items: center
+    }
+
+    .myr-stub-label {
+        grid-column: 1;
+        font-size: 10px;
+        letter-spacing: 2px;
+        margin: 0
+    }
+
+        .myr-stub-label br {
+            display: none
+        }
+
+    .myr-stub-reference {
+        grid-column: 1;
+        font-size: 24px
+    }
+
+    .myr-stub-inner > .myr-status {
+        grid-column: 2;
+        grid-row: 1/3;
+        font-size: 21px
+    }
+
+    .myr-stub-inner > p:not(.myr-stub-label) {
+        grid-column: 1/-1;
+        font-size: 16px
+    }
+
+    .myr-stub-rule, .myr-stub-symbol, .myr-stub-brand {
+        display: none !important
+    }
+
+    .myr-brand > span {
+        font-size: 39px
+    }
+
+    .myr-brand small {
+        font-size: 11px
+    }
+
+    .myr-ticket-header h2 {
+        font-size: 35px
+    }
+
+    .myr-detail-cell strong {
+        font-size: 19px
+    }
+
+    .myr-detail-cell > svg {
+        width: 27px;
+        height: 27px
+    }
+
+    .myr-arrival p {
+        font-size: 16px
+    }
+
+    .myr-detail-grid {
+        padding: 15px 0
+    }
+
+    .myr-dialog-actions {
+        padding-top: 18px
+    }
+
+    .myr-cancel-button, .myr-close-button {
+        font-size: 18px;
+        min-width: 170px
+    }
+
+    .myr-reminder {
+        font-size: 15px
+    }
+}
+
+@media(max-width:500px) {
+    .myr {
+        padding-inline: 13px
+    }
+
+    .myr-heading h1 {
+        font-size: 37px;
+        letter-spacing: -1px
+    }
+
+    .myr-heading > p {
+        font-size: 17px
+    }
+
+    .myr-toolbar {
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px
+    }
+
+    .myr-upcoming {
+        padding: 10px 4px 15px;
+        font-size: 18px;
+        white-space: nowrap
+    }
+
+    .myr-make {
+        font-size: 14px;
+        padding: 10px;
+        gap: 7px;
+        margin-bottom: 5px
+    }
+
+        .myr-make svg {
+            width: 18px;
+            height: 18px
+        }
+
+    .myr-ticket {
+        grid-template-columns: 24% minmax(0,1fr);
+        mask: none;
+        border-radius: 12px
+    }
+
+    .myr-date {
+        padding: 15px 6px
+    }
+
+    .myr-day {
+        font-size: 47px;
+        letter-spacing: -2px
+    }
+
+    .myr-month {
+        font-size: 12px;
+        letter-spacing: 0
+    }
+
+    .myr-date time {
+        font-size: 22px
+    }
+
+    .myr-facts {
+        padding: 7px 12px;
+        grid-template-columns: 1fr;
+        gap: 0
+    }
+
+    .myr-fact {
+        padding: 8px 0;
+        gap: 10px
+    }
+
+        .myr-fact > svg {
+            width: 24px;
+            height: 24px
+        }
+
+        .myr-fact:nth-child(-n+2) {
+            border: 0
+        }
+
+        .myr-fact:nth-child(even):before {
+            display: none
+        }
+
+        .myr-fact:nth-child(even) {
+            padding-left: 0
+        }
+
+        .myr-fact:not(:last-child) {
+            border-bottom: 1px solid #d6b16f30
+        }
+
+    .myr-label {
+        font-size: 12px;
+        margin-bottom: 1px
+    }
+
+    .myr-fact strong {
+        font-size: 16px
+    }
+
+    .myr-status-area {
+        padding: 12px;
+        grid-template-columns: 1fr;
+        gap: 8px
+    }
+
+        .myr-status-area .myr-view {
+            grid-column: 1;
+            grid-row: 3;
+            justify-self: start;
+            font-size: 14px;
+            padding: 7px 12px
+        }
+
+        .myr-status-area > p {
+            padding: 0;
+            font-size: 13px
+        }
+
+        .myr-status-area .myr-status {
+            font-size: 15px
+        }
+
+    .myr-reminder {
+        gap: 12px;
+        font-size: 14px;
+        align-items: flex-start
+    }
+
+        .myr-reminder > svg {
+            width: 22px;
+            height: 22px
+        }
+
+    .myr-detail-main {
+        padding: 22px 22px 16px
+    }
+
+    .myr-ticket-header h2 {
+        font-size: 30px
+    }
+
+    .myr-brand > span {
+        font-size: 32px;
+        letter-spacing: 7px
+    }
+
+    .myr-brand b {
+        font-size: 23px
+    }
+
+    .myr-brand small {
+        font-size: 9px;
+        letter-spacing: 8px
+    }
+
+    .myr-detail-grid {
+        grid-template-columns: 1fr;
+        gap: 14px
+    }
+
+    .myr-detail-cell {
+        padding: 0 !important;
+        border: 0 !important;
+        gap: 12px
+    }
+
+        .myr-detail-cell > div {
+            display: block
+        }
+
+        .myr-detail-cell strong {
+            font-size: 19px
+        }
+
+        .myr-detail-cell small {
+            font-size: 13px
+        }
+
+        .myr-detail-cell .myr-label {
+            font-size: 13px
+        }
+
+    .myr-arrival {
+        padding: 14px 0 0;
+        gap: 12px
+    }
+
+        .myr-arrival p {
+            font-size: 14px
+        }
+
+        .myr-arrival > svg {
+            width: 25px;
+            height: 25px
+        }
+
+    .myr-stub-inner {
+        grid-template-columns: 1fr
+    }
+
+    .myr-stub-reference {
+        font-size: 24px
+    }
+
+    .myr-stub-inner > .myr-status {
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: start;
+        font-size: 19px;
+        margin-top: 4px
+    }
+
+    .myr-dialog-actions {
+        gap: 11px
+    }
+
+    .myr-cancel-button, .myr-close-button {
+        min-width: 0;
+        flex: 1;
+        font-size: 16px;
+        padding: 12px 9px
+    }
+
+    .myr-cancel-note {
+        font-size: 14px
+    }
+
+    .myr-confirm-inner {
+        padding: 26px
+    }
+
+        .myr-confirm-inner h2 {
+            font-size: 28px
+        }
+
+    .myr-empty {
+        padding: 35px 18px
+    }
+
+        .myr-empty h2 {
+            font-size: 28px
+        }
+
+        .myr-empty p {
+            font-size: 16px
+        }
+}
+
+/* ---- Revised list: nearest = ticket, the rest = plain cards ---- */
+.myr-limit {
+    margin: 0 auto 12px 24px;
+    font-size: 16px;
+    color: var(--myr-muted);
+    align-self: flex-end;
+    text-shadow: 0 1px 6px #000
+}
+
+.myr-list {
+    gap: 0
+}
+
+.myr-next-label {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 12px;
+    font-size: 18px;
+    color: var(--myr-gold-bright);
+    text-shadow: 0 1px 8px #000
+}
+
+.myr-next-pill {
+    padding: 3px 15px;
+    border-radius: 999px;
+    background: #a9362b;
+    border: 1px solid #f24a36;
+    color: #fff4e9;
+    font-family: Arial,sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .14em
+}
+
+.myr-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    align-self: stretch
+}
+
+    .myr-actions .myr-view {
+        align-self: auto
+    }
+
+.myr-quick-cancel {
+    padding: 8px 20px;
+    border-radius: 25px;
+    border: 1px solid #ff5b4d;
+    background: #170b0bcf;
+    color: #ff6b5a;
+    font-size: clamp(14px,1.25vw,19px);
+    white-space: nowrap;
+    transition: background .15s
+}
+
+    .myr-quick-cancel:hover {
+        background: #511612
+    }
+
+.myr-later-section {
+    margin-top: 34px
+}
+
+.myr-later-title {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin: 0 0 16px;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: .28em;
+    text-transform: uppercase;
+    color: var(--myr-muted)
+}
+
+    .myr-later-title:after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--myr-line)
+    }
+
+.myr-later-list {
+    display: grid;
+    gap: 12px
+}
+
+.myr-later {
+    position: relative;
+    display: grid;
+    grid-template-columns: 78px minmax(0,1.6fr) minmax(0,1fr) auto auto;
+    align-items: center;
+    gap: 26px;
+    padding: 16px 24px 16px 20px;
+    border: 1px solid #d6b16f42;
+    border-left: 4px solid var(--myr-gold);
+    border-radius: 12px;
+    background: linear-gradient(105deg,#241816f2,#1b1210f2),url('../images/Reservations/ticket-black.webp') center/cover #1f1411;
+    box-shadow: 0 8px 22px #0006;
+    transition: border-color .15s,transform .15s
+}
+
+    .myr-later:hover {
+        border-color: #d6b16f99;
+        border-left-color: var(--myr-gold-bright)
+    }
+
+.myr-later-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    border: 1px solid var(--myr-line);
+    border-radius: 10px;
+    background: #d6b16f14;
+    line-height: 1.1
+}
+
+    .myr-later-date small {
+        font-family: Arial,sans-serif;
+        font-size: 11px;
+        letter-spacing: .14em;
+        color: var(--myr-muted)
+    }
+
+    .myr-later-date b {
+        font-size: 34px;
+        font-weight: 500;
+        color: var(--myr-gold-bright);
+        margin: 2px 0
+    }
+
+.myr-later-main {
+    min-width: 0
+}
+
+.myr-later-time {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1.15
+}
+
+    .myr-later-time span {
+        font-size: 15px;
+        font-weight: 400;
+        color: var(--myr-gold)
+    }
+
+.myr-later-main p {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0 0;
+    font-size: 17px;
+    color: var(--myr-cream)
+}
+
+    .myr-later-main p svg {
+        width: 19px;
+        height: 19px;
+        color: var(--myr-gold-bright)
+    }
+
+    .myr-later-main p i {
+        width: 1px;
+        height: 16px;
+        margin: 0 8px;
+        background: var(--myr-line)
+    }
+
+.myr-later-main .myr-later-spend {
+    font-size: 15px;
+    color: var(--myr-muted);
+    margin-top: 4px
+}
+
+.myr-later-ref {
+    min-width: 0
+}
+
+    .myr-later-ref strong {
+        display: block;
+        font-size: 19px;
+        font-weight: 400;
+        overflow-wrap: anywhere
+    }
+
+    .myr-later-ref .myr-label {
+        font-size: 13px;
+        letter-spacing: .06em
+    }
+
+.myr-later .myr-status {
+    font-size: 16px;
+    padding: 5px 16px
+}
+
+    .myr-later .myr-status svg {
+        width: 19px;
+        height: 19px
+    }
+
+.myr-later-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end
+}
+
+    .myr-later-actions .myr-view, .myr-later-actions .myr-quick-cancel {
+        font-size: 16px;
+        padding: 7px 18px
+    }
+
+.myr-rule-note {
+    font-size: 15px;
+    color: var(--myr-muted);
+    text-align: center;
+    margin: 14px 0 -9px
+}
+
+.myr-reminder strong {
+    color: var(--myr-gold-bright);
+    font-weight: 400
+}
+
+@media(max-width:1100px) {
+    .myr-later {
+        grid-template-columns: 70px minmax(0,1.4fr) minmax(0,1fr) auto;
+        gap: 18px
+    }
+
+    .myr-later-actions {
+        grid-column: 2/-1;
+        justify-content: flex-start
+    }
+
+    .myr-later .myr-status {
+        grid-column: 4;
+        grid-row: 1
+    }
+}
+
+@media(max-width:800px) {
+    .myr-limit {
+        display: none
+    }
+
+    .myr-later {
+        grid-template-columns: 64px minmax(0,1fr) auto;
+        gap: 10px 16px;
+        padding: 14px 16px
+    }
+
+    .myr-later-ref {
+        grid-column: 2;
+        grid-row: 2
+    }
+
+    .myr-later .myr-status {
+        grid-column: 3;
+        grid-row: 1;
+        justify-self: end;
+        font-size: 14px;
+        padding: 4px 11px
+    }
+
+    .myr-later-date {
+        grid-row: 1/3
+    }
+
+    .myr-later-actions {
+        grid-column: 1/-1;
+        justify-content: flex-end;
+        grid-row: 3
+    }
+
+    .myr-later-time {
+        font-size: 24px
+    }
+
+    .myr-later-main p {
+        font-size: 15px
+    }
+
+    .myr-actions {
+        justify-content: flex-start
+    }
+
+    .myr-status-area .myr-actions {
+        grid-column: 2;
+        grid-row: 1/3;
+        flex-direction: column;
+        align-items: flex-end
+    }
+}
+
+@media(max-width:500px) {
+    .myr-later {
+        grid-template-columns: 56px minmax(0,1fr)
+    }
+
+        .myr-later .myr-status {
+            grid-column: 1/-1;
+            grid-row: auto;
+            justify-self: start
+        }
+
+    .myr-later-date {
+        grid-row: 1
+    }
+
+    .myr-later-ref {
+        grid-column: 1/-1;
+        grid-row: auto
+    }
+
+    .myr-later-actions {
+        grid-row: auto
+    }
+
+    .myr-status-area .myr-actions {
+        grid-column: 1;
+        grid-row: auto;
+        flex-direction: row;
+        justify-content: flex-start
+    }
+
+    .myr-next-label {
+        font-size: 15px
+    }
+}
+
+
+/* ---- Backgrounds: ticket-list.webp = list ticket (new wide art), ticket-black.webp = details ticket (original). Never stretched. ---- */
+.myr-detail-main {
+    background: url('../images/Reservations/ticket-black.webp') right center/cover no-repeat #090a09
+}
+
+.myr-row-body {
+    background: linear-gradient(90deg,rgba(30,20,17,.92) 0,rgba(27,18,16,.76) 60%,rgba(27,18,16,.55) 100%),url('../images/Reservations/ticket-list.webp') right bottom/cover no-repeat #1b1210
+}
+/* ---- Request box: collapsed = 2 lines + Read more; open = fixed-height box that scrolls ---- */
+.myr-detail-cell .myr-request-box strong {
+    font-size: 1em
+}
+
+.myr-request-box {
+    font-size: clamp(17px,1.9vw,24px);
+    max-height: 2.6em;
+    overflow: hidden;
+    line-height: 1.3
+}
+
+    .myr-request-box .myr-request {
+        display: block;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        line-height: 1.3
+    }
+
+    .myr-request-box.is-open {
+        max-height: 6.5em;
+        overflow-y: auto;
+        padding-right: 8px;
+        scrollbar-width: thin;
+        scrollbar-color: #b98a3e #1a1612
+    }
+
+.myr-request-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px
+}
+
+    .myr-request-head .myr-label {
+        margin-bottom: 3px
+    }
+
+.myr-readmore {
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    border: 0;
+    background: none;
+    color: var(--myr-gold-bright);
+    font-size: 14px;
+    text-decoration: underline;
+    text-underline-offset: 3px
+}
+
+    .myr-readmore:hover {
+        color: #fff
+    }
+/* ---- Compact sizing (desktop). Fixed-size details ticket with a slimmer stub. ---- */
+@media(min-width:801px) {
+    .myr {
+        padding-top: 26px;
+        padding-bottom: 26px
+    }
+
+    .myr-heading {
+        margin-bottom: 24px
+    }
+
+        .myr-heading h1 {
+            font-size: clamp(32px,3.4vw,48px)
+        }
+
+        .myr-heading > p {
+            font-size: clamp(15px,1.3vw,19px)
+        }
+
+    .myr-toolbar {
+        min-height: 46px;
+        margin-bottom: 20px
+    }
+
+    .myr-upcoming {
+        font-size: 20px;
+        padding: 0 26px 11px
+    }
+
+    .myr-make {
+        font-size: 16px;
+        padding: 9px 20px;
+        gap: 10px;
+        margin-bottom: 7px
+    }
+
+        .myr-make svg {
+            width: 21px;
+            height: 21px
+        }
+
+    .myr-limit {
+        font-size: 14px;
+        margin-bottom: 10px
+    }
+
+    .myr-next-label {
+        font-size: 15px;
+        margin-bottom: 10px
+    }
+
+    .myr-next-pill {
+        font-size: 11px;
+        padding: 2px 13px
+    }
+
+    .myr-ticket {
+        min-height: 150px
+    }
+
+    .myr-day {
+        font-size: clamp(40px,4.2vw,62px)
+    }
+
+    .myr-month {
+        font-size: clamp(13px,1.2vw,18px)
+    }
+
+    .myr-date time {
+        font-size: clamp(17px,1.6vw,24px)
+    }
+
+    .myr-date-rule {
+        margin: 8px 0
+    }
+
+    .myr-facts {
+        padding: 10px 20px 10px 32px
+    }
+
+    .myr-fact {
+        padding: 8px 10px;
+        gap: 14px
+    }
+
+        .myr-fact > svg {
+            width: 27px;
+            height: 27px
+        }
+
+    .myr-label {
+        font-size: clamp(12px,.95vw,14px)
+    }
+
+    .myr-fact strong {
+        font-size: clamp(15px,1.3vw,19px)
+    }
+
+    .myr-status {
+        font-size: clamp(14px,1.2vw,18px);
+        padding: 5px 15px;
+        gap: 8px
+    }
+
+        .myr-status svg {
+            width: 19px;
+            height: 19px
+        }
+
+    .myr-status-area {
+        padding: 12px 24px
+    }
+
+        .myr-status-area > p {
+            font-size: clamp(12px,1vw,15px);
+            margin: 6px 0 10px
+        }
+
+    .myr-view, .myr-quick-cancel {
+        font-size: clamp(13px,1vw,15px);
+        padding: 6px 16px
+    }
+
+        .myr-view svg {
+            width: 19px;
+            height: 19px
+        }
+
+    .myr-small-seal {
+        font-size: 15px
+    }
+
+    .myr-later-section {
+        margin-top: 26px
+    }
+
+    .myr-later-title {
+        font-size: 13px;
+        margin-bottom: 12px
+    }
+
+    .myr-later-list {
+        gap: 10px
+    }
+
+    .myr-later {
+        padding: 11px 20px 11px 16px;
+        gap: 22px
+    }
+
+    .myr-later-date {
+        padding: 5px 0
+    }
+
+        .myr-later-date b {
+            font-size: 27px
+        }
+
+        .myr-later-date small {
+            font-size: 10px
+        }
+
+    .myr-later-time {
+        font-size: 22px
+    }
+
+        .myr-later-time span {
+            font-size: 13px
+        }
+
+    .myr-later-main p {
+        font-size: 14.5px;
+        margin-top: 4px
+    }
+
+        .myr-later-main p svg {
+            width: 17px;
+            height: 17px
+        }
+
+    .myr-later-ref strong {
+        font-size: 16px
+    }
+
+    .myr-later-ref .myr-label {
+        font-size: 12px
+    }
+
+    .myr-later .myr-status {
+        font-size: 14px;
+        padding: 4px 13px
+    }
+
+    .myr-later-actions .myr-view, .myr-later-actions .myr-quick-cancel {
+        font-size: 14px;
+        padding: 6px 16px
+    }
+
+    .myr-reminder {
+        font-size: 14.5px;
+        margin-top: 20px;
+        padding-top: 14px;
+        gap: 14px
+    }
+
+        .myr-reminder > svg {
+            width: 22px;
+            height: 22px
+        }
+
+    .myr-detail-dialog {
+        width: min(960px,calc(100vw - 42px))
+    }
+
+    .myr-detail-ticket {
+        grid-template-columns: minmax(0,1fr) 22%;
+        height: 560px;
+        mask-image: radial-gradient(circle at 0 50%,transparent 5px,#000 5.7px),radial-gradient(circle at 100% 50%,transparent 5px,#000 5.7px),radial-gradient(circle at 78% 0,transparent 17px,#000 18px),radial-gradient(circle at 78% 100%,transparent 17px,#000 18px)
+    }
+
+    .myr-detail-main {
+        display: flex;
+        flex-direction: column;
+        padding: 20px 26px 16px 40px;
+        box-shadow: inset 0 0 0 10px #070807,inset 0 0 0 11px #bc8c42,inset 0 0 0 14px #070807,inset 0 0 0 15px #9d7436
+    }
+
+    .myr-ticket-header {
+        padding: 6px 0 4px
+    }
+
+    .myr-brand {
+        margin-bottom: 8px
+    }
+
+        .myr-brand > span {
+            font-size: 34px;
+            letter-spacing: 8px
+        }
+
+        .myr-brand b {
+            font-size: 21px;
+            padding: 2px
+        }
+
+        .myr-brand small {
+            font-size: 10px;
+            margin-top: 5px;
+            margin-left: 12px;
+            letter-spacing: 8px
+        }
+
+    .myr-brand-rule {
+        width: 150px;
+        margin-bottom: 8px
+    }
+
+    .myr-ticket-header h2 {
+        font-size: clamp(24px,2.6vw,32px)
+    }
+
+    .myr-detail-grid {
+        padding: 10px 0;
+        flex: 1 1 auto;
+        align-items: stretch
+    }
+
+    .myr-detail-cell {
+        align-items: center;
+        gap: 12px;
+        padding: 0 12px
+    }
+
+        .myr-detail-cell:first-child {
+            padding-left: 0
+        }
+
+        .myr-detail-cell:last-child {
+            padding-right: 0
+        }
+
+        .myr-detail-cell > svg {
+            width: 24px;
+            height: 24px;
+            margin-top: 0
+        }
+
+        .myr-detail-cell strong {
+            font-size: clamp(15px,1.5vw,19px)
+        }
+
+        .myr-detail-cell small {
+            font-size: 12px
+        }
+
+        .myr-detail-cell .myr-label {
+            font-size: 13px
+        }
+
+        .myr-detail-cell .myr-request-box {
+            font-size: clamp(15px,1.5vw,19px)
+        }
+
+    .myr-detail-grid-spend {
+        height: auto;
+        min-height: 96px;
+        align-items: stretch
+    }
+
+    .myr-spend-accepted {
+        font-size: 12.5px !important;
+        margin-top: 5px !important
+    }
+
+        .myr-spend-accepted svg {
+            width: 16px;
+            height: 16px
+        }
+
+    .myr-arrival {
+        flex: 0 0 auto;
+        align-items: center;
+        padding: 12px 8px 8px 10px;
+        gap: 14px
+    }
+
+        .myr-arrival > svg {
+            margin-top: 0
+        }
+
+        .myr-arrival > svg {
+            width: 24px;
+            height: 24px
+        }
+
+        .myr-arrival p {
+            font-size: 13.5px;
+            line-height: 1.35
+        }
+
+        .myr-arrival .myr-label {
+            font-size: 13px
+        }
+
+    .myr-detail-stub {
+        padding: 16px 12px;
+        box-shadow: inset 0 0 0 9px #730a0799,inset 0 0 0 10px #d1a047,inset 0 0 0 13px #730a0799,inset 0 0 0 14px #b68c3d
+    }
+
+    .myr-stub-inner {
+        padding: 14px 0 10px;
+        min-height: 0;
+        justify-content: center
+    }
+
+    .myr-stub-label {
+        font-size: 10.5px;
+        letter-spacing: 2px;
+        margin-bottom: 10px
+    }
+
+    .myr-stub-reference {
+        font-size: clamp(14px,1.35vw,18px)
+    }
+
+    .myr-stub-rule {
+        margin: 14px 0;
+        width: 36px
+    }
+
+    .myr-stub-symbol {
+        width: 30px !important;
+        height: 30px !important;
+        margin-bottom: 10px
+    }
+
+    .myr-detail-stub .myr-status {
+        font-size: clamp(13px,1.2vw,16px);
+        padding: 5px 12px;
+        gap: 6px
+    }
+
+        .myr-detail-stub .myr-status svg {
+            width: 18px;
+            height: 18px
+        }
+
+    .myr-stub-inner > p:not(.myr-stub-label) {
+        font-size: 13.5px;
+        line-height: 1.3
+    }
+
+    .myr-stub-brand {
+        font-size: 21px;
+        letter-spacing: 4px;
+        margin-top: 22px;
+        padding-top: 0
+    }
+
+        .myr-stub-brand small {
+            font-size: 8px;
+            letter-spacing: 4px
+        }
+
+        .myr-stub-brand b {
+            font-size: 18px;
+            margin-top: 8px
+        }
+
+    .myr-dialog-actions {
+        padding-top: 16px
+    }
+
+    .myr-cancel-button, .myr-close-button {
+        min-width: 180px;
+        font-size: 17px;
+        padding: 10px 22px
+    }
+
+    .myr-rule-note, .myr-cancel-note {
+        font-size: 14px;
+        margin-top: 12px
+    }
+}
+
+@media(max-width:800px) {
+    .myr-detail-cell .myr-request-box {
+        font-size: 19px
+    }
+
+    .myr-detail-grid-spend .myr-detail-cell:first-child {
+        min-height: 150px
+    }
+}
+
+/* ---- Smooth open / close for the details ticket and the confirm box ---- */
+@keyframes myr-pop-in {
+    from {
+        opacity: 0;
+        transform: translateY(26px) scale(.965)
+    }
+
+    30% {
+        opacity: 1
+    }
+
+    to {
+        opacity: 1;
+        transform: none
+    }
+}
+
+@keyframes myr-pop-out {
+    from {
+        opacity: 1;
+        transform: none
+    }
+
+    65% {
+        opacity: 1
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(18px) scale(.97)
+    }
+}
+
+@keyframes myr-stub-in {
+    from {
+        opacity: 0;
+        transform: translateX(-46px)
+    }
+
+    60% {
+        opacity: 1
+    }
+
+    to {
+        opacity: 1;
+        transform: none
+    }
+}
+
+@keyframes myr-fade-in {
+    from {
+        opacity: 0
+    }
+
+    to {
+        opacity: 1
+    }
+}
+
+@keyframes myr-fade-out {
+    from {
+        opacity: 1
+    }
+
+    to {
+        opacity: 0
+    }
+}
+
+.myr-detail-dialog[open] .myr-detail-shell, .myr-confirm-dialog[open] .myr-confirm-inner {
+    animation: myr-pop-in .46s cubic-bezier(.2,.85,.25,1) both
+}
+
+.myr-detail-dialog[open] .myr-detail-stub {
+    animation: myr-stub-in .62s cubic-bezier(.2,.85,.25,1) .1s both
+}
+
+.myr-detail-dialog[open]::backdrop, .myr-confirm-dialog[open]::backdrop {
+    animation: myr-fade-in .16s ease-out both
+}
+
+.myr-detail-dialog.is-closing .myr-detail-shell {
+    animation: myr-pop-out .24s ease-in both
+}
+
+.myr-detail-dialog.is-closing::backdrop {
+    animation: myr-fade-out .24s ease-in both
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .myr-detail-dialog[open] .myr-detail-shell, .myr-confirm-dialog[open] .myr-confirm-inner, .myr-detail-dialog[open] .myr-detail-stub, .myr-detail-dialog[open]::backdrop, .myr-confirm-dialog[open]::backdrop, .myr-detail-dialog.is-closing .myr-detail-shell, .myr-detail-dialog.is-closing::backdrop {
+        animation: none !important
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .myr * {
+        transition: none !important;
+        scroll-behavior: auto !important
+    }
+}
+
+/* ---- Dining area under the table type; wax seal with the table number (shown only after staff confirm) ---- */
+.myr-area {
+    display: block;
+    margin-top: 2px;
+    font-size: clamp(12px,.95vw,14px);
+    color: var(--myr-muted)
+}
+
+.myr-detail-cell small:empty {
+    display: none
+}
+
+.myr-table-seal {
+    --s: 1;
+    position: absolute;
+    top: 6px;
+    right: 14px;
+    z-index: 2;
+    width: calc(92px * var(--s));
+    height: calc(94px * var(--s));
+    transform: rotate(-8deg);
+    filter: drop-shadow(0 6px 8px rgba(0,0,0,.55));
+    pointer-events: none
+}
+
+    .myr-table-seal.is-long {
+        --s: 1.15
+    }
+
+    .myr-table-seal img {
+        display: block;
+        width: 100%;
+        height: 100%
+    }
+
+.myr-seal-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-right: calc(3px * var(--s));
+    padding-bottom: calc(9px * var(--s));
+    line-height: 1;
+    font-weight: 700;
+    color: #ecc56c;
+    text-shadow: 0 1px 0 #f7dc9a,0 2px 2px rgba(60,12,8,.9)
+}
+
+    .myr-seal-text small {
+        display: block;
+        margin: 0 -.28em 0 0;
+        font-size: calc(9px * var(--s));
+        letter-spacing: .28em;
+        color: #e6bf6a;
+        text-shadow: 0 1px 0 rgba(60,12,8,.9)
+    }
+
+    .myr-seal-text b {
+        font-weight: 700;
+        font-size: calc(34px * var(--s));
+        white-space: nowrap
+    }
+
+        .myr-seal-text b.s4 {
+            font-size: calc(26px * var(--s))
+        }
+
+        .myr-seal-text b.s5 {
+            font-size: calc(20px * var(--s))
+        }
+
+        .myr-seal-text b.s6 {
+            font-size: calc(16px * var(--s))
+        }
+
+        .myr-seal-text b.s7 {
+            font-size: calc(14px * var(--s))
+        }
+
+/* next-up ticket: keep the chip and the note clear of the seal */
+.myr-status-area.has-seal > .myr-status, .myr-status-area.has-seal > p {
+    max-width: calc(100% - 118px)
+}
+
+.myr-later-main p .myr-later-table {
+    color: var(--myr-gold-bright);
+    font-weight: 600
+}
+
+/* details ticket: the seal sits at the top right of the black part */
+.myr-detail-seal {
+    top: 18px;
+    right: 30px
+}
+
+.myr-detail-stub .myr-stub-inner > p.myr-stub-note {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: #f4d9b3
+}
+
+@media(max-width:1100px) {
+    .myr-table-seal {
+        --s: .8
+    }
+
+        .myr-table-seal.is-long {
+            --s: .92
+        }
+
+    .myr-status-area.has-seal > .myr-status, .myr-status-area.has-seal > p {
+        max-width: calc(100% - 92px)
+    }
+}
+
+@media(max-width:800px) {
+    /* the status area becomes a grid: the seal takes the right column and the buttons move below */
+    .myr-status-area.has-seal .myr-table-seal {
+        --s: .7;
+        position: static;
+        grid-column: 2;
+        grid-row: 1/3;
+        justify-self: end;
+        align-self: center
+    }
+
+    .myr-status-area.has-seal > .myr-status, .myr-status-area.has-seal > p {
+        max-width: none
+    }
+
+    .myr-status-area.has-seal .myr-actions {
+        grid-column: 1/-1;
+        grid-row: 3;
+        flex-direction: row;
+        justify-content: flex-start
+    }
+
+    .myr-detail-seal {
+        --s: .75;
+        top: 14px;
+        right: 16px
+    }
+}
+
+@media(max-width:500px) {
+    .myr-status-area.has-seal .myr-table-seal {
+        --s: .62;
+        grid-column: 1;
+        grid-row: auto;
+        justify-self: end;
+        order: -1
+    }
+}
+
+
+/* The wax seal replaces the small stamp when a table number is shown. */
+.has-seal .myr-small-seal {
+    display: none;
+}
+
+/* Details ticket: dark halo so the seal stands out from the red moon and blossoms behind it */
+.myr-detail-seal {
+    filter: drop-shadow(0 0 7px rgba(244,204,120,.55)) drop-shadow(0 6px 8px rgba(0,0,0,.55))
+}
+
+    .myr-detail-seal::before {
+        content: "";
+        position: absolute;
+        inset: -16px;
+        z-index: -1;
+        border-radius: 50%;
+        background: radial-gradient(circle,rgba(10,5,4,.88) 48%,rgba(10,5,4,0) 74%)
+    }
+
+/* Details stub: keep the caption and the note inside the red ticket */
+.myr-detail-stub .myr-stub-inner > p:not(.myr-stub-label):not(.myr-stub-note) {
+    font-size: clamp(13px,1.35vw,17px);
+    max-width: 100%;
+    padding: 0 6px;
+    overflow-wrap: anywhere
+}
+
+.myr-detail-stub .myr-stub-inner > p.myr-stub-note {
+    font-size: clamp(12px,1.15vw,14.5px);
+    max-width: 100%;
+    padding: 0 6px;
+    overflow-wrap: anywhere
+}
