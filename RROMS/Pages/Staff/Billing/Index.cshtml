@@ -5,28 +5,49 @@
 
 @{
     ViewData["Title"] = "Billing & Payment Management";
+    ViewData["FullWidth"] = true;   // banner goes edge to edge, like Staff/Orders; the page draws its own container
     var showTakeaway = Model.ShowTakeaway;
+
+    // Header counts (dine-in + takeaway together)
+    var allStates = Model.DineInRows.Select(r => IndexModel.BillStateKey(r.BillStatus))
+        .Concat(Model.TakeawayRows.Select(r => IndexModel.BillStateKey(r.BillStatus)))
+        .ToList();
+    var awaitingCount = allStates.Count(k => k == "awaiting");
+    var noBillCount = allStates.Count(k => k == "nobill");
+    var paidCount = allStates.Count(k => k == "paid");
 }
 
 <link rel="stylesheet" href="~/css/staff-billing.css" asp-append-version="true" />
 
-<div class="container py-4 us32-billing">
+<div class="us32-billing">
 
-    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-        <div>
-            <h2 class="mb-1">Billing & Payment Management</h2>
-            <p class="text-muted mb-0">
-                @Brand.FullName — today's bills. Pick a table or a takeaway order to open its bill.
-            </p>
+    @* Header banner: wwwroot/images/billing/yoru-billing-banner.svg (original artwork) *@
+    <section class="billing-hero" aria-labelledby="billing-title">
+        <div class="billing-hero-inner container-xl container-wide">
+        <div class="billing-hero-copy">
+            <p class="billing-hero-eyebrow">@Brand.FullName · Staff · Billing desk</p>
+            <h1 id="billing-title" class="billing-hero-title">
+                Billing &amp; Payments
+                <span class="billing-hero-seal" lang="ja">お会計</span>
+            </h1>
+            <p class="billing-hero-intro">Today's bills. Pick a table or a takeaway order to open its bill.</p>
+
+            <div class="billing-hero-chips">
+                <span>Awaiting payment <b>@awaitingCount</b></span>
+                <span>No bill <b>@noBillCount</b></span>
+                <span>Paid today <b>@paidCount</b></span>
+                @* Refresh always opens the Dine-in tab (default) *@
+                <a class="billing-hero-refresh" asp-page="./Index">
+                    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh
+                </a>
+            </div>
         </div>
+        </div>
+    </section>
 
-        <a class="btn btn-outline-dark btn-sm" asp-page="./Index"
-           asp-route-tab="@(showTakeaway ? "takeaway" : "dinein")">
-            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh
-        </a>
-    </div>
+    <div class="container-xl container-wide py-4">
 
-    <div class="card shadow-sm billing-card">
+    <div class="card billing-card billing-list-card">
         <div class="card-body">
 
             <!-- Tabs + search -->
@@ -69,6 +90,7 @@
                         <button type="button" class="billing-filter" data-filter="nobill">No bill</button>
                         <button type="button" class="billing-filter" data-filter="awaiting">Awaiting payment</button>
                         <button type="button" class="billing-filter" data-filter="paid">Paid today</button>
+                        <span class="billing-match-count" aria-live="polite"></span>
                     </div>
 
                     @if (!Model.DineInRows.Any())
@@ -142,7 +164,7 @@
                                                 }
                                             </td>
                                             <td class="text-end">
-                                                <a class="btn btn-sm @(isPaid ? "btn-outline-dark" : "btn-dark")"
+                                                <a class="billing-open-link @(isPaid ? "" : "is-open")"
                                                    asp-page="./Bill" asp-route-sessionId="@row.SessionId">
                                                     @(isPaid ? "View" : "Open") <span aria-hidden="true">→</span>
                                                 </a>
@@ -166,6 +188,7 @@
                         <button type="button" class="billing-filter" data-filter="nobill">No bill</button>
                         <button type="button" class="billing-filter" data-filter="awaiting">Awaiting payment</button>
                         <button type="button" class="billing-filter" data-filter="paid">Paid today</button>
+                        <span class="billing-match-count" aria-live="polite"></span>
                     </div>
 
                     @if (!Model.TakeawayRows.Any())
@@ -231,7 +254,7 @@
                                                 }
                                             </td>
                                             <td class="text-end">
-                                                <a class="btn btn-sm @(isPaid ? "btn-outline-dark" : "btn-dark")"
+                                                <a class="billing-open-link @(isPaid ? "" : "is-open")"
                                                    asp-page="./Bill" asp-route-orderNo="@row.OrderNo">
                                                     @(isPaid ? "View" : "Open") <span aria-hidden="true">→</span>
                                                 </a>
@@ -254,6 +277,7 @@
                     <strong id="billingLookupText"></strong></a>
             </p>
         </div>
+    </div>
     </div>
 </div>
 
@@ -293,6 +317,14 @@
                     if (visible) shown++;
                 });
 
+                // "4 tables · showing 4" on the right of the filters
+                const matchCount = pane.querySelector('.billing-match-count');
+                if (matchCount) {
+                    const noun = pane.id === 'pane-takeaway' ? 'order' : 'table';
+                    matchCount.textContent = rows.length + ' ' + noun + (rows.length === 1 ? '' : 's')
+                        + ' \u00b7 showing ' + shown;
+                }
+
                 const noMatch = pane.querySelector('.billing-no-match');
                 if (noMatch) noMatch.classList.toggle('d-none', rows.length === 0 || shown > 0);
 
@@ -322,14 +354,10 @@
                 });
             });
 
-            // Keep the open tab in the address bar, so Refresh and Back return to it.
+            // Switching tab only re-applies search and filters.
+            // The tab is not kept in the address bar: Refresh and Back always open Dine-in.
             document.querySelectorAll('[data-tab-key]').forEach(function (tab) {
-                tab.addEventListener('shown.bs.tab', function () {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('tab', tab.dataset.tabKey);
-                    history.replaceState(null, '', url);
-                    apply();
-                });
+                tab.addEventListener('shown.bs.tab', apply);
             });
 
             apply();

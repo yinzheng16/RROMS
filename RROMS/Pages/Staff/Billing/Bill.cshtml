@@ -5,55 +5,59 @@
 
 @{
     ViewData["Title"] = "Bill";
+    ViewData["FullWidth"] = true;   // banner goes edge to edge, like the billing list
     var ordersInKitchen = Model.OrdersInKitchen;
 }
 
 <link rel="stylesheet" href="~/css/staff-billing.css" asp-append-version="true" />
 
-<div class="container py-4 us32-billing">
+<div class="us32-billing">
 
-    <!-- Header -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div>
-            <a class="billing-back" asp-page="./Index" asp-route-tab="@Model.ListTab">
-                <span aria-hidden="true">←</span> All bills
-            </a>
-            <h2 class="mb-0 mt-1">
-                @if (Model.IsDineIn)
-                {
-                    <span>Table @(Model.SessionBill!.TableNumber)</span>
-                    <small class="billing-heading-type">Dine-in</small>
-                }
-                else if (Model.TakeawayOrder != null)
-                {
-                    <span>Takeaway</span>
-                    <small class="billing-heading-type">@Model.TakeawayOrder.OrderNo</small>
-                }
-                else
-                {
-                    <span>Bill</span>
-                }
-            </h2>
+    <!-- Header banner (slim version of the billing list banner) -->
+    <section class="billing-hero billing-hero-slim">
+        <div class="billing-hero-inner container-xl container-wide">
+            <div class="billing-hero-copy">
+                <a class="billing-back" asp-page="./Index">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> All bills
+                </a>
+                <h1 class="billing-hero-title">
+                    @if (Model.IsDineIn)
+                    {
+                        <span>Table @(Model.SessionBill!.TableNumber)</span>
+                        <span class="billing-hero-side">
+                            <span class="billing-hero-jp" lang="ja">店内</span>
+                            <span class="billing-hero-type">Dine-in</span>
+                        </span>
+                    }
+                    else if (Model.TakeawayOrder != null)
+                    {
+                        <span>Takeaway</span>
+                        <span class="billing-hero-side">
+                            <span class="billing-hero-jp" lang="ja">持ち帰り</span>
+                            <span class="billing-hero-type">@Model.TakeawayOrder.OrderNo</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span>Bill</span>
+                    }
+                </h1>
+            </div>
         </div>
+    </section>
 
-        @if (Model.HasBill)
-        {
-            <span class="bill-state bill-state-lg bill-state-@IndexModel.BillStateKey(Model.CurrentBill?.Status)">
-                @IndexModel.BillStateLabel(Model.CurrentBill?.Status)
-            </span>
-        }
-    </div>
+    <div class="container-xl container-wide py-4">
 
     @if (!Model.HasBill)
     {
         <!-- Nothing to show: wrong link, order not found, or not seated yet -->
-        <div class="card shadow-sm billing-card">
+        <div class="card billing-card">
             <div class="card-body text-center py-5">
                 <h5 class="mb-2">This bill cannot be opened</h5>
                 <p class="text-muted mb-3">
                     @(Model.ErrorMessage ?? "The table or order could not be found.")
                 </p>
-                <a class="btn btn-dark" asp-page="./Index" asp-route-tab="@Model.ListTab">
+                <a class="btn btn-dark" asp-page="./Index">
                     Back to the billing list
                 </a>
             </div>
@@ -101,7 +105,7 @@
 
             <!-- ================= LEFT: printable bill ================= -->
             <div class="col-lg-7">
-                <div class="card shadow-sm billing-card" id="printableBill">
+                <div class="card billing-card" id="printableBill">
                     <div class="card-body">
 
                         <!-- Print-only restaurant header -->
@@ -129,7 +133,8 @@
                             <div class="yoru-print-divider"></div>
 
                             <h2>
-                                @(Model.IsPreview ? "BILL PREVIEW" : "BILL")
+                                @* Before payment: BILL. After payment: RECEIPT (payment details on the receipt = US35). *@
+                                @(Model.IsPreview ? "BILL PREVIEW" : Model.IsPaid ? "RECEIPT" : "BILL")
                             </h2>
 
                             <p>Japanese Dining</p>
@@ -154,11 +159,11 @@
                         <p class="bill-order-number">
                             @if (Model.IsDineIn)
                             {
-                                <span>Table @(Model.SessionBill!.TableNumber) · Dine-in</span>
+                                <span>Table @(Model.SessionBill!.TableNumber)<span class="bill-sep" aria-hidden="true"></span>Dine-in</span>
                             }
                             else
                             {
-                                <span>Takeaway · Order Number: @(Model.TakeawayOrder!.OrderNo)</span>
+                                <span>Takeaway<span class="bill-sep" aria-hidden="true"></span>Order Number: @(Model.TakeawayOrder!.OrderNo)</span>
                             }
 
                             @if (Model.CurrentBill?.ConfirmedAt is DateTime confirmedAt && !Model.IsPreview)
@@ -182,29 +187,20 @@
                         }
                         else
                         {
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-hover align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Menu Item</th>
-                                            <th class="text-center">Quantity</th>
-                                            <th class="text-end">Unit Price (RM)</th>
-                                            <th class="text-end">Line Total (RM)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var line in Model.ReceiptLines)
-                                        {
-                                            <tr>
-                                                <td>@line.Name</td>
-                                                <td class="text-center">@line.Quantity</td>
-                                                <td class="text-end">@line.UnitPrice.ToString("F2")</td>
-                                                <td class="text-end">@line.LineTotal.ToString("F2")</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
+                            @* One dish per row: name + line total, then "qty × unit price" (screen and print) *@
+                            <ul class="bill-items">
+                                @foreach (var line in Model.ReceiptLines)
+                                {
+                                    <li>
+                                        <div class="bill-item-text">
+                                            <div class="bill-item-main">@line.Name</div>
+                                            <div class="bill-item-sub">@line.Quantity × RM @line.UnitPrice.ToString("F2")</div>
+                                        </div>
+                                        @* amount sits in the middle of the two lines *@
+                                        <span class="bill-item-amount">RM @line.LineTotal.ToString("F2")</span>
+                                    </li>
+                                }
+                            </ul>
                         }
 
                         <!-- Bill totals (saved order amounts; SST is charged on subtotal + service) -->
@@ -279,7 +275,7 @@
             <div class="col-lg-5">
                 <div class="billing-side" id="billActions">
 
-                    <div class="card shadow-sm billing-card">
+                    <div class="card billing-card">
                         <div class="card-body">
 
                             <!-- Stepper -->
@@ -458,7 +454,7 @@
                                                        class="visually-hidden payment-method-radio"
                                                        name="method" id="paymentCash" value="Cash" required />
                                                 <label class="payment-method-tile" for="paymentCash">
-                                                    <span class="payment-method-icon" aria-hidden="true">RM</span>
+                                                    <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M560-440q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35ZM280-320q-33 0-56.5-23.5T200-400v-320q0-33 23.5-56.5T280-800h560q33 0 56.5 23.5T920-720v320q0 33-23.5 56.5T840-320H280Zm80-80h400q0-33 23.5-56.5T840-480v-160q-33 0-56.5-23.5T760-720H360q0 33-23.5 56.5T280-640v160q33 0 56.5 23.5T360-400Zm440 240H120q-33 0-56.5-23.5T40-240v-440h80v440h680v80ZM280-400v-320 320Z"/></svg></span>
                                                     <strong>Cash</strong>
                                                 </label>
                                             </div>
@@ -469,7 +465,7 @@
                                                        class="visually-hidden payment-method-radio"
                                                        name="method" id="paymentCard" value="Card" required />
                                                 <label class="payment-method-tile" for="paymentCard">
-                                                    <span class="payment-method-icon" aria-hidden="true">▭</span>
+                                                    <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M880-720v480q0 33-23.5 56.5T800-160H160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720Zm-720 80h640v-80H160v80Zm0 160v240h640v-240H160Zm0 240v-480 480Z"/></svg></span>
                                                     <strong>Card</strong>
                                                     <small>In-store</small>
                                                 </label>
@@ -482,7 +478,7 @@
                                                        name="method" id="paymentOnline" value="Online" disabled />
                                                 <label class="payment-method-tile payment-method-tile-disabled"
                                                        for="paymentOnline">
-                                                    <span class="payment-method-icon" aria-hidden="true">▣</span>
+                                                    <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-280v-280h80v280h-80Zm240 0v-280h80v280h-80ZM80-120v-80h800v80H80Zm600-160v-280h80v280h-80ZM80-640v-80l400-200 400 200v80H80Zm178-80h444-444Zm0 0h444L480-830 258-720Z"/></svg></span>
                                                     <strong>Online</strong>
                                                     <small>By customer</small>
                                                 </label>
@@ -550,7 +546,7 @@
                                 <button type="button" class="btn btn-outline-dark flex-fill" onclick="window.print()">
                                     <i class="bi bi-printer" aria-hidden="true"></i> Print Bill
                                 </button>
-                                <a class="btn btn-outline-dark flex-fill" asp-page="./Index" asp-route-tab="@Model.ListTab">
+                                <a class="btn btn-outline-dark flex-fill" asp-page="./Index">
                                     Back to list
                                 </a>
                             </div>
@@ -560,13 +556,14 @@
                     <!-- Payment history (bill payments and older order payments) -->
                     @if (Model.Payments.Any())
                     {
-                        <details class="card shadow-sm billing-card billing-history mt-3">
+                        <details class="card billing-card billing-history mt-3">
                             <summary class="card-body py-3">
                                 Payment history (@Model.Payments.Count)
                             </summary>
 
-                            <div class="table-responsive px-3 pb-3">
-                                <table class="table table-sm align-middle mb-0">
+                            <div class="px-3 pb-3">
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Date</th>
@@ -588,12 +585,14 @@
                                     </tbody>
                                 </table>
                             </div>
+                            </div>
                         </details>
                     }
                 </div>
             </div>
         </div>
     }
+    </div>
 </div>
 
 @section Scripts {
