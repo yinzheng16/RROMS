@@ -22,6 +22,14 @@ namespace RROMS.Services.Interfaces
         // US32: Get the combined bill for a dining session.
         Task<Bill?> GetBillForSessionAsync(int sessionId);
 
+        // US32: One bill (status and totals only). Null if not found.
+        Task<Bill?> GetBillByIdAsync(int billId);
+
+        // US32: Billing facts about one order, found by its order number
+        // (order type, kitchen status, dining session and bill).
+        // Null if the order does not exist.
+        Task<OrderBillingInfo?> GetOrderBillingInfoAsync(string orderNo);
+
         // US32 (called by Member 3): true once the session's bill is
         // Confirmed or Paid. Block new dine-in orders and partial
         // cancellations for the session while this returns true.
@@ -127,6 +135,16 @@ namespace RROMS.Services.Interfaces
             ExistingBillId == null &&
             Orders.Count > 0;
     }
+
+    // US32: Billing facts about one order. Not a database entity.
+    public sealed record OrderBillingInfo(
+        int OrderId,
+        string OrderNo,
+        OrderType OrderType,
+        OrderStatus Status,
+        int? DiningSessionId,
+        int? BillId
+    );
 
     // US32: Outcome of ConfirmSessionBillAsync.
     public enum SessionBillConfirmStatus

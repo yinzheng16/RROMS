@@ -296,6 +296,39 @@ namespace RROMS.Services
                     b.DiningSessionId == sessionId);
         }
 
+        // US32: One bill (status and totals only). Null if not found.
+        public async Task<Bill?> GetBillByIdAsync(int billId)
+        {
+            if (billId <= 0)
+                return null;
+
+            return await _bills.Query()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == billId);
+        }
+
+        // US32: Billing facts about one order, found by its order number.
+        public async Task<OrderBillingInfo?> GetOrderBillingInfoAsync(
+            string orderNo)
+        {
+            if (string.IsNullOrWhiteSpace(orderNo))
+                throw new ArgumentException("Order number is required.");
+
+            string normalizedOrderNo = orderNo.Trim();
+
+            return await _orders.Query()
+                .AsNoTracking()
+                .Where(o => o.OrderNo == normalizedOrderNo)
+                .Select(o => new OrderBillingInfo(
+                    o.Id,
+                    o.OrderNo,
+                    o.OrderType,
+                    o.Status,
+                    o.DiningSessionId,
+                    o.BillId))
+                .SingleOrDefaultAsync();
+        }
+
         // US32: Confirmed or paid bills lock the dining session.
         public async Task<bool> IsSessionLockedAsync(int sessionId)
         {
