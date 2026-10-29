@@ -1,9 +1,12 @@
 // Owner: Member 2 (Tables & Reservations) - US11
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RROMS.Models;
+using RROMS.Services;
 using RROMS.Services.Interfaces;
+using System.ComponentModel.DataAnnotations;
+using RROMS.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace RROMS.Pages.Admin.Tables;
 
@@ -11,8 +14,12 @@ namespace RROMS.Pages.Admin.Tables;
 public class IndexModel : PageModel
 {
     private readonly IReservationService _service;
-    public IndexModel(IReservationService service) => _service = service;
-
+    private readonly ApplicationDbContext _db;
+    public IndexModel(IReservationService service, ApplicationDbContext db)
+    {
+    _service = service;
+    _db = db;
+    }
     public List<DiningArea> Areas { get; set; } = new();
     public List<TableTypeDefinition> TableTypes { get; set; } = new();
     public List<RestaurantTable> AllTables =>
@@ -42,16 +49,20 @@ public class IndexModel : PageModel
         [StringLength(50)]
         public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Prefix is required.")]
-        [RegularExpression(@"^[A-Za-z]+$", ErrorMessage = "Prefix must contain letters only.")]
-        [StringLength(10)]
-        public string Prefix { get; set; } = string.Empty;
+        // Shown to customers next to the English name, e.g. 二名席 (optional).
+        [StringLength(50)]
+        public string? JapaneseName { get; set; }
 
-        [Range(1, int.MaxValue)]
+        // Legacy fields: no longer entered by Admin.
+        public string? Prefix { get; set; }
+
         public int StartingNumber { get; set; } = 1;
 
-        [Range(1, 10)]
-        public int NumberPadding { get; set; } = 1;
+        // New numbering rule.
+        [Range(1, 4, ErrorMessage = "Number padding must be between 1 and 4.")]
+        public int NumberPadding { get; set; } = 3;
+
+        [Range(1, int.MaxValue)]
 
         [Required(ErrorMessage = "Choose a dining area.")]
         public int? DefaultDiningAreaId { get; set; }
@@ -69,6 +80,13 @@ public class IndexModel : PageModel
         public string? Description { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        // Off: parties below Min Guests cannot book this type.
+        // On: they can, but must accept the minimum spend.
+        public bool AllowBelowMinGuests { get; set; }
+
+        // Set by the "Remove photo" button on the type form.
+        public bool RemoveTypePhoto { get; set; }
 
         public bool CreateFirstTable { get; set; }
 
@@ -92,25 +110,36 @@ public class IndexModel : PageModel
 
         [StringLength(40)]
         public string IconName { get; set; } = "layout-grid";
-        public DiningAreaStatusMode StatusMode { get; set; }
-        = DiningAreaStatusMode.Auto;
-        public DiningAreaManualStatus? ManualStatus { get; set; }
+        // Occupied area: all its tables become Out of service.
+        public bool IsOccupied { get; set; }
     }
+
 
     public class TableInput
     {
         public int Id { get; set; }
-        [Required(ErrorMessage = "Table name is required."), StringLength(10, ErrorMessage = "Table name can be at most 10 characters."), Display(Name = "Table name")] public string TableNumber { get; set; } = string.Empty;
-        public TableType Type { get; set; }
+
+        [Required(ErrorMessage = "Table number is required.")]
+        [StringLength(10, ErrorMessage = "Table number cannot exceed 10 characters.")]
+        public string TableNumber { get; set; } = string.Empty;
+
+        // Dynamic Table Type
         public int? TableTypeDefinitionId { get; set; }
-        [Required(ErrorMessage = "Choose a dining area.")] public int? DiningAreaId { get; set; }
-        [Range(1, 20, ErrorMessage = "Minimum guests must be between 1 and 20.")] public int MinGuests { get; set; } = 1;
-        [Range(1, 20, ErrorMessage = "Capacity must be between 1 and 20.")] public int Capacity { get; set; } = 2;
-        [Range(0, 100000, ErrorMessage = "Minimum spend must be 0 or more.")] public decimal MinimumSpend { get; set; }
-        [StringLength(300)] public string? Description { get; set; }
-        public bool IsActive { get; set; } = true;
+
+        // Editable on existing tables
         public TableStatus Status { get; set; } = TableStatus.Available;
+
+        // Legacy fields retained temporarily for existing UI compatibility.
+        // They are no longer used by SaveTableAsync().
+        public TableType Type { get; set; }
+        public int? DiningAreaId { get; set; }
+        public int MinGuests { get; set; } = 1;
+        public int Capacity { get; set; } = 2;
+        public decimal MinimumSpend { get; set; }
+        public string? Description { get; set; }
+        public bool IsActive { get; set; } = true;
     }
+
 
     public async Task OnGetAsync()
     {
@@ -145,25 +174,36 @@ public class IndexModel : PageModel
         {
             Id = TableTypeForm.Id,
             Name = TableTypeForm.Name,
-            Prefix = TableTypeForm.Prefix,
-            StartingNumber = TableTypeForm.StartingNumber,
+            JapaneseName = TableTypeForm.JapaneseName,
+
+            // Legacy model compatibility.
+            // The service generates Code and Prefix on creation.
+            Prefix = string.Empty,
+            StartingNumber = 1,
+
             NumberPadding = TableTypeForm.NumberPadding,
             DefaultDiningAreaId = TableTypeForm.DefaultDiningAreaId!.Value,
             DefaultMinGuests = TableTypeForm.DefaultMinGuests,
             DefaultMaxGuests = TableTypeForm.DefaultMaxGuests,
             DefaultMinimumSpend = TableTypeForm.DefaultMinimumSpend,
             Description = TableTypeForm.Description,
-            IsActive = TableTypeForm.IsActive
+            IsActive = TableTypeForm.IsActive,
+            AllowBelowMinGuests = TableTypeForm.AllowBelowMinGuests
         };
 
         var result = await _service.SaveTableTypeAsync(
             input,
-            TableTypeForm.CreateFirstTable,
-            TableTypeForm.FirstTableName,
-            TableTypeForm.ApplyToExistingTables);
+            createFirstTable: TableTypeForm.CreateFirstTable);
 
         if (!result.Success)
             return Done(result, "Table type saved.");
+        
+        // "Remove photo" was pressed and no new file replaces it.
+        if (TableTypeForm.RemoveTypePhoto &&
+            TableTypeForm.Photo is not { Length: > 0 })
+        {
+            await _service.RemoveTableTypePhotoAsync(input.Id);
+        }
 
         // Upload photo only when Admin selected a file.
         if (TableTypeForm.Photo is { Length: > 0 })
@@ -171,11 +211,26 @@ public class IndexModel : PageModel
             var photoResult = await _service.SetTableTypePhotoAsync(
                 input.Id,
                 TableTypeForm.Photo);
-
             if (!photoResult.Success)
             {
-                ErrorMessage = "Table type saved, but photo upload failed: "
-                                + photoResult.Error;
+                var message =
+                    "Table type saved, but photo upload failed: " +
+                    photoResult.Error;
+
+                if (IsAjaxRequest)
+                {
+                    return new JsonResult(new
+                    {
+                        success = false,
+                        message,
+                        savedId = input.Id
+                    })
+                    {
+                        StatusCode = 400
+                    };
+                }
+
+                ErrorMessage = message;
 
                 return RedirectToPage();
             }
@@ -218,28 +273,6 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostSaveAreaAsync()
     {
         KeepOnly(nameof(AreaForm));
-        if (!Enum.IsDefined(AreaForm.StatusMode))
-        {
-            ModelState.AddModelError(
-                "AreaForm.StatusMode",
-                "Please select a valid status mode.");
-        }
-
-        if (AreaForm.StatusMode == DiningAreaStatusMode.Manual)
-        {
-            if (!AreaForm.ManualStatus.HasValue ||
-                !Enum.IsDefined(AreaForm.ManualStatus.Value))
-            {
-                ModelState.AddModelError(
-                    "AreaForm.ManualStatus",
-                    "Please select Available or Occupied.");
-            }
-        }
-        else
-        {
-            AreaForm.ManualStatus = null;
-        }
-
         var allowedIcons = new HashSet<string>
     {
         "wine",
@@ -268,8 +301,7 @@ public class IndexModel : PageModel
             Name = AreaForm.Name,
             Description = AreaForm.Description,
             IconName = AreaForm.IconName,
-            StatusMode = AreaForm.StatusMode,
-            ManualStatus = AreaForm.StatusMode == DiningAreaStatusMode.Manual ? AreaForm.ManualStatus : null
+            IsOccupied = AreaForm.IsOccupied
         };
 
         var result = await _service.SaveAreaAsync(area);
@@ -280,35 +312,166 @@ public class IndexModel : PageModel
     public async Task<IActionResult> OnPostDeleteAreaAsync(int id) =>
         Done(await _service.DeleteAreaAsync(id), "Dining area deleted.");
 
+
     public async Task<IActionResult> OnPostSaveTableAsync()
     {
         KeepOnly(nameof(TableForm));
-        if (!Enum.IsDefined(TableForm.Type))
-            ModelState.AddModelError("TableForm.Type", "Choose a valid table type.");
-        if (TableForm.MinGuests > TableForm.Capacity)
-            ModelState.AddModelError("TableForm.Capacity", "Maximum capacity must be at least the minimum booking guests.");
+
+        // 1. Validate status
         if (!Enum.IsDefined(TableForm.Status))
-            ModelState.AddModelError("TableForm.Status", "Choose a valid table status.");
-        if (!ModelState.IsValid) return InvalidInput();
-        var result = await _service.SaveTableAsync(new RestaurantTable
         {
-            Id = TableForm.Id,
-            TableNumber = TableForm.TableNumber,
-            Type = TableForm.Type,
-            TableTypeDefinitionId = TableForm.TableTypeDefinitionId,
-            DiningAreaId = TableForm.DiningAreaId!.Value,
-            MinGuests = TableForm.MinGuests,
-            Capacity = TableForm.Capacity,
-            MinimumSpend = TableForm.MinimumSpend,
-            Description = TableForm.Description,
-            IsActive = TableForm.IsActive,
-            Status = TableForm.Status
-        });
-        return Done(result, "Table saved.");
+            ModelState.AddModelError(
+                "TableForm.Status",
+                "Choose a valid table status.");
+        }
+
+        // 2. Validate table type for new tables
+        if (TableForm.Id == 0 &&
+            (!TableForm.TableTypeDefinitionId.HasValue ||
+             TableForm.TableTypeDefinitionId.Value <= 0))
+        {
+            ModelState.AddModelError(
+                "TableForm.TableTypeDefinitionId",
+                "Please select a table type.");
+        }
+
+        if (!ModelState.IsValid)
+            return InvalidInput();
+
+        // 3. Load existing table to compare changes
+        RestaurantTable? oldTable = null;
+
+        if (TableForm.Id != 0)
+        {
+            oldTable = await _db.RestaurantTables
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == TableForm.Id);
+
+            if (oldTable == null)
+            {
+                ModelState.AddModelError(
+                    string.Empty, "Table not found.");
+                return InvalidInput();
+            }
+        }
+
+        // 4. Use the existing table's type when editing
+        int? typeId = oldTable == null
+            ? TableForm.TableTypeDefinitionId
+            : oldTable.TableTypeDefinitionId;
+
+        if (!typeId.HasValue)
+        {
+            ModelState.AddModelError(
+                "TableForm.TableTypeDefinitionId",
+                "Please select a valid table type.");
+            return InvalidInput();
+        }
+
+        var type = await _db.TableTypeDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == typeId.Value);
+
+        if (type == null || string.IsNullOrWhiteSpace(type.Code))
+        {
+            ModelState.AddModelError(
+                "TableForm.TableTypeDefinitionId",
+                "Table type not found or has no code.");
+            return InvalidInput();
+        }
+
+        // 5. Compare table number and status
+        string submittedNumber = TableForm.TableNumber?.Trim() ?? "";
+
+        // The service accepts both "008" and "CS008".
+        string suffix = submittedNumber.StartsWith(
+            type.Code, StringComparison.OrdinalIgnoreCase)
+            ? submittedNumber.Substring(type.Code.Length)
+            : submittedNumber;
+
+        string fullNumber;
+
+        try
+        {
+            fullNumber = TableNumberHelper.Build(
+                type.Code, suffix, type.NumberPadding);
+        }
+        catch (ArgumentException ex)
+        {
+            ModelState.AddModelError(
+                "TableForm.TableNumber", ex.Message);
+            return InvalidInput();
+        }
+
+        bool numberChanged = oldTable != null &&
+            !string.Equals(
+                oldTable.TableNumber,
+                fullNumber,
+                StringComparison.OrdinalIgnoreCase);
+
+        bool statusChanged = oldTable != null &&
+            oldTable.Status != TableForm.Status;
+
+        // 6. No changes
+        if (oldTable != null &&
+            !numberChanged &&
+            !statusChanged)
+        {
+            return Done(
+                ReservationResult.Ok(),
+                "No changes were made.");
+        }
+
+        // 7. Save only fields managed by the table.
+        // Shared settings come from the table type in the service.
+        var result = await _service.SaveTableAsync(
+            new RestaurantTable
+            {
+                Id = TableForm.Id,
+                TableNumber = fullNumber,
+                TableTypeDefinitionId = typeId,
+                Status = TableForm.Status
+            });
+
+        // 8. Give an accurate success message
+        string message;
+
+        if (oldTable == null)
+        {
+            message = $"Table {fullNumber} created successfully.";
+        }
+        else if (numberChanged && statusChanged)
+        {
+            message = "Table number and status updated successfully.";
+        }
+        else if (numberChanged)
+        {
+            message = "Table number updated successfully.";
+        }
+        else
+        {
+            message = "Table status updated successfully.";
+        }
+
+        return Done(result, message);
     }
+
 
     public async Task<IActionResult> OnPostDeleteTableAsync(int id) =>
         Done(await _service.DeleteTableAsync(id), "Table deleted.");
+    public async Task<IActionResult> OnPostDeleteAllTablesAsync(int typeId)
+    {
+        var result = await _service.DeleteAllTablesAsync(typeId);
+
+        if (!result.Success)
+            return Done(RROMS.Services.ReservationResult.Fail(result.Error!), "");
+
+        var message = result.Kept == 0
+            ? $"Deleted {result.Deleted} table(s)."
+            : $"Deleted {result.Deleted} table(s). {result.Kept} table(s) with booking records were kept.";
+
+        return Done(RROMS.Services.ReservationResult.Ok(), message);
+    }
 
     public async Task<IActionResult> OnPostTypePhotoAsync(TableType type, IFormFile? photo) =>
         Done(await _service.SetTypePhotoAsync(type, photo!), "Table type photo updated on this computer.");
@@ -353,22 +516,64 @@ public class IndexModel : PageModel
         foreach (var key in ModelState.Keys.Where(k => !k.StartsWith(prefix)).ToList()) ModelState.Remove(key);
     }
 
+    private bool IsAjaxRequest =>
+    Request.Headers["X-Requested-With"].ToString() == "XMLHttpRequest";
+
     private IActionResult InvalidInput()
     {
-        ErrorMessage = string.Join(" ",
+        var message = string.Join(" ",
             ModelState.Values
                 .SelectMany(v => v.Errors)
-                .Select(e => e.ErrorMessage));
+                .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage)
+                    ? "Please check the values entered."
+                    : e.ErrorMessage));
+
+        if (IsAjaxRequest)
+        {
+            return new JsonResult(new
+            {
+                success = false,
+                message
+            })
+            {
+                StatusCode = 400
+            };
+        }
+
+        ErrorMessage = message;
 
         return RedirectToPage();
     }
 
-    private IActionResult Done(RROMS.Services.ReservationResult result, string success)
+    private IActionResult Done(
+        RROMS.Services.ReservationResult result,
+        string success)
     {
+        if (IsAjaxRequest)
+        {
+            if (result.Success)
+            {
+                SuccessMessage = success;
+            }
+
+            return new JsonResult(new
+            {
+                success = result.Success,
+                message = result.Success ? success : result.Error
+            })
+            {
+                StatusCode = result.Success ? 200 : 400
+            };
+        }
+
         if (result.Success)
+        {
             SuccessMessage = success;
+        }
         else
+        {
             ErrorMessage = result.Error;
+        }
 
         return RedirectToPage();
     }

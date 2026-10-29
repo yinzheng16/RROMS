@@ -74,17 +74,20 @@ namespace RROMS.Services
 
         public async Task<IReadOnlyList<MenuItemSummary>> GetOrderableMenuItemsAsync(
             CancellationToken cancellationToken = default)
-            => await ItemSummaries(_context.MenuItems.AsNoTracking()
+            => await WithCustomerPricesAsync(await ItemSummaries(_context.MenuItems.AsNoTracking()
                 .Where(item => item.IsAvailable && item.Price > 0)
                 .OrderBy(item => item.Category.DisplayOrder).ThenBy(item => item.Category.Name).ThenBy(item => item.CategoryId)
                 .ThenBy(item => item.Name).ThenBy(item => item.Id))
-                .ToListAsync(cancellationToken);
+                .ToListAsync(cancellationToken), cancellationToken);
 
-        public Task<MenuItemSummary?> GetOrderableMenuItemAsync(int id,
+        public async Task<MenuItemSummary?> GetOrderableMenuItemAsync(int id,
             CancellationToken cancellationToken = default)
-            => ItemSummaries(_context.MenuItems.AsNoTracking()
+        {
+            var item = await ItemSummaries(_context.MenuItems.AsNoTracking()
                 .Where(item => item.Id == id && item.IsAvailable && item.Price > 0))
                 .SingleOrDefaultAsync(cancellationToken);
+            return item is null ? null : (await WithCustomerPricesAsync(new[] { item }, cancellationToken))[0];
+        }
 
         public async Task<MenuItemOperationStatus> SaveMenuItemAsync(int? id, MenuItemWrite input,
             IFormFile? image, bool removeImage, CancellationToken cancellationToken = default)

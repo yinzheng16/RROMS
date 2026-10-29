@@ -23,6 +23,7 @@ public interface IReservationService
 
     // Delete a type only if it has no tables.
     Task<ReservationResult> DeleteTableTypeAsync(int id);
+    Task<DeleteAllTablesResult> DeleteAllTablesAsync(int tableTypeId);
 
     // Upload or change a table type photo.
     Task<ReservationResult> SetTableTypePhotoAsync(
@@ -44,6 +45,7 @@ public interface IReservationService
     Task<ReservationResult> SetTablePhotoAsync(int tableId, IFormFile photo);
     Task<ReservationResult> SetTypePhotoAsync(TableType type, IFormFile photo);
     Task<ReservationResult> SetTableStatusAsync(int id, TableStatus status);
+    Task<ReservationResult> RemoveTableTypePhotoAsync(int tableTypeId);
 
     /// <summary>Always returns 7 rows (Monday to Sunday).</summary>
     Task<List<OperatingHour>> GetOperatingHoursAsync();
@@ -54,4 +56,16 @@ public interface IReservationService
     Task<ReservationResult> DeleteSpecialDateAsync(int id);
 
     // US12, US13, US14... will be added here in the next branches.
+    // ---- US12 / US14: customer booking ----
+    Task<List<string>> GetBookableDatesAsync();
+    Task<List<BookingSlot>> GetTimeSlotsAsync(DateTime date);
+    Task<int> GetMaxPartySizeAsync();
+    Task<TypeOptionsResult> GetTypeOptionsAsync(DateTime start, int guests);
+    Task<BookingResult> CreateReservationAsync(CreateReservationRequest request);
+    Task<int> ReleaseOverdueReservationsAsync();
+    Task<TimeCheckResult> CheckTimeAsync(DateTime start, int guests);
+    Task<bool> HasOverlapAsync(string userId, DateTime start);
+    Task<string?> GetLimitMessageAsync(string userId, DateTime start);
+    Task<bool> IsOpenAtAsync(DateTime when);
+    Task<bool> CanOrderAtAsync(DateTime when);
 }

@@ -35,14 +35,17 @@
 
 </script>
 <link rel="stylesheet" href="~/css/customer-menu.css" asp-append-version="true" />
-<div class="customer-menu" data-customer-menu>
+<link rel="stylesheet" href="~/css/customer-cart.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/customer-menu-art.css" asp-append-version="true" />
+<div class="customer-menu" data-customer-menu data-cart-customer="@(User.IsInRole(RROMS.Models.Roles.Customer) ? "true" : "false")" data-cart-signed-in="@(User.Identity?.IsAuthenticated == true ? "true" : "false")">
     <section class="customer-menu-hero" aria-labelledby="menu-hero-title">
-        <img class="customer-menu-hero__art" src="~/images/menu/yoru-customer-menu-evening.png" alt="" fetchpriority="high" width="2172" height="724" />
+        <img class="customer-menu-hero__art" src="~/images/menu/yoru-customer-menu-evening.webp" asp-append-version="true" alt="" fetchpriority="high" width="2172" height="724" />
         <div class="customer-menu-container customer-menu-hero__content">
             <p class="eyebrow">YORU IZAKAYA · THE MENU</p>
-            <h1 id="menu-hero-title">Your evening<br />starts here.</h1>
+            <h1 id="menu-hero-title">Your evening<br /><span class="customer-menu-hero__gold">starts here.</span></h1>
             <p class="customer-menu-hero__subtitle">Small plates, comforting favourites, and drinks worth lingering over.</p>
         </div>
+        <div class="customer-menu-hero__blossoms" aria-hidden="true"></div>
     </section>
 
     <div class="customer-menu-container customer-menu-browser" id="menu-browser" data-menu-browser>
@@ -240,9 +243,13 @@
                 }
             </div>
         </div>
-        @* Future US24 cart-drawer host. Hidden: no blank column or inactive cart UI in US23. *@
-        <div data-menu-cart-host hidden></div>
     </div>
+    @if (User.IsInRole(RROMS.Models.Roles.Customer))
+    {
+        <a class="menu-floating-cart" href="@Url.Page("/Customer/Cart")" title="View cart" aria-label="My cart" data-cart-floating hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></svg>
+        </a>
+    }
     <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-menu-status></p>
     <dialog class="menu-dish-dialog" id="dish-details" aria-labelledby="dish-detail-title" open="@(Model.SelectedItem is not null)" data-dish-dialog data-menu-dish-id="@(Model.SelectedItem?.Id)">
         <form method="dialog" class="menu-dish-dialog__close"><button type="submit" aria-label="Close dish details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></form>
@@ -254,7 +261,27 @@
         </div>
     </dialog>
     <dialog class="menu-category-drawer" id="menu-category-drawer" aria-labelledby="menu-category-title" data-menu-category-dialog></dialog>
+    <dialog class="customer-cart-dialog cart-login" data-cart-login-dialog aria-labelledby="cart-login-title" aria-describedby="cart-login-copy">
+        <button type="button" class="cart-dialog-close" data-cart-login-close aria-label="Close and continue browsing"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        <div class="cart-login__art" aria-hidden="true">
+            <img src="~/images/cart/yoru-sign-in-watercolour.png" asp-append-version="true" alt="" width="2172" height="724" />
+        </div>
+        <div class="cart-login__content">
+            <p class="cart-login__eyebrow">YORU IZAKAYA <span aria-hidden="true">·</span> <span lang="ja">ようこそ</span></p>
+            <h2 id="cart-login-title">Sign in to start your order</h2>
+            <p id="cart-login-copy">Log in or create an account to add your favourites to your cart.</p>
+            <div class="cart-login__actions">
+                <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login" data-cart-login-link>Log in</a>
+                <a class="btn btn-outline-secondary" asp-area="Identity" asp-page="/Account/Register" data-cart-register-link>Create account</a>
+            </div>
+            <div class="cart-login__browsing">
+                <span aria-hidden="true">←</span>
+                <button type="button" class="cart-text-link cart-login__browse" data-cart-login-close>Continue browsing</button>
+            </div>
+        </div>
+    </dialog>
 </div>
 @section Scripts {
     <script src="~/js/customer-menu.js" asp-append-version="true" defer></script>
+    <script src="~/js/customer-cart.js" asp-append-version="true" defer></script>
 }

@@ -2,13 +2,10 @@
 @using RROMS.Models
 @inject SignInManager<ApplicationUser> SignInManager
 @inject RROMS.Services.Interfaces.IHomeService HomeData
+@inject RROMS.Services.Interfaces.IReportService ReportService
 @{
     // EN04 Shared layout (Owner: Member 1). Ask Member 1 before changing this file.
-    // Brand name: change it here only.
-    const string BrandName = "YORU";
-    const string BrandSub = "IZAKAYA";
-    const string TaglineJp = "夜はこれから";
-    const string Tagline = "The night is still young.";
+    // Brand name, taglines and logo: Models/Brand.cs (one place for the whole site).
 
     var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
     var signedIn = SignInManager.IsSignedIn(User);
@@ -41,8 +38,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] · @BrandName @BrandSub</title>
-    <link rel="icon" type="image/png" href="~/images/yoru-icon.png" />
+    <title>@ViewData["Title"] · @Brand.FullName</title>
+    <link rel="icon" type="image/png" href="@Brand.Favicon" />
     <link rel="apple-touch-icon" href="~/images/yoru-icon-180.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -58,7 +55,7 @@
         <nav class="navbar navbar-expand-lg site-nav" data-bs-theme="dark">
             <div class="@containerClass">
                 <a class="navbar-brand brand" href="@brandHref">
-                    <img class="brand-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
+                    <img class="brand-logo" src="@Brand.Logo" alt="@Brand.FullName" />
                     @if (isAdmin)
                     {
                         <span class="role-pill">Admin</span>
@@ -194,7 +191,7 @@
     {
         <footer class="site-footer site-footer-slim">
             <div class="@containerClass d-flex justify-content-between flex-wrap gap-2">
-                <span>@BrandName @BrandSub · Back office</span>
+                <span>@Brand.FullName · Back office</span>
                 <span>&copy; @DateTime.Now.Year RROMS</span>
             </div>
         </footer>
@@ -206,19 +203,26 @@
             <div class="container-xl">
                 <div class="row gy-4">
                     <div class="col-md-5">
-                        <img class="footer-logo" src="~/images/yoru-logo-dark.png" alt="@BrandName @BrandSub" />
-                        <p class="footer-tagline-jp">@TaglineJp</p>
-                        <p class="footer-tagline">@Tagline</p>
+                        <img class="footer-logo" src="@Brand.Logo" alt="@Brand.FullName" />
+                        <p class="footer-tagline-jp">@Brand.TaglineJp</p>
+                        <p class="footer-tagline">@Brand.Tagline</p>
                     </div>
                     @{
                         // Same data as the Home page: Member 5's settings + Member 2's opening hours.
                         var footerInfo = await HomeData.GetInfoAsync();
                         var footerHours = await HomeData.GetOpeningHoursAsync();
+                        // US49: email is only in Restaurant Settings (HomeInfo has address + phone).
+                        var footerEmail = (await ReportService.GetRestaurantSettingsAsync()).Email;
                     }
                     <div class="col-6 col-md-3">
                         <h2 class="footer-heading">Visit</h2>
-                        <p>@footerInfo.Address</p>
-                        <p>@footerInfo.Phone</p>
+                        @* US49: address keeps the admin's line breaks; phone is already formatted by HomeService *@
+                        <p class="footer-address">@footerInfo.Address</p>
+                        <p><a class="footer-link" href="tel:@footerInfo.Phone.Replace(" ", "")">@footerInfo.Phone</a></p>
+                        @if (!string.IsNullOrWhiteSpace(footerEmail))
+                        {
+                            <p><a class="footer-link" href="mailto:@footerEmail">@footerEmail</a></p>
+                        }
                     </div>
                     <div class="col-6 col-md-4">
                         <h2 class="footer-heading">Hours</h2>
@@ -232,7 +236,7 @@
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <span>&copy; @DateTime.Now.Year @BrandName @BrandSub</span>
+                    <span>&copy; @DateTime.Now.Year @Brand.FullName</span>
                     <span>5026CMD Software Engineering · RROMS</span>
                 </div>
             </div>

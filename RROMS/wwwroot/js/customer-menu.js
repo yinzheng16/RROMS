@@ -558,6 +558,8 @@
                 img.removeAttribute('data-menu-warmed');
                 img.removeAttribute('loading');
             });
+            // Per-response antiforgery tokens aren't a dish-content change.
+            copy.querySelectorAll('input[name="__RequestVerificationToken"]').forEach(input => input.removeAttribute('value'));
             return copy;
         }
 
@@ -574,6 +576,8 @@
                 const oldCard = existing.get(nextCard.dataset.dishId);
                 if (!oldCard) continue;
                 if (comparable(oldCard).isEqualNode(comparable(nextCard))) {
+                    const token = nextCard.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                    if (token) oldCard.querySelectorAll('input[name="__RequestVerificationToken"]').forEach(input => { input.value = token; });
                     nextCard.replaceWith(oldCard);
                     continue;
                 }

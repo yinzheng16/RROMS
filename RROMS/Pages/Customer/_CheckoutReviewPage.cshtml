@@ -1,0 +1,7 @@
+@model RROMS.Services.Interfaces.CheckoutQuote
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Review your order";
+}
+<link rel="stylesheet" href="~/css/customer-cart.css" asp-append-version="true" />
+<section class="card checkout-review-page"><partial name="_CheckoutReview" model="Model" /></section>

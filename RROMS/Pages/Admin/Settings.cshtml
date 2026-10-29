@@ -1,0 +1,302 @@
+@page
+@model RROMS.Pages.Admin.Settings
+@using RROMS.Models
+@using RROMS.Services
+@using System.Globalization
+
+@{
+    // US49 Restaurant Settings (Member 5; follow-up fixes and redesign by Member 1)
+    // Styles: wwwroot/css/restaurant-settings.css · Script: wwwroot/js/restaurant-settings.js
+    // Images: wwwroot/images/settings/ (artwork only, no text in images)
+    ViewData["Title"] = "Restaurant Settings";
+    ViewData["FullWidth"] = true;   // the hero goes edge to edge; the page draws its own container
+
+    var s = Model.RestaurantSetting;
+    var hasErrors = ViewData.ModelState.ErrorCount > 0;
+    string Pct(decimal v) => v.ToString("0.##", CultureInfo.InvariantCulture) + "%";
+    var phoneShown = string.IsNullOrWhiteSpace(s.Phone) ? "—" : PhoneDisplay.Pretty(s.Phone);
+    var addressOneLine = System.Text.RegularExpressions.Regex.Replace(s.Address ?? "", @",?\s*\r?\n\s*", ", ");   // 2 lines -> "line 1, line 2"
+}
+
+@* Same flag icons as /Account/Register (emoji flags don't show on Windows) *@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" />
+<link rel="stylesheet" href="~/css/restaurant-settings.css" asp-append-version="true" />
+
+<div class="rs-page @(hasErrors ? "has-errors" : "")" id="rsPage">
+
+    @* ================= HERO (same width as the other back-office pages) ================= *@
+    <div class="container-xl container-wide rs-hero-wrap">
+    <section class="rs-hero">
+        <div class="rs-hero-in">
+            <p class="rs-eyebrow">ADMINISTRATION · 店舗設定</p>
+            <h1 class="rs-title">Restaurant <em>Settings</em></h1>
+            <p class="rs-lede">Manage how guests reach you, and set the service charges, taxes and receipt details that appear on every bill.</p>
+            <div class="rs-glance">
+                <span><i class="bi bi-gear" aria-hidden="true"></i>Service <b id="glSvc">@Pct(s.ServiceChargePercent)</b> · <span id="glTake">@(s.ServiceChargeOnTakeaway ? "dine-in & takeaway" : "dine-in only")</span></span>
+                <span><i class="bi bi-percent" aria-hidden="true"></i>SST <b id="glTax">@Pct(s.TaxRatePercent)</b></span>
+                <span><i class="bi bi-telephone" aria-hidden="true"></i>Phone <b id="glPhone">@phoneShown</b></span>
+            </div>
+        </div>
+    </section>
+    </div>
+
+    <img class="rs-deco rs-deco-right" src="~/images/settings/sakura-right.webp" alt="" aria-hidden="true" />
+    <img class="rs-deco rs-deco-left" src="~/images/settings/sakura-left.webp" alt="" aria-hidden="true" />
+
+    <form method="post" id="rsForm" class="rs-wrap container-xl container-wide" novalidate>
+        <input type="hidden" asp-for="RestaurantSetting.Id" />
+        <div asp-validation-summary="ModelOnly" class="rs-summary"></div>
+
+        @* ================= 一 CONTACT ================= *@
+        <div class="rs-band" id="rs-contact">
+            <span class="rs-band-ic" aria-hidden="true"><i class="bi bi-telephone-fill"></i></span>
+            <div>
+                <h2>Contact<span>連絡先</span></h2>
+                <p>This information will be shown in the footer and the Home page "Visit us" section.</p>
+            </div>
+        </div>
+
+        <div class="rs-row">
+            <div class="rs-tile rs-c7 rs-tile-open">
+                <div class="rs-grid2">
+                    <div class="rs-field">
+                        <label asp-for="PhoneInput" class="rs-lb">Phone <span>Optional</span></label>
+                        @* Same country picker as /Account/Register (styles in site.css: .cc, .cc-btn, .cc-panel) *@
+                        <div class="rs-phone-row" id="phoneBox">
+                            <div class="rs-phone-code cc" data-cc>
+                                <select asp-for="RestaurantSetting.PhoneCountry" class="form-select cc-native" aria-label="Country code" autocomplete="tel-country-code">
+                                    @foreach (var c in Model.Countries)
+                                    {
+                                        <option value="@c.Iso" data-name="@c.Name" data-dial="@c.DialCode">@c.Iso @c.DialCode</option>
+                                    }
+                                </select>
+                                <button type="button" class="cc-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Country code">
+                                    <span class="cc-flag fi" aria-hidden="true"></span>
+                                    <span class="cc-dial"></span>
+                                    <i class="bi bi-chevron-down cc-caret" aria-hidden="true"></i>
+                                </button>
+                                <div class="cc-panel" hidden>
+                                    <div class="cc-search">
+                                        <i class="bi bi-search" aria-hidden="true"></i>
+                                        <input type="text" class="cc-input" placeholder="Search country or code" aria-label="Search country or code" autocomplete="off" />
+                                    </div>
+                                    <ul class="cc-list" role="listbox" aria-label="Countries"></ul>
+                                    <p class="cc-empty" hidden><i class="bi bi-globe2 me-1" aria-hidden="true"></i>No country found</p>
+                                </div>
+                            </div>
+                            <input asp-for="PhoneInput" class="rs-in" type="tel" inputmode="tel" autocomplete="tel-national"
+                                   placeholder="e.g. 03-2142 6688" />
+                        </div>
+                        <p class="rs-hint">Mobile or landline. Spaces and dashes are fine.</p>
+                        <span class="rs-msg" id="phoneMsg" hidden></span>
+                        <span asp-validation-for="RestaurantSetting.PhoneCountry"></span>
+                        <span asp-validation-for="PhoneInput" id="phoneServerMsg"></span>
+                    </div>
+
+                    <div class="rs-field">
+                        <label asp-for="RestaurantSetting.Email" class="rs-lb">Email <span>Optional</span></label>
+                        <div class="rs-affix">
+                            <span class="rs-pre" aria-hidden="true"><i class="bi bi-envelope-fill"></i></span>
+                            <input asp-for="RestaurantSetting.Email" type="email" autocomplete="email" placeholder="hello@yoru-izakaya.com" />
+                        </div>
+                        <p class="rs-hint">Shown as a link in the footer.</p>
+                        <span asp-validation-for="RestaurantSetting.Email"></span>
+                    </div>
+
+                    <div class="rs-field rs-span2">
+                        <label asp-for="RestaurantSetting.Address" class="rs-lb">Address <span class="rs-count" data-count-for="RestaurantSetting_Address" data-max="200"></span></label>
+                        <div class="rs-addr">
+                            <textarea asp-for="RestaurantSetting.Address" class="rs-in" rows="3" maxlength="200" autocomplete="street-address"></textarea>
+                            <span class="rs-pin" aria-hidden="true"><i class="bi bi-geo-alt-fill"></i></span>
+                        </div>
+                        <p class="rs-hint">Press Enter for a new line. The footer and Home page keep your line breaks.</p>
+                        <span asp-validation-for="RestaurantSetting.Address"></span>
+                    </div>
+                </div>
+            </div>
+
+            @* Business card: what guests see (footer + Home "Visit us") *@
+            <div class="rs-tile rs-c5 rs-cardtile" aria-live="polite">
+                <span class="rs-ribbon">WHAT GUESTS SEE · 名刺</span>
+                <div class="rs-meishi">
+                    <span class="rs-hanko" aria-hidden="true">夜</span>
+                    <p class="rs-meishi-name">@Brand.FullName</p>
+                    <p class="rs-meishi-tag">@Brand.TaglineJp</p>
+                    <div class="rs-meishi-ln"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i><span id="mcAddr" class="rs-pre-line">@(string.IsNullOrWhiteSpace(s.Address) ? "—" : s.Address)</span></div>
+                    <div class="rs-meishi-ln"><i class="bi bi-telephone-fill" aria-hidden="true"></i><span id="mcPhone">@phoneShown</span></div>
+                    <div class="rs-meishi-ln" id="mcEmailRow" hidden="@string.IsNullOrWhiteSpace(s.Email)"><i class="bi bi-envelope-fill" aria-hidden="true"></i><span id="mcEmail">@s.Email</span></div>
+                </div>
+            </div>
+        </div>
+
+        @* ================= 二 CHARGES ================= *@
+        <div class="rs-band" id="rs-charges">
+            <span class="rs-band-ic" aria-hidden="true"><i class="bi bi-coin"></i></span>
+            <div>
+                <h2>Charges<span class="is-red">料金</span></h2>
+                <p>Used by every order and bill.</p>
+            </div>
+            <span class="rs-rule"></span>
+        </div>
+
+        <div class="rs-row">
+            <div class="rs-tile rs-c4 rs-rate" style="--c:var(--rs-shu)" data-rate="svc">
+                <div class="rs-rate-top"><label asp-for="RestaurantSetting.ServiceChargePercent">Service charge</label><span>サービス料</span></div>
+                <div class="rs-num">
+                    <button type="button" class="rs-step" data-step="-1" aria-label="Lower service charge">−</button>
+                    <span class="rs-val">
+                        <input asp-for="RestaurantSetting.ServiceChargePercent" asp-format="{0:0.##}" type="number" step="0.01" min="0" max="100" inputmode="decimal" class="rs-big" />
+                        <small>%</small>
+                    </span>
+                    <button type="button" class="rs-step" data-step="1" aria-label="Raise service charge">+</button>
+                </div>
+                <div class="rs-ruler">
+                    <input type="range" class="rs-range" min="0" max="30" step="0.5" aria-label="Service charge slider" />
+                    <span class="rs-ticks" aria-hidden="true"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30</span></span>
+                </div>
+                <div class="rs-chips">
+                    <button type="button" class="rs-chip" data-set="0">0%</button>
+                    <button type="button" class="rs-chip" data-set="5">5%</button>
+                    <button type="button" class="rs-chip" data-set="10">10%</button>
+                    <button type="button" class="rs-chip" data-set="15">15%</button>
+                </div>
+                <span asp-validation-for="RestaurantSetting.ServiceChargePercent"></span>
+            </div>
+
+            <div class="rs-tile rs-c4 rs-rate rs-rate-tax" style="--c:var(--rs-kin2)" data-rate="tax">
+                <div class="rs-rate-top"><label asp-for="RestaurantSetting.TaxRatePercent">Tax rate (SST)</label><span>売上・サービス税</span></div>
+                <div class="rs-num">
+                    <button type="button" class="rs-step" data-step="-1" aria-label="Lower tax rate">−</button>
+                    <span class="rs-val">
+                        <input asp-for="RestaurantSetting.TaxRatePercent" asp-format="{0:0.##}" type="number" step="0.01" min="0" max="100" inputmode="decimal" class="rs-big" />
+                        <small>%</small>
+                    </span>
+                    <button type="button" class="rs-step" data-step="1" aria-label="Raise tax rate">+</button>
+                </div>
+                <div class="rs-ruler">
+                    <input type="range" class="rs-range" min="0" max="30" step="0.5" aria-label="Tax rate slider" />
+                    <span class="rs-ticks" aria-hidden="true"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30</span></span>
+                </div>
+                <div class="rs-chips">
+                    <button type="button" class="rs-chip" data-set="0">0%</button>
+                    <button type="button" class="rs-chip" data-set="6">6%</button>
+                    <button type="button" class="rs-chip" data-set="8">8%</button>
+                </div>
+                <span asp-validation-for="RestaurantSetting.TaxRatePercent"></span>
+            </div>
+
+            <div class="rs-tile rs-c4 rs-who">
+                <h3>Who pays service charge?</h3>
+                <p>Pick which bills include the service charge.</p>
+                <div class="rs-opt is-dine">
+                    <span class="rs-opt-ic" aria-hidden="true"><i class="bi bi-cup-hot-fill"></i></span>
+                    <div><b>Dine-in</b><small>Always charged</small></div>
+                    <span class="rs-always">ALWAYS</span>
+                </div>
+                <label class="rs-opt" for="RestaurantSetting_ServiceChargeOnTakeaway">
+                    <span class="rs-opt-ic is-dark" aria-hidden="true"><i class="bi bi-bag-check-fill"></i></span>
+                    <div><b>Takeaway</b><small id="takeHelp">@(s.ServiceChargeOnTakeaway ? "On: service charge added" : "Off: no service charge")</small></div>
+                    <input asp-for="RestaurantSetting.ServiceChargeOnTakeaway" class="rs-switch-input" role="switch" />
+                    <span class="rs-switch" aria-hidden="true"><i></i></span>
+                </label>
+            </div>
+
+            @* How a RM 100 bill adds up (same maths as ReportService.CalculateCharges) *@
+            <div class="rs-eq rs-c12" aria-live="polite">
+                <img class="rs-torii" src="~/images/settings/torii.webp" alt="" aria-hidden="true" />
+                <span class="rs-eq-lbl" id="eqTitle">HOW A RM 100 DINE-IN BILL ADDS UP</span>
+                <span class="rs-blk"><small>SUBTOTAL</small><b>RM 100.00</b></span>
+                <span class="rs-op">+</span>
+                <span class="rs-blk"><small id="eqSvcL">SERVICE</small><b id="eqSvc">—</b></span>
+                <span class="rs-op">+</span>
+                <span class="rs-blk"><small id="eqTaxL">SST</small><b id="eqTax">—</b></span>
+                <span class="rs-op">=</span>
+                <span class="rs-blk is-total"><small>TOTAL</small><b id="eqTotal">—</b></span>
+                <span class="rs-eq-note">Same maths the order and billing pages use. Rounded to 2 decimals.</span>
+            </div>
+        </div>
+
+        @* ================= 三 RECEIPT ================= *@
+        <div class="rs-band" id="rs-receipt">
+            <span class="rs-band-ic is-green" aria-hidden="true"><i class="bi bi-receipt"></i></span>
+            <div>
+                <h2>Receipt<span>領収書</span></h2>
+                <p>Printed on every bill and receipt.</p>
+            </div>
+            <span class="rs-rule"></span>
+        </div>
+
+        <div class="rs-row">
+            <div class="rs-tile rs-c5 rs-rcpt">
+                <div class="rs-field">
+                    <label asp-for="RestaurantSetting.SstRegistrationNo" class="rs-lb">SST registration no. <span>Optional</span></label>
+                    <input asp-for="RestaurantSetting.SstRegistrationNo" class="rs-in rs-caps" maxlength="30" autocomplete="off" placeholder="e.g. W10-1808-31000123" />
+                    <p class="rs-hint">Printed under the restaurant name.</p>
+                    <span asp-validation-for="RestaurantSetting.SstRegistrationNo"></span>
+                </div>
+                <div class="rs-field">
+                    <label asp-for="RestaurantSetting.ReceiptFooterNote" class="rs-lb">Message at the bottom <span class="rs-count" data-count-for="RestaurantSetting_ReceiptFooterNote" data-max="120"></span></label>
+                    <input asp-for="RestaurantSetting.ReceiptFooterNote" class="rs-in" maxlength="120" placeholder="e.g. Thank you, see you again! ありがとう" />
+                    <p class="rs-hint">One short line under the total.</p>
+                    <span asp-validation-for="RestaurantSetting.ReceiptFooterNote"></span>
+                </div>
+                <div class="rs-tip">
+                    <i class="bi bi-lightbulb-fill" aria-hidden="true"></i>
+                    <span><b>Tip ·</b> the yellow marks on the receipt show the two lines this section controls. Everything else comes from the order itself.</span>
+                </div>
+            </div>
+
+            <div class="rs-c7 rs-tablewrap">
+                <div class="rs-rhead">
+                    <b>LIVE RECEIPT · 見本</b>
+                    <span class="rs-seg" role="radiogroup" aria-label="Example bill type">
+                        <input type="radio" id="pvDine" name="pvType" value="dine" checked /><label for="pvDine">Dine-in</label>
+                        <input type="radio" id="pvTake" name="pvType" value="take" /><label for="pvTake">Takeaway</label>
+                    </span>
+                </div>
+                <div class="rs-table">
+                    <div class="rs-slot" aria-hidden="true"></div>
+                    <div class="rs-paper" aria-live="polite">
+                        <div class="rs-paper-brand"><i aria-hidden="true">夜</i><b>@Brand.FullName</b></div>
+                        <p class="rs-c"><span class="rs-hl rs-paper-sst" id="rcSst" hidden="@string.IsNullOrWhiteSpace(s.SstRegistrationNo)">SST No. @s.SstRegistrationNo</span></p>
+                        <p class="rs-c rs-paper-addr" id="rcAddr">@addressOneLine</p>
+                        <div class="rs-sec"><div class="rs-r rs-small"><span id="rcKind">Table 7 · Dine-in</span><span>@DateTime.Now.ToString("d MMM · h:mm tt", CultureInfo.InvariantCulture)</span></div></div>
+                        <div class="rs-sec">
+                            <div class="rs-r"><span>Salmon sashimi</span><span>38.00</span></div>
+                            <div class="rs-r"><span>2 × Chicken yakitori</span><span>32.00</span></div>
+                            <div class="rs-r"><span>2 × Highball</span><span>30.00</span></div>
+                        </div>
+                        <div class="rs-sec">
+                            <div class="rs-r"><span>Subtotal</span><span>100.00</span></div>
+                            <div class="rs-r" id="rcSvcRow"><span id="rcSvcL">Service charge</span><span id="rcSvc">—</span></div>
+                            <div class="rs-r"><span id="rcTaxL">SST</span><span id="rcTax">—</span></div>
+                        </div>
+                        <div class="rs-tot"><span>TOTAL</span><b id="rcTotal">—</b></div>
+                        <p class="rs-c rs-paper-msg"><span class="rs-hl" id="rcNote" hidden="@string.IsNullOrWhiteSpace(s.ReceiptFooterNote)">@s.ReceiptFooterNote</span></p>
+                        <p class="rs-c rs-paper-bye">ご来店ありがとうございました</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Save bar: appears only when something changed (like My profile) *@
+        <div class="rs-savebar" id="rsSavebar" role="region" aria-label="Unsaved changes">
+            <span class="rs-dot" aria-hidden="true"></span>
+            <div class="rs-save-text">
+                <b id="rsSaveCount">@(hasErrors ? "Not saved yet" : "Unsaved changes")</b>
+                <small>@(hasErrors ? "Please fix the highlighted fields." : "Nothing goes live until you save.")</small>
+            </div>
+            <span class="rs-save-actions">
+                <button type="button" class="rs-ghost" id="rsDiscard">Discard</button>
+                <button type="submit" class="rs-save">Save changes</button>
+            </span>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    @* Same phone rules as the server (libphonenumber), for instant feedback while typing *@
+    <script src="https://cdn.jsdelivr.net/npm/libphonenumber-js@1/bundle/libphonenumber-min.js"></script>
+    <script src="~/js/restaurant-settings.js" asp-append-version="true"></script>
+}

@@ -23,13 +23,17 @@
         </div>
         <h4><a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" data-dish-open="@Model.Id">@Model.Name</a></h4>
         <p class="tasting-card__description">@(string.IsNullOrWhiteSpace(Model.Description) ? "Discover this dish in the details." : Model.Description)</p>
-        <p class="menu-availability tasting-card__availability"><span class="@(Model.IsAvailable ? "bg-success" : "bg-secondary")" aria-hidden="true"></span>@(Model.IsAvailable ? "Available" : "Unavailable")</p>
+        <div class="tasting-card__information">
+            <p class="menu-availability tasting-card__availability"><span class="@(Model.IsAvailable ? "bg-success" : "bg-secondary")" aria-hidden="true"></span>@(Model.IsAvailable ? "Available" : "Unavailable")</p>
+            <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="tasting-card__details-link" data-dish-open="@Model.Id" aria-label="View @Model.Name details">View details <span aria-hidden="true">→</span></a>
+        </div>
         <div class="tasting-card__footer">
             <span class="tasting-card__price">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
-            @* US23 keeps one visible details button. US24 will place cart controls here
-               and move View details to a small link below the description. *@
             <div class="tasting-card__actions" data-menu-actions>
-                <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="btn btn-outline-secondary tasting-card__details" data-dish-open="@Model.Id" aria-label="View @Model.Name details">View details <span aria-hidden="true">→</span></a>
+                <form method="get" asp-page="/Menu/Index" data-cart-customize>
+                    <input type="hidden" name="ItemId" value="@Model.Id" />
+                    <button type="submit" class="btn btn-primary tasting-card__add" disabled="@(!Model.IsAvailable)" aria-label="@(Model.IsAvailable ? "Add " + Model.Name + " to cart" : Model.Name + " is unavailable")">@(Model.IsAvailable ? "Add to cart" : "Unavailable")</button>
+                </form>
             </div>
         </div>
     </div>

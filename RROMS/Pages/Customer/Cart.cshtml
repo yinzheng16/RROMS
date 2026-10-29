@@ -1,0 +1,28 @@
+@page
+@model RROMS.Pages.Customer.CartModel
+@{
+    ViewData["Title"] = "Your cart";
+}
+<link rel="stylesheet" href="~/css/customer-cart.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/customer-cart-art.css" asp-append-version="true" />
+<div class="customer-cart" data-customer-cart>
+    <header class="cart-page-heading">
+        <div class="cart-page-heading__text">
+            <p class="eyebrow">YORU IZAKAYA <span aria-hidden="true">·</span> <span lang="ja">ご注文</span></p>
+            <h1>A taste of <span>YORU</span></h1>
+            <p class="cart-page-heading__intro">Review your favourites before placing your order.</p>
+            <a class="btn btn-outline-secondary" asp-page="/Menu/Index">← Continue browsing</a>
+        </div>
+        <div class="cart-page-heading__art" aria-hidden="true">
+            <img src="~/images/cart/yoru-cart-illustrated-header.webp" asp-append-version="true" alt="" width="2172" height="724" />
+        </div>
+    </header>
+    <partial name="_CartContent" model="Model.Cart" />
+    <p class="visually-hidden" role="status" aria-live="polite" data-cart-status></p>
+    <dialog class="customer-cart-dialog" data-checkout-dialog aria-labelledby="checkout-title">
+        <div data-checkout-content></div>
+    </dialog>
+</div>
+@section Scripts {
+    <script src="~/js/customer-cart.js" asp-append-version="true"></script>
+}
