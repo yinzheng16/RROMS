@@ -1,0 +1,781 @@
+/* =====================================================
+   YORU IZAKAYA — US32 STAFF BILLING (Member 4)
+   Used by Pages/Staff/Billing/Index.cshtml (list)
+   and Pages/Staff/Billing/Bill.cshtml (one bill).
+   The screen, payment and A4 print styles below were moved
+   unchanged from the old Index.cshtml <style> block.
+   ===================================================== */
+
+/* =====================================================
+           YORU IZAKAYA — US32 SCREEN STYLES
+           ===================================================== */
+
+@media screen {
+
+    .us32-billing .billing-card {
+        margin-bottom: 24px !important;
+        border-radius: 8px;
+    }
+
+        .us32-billing .billing-card > .card-body {
+            padding: 24px;
+        }
+
+        .us32-billing .billing-card .billing-card-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.4;
+            letter-spacing: 0;
+            margin-bottom: 8px !important;
+        }
+
+        .us32-billing .billing-card h6 {
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .us32-billing .billing-card .form-label {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .us32-billing .billing-card .billing-order-label {
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .us32-billing .billing-card .form-control {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.5;
+            min-height: 42px;
+        }
+
+        .us32-billing .billing-card p {
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 1.65;
+        }
+
+        .us32-billing .billing-card table {
+            font-family: var(--font-body);
+        }
+
+            .us32-billing .billing-card table th {
+                font-size: 11px;
+                font-weight: 600;
+                line-height: 1.5;
+                letter-spacing: .7px;
+                padding: 12px;
+            }
+
+            .us32-billing .billing-card table td {
+                font-size: 13px;
+                font-weight: 400;
+                line-height: 1.5;
+                padding: 13px 12px;
+            }
+
+        .us32-billing .billing-card
+        .row.justify-content-end span {
+            font-family: var(--font-body);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+    .us32-billing #printableBill h4 {
+        font-family: var(--font-body);
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .us32-billing .billing-card .btn {
+        font-family: var(--font-body);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.5;
+        padding: 10px 18px;
+    }
+
+    .us32-billing .billing-card .badge {
+        font-family: var(--font-body);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: .3px;
+    }
+    /* Bill heading */
+    .us32-billing #printableBill
+    .bill-preview-heading {
+        margin-bottom: 8px !important;
+    }
+
+        .us32-billing #printableBill
+        .bill-preview-heading .billing-card-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 0 !important;
+        }
+
+    .us32-billing #printableBill
+    .bill-order-number {
+        font-family: var(--font-body);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5;
+        margin-bottom: 22px !important;
+    }
+    /* Balanced Final Total spacing */
+    .us32-billing #printableBill
+    .billing-total-divider {
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .us32-billing #printableBill
+    .billing-final-total {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .us32-billing #printableBill
+    .billing-actions-divider {
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-card > .card-body {
+        padding: 18px;
+    }
+}
+
+/* =====================================================
+           PAYMENT MANAGEMENT
+           ===================================================== */
+
+/* Reduce spacing below Payment Management heading */
+.us32-billing .payment-management-card
+.payment-empty-message {
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
+    line-height: 1.5;
+}
+
+.us32-billing .payment-method-fieldset {
+    min-width: 0;
+}
+
+    .us32-billing .payment-method-fieldset legend {
+        float: none;
+        width: auto;
+    }
+
+.us32-billing .payment-method-tile {
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+    cursor: pointer;
+    padding: 14px 8px;
+    border: 1px solid #d8cfc2;
+    border-radius: 7px;
+    background: #fffdf9;
+    transition: border-color .15s, background-color .15s;
+}
+
+    .us32-billing .payment-method-tile strong {
+        font-size: 14px;
+    }
+
+    .us32-billing .payment-method-tile small {
+        font-size: 11px;
+        color: #746d63;
+    }
+
+.us32-billing .payment-method-icon {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.us32-billing
+.payment-method-radio:checked + .payment-method-tile {
+    border-color: #a67b3f;
+    background: #fff0d3;
+    box-shadow: inset 0 0 0 1px #a67b3f;
+}
+
+.us32-billing
+.payment-method-radio:focus-visible + .payment-method-tile {
+    outline: 3px solid #896a42;
+    outline-offset: 3px;
+}
+
+.us32-billing .payment-method-tile-disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.us32-billing .payment-readonly-value {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #e0d8cc;
+    border-radius: 6px;
+    background: #faf8f4;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.us32-billing .payment-result {
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+}
+
+.us32-billing .payment-result-success {
+    background: #e8f6eb;
+    color: #166534;
+}
+
+.us32-billing .payment-result-pending {
+    background: #fff2d6;
+    color: #845400;
+}
+
+.us32-billing .payment-result-failed {
+    background: #fce8e7;
+    color: #9b2823;
+}
+
+/* =====================================================
+           PRINT-ONLY ELEMENTS
+           ===================================================== */
+
+.yoru-print-header,
+.yoru-print-footer {
+    display: none;
+}
+
+.yoru-print-logo {
+    display: block;
+    width: 100px;
+    max-height: 85px;
+    object-fit: contain;
+    margin: 0 auto 12px;
+}
+
+/* =====================================================
+           PRINT BILL — A4
+           ===================================================== */
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 18mm;
+    }
+
+    html, body {
+        background: #fff !important;
+        color: #24201c !important;
+    }
+
+        body * {
+            visibility: hidden !important;
+        }
+
+    #printableBill,
+    #printableBill * {
+        visibility: visible !important;
+    }
+
+    #printableBill {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        font-family: var(--font-body) !important;
+        font-weight: 400;
+    }
+
+        #printableBill .card-body {
+            padding: 0 !important;
+        }
+
+        #printableBill .billing-actions,
+        #printableBill .billing-actions-divider,
+        .us32-billing .payment-management-card {
+            display: none !important;
+        }
+        /* Restaurant branding */
+        #printableBill .yoru-print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+            #printableBill .yoru-print-brand h1,
+            #printableBill .yoru-print-header h2 {
+                font-family: var(--font-display) !important;
+                font-weight: 700;
+            }
+
+        #printableBill .yoru-print-brand h1 {
+            margin: 0;
+            font-size: 34px;
+            letter-spacing: 3px;
+        }
+
+        #printableBill .yoru-print-subtitle {
+            margin-top: 3px;
+            color: #9b8062 !important;
+            font-size: 11px;
+            letter-spacing: 5px;
+        }
+
+        #printableBill .yoru-print-divider {
+            width: 100%;
+            height: 1px;
+            background: #b49a76 !important;
+            margin: 20px 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        #printableBill .yoru-print-header h2 {
+            font-size: 15px;
+            letter-spacing: 1px;
+            margin: 14px 0 5px;
+        }
+
+        #printableBill .yoru-print-header p {
+            color: #77716b !important;
+            font-size: 11px;
+            margin: 0;
+        }
+        /* Avoid duplicate headings */
+        #printableBill .card-body >
+        .yoru-print-header + .d-flex {
+            display: none !important;
+        }
+        /* Item table */
+        #printableBill .table-responsive {
+            overflow: visible !important;
+        }
+
+        #printableBill table {
+            width: 100% !important;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        #printableBill th {
+            background: #f7f3ed !important;
+            color: #6f5b47 !important;
+            font-size: 10px;
+            letter-spacing: .7px;
+            padding: 12px 8px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        #printableBill td {
+            padding: 12px 8px !important;
+            border-color: #e8e2d9 !important;
+        }
+
+        #printableBill tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        /* Bill totals */
+        #printableBill .row.justify-content-end {
+            margin-top: 24px !important;
+        }
+
+            #printableBill
+            .row.justify-content-end > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+            }
+
+        #printableBill h4 {
+            color: var(--yoru-red-text) !important;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        /* Balanced Final Total spacing */
+        #printableBill .billing-total-divider {
+            margin-top: 12px !important;
+            margin-bottom: 12px !important;
+        }
+
+        #printableBill .billing-final-total {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Print footer */
+        #printableBill .yoru-print-footer {
+            display: block !important;
+            text-align: center;
+            margin-top: 0 !important;
+        }
+
+            #printableBill .yoru-print-footer
+            .yoru-print-divider {
+                margin-top: 12px !important;
+                margin-bottom: 20px !important;
+            }
+
+            #printableBill .yoru-print-footer p {
+                font-family: var(--font-body) !important;
+                font-size: 11px;
+                color: #77716b !important;
+                margin: 5px 0;
+            }
+
+            #printableBill .yoru-print-footer
+            .yoru-japanese {
+                font-family: var(--font-display) !important;
+                font-size: 17px;
+                color: #9b8062 !important;
+            }
+
+            #printableBill .yoru-print-footer strong {
+                display: block;
+                margin-top: 12px;
+                font-size: 11px;
+                letter-spacing: 2px;
+                color: #a94736 !important;
+            }
+
+            #printableBill .yoru-print-footer
+            .yoru-print-notice {
+                margin-top: 16px;
+                font-size: 10px;
+                font-style: italic;
+            }
+}
+
+/* =====================================================
+   BILLING LIST (Index)
+   ===================================================== */
+
+.us32-billing .billing-tabs .nav-link {
+    color: var(--yoru-ink);
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 999px;
+    padding: 8px 18px;
+}
+
+    .us32-billing .billing-tabs .nav-link.active {
+        background: var(--yoru-ink);
+        color: var(--yoru-cream);
+    }
+
+.us32-billing .billing-tab-count {
+    display: inline-block;
+    min-width: 22px;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .08);
+    font-size: 12px;
+    text-align: center;
+}
+
+.us32-billing .billing-tabs .nav-link.active .billing-tab-count {
+    background: rgba(255, 255, 255, .18);
+}
+
+.us32-billing .billing-search {
+    position: relative;
+    flex: 1 1 280px;
+    max-width: 380px;
+}
+
+    .us32-billing .billing-search .bi-search {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--yoru-olive-text);
+        pointer-events: none;
+    }
+
+    .us32-billing .billing-search .form-control {
+        padding-left: 36px;
+    }
+
+.us32-billing .billing-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.us32-billing .billing-filter {
+    border: 1px solid var(--yoru-line);
+    background: var(--yoru-paper);
+    color: var(--yoru-ink);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+    .us32-billing .billing-filter.active {
+        border-color: #a67b3f;
+        background: #fff0d3;
+    }
+
+.us32-billing .billing-card .billing-list .btn {
+    padding: 6px 14px;
+}
+
+.us32-billing .billing-sub {
+    font-size: 11px;
+    color: var(--yoru-olive-text);
+    margin-top: 2px;
+}
+
+.us32-billing .billing-kitchen {
+    color: #845400;
+}
+
+.us32-billing .billing-order-no {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 12px !important;
+    white-space: nowrap;
+}
+
+.us32-billing .billing-empty {
+    margin: 12px 0 0;
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .billing-row-done td {
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .billing-old-tag {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: #fce8e7;
+    color: #9b2823;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.us32-billing .billing-lookup {
+    margin: 14px 0 0;
+    font-size: 13px;
+}
+
+/* Bill state pill (list + bill page header) */
+.us32-billing .bill-state {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.us32-billing .bill-state-nobill {
+    background: transparent;
+    color: var(--yoru-olive-text);
+    border-color: #c9c1b3;
+}
+
+.us32-billing .bill-state-awaiting {
+    background: #fff2d6;
+    color: #845400;
+    border-color: #ecd29b;
+}
+
+.us32-billing .bill-state-paid {
+    background: #191919;
+    color: #f5f0e7;
+}
+
+.us32-billing .bill-state-lg {
+    font-size: 13px;
+    padding: 6px 14px;
+}
+
+/* =====================================================
+   ONE BILL (Bill.cshtml)
+   ===================================================== */
+
+.us32-billing .billing-back {
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.us32-billing .billing-heading-type {
+    margin-left: 8px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .bill-round-orderno {
+    font-size: 12px;
+    color: var(--yoru-olive-text);
+}
+
+@media screen and (min-width: 992px) {
+    .us32-billing .billing-side {
+        position: sticky;
+        top: 24px;
+    }
+}
+
+/* Stepper */
+.us32-billing .billing-steps {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+}
+
+.us32-billing .billing-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    font-size: 12px;
+    color: var(--yoru-olive-text);
+    text-align: center;
+}
+
+    .us32-billing .billing-step:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: calc(50% + 18px);
+        right: calc(-50% + 18px);
+        height: 2px;
+        background: var(--yoru-line);
+    }
+
+    .us32-billing .billing-step.done:not(:last-child)::after {
+        background: #a67b3f;
+    }
+
+.us32-billing .billing-step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--yoru-line);
+    background: var(--yoru-paper);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.us32-billing .billing-step.current {
+    color: var(--yoru-ink);
+    font-weight: 600;
+}
+
+    .us32-billing .billing-step.current .billing-step-dot {
+        border-color: var(--yoru-ink);
+        background: var(--yoru-ink);
+        color: var(--yoru-cream);
+    }
+
+.us32-billing .billing-step.done .billing-step-dot {
+    border-color: #a67b3f;
+    background: #fff0d3;
+    color: #6e4f24;
+}
+
+.us32-billing .billing-side-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border-radius: 6px;
+    background: #faf8f4;
+    border: 1px solid #e0d8cc;
+    font-size: 13px;
+}
+
+    .us32-billing .billing-side-total strong {
+        font-size: 20px;
+        color: var(--yoru-red-text);
+    }
+
+.us32-billing .billing-card p.billing-side-note {
+    font-size: 12px;
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .billing-paid-details {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    margin: 0 0 12px;
+    font-size: 13px;
+}
+
+    .us32-billing .billing-paid-details dt {
+        font-weight: 500;
+        color: var(--yoru-olive-text);
+    }
+
+    .us32-billing .billing-paid-details dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+.us32-billing .billing-history summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+@media print {
+    .us32-billing .billing-side {
+        display: none !important;
+    }
+}
+

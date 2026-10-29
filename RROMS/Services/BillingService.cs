@@ -329,6 +329,250 @@ namespace RROMS.Services
                 .SingleOrDefaultAsync();
         }
 
+        // US32 (staff billing list, dine-in tab): open dining sessions, plus
+        // closed sessions whose bill was paid today. A few small read-only
+        // queries, no per-row lookups. Older history belongs to US40.
+        public async Task<IReadOnlyList<SessionBillingRow>>
+            GetSessionBillingRowsAsync()
+        {
+            var (today, tomorrow) = TodayRange();
+
+            // Sessions whose bill was paid today (they may be closed already).
+            var paidTodaySessionIds = await _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    p.Status == PaymentStatus.Paid &&
+                    p.BillId != null &&
+                    p.PaidAt >= today &&
+                    p.PaidAt < tomorrow &&
+                    p.Bill!.DiningSessionId != null)
+                .Select(p => p.Bill!.DiningSessionId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            var sessions = await _sessions.Query()
+                .AsNoTracking()
+                .Where(s =>
+                    s.Status == DiningSessionStatus.Open ||
+                    paidTodaySessionIds.Contains(s.Id))
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Table.TableNumber,
+                    s.OpenedAt,
+                    s.Status,
+                    ReservationRef = s.Reservation != null
+                        ? s.Reservation.ReferenceNo
+                        : null,
+                    CustomerName = s.Customer != null
+                        ? s.Customer.FullName
+                        : null
+                })
+                .ToListAsync();
+
+            if (sessions.Count == 0)
+                return Array.Empty<SessionBillingRow>();
+
+            var sessionIds = sessions.Select(s => s.Id).ToList();
+
+            // Non-cancelled orders of these sessions (only the fields needed).
+            var orders = await _orders.Query()
+                .AsNoTracking()
+                .Where(o =>
+                    o.DiningSessionId != null &&
+                    sessionIds.Contains(o.DiningSessionId.Value) &&
+                    o.Status != OrderStatus.Cancelled)
+                .Select(o => new
+                {
+                    SessionId = o.DiningSessionId!.Value,
+                    o.Status,
+                    o.TotalAmount
+                })
+                .ToListAsync();
+
+            var bills = await _bills.Query()
+                .AsNoTracking()
+                .Where(b =>
+                    b.DiningSessionId != null &&
+                    sessionIds.Contains(b.DiningSessionId.Value))
+                .Select(b => new
+                {
+                    SessionId = b.DiningSessionId!.Value,
+                    b.Id,
+                    b.Status,
+                    b.TotalAmount
+                })
+                .ToListAsync();
+
+            var paidAtByBill = await GetPaidAtByBillAsync(
+                bills.Where(b => b.Status == BillStatus.Paid).Select(b => b.Id));
+
+            var ordersBySession = orders.ToLookup(o => o.SessionId);
+            var billBySession = bills.ToDictionary(b => b.SessionId);
+
+            return sessions
+                .Select(s =>
+                {
+                    var sessionOrders = ordersBySession[s.Id].ToList();
+                    billBySession.TryGetValue(s.Id, out var bill);
+
+                    DateTime? paidAt = null;
+                    if (bill != null && paidAtByBill.TryGetValue(bill.Id, out var at))
+                        paidAt = at;
+
+                    return new SessionBillingRow(
+                        s.Id,
+                        s.TableNumber,
+                        s.OpenedAt,
+                        s.ReservationRef,
+                        string.IsNullOrWhiteSpace(s.CustomerName)
+                            ? null
+                            : s.CustomerName,
+                        sessionOrders.Count,
+                        sessionOrders.Count(o =>
+                            KitchenStatuses.Contains(o.Status)),
+                        bill?.TotalAmount
+                            ?? sessionOrders.Sum(o => o.TotalAmount),
+                        bill?.Id,
+                        bill?.Status,
+                        s.Status == DiningSessionStatus.Closed,
+                        paidAt);
+                })
+                // Open tables first (by table number), then today's closed ones.
+                .OrderBy(r => r.IsClosed)
+                .ThenBy(r => r.TableNumber)
+                .ToList();
+        }
+
+        // US32 (staff billing list, takeaway tab): takeaway orders still
+        // waiting for payment (any day, oldest first), then takeaway bills
+        // paid today (latest first). Cancelled orders and older orders
+        // already paid through a US31 order payment are left out.
+        public async Task<IReadOnlyList<TakeawayBillingRow>>
+            GetTakeawayBillingRowsAsync()
+        {
+            var (today, tomorrow) = TodayRange();
+
+            // Takeaway bills paid today.
+            var paidTodayBillIds = await _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    p.Status == PaymentStatus.Paid &&
+                    p.BillId != null &&
+                    p.PaidAt >= today &&
+                    p.PaidAt < tomorrow &&
+                    p.Bill!.DiningSessionId == null)
+                .Select(p => p.BillId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            var rows = await _orders.Query()
+                .AsNoTracking()
+                .Where(o =>
+                    o.OrderType == OrderType.Takeaway &&
+                    o.Status != OrderStatus.Cancelled &&
+                    (
+                        // Not paid yet.
+                        ((o.BillId == null || o.Bill!.Status != BillStatus.Paid) &&
+                         !o.Payments.Any(p => p.Status == PaymentStatus.Paid))
+                        ||
+                        // Paid today.
+                        (o.BillId != null && paidTodayBillIds.Contains(o.BillId.Value))
+                    ))
+                .Select(o => new
+                {
+                    o.Id,
+                    o.OrderNo,
+                    o.CreatedAt,
+                    CustomerName = o.User.FullName,
+                    o.Status,
+                    o.TotalAmount,
+                    o.BillId,
+                    BillStatus = o.Bill != null
+                        ? (BillStatus?)o.Bill.Status
+                        : null
+                })
+                .ToListAsync();
+
+            var paidAtByBill = await GetPaidAtByBillAsync(
+                rows.Where(o => o.BillStatus == BillStatus.Paid && o.BillId != null)
+                    .Select(o => o.BillId!.Value));
+
+            return rows
+                .Select(o => new TakeawayBillingRow(
+                    o.Id,
+                    o.OrderNo,
+                    o.CreatedAt,
+                    string.IsNullOrWhiteSpace(o.CustomerName)
+                        ? null
+                        : o.CustomerName,
+                    o.Status,
+                    o.TotalAmount,
+                    o.BillId,
+                    o.BillStatus,
+                    o.BillId is int billId && paidAtByBill.TryGetValue(billId, out var at)
+                        ? at
+                        : null))
+                // Waiting for payment first (oldest first), then paid today (latest first).
+                .OrderBy(r => r.BillStatus == BillStatus.Paid)
+                .ThenByDescending(r => r.PaidAt) // null for unpaid rows
+                .ThenBy(r => r.CreatedAt)
+                .ThenBy(r => r.OrderId)
+                .ToList();
+        }
+
+        // US32: Where a bill belongs (dining session or takeaway order).
+        public async Task<BillLocation?> FindBillLocationAsync(int billId)
+        {
+            if (billId <= 0)
+                return null;
+
+            return await _bills.Query()
+                .AsNoTracking()
+                .Where(b => b.Id == billId)
+                .Select(b => new BillLocation(
+                    b.Id,
+                    b.DiningSessionId,
+                    b.DiningSessionId == null
+                        ? b.Orders
+                            .OrderBy(o => o.Id)
+                            .Select(o => o.OrderNo)
+                            .FirstOrDefault()
+                        : null))
+                .SingleOrDefaultAsync();
+        }
+
+        // "Today" in local time, same as the rest of billing (DateTime.Now).
+        private static (DateTime Today, DateTime Tomorrow) TodayRange()
+        {
+            DateTime today = DateTime.Today;
+            return (today, today.AddDays(1));
+        }
+
+        // Latest Paid payment time for each of these bills.
+        private async Task<Dictionary<int, DateTime>> GetPaidAtByBillAsync(
+            IEnumerable<int> billIds)
+        {
+            var ids = billIds.Distinct().ToList();
+
+            if (ids.Count == 0)
+                return new Dictionary<int, DateTime>();
+
+            var paid = await _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    p.BillId != null &&
+                    ids.Contains(p.BillId.Value) &&
+                    p.Status == PaymentStatus.Paid &&
+                    p.PaidAt != null)
+                .Select(p => new { BillId = p.BillId!.Value, PaidAt = p.PaidAt!.Value })
+                .ToListAsync();
+
+            return paid
+                .GroupBy(p => p.BillId)
+                .ToDictionary(g => g.Key, g => g.Max(p => p.PaidAt));
+        }
+
         // US32: Confirmed or paid bills lock the dining session.
         public async Task<bool> IsSessionLockedAsync(int sessionId)
         {

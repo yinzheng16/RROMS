@@ -1,1158 +1,338 @@
 ﻿@page
 @model RROMS.Pages.Staff.Billing.IndexModel
 @using RROMS.Models
+@using RROMS.Pages.Staff.Billing
 
 @{
     ViewData["Title"] = "Billing & Payment Management";
+    var showTakeaway = Model.ShowTakeaway;
 }
+
+<link rel="stylesheet" href="~/css/staff-billing.css" asp-append-version="true" />
 
 <div class="container py-4 us32-billing">
 
-    <div class="mb-4">
-        <h2 class="mb-1">Billing & Payment Management</h2>
-        <p class="text-muted mb-0">
-            @Brand.FullName — Staff Billing & Payments
-        </p>
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <h2 class="mb-1">Billing & Payment Management</h2>
+            <p class="text-muted mb-0">
+                @Brand.FullName — today's bills. Pick a table or a takeaway order to open its bill.
+            </p>
+        </div>
+
+        <a class="btn btn-outline-dark btn-sm" asp-page="./Index"
+           asp-route-tab="@(showTakeaway ? "takeaway" : "dinein")">
+            <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh
+        </a>
     </div>
 
-    <!-- Feedback messages -->
-    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
-    {
-        <div class="alert alert-warning" role="alert">
-            @Model.ErrorMessage
-        </div>
-    }
-
-    @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
-    {
-        <div class="alert alert-success" role="alert">
-            @Model.SuccessMessage
-        </div>
-    }
-
-    <!-- US32: Dine-in — tables with an open dining session -->
-    <div class="card shadow-sm mb-4 billing-card">
+    <div class="card shadow-sm billing-card">
         <div class="card-body">
-            <h5 class="card-title billing-card-title mb-3">
-                Dine-in · Open Tables
-            </h5>
 
-            @if (!Model.OpenTables.Any())
-            {
-                <p class="text-muted mb-0">
-                    No tables are seated right now.
-                </p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Table</th>
-                                <th>Seated At</th>
-                                <th>Bill</th>
-                                <th class="text-end"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var table in Model.OpenTables)
-                            {
-                                var selected = Model.SessionId == table.SessionId;
-
-                                <tr class="@(selected ? "table-active" : "")">
-                                    <td><strong>@table.TableNumber</strong></td>
-                                    <td>@table.OpenedAt.ToString("h:mm tt")</td>
-                                    <td>
-                                        @if (table.BillStatus is BillStatus billStatus && table.BillId is int tableBillId)
-                                        {
-                                            <span class="status-badge status-@billStatus">@billStatus</span>
-                                            <small class="text-muted ms-1">@Model.BillNo(tableBillId)</small>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Not billed</span>
-                                        }
-                                    </td>
-                                    <td class="text-end">
-                                        <a class="btn btn-sm @(selected ? "btn-dark" : "btn-outline-dark")"
-                                           asp-page="./Index"
-                                           asp-route-sessionId="@table.SessionId">
-                                            View Bill
-                                        </a>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- US32: Takeaway — find the order -->
-    <div class="card shadow-sm mb-4 billing-card">
-        <div class="card-body">
-            <h5 class="card-title billing-card-title mb-3">
-                Takeaway · Find Order
-            </h5>
-
-            <form method="get">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-8">
-                        <label asp-for="OrderNo"
-                               class="form-label billing-order-label">
-                            Order Number
-                        </label>
-
-                        <input asp-for="OrderNo"
-                               class="form-control"
-                               placeholder="Enter Order Number"
-                               maxlength="20"
-                               required />
-                    </div>
-
-                    <div class="col-md-4">
-                        <button type="submit"
-                                class="btn btn-dark w-100">
-                            Search Order
+            <!-- Tabs + search -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                <ul class="nav nav-pills billing-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(showTakeaway ? "" : "active")"
+                                id="tab-dinein" data-bs-toggle="pill" data-bs-target="#pane-dinein"
+                                data-tab-key="dinein" type="button" role="tab"
+                                aria-controls="pane-dinein" aria-selected="@(showTakeaway ? "false" : "true")">
+                            Dine-in <span class="billing-tab-count">@Model.DineInRows.Count</span>
                         </button>
-                    </div>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(showTakeaway ? "active" : "")"
+                                id="tab-takeaway" data-bs-toggle="pill" data-bs-target="#pane-takeaway"
+                                data-tab-key="takeaway" type="button" role="tab"
+                                aria-controls="pane-takeaway" aria-selected="@(showTakeaway ? "true" : "false")">
+                            Takeaway <span class="billing-tab-count">@Model.TakeawayRows.Count</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="billing-search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="billingSearch" class="form-control"
+                           placeholder="Search table, order no., bill no., name or reservation"
+                           aria-label="Search the billing list" autocomplete="off" />
                 </div>
-                <p class="text-muted small mt-2 mb-0">
-                    A dine-in order number opens its table's combined bill.
-                </p>
-            </form>
-        </div>
-    </div>
+            </div>
 
-    @if (Model.HasBill)
-    {
-        decimal subtotal, taxAmount, serviceCharge, totalAmount, taxRate, serviceRate;
+            <div class="tab-content">
 
-        if (Model.IsDineIn)
-        {
-            var preview = Model.SessionBill!;
-            subtotal = preview.Subtotal;
-            taxAmount = preview.TaxAmount;
-            serviceCharge = preview.ServiceCharge;
-            totalAmount = preview.TotalAmount;
-            taxRate = preview.TaxRatePercent;
-            serviceRate = preview.ServiceChargePercent;
-        }
-        else
-        {
-            var summary = Model.TakeawaySummary!;
-            subtotal = summary.Subtotal;
-            taxAmount = summary.TaxAmount;
-            serviceCharge = summary.ServiceCharge;
-            totalAmount = summary.TotalAmount;
-            taxRate = summary.TaxRatePercent;
-            serviceRate = summary.ServiceChargePercent;
-        }
+                <!-- ================= Dine-in ================= -->
+                <div class="tab-pane fade @(showTakeaway ? "" : "show active")"
+                     id="pane-dinein" role="tabpanel" aria-labelledby="tab-dinein">
 
-        // A confirmed bill always shows its own saved totals.
-        if (!Model.IsPreview && Model.CurrentBill != null)
-        {
-            subtotal = Model.CurrentBill.Subtotal;
-            taxAmount = Model.CurrentBill.TaxAmount;
-            serviceCharge = Model.CurrentBill.ServiceCharge;
-            totalAmount = Model.CurrentBill.TotalAmount;
-        }
-
-        var billTitle = Model.IsPreview || Model.CurrentBill == null
-            ? "Bill Preview"
-            : $"Bill {Model.BillNo(Model.CurrentBill.Id)}";
-
-        var ordersInKitchen = Model.OrdersInKitchen;
-
-        <!-- Bill Details / Preview -->
-        <div class="card shadow-sm mb-4 billing-card"
-             id="printableBill">
-            <div class="card-body">
-
-                <!-- Print-only restaurant header -->
-                <div class="yoru-print-header">
-                    <div class="yoru-print-brand">
-                        <img src="~/images/yoru-icon.png"
-                             asp-append-version="true"
-                             alt="@Brand.FullName Logo"
-                             class="yoru-print-logo" />
-
-                        <h1>@Brand.Name</h1>
-                        <div class="yoru-print-subtitle">
-                            @(string.Join(" ", Brand.Sub.ToCharArray()))
-                        </div>
-
-                        @* US49: SST registration no. under the restaurant name *@
-                        @if (!string.IsNullOrWhiteSpace(Model.SstRegistrationNo))
-                        {
-                            <p class="yoru-print-sst">
-                                SST No. @Model.SstRegistrationNo
-                            </p>
-                        }
+                    <div class="billing-filters" role="group" aria-label="Filter dine-in by bill status">
+                        <button type="button" class="billing-filter active" data-filter="all">All</button>
+                        <button type="button" class="billing-filter" data-filter="nobill">No bill</button>
+                        <button type="button" class="billing-filter" data-filter="awaiting">Awaiting payment</button>
+                        <button type="button" class="billing-filter" data-filter="paid">Paid today</button>
                     </div>
 
-                    <div class="yoru-print-divider"></div>
-
-                    <h2>
-                        @(Model.IsPreview ? "BILL PREVIEW" : "BILL")
-                    </h2>
-
-                    <p>Japanese Dining</p>
-                </div>
-
-                <!-- Bill heading -->
-                <div class="d-flex flex-wrap justify-content-between
-                    align-items-center gap-2 bill-preview-heading">
-
-                    <h5 class="card-title billing-card-title mb-0">
-                        @billTitle
-                    </h5>
-
-                    @if (Model.CurrentBill != null && !Model.IsPreview)
+                    @if (!Model.DineInRows.Any())
                     {
-                        <span class="status-badge status-@Model.CurrentBill.Status">
-                            @Model.CurrentBill.Status
-                        </span>
-                    }
-                </div>
-
-                <p class="bill-order-number">
-                    @if (Model.IsDineIn)
-                    {
-                        <span>Table @(Model.SessionBill!.TableNumber) · Dine-in</span>
+                        <p class="billing-empty">No tables are seated and no table bills were paid today.</p>
                     }
                     else
                     {
-                        <span>Takeaway · Order Number: @(Model.TakeawayOrder!.OrderNo)</span>
-                    }
-
-                    @if (Model.CurrentBill?.ConfirmedAt is DateTime confirmedAt && !Model.IsPreview)
-                    {
-                        <br />
-                        <small class="text-muted">
-                            Confirmed @confirmedAt.ToString("d MMM yyyy, h:mm tt")
-                            @(Model.ConfirmedByName is null ? "" : $"by {Model.ConfirmedByName}")
-                        </small>
-                    }
-                </p>
-
-                <!-- Ordered items -->
-                @if (Model.IsDineIn)
-                {
-                    if (!Model.SessionBill!.Orders.Any())
-                    {
-                        <p class="text-muted">No orders for this table yet.</p>
-                    }
-
-                    foreach (var order in Model.SessionBill.Orders)
-                    {
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3 mb-2">
-                            <h6 class="mb-0">Order @order.OrderNo</h6>
-                            <span class="status-badge status-@order.Status">@order.Status</span>
-                        </div>
-
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover align-middle">
+                            <table class="table table-hover align-middle mb-0 billing-list">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Menu Item</th>
-                                        <th class="text-center">Quantity</th>
-                                        <th class="text-end">Unit Price (RM)</th>
-                                        <th class="text-end">Line Total (RM)</th>
+                                        <th>Table</th>
+                                        <th>Guest</th>
+                                        <th>Seated</th>
+                                        <th class="text-center">Orders</th>
+                                        <th class="text-end">Total (RM)</th>
+                                        <th>Bill</th>
+                                        <th class="text-end"></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var item in order.Items)
+                                    @foreach (var row in Model.DineInRows)
                                     {
-                                        <tr>
-                                            <td>@item.MenuItemName</td>
-                                            <td class="text-center">@item.Quantity</td>
-                                            <td class="text-end">@item.UnitPrice.ToString("F2")</td>
-                                            <td class="text-end">@item.LineTotal.ToString("F2")</td>
+                                        var searchText = string.Join(" ",
+                                            row.TableNumber, row.ReservationRef, row.CustomerName,
+                                            row.BillId is int sb ? IndexModel.FormatBillNo(sb) : null).ToLowerInvariant();
+                                        var isPaid = row.BillStatus == BillStatus.Paid;
+
+                                        <tr class="@(row.IsClosed ? "billing-row-done" : "")"
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            <td>
+                                                <strong>@row.TableNumber</strong>
+                                                @if (row.IsClosed)
+                                                {
+                                                    <div class="billing-sub">Guests left</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                @(row.CustomerName ?? "—")
+                                                @if (!string.IsNullOrWhiteSpace(row.ReservationRef))
+                                                {
+                                                    <div class="billing-sub">Reservation @row.ReservationRef</div>
+                                                }
+                                            </td>
+                                            <td>@row.OpenedAt.ToString("h:mm tt")</td>
+                                            <td class="text-center">
+                                                @row.OrderCount
+                                                @if (row.OrdersInKitchenCount > 0 && row.BillId == null)
+                                                {
+                                                    <div class="billing-sub billing-kitchen">
+                                                        <i class="bi bi-fire" aria-hidden="true"></i>
+                                                        @row.OrdersInKitchenCount in kitchen
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="text-end">@row.TotalAmount.ToString("F2")</td>
+                                            <td>
+                                                <span class="bill-state bill-state-@IndexModel.BillStateKey(row.BillStatus)">
+                                                    @IndexModel.BillStateLabel(row.BillStatus)
+                                                </span>
+                                                @if (row.BillId is int billId)
+                                                {
+                                                    <div class="billing-sub">
+                                                        @IndexModel.FormatBillNo(billId)
+                                                        @if (row.PaidAt is DateTime paidAt)
+                                                        {
+                                                            <span>· @paidAt.ToString("h:mm tt")</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                <a class="btn btn-sm @(isPaid ? "btn-outline-dark" : "btn-dark")"
+                                                   asp-page="./Bill" asp-route-sessionId="@row.SessionId">
+                                                    @(isPaid ? "View" : "Open") <span aria-hidden="true">→</span>
+                                                </a>
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
                         </div>
+
+                        <p class="billing-empty billing-no-match d-none">No tables match.</p>
                     }
-                }
-                else
-                {
-                    <h6>Ordered Items</h6>
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Menu Item</th>
-                                    <th class="text-center">Quantity</th>
-                                    <th class="text-end">Unit Price (RM)</th>
-                                    <th class="text-end">Line Total (RM)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in Model.TakeawaySummary!.Items)
-                                {
-                                    <tr>
-                                        <td>@item.MenuItemName</td>
-                                        <td class="text-center">@item.Quantity</td>
-                                        <td class="text-end">@item.UnitPrice.ToString("F2")</td>
-                                        <td class="text-end">@item.LineTotal.ToString("F2")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-
-                <!-- Bill totals (saved order amounts; SST is charged on subtotal + service) -->
-                <div class="row justify-content-end mt-4">
-                    <div class="col-md-6 col-lg-5">
-
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal</span>
-                            <span>RM @subtotal.ToString("F2")</span>
-                        </div>
-
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Service Charge (@serviceRate.ToString("0.##")%)</span>
-                            <span>RM @serviceCharge.ToString("F2")</span>
-                        </div>
-
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>SST (@taxRate.ToString("0.##")%)</span>
-                            <span>RM @taxAmount.ToString("F2")</span>
-                        </div>
-
-                        <hr class="billing-total-divider" />
-
-                        <div class="d-flex justify-content-between
-                            align-items-center billing-final-total">
-                            <strong>Final Total</strong>
-                            <h4 class="mb-0">RM @totalAmount.ToString("F2")</h4>
-                        </div>
-
-                        <hr class="billing-actions-divider" />
-                    </div>
                 </div>
 
-                <!-- US32: kitchen warning (warn, not block) -->
-                @if (Model.CanConfirmDineIn && ordersInKitchen.Count > 0)
-                {
-                    <div class="alert alert-warning d-print-none" role="alert">
-                        <strong>Some orders are still in the kitchen:</strong>
-                        @(string.Join(", ", ordersInKitchen)).
-                        Confirming the bill now locks this table, so no more orders can be added.
+                <!-- ================= Takeaway ================= -->
+                <div class="tab-pane fade @(showTakeaway ? "show active" : "")"
+                     id="pane-takeaway" role="tabpanel" aria-labelledby="tab-takeaway">
+
+                    <div class="billing-filters" role="group" aria-label="Filter takeaway by bill status">
+                        <button type="button" class="billing-filter active" data-filter="all">All</button>
+                        <button type="button" class="billing-filter" data-filter="nobill">No bill</button>
+                        <button type="button" class="billing-filter" data-filter="awaiting">Awaiting payment</button>
+                        <button type="button" class="billing-filter" data-filter="paid">Paid today</button>
                     </div>
-                }
 
-                <!-- Bill actions -->
-                <div class="d-flex flex-wrap
-                    align-items-center gap-2 billing-actions">
-
-                    @if (Model.CanConfirmDineIn)
+                    @if (!Model.TakeawayRows.Any())
                     {
-                        <form method="post"
-                              asp-page-handler="ConfirmSession"
-                              class="mb-0">
-
-                            <input type="hidden" name="sessionId" value="@(Model.SessionBill!.SessionId)" />
-                            <input type="hidden" name="orderSnapshot" value="@(Model.SessionBill.OrderSnapshot)" />
-                            <input type="hidden" name="acknowledgeKitchenWarning"
-                                   value="@(ordersInKitchen.Count > 0 ? "true" : "false")" />
-
-                            <button type="submit"
-                                    class="btn btn-dark">
-                                @(ordersInKitchen.Count > 0 ? "Confirm Anyway" : "Confirm Bill")
-                            </button>
-                        </form>
-                    }
-                    else if (Model.CanConfirmTakeaway)
-                    {
-                        <form method="post"
-                              asp-page-handler="ConfirmTakeaway"
-                              class="mb-0">
-
-                            <input type="hidden" name="orderNo" value="@(Model.TakeawayOrder!.OrderNo)" />
-
-                            <button type="submit"
-                                    class="btn btn-dark">
-                                Confirm Bill
-                            </button>
-                        </form>
-                    }
-
-                    <button type="button"
-                            class="btn btn-outline-dark"
-                            onclick="window.print()">
-                        Print Bill
-                    </button>
-                </div>
-
-                <!-- Print-only footer -->
-                <div class="yoru-print-footer">
-                    <div class="yoru-print-divider"></div>
-
-                    <p class="yoru-japanese">
-                        ありがとうございます
-                    </p>
-
-                    @* US49: receipt footer message from Restaurant Settings *@
-                    <p>
-                        @(string.IsNullOrWhiteSpace(Model.ReceiptFooterNote)
-                            ? "Thank you for dining with us."
-                            : Model.ReceiptFooterNote)
-                    </p>
-                    <strong>@Brand.FullName</strong>
-
-                    @if (Model.IsPreview)
-                    {
-                        <p class="yoru-print-notice">
-                            Preview only — not a payment receipt.
-                        </p>
-                    }
-                    else if (Model.IsPaid)
-                    {
-                        <p class="yoru-print-notice">
-                            Payment received. Thank you!
-                        </p>
+                        <p class="billing-empty">No takeaway orders are waiting for payment and none were paid today.</p>
                     }
                     else
                     {
-                        <p class="yoru-print-notice">
-                            This bill is not proof of payment.
-                        </p>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <!-- Payment Management (confirmed bills only) -->
-        @if (!Model.IsPreview && Model.CurrentBill != null)
-        {
-            <div class="card shadow-sm mb-4
-                billing-card payment-management-card">
-                <div class="card-body">
-
-                    <div class="d-flex justify-content-between
-                        align-items-center gap-2 mb-3">
-
-                        <h5 class="card-title billing-card-title mb-0">
-                            Payment Management
-                        </h5>
-
-                        @if (Model.IsPaid)
-                        {
-                            <span class="status-badge status-Paid">Paid</span>
-                        }
-                        else
-                        {
-                            <span class="status-badge status-Pending">Awaiting Payment</span>
-                        }
-                    </div>
-
-                    <!-- US32: counter payment against the confirmed bill (one step) -->
-                    @if (Model.IsConfirmed)
-                    {
-                        <form method="post"
-                              asp-page-handler="RecordPayment"
-                              class="payment-record-form">
-
-                            <input type="hidden" name="billId" value="@Model.CurrentBill.Id" />
-
-                            @if (Model.IsDineIn)
-                            {
-                                <input type="hidden" name="sessionId" value="@(Model.SessionBill!.SessionId)" />
-                            }
-                            else
-                            {
-                                <input type="hidden" name="orderNo" value="@(Model.TakeawayOrder!.OrderNo)" />
-                            }
-
-                            <fieldset class="payment-method-fieldset">
-                                <legend class="form-label">
-                                    1. Select Payment Method
-                                </legend>
-
-                                <div class="row g-3">
-
-                                    <!-- Cash -->
-                                    <div class="col-sm-4">
-                                        <input type="radio"
-                                               class="visually-hidden payment-method-radio"
-                                               name="method"
-                                               id="paymentCash"
-                                               value="Cash"
-                                               required />
-
-                                        <label class="payment-method-tile"
-                                               for="paymentCash">
-                                            <span class="payment-method-icon"
-                                                  aria-hidden="true">
-                                                RM
-                                            </span>
-                                            <strong>Cash</strong>
-                                        </label>
-                                    </div>
-
-                                    <!-- Card -->
-                                    <div class="col-sm-4">
-                                        <input type="radio"
-                                               class="visually-hidden payment-method-radio"
-                                               name="method"
-                                               id="paymentCard"
-                                               value="Card"
-                                               required />
-
-                                        <label class="payment-method-tile"
-                                               for="paymentCard">
-                                            <span class="payment-method-icon"
-                                                  aria-hidden="true">
-                                                ▭
-                                            </span>
-                                            <strong>Card</strong>
-                                            <small>In-store</small>
-                                        </label>
-                                    </div>
-
-                                    <!-- Online Payment (US33) -->
-                                    <div class="col-sm-4">
-                                        <input type="radio"
-                                               class="visually-hidden payment-method-radio"
-                                               name="method"
-                                               id="paymentOnline"
-                                               value="Online"
-                                               disabled />
-
-                                        <label class="payment-method-tile
-                                            payment-method-tile-disabled"
-                                               for="paymentOnline">
-                                            <span class="payment-method-icon"
-                                                  aria-hidden="true">
-                                                ▣
-                                            </span>
-                                            <strong>Online Payment</strong>
-                                            <small>Paid by the customer</small>
-                                        </label>
-                                    </div>
-                                </div>
-                            </fieldset>
-
-                            <!-- Amount and reference -->
-                            <div class="row g-3 mt-2">
-
-                                <div class="col-md-6">
-                                    <div class="form-label">
-                                        Amount (RM)
-                                    </div>
-                                    <div class="payment-readonly-value">
-                                        @Model.CurrentBill.TotalAmount.ToString("F2")
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="transactionRef" class="form-label">
-                                        Card Terminal Reference (optional)
-                                    </label>
-                                    <input id="transactionRef"
-                                           name="transactionRef"
-                                           class="form-control"
-                                           maxlength="100"
-                                           autocomplete="off"
-                                           placeholder="e.g. approval code" />
-                                </div>
-                            </div>
-
-                            <button type="submit"
-                                    class="btn btn-dark w-100 mt-3">
-                                Record Payment
-                            </button>
-
-                            <p class="text-muted small mt-2 mb-0">
-                                Records the full bill amount as Paid.
-                                Record a card payment only after the card terminal approves it;
-                                if the card is declined, nothing is recorded and another method can be used.
-                            </p>
-                        </form>
-                    }
-
-                    <!-- Paid: details of the payment -->
-                    @if (Model.IsPaid && Model.LatestPayment != null)
-                    {
-                        <div class="row g-3 payment-details">
-
-                            <div class="col-md-6">
-                                <div class="form-label">Payment Method</div>
-                                <div class="payment-readonly-value">@Model.LatestPayment.Method</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-label">Amount (RM)</div>
-                                <div class="payment-readonly-value">@Model.LatestPayment.Amount.ToString("F2")</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-label">Paid At</div>
-                                <div class="payment-readonly-value">
-                                    @(Model.LatestPayment.PaidAt?.ToString("d MMM yyyy, h:mm tt") ?? "N/A")
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-label">Recorded By</div>
-                                <div class="payment-readonly-value">
-                                    @(Model.LatestPaymentRecordedByName ?? "N/A")
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-label">Transaction Reference</div>
-                                <div class="payment-readonly-value">
-                                    @(string.IsNullOrWhiteSpace(Model.LatestPayment.TransactionRef)
-                                        ? "N/A"
-                                        : Model.LatestPayment.TransactionRef)
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="payment-result
-                            payment-result-success mt-3"
-                             role="status">
-                            <span aria-hidden="true">&#10003;</span>
-                            Payment received. No further action required.
-                        </div>
-                    }
-                </div>
-            </div>
-        }
-
-        <!-- Payment history (bill payments and older order payments) -->
-        @if (Model.Payments.Any())
-        {
-            <div class="card shadow-sm mb-4 billing-card">
-                <div class="card-body">
-                    <h5 class="card-title billing-card-title mb-3">
-                        Payment History
-                    </h5>
-
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Method</th>
-                                    <th>Status</th>
-                                    <th class="text-end">Amount (RM)</th>
-                                    <th>Reference</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var payment in Model.Payments)
-                                {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 billing-list">
+                                <thead class="table-light">
                                     <tr>
-                                        <td>@payment.CreatedAt.ToString("d MMM yyyy, h:mm tt")</td>
-                                        <td>@payment.Method</td>
-                                        <td><span class="status-badge status-@payment.Status">@payment.Status</span></td>
-                                        <td class="text-end">@payment.Amount.ToString("F2")</td>
-                                        <td>@(string.IsNullOrWhiteSpace(payment.TransactionRef) ? "—" : payment.TransactionRef)</td>
+                                        <th>Order No.</th>
+                                        <th>Customer</th>
+                                        <th>Ordered</th>
+                                        <th>Kitchen</th>
+                                        <th class="text-end">Total (RM)</th>
+                                        <th>Bill</th>
+                                        <th class="text-end"></th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in Model.TakeawayRows)
+                                    {
+                                        var searchText = string.Join(" ",
+                                            row.OrderNo, row.CustomerName,
+                                            row.BillId is int tb ? IndexModel.FormatBillNo(tb) : null).ToLowerInvariant();
+                                        var isPaid = row.BillStatus == BillStatus.Paid;
+                                        var isOld = !isPaid && IndexModel.IsBeforeToday(row.CreatedAt);
+
+                                        <tr class="@(isPaid ? "billing-row-done" : "")"
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            <td class="billing-order-no">@row.OrderNo</td>
+                                            <td>@(row.CustomerName ?? "—")</td>
+                                            <td>
+                                                @if (isOld)
+                                                {
+                                                    <span class="billing-old-tag" title="Ordered before today and still not paid">
+                                                        @row.CreatedAt.ToString("d MMM")
+                                                    </span>
+                                                }
+                                                @row.CreatedAt.ToString("h:mm tt")
+                                            </td>
+                                            <td>
+                                                <span class="status-badge status-@row.OrderStatus">
+                                                    @IndexModel.OrderStatusLabel(row.OrderStatus)
+                                                </span>
+                                            </td>
+                                            <td class="text-end">@row.TotalAmount.ToString("F2")</td>
+                                            <td>
+                                                <span class="bill-state bill-state-@IndexModel.BillStateKey(row.BillStatus)">
+                                                    @IndexModel.BillStateLabel(row.BillStatus)
+                                                </span>
+                                                @if (row.BillId is int billId)
+                                                {
+                                                    <div class="billing-sub">
+                                                        @IndexModel.FormatBillNo(billId)
+                                                        @if (row.PaidAt is DateTime paidAt)
+                                                        {
+                                                            <span>· @paidAt.ToString("h:mm tt")</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                <a class="btn btn-sm @(isPaid ? "btn-outline-dark" : "btn-dark")"
+                                                   asp-page="./Bill" asp-route-orderNo="@row.OrderNo">
+                                                    @(isPaid ? "View" : "Open") <span aria-hidden="true">→</span>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="billing-empty billing-no-match d-none">No takeaway orders match.</p>
+                    }
                 </div>
             </div>
-        }
-    }
-    else if (string.IsNullOrWhiteSpace(Model.ErrorMessage))
-    {
-        <div class="card shadow-sm">
-            <div class="card-body text-center py-4">
-                <h5 class="mb-1">Bill Details</h5>
-                <p class="text-muted mb-0">
-                    Select a table or search a takeaway order to view its bill.
-                </p>
-            </div>
+
+            <!-- Older bills are not in the list: open them by full order number or bill number -->
+            <p class="billing-lookup d-none" id="billingLookup">
+                Not in today's list?
+                <a href="#" id="billingLookupLink"><span id="billingLookupKind">Open order</span>
+                    <strong id="billingLookupText"></strong></a>
+            </p>
         </div>
-    }
+    </div>
 </div>
 
-<style>
-    /* =====================================================
-               YORU IZAKAYA — US32 SCREEN STYLES
-               ===================================================== */
+@section Scripts {
+    <script>
+        // US32: client-side search and filters for the billing list.
+        // Nothing is sent to the server; the list is already loaded.
+        (function () {
+            const search = document.getElementById('billingSearch');
+            const lookup = document.getElementById('billingLookup');
+            const lookupLink = document.getElementById('billingLookupLink');
+            const lookupKind = document.getElementById('billingLookupKind');
+            const lookupText = document.getElementById('billingLookupText');
+            const billUrl = '@Url.Page("./Bill")';
+            const billNoPattern = /^yb-?\d{1,9}$/i;
 
-    @@media screen {
-
-        .us32-billing .billing-card {
-            margin-bottom: 24px !important;
-            border-radius: 8px;
-        }
-
-            .us32-billing .billing-card > .card-body {
-                padding: 24px;
+            function activePane() {
+                return document.querySelector('.tab-pane.active');
             }
 
-            .us32-billing .billing-card .billing-card-title {
-                font-family: var(--font-display);
-                font-size: 20px;
-                font-weight: 600;
-                line-height: 1.4;
-                letter-spacing: 0;
-                margin-bottom: 8px !important;
-            }
+            function apply() {
+                const pane = activePane();
+                if (!pane) return;
 
-            .us32-billing .billing-card h6 {
-                font-family: var(--font-body);
-                font-size: 15px;
-                font-weight: 500;
-                line-height: 1.5;
-                margin-bottom: 12px;
-            }
+                const raw = (search.value || '').trim();
+                const query = raw.toLowerCase();
+                const filterBtn = pane.querySelector('.billing-filter.active');
+                const filter = filterBtn ? filterBtn.dataset.filter : 'all';
+                const rows = pane.querySelectorAll('tbody tr');
+                let shown = 0;
 
-            .us32-billing .billing-card .form-label {
-                font-family: var(--font-body);
-                font-size: 14px;
-                font-weight: 500;
-                line-height: 1.5;
-                margin-bottom: 8px;
-            }
+                rows.forEach(function (row) {
+                    const matchText = !query || row.dataset.search.indexOf(query) !== -1;
+                    const matchState = filter === 'all' || row.dataset.state === filter;
+                    const visible = matchText && matchState;
+                    row.classList.toggle('d-none', !visible);
+                    if (visible) shown++;
+                });
 
-            .us32-billing .billing-card .billing-order-label {
-                font-family: var(--font-body);
-                font-size: 15px;
-                font-weight: 500;
-                line-height: 1.5;
-            }
+                const noMatch = pane.querySelector('.billing-no-match');
+                if (noMatch) noMatch.classList.toggle('d-none', rows.length === 0 || shown > 0);
 
-            .us32-billing .billing-card .form-control {
-                font-family: var(--font-body);
-                font-size: 14px;
-                font-weight: 400;
-                line-height: 1.5;
-                min-height: 42px;
-            }
+                // Nothing in the list matches: offer to open a full order number
+                // or a bill number (older bills, or dine-in order numbers).
+                const isBillNo = billNoPattern.test(raw);
+                const showLookup = shown === 0 && (isBillNo || raw.length >= 6);
+                lookup.classList.toggle('d-none', !showLookup);
 
-            .us32-billing .billing-card p {
-                font-family: var(--font-body);
-                font-size: 13px;
-                font-weight: 400;
-                line-height: 1.65;
-            }
-
-            .us32-billing .billing-card table {
-                font-family: var(--font-body);
-            }
-
-                .us32-billing .billing-card table th {
-                    font-size: 11px;
-                    font-weight: 600;
-                    line-height: 1.5;
-                    letter-spacing: .7px;
-                    padding: 12px;
+                if (showLookup) {
+                    const value = raw.toUpperCase();
+                    lookupKind.textContent = isBillNo ? 'Open bill' : 'Open order';
+                    lookupText.textContent = value;
+                    lookupLink.href = billUrl + (isBillNo ? '?billNo=' : '?orderNo=') + encodeURIComponent(value);
                 }
-
-                .us32-billing .billing-card table td {
-                    font-size: 13px;
-                    font-weight: 400;
-                    line-height: 1.5;
-                    padding: 13px 12px;
-                }
-
-            .us32-billing .billing-card
-            .row.justify-content-end span {
-                font-family: var(--font-body);
-                font-size: 13px;
-                line-height: 1.6;
             }
 
-        .us32-billing #printableBill h4 {
-            font-family: var(--font-body);
-            font-size: 22px;
-            font-weight: 700;
-            line-height: 1.3;
-        }
+            search.addEventListener('input', apply);
 
-        .us32-billing .billing-card .btn {
-            font-family: var(--font-body);
-            font-size: 13px;
-            font-weight: 600;
-            line-height: 1.5;
-            padding: 10px 18px;
-        }
+            document.querySelectorAll('.billing-filters').forEach(function (group) {
+                group.addEventListener('click', function (e) {
+                    const btn = e.target.closest('.billing-filter');
+                    if (!btn) return;
+                    group.querySelectorAll('.billing-filter').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    apply();
+                });
+            });
 
-        .us32-billing .billing-card .badge {
-            font-family: var(--font-body);
-            font-size: 11px;
-            font-weight: 500;
-            letter-spacing: .3px;
-        }
-        /* Bill heading */
-        .us32-billing #printableBill
-        .bill-preview-heading {
-            margin-bottom: 8px !important;
-        }
+            // Keep the open tab in the address bar, so Refresh and Back return to it.
+            document.querySelectorAll('[data-tab-key]').forEach(function (tab) {
+                tab.addEventListener('shown.bs.tab', function () {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tab', tab.dataset.tabKey);
+                    history.replaceState(null, '', url);
+                    apply();
+                });
+            });
 
-            .us32-billing #printableBill
-            .bill-preview-heading .billing-card-title {
-                font-family: var(--font-display);
-                font-size: 20px;
-                font-weight: 600;
-                line-height: 1.4;
-                margin-bottom: 0 !important;
-            }
-
-        .us32-billing #printableBill
-        .bill-order-number {
-            font-family: var(--font-body);
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 1.5;
-            margin-bottom: 22px !important;
-        }
-        /* Balanced Final Total spacing */
-        .us32-billing #printableBill
-        .billing-total-divider {
-            margin-top: 12px !important;
-            margin-bottom: 12px !important;
-        }
-
-        .us32-billing #printableBill
-        .billing-final-total {
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        .us32-billing #printableBill
-        .billing-actions-divider {
-            margin-top: 12px !important;
-            margin-bottom: 12px !important;
-        }
-    }
-
-    @@media screen and (max-width: 576px) {
-        .us32-billing .billing-card > .card-body {
-            padding: 18px;
-        }
-    }
-
-    /* =====================================================
-               PAYMENT MANAGEMENT
-               ===================================================== */
-
-    /* Reduce spacing below Payment Management heading */
-    .us32-billing .payment-management-card
-    .payment-empty-message {
-        margin-top: 0 !important;
-        margin-bottom: 12px !important;
-        line-height: 1.5;
-    }
-
-    .us32-billing .payment-method-fieldset {
-        min-width: 0;
-    }
-
-        .us32-billing .payment-method-fieldset legend {
-            float: none;
-            width: auto;
-        }
-
-    .us32-billing .payment-method-tile {
-        min-height: 112px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        text-align: center;
-        cursor: pointer;
-        padding: 14px 8px;
-        border: 1px solid #d8cfc2;
-        border-radius: 7px;
-        background: #fffdf9;
-        transition: border-color .15s, background-color .15s;
-    }
-
-        .us32-billing .payment-method-tile strong {
-            font-size: 14px;
-        }
-
-        .us32-billing .payment-method-tile small {
-            font-size: 11px;
-            color: #746d63;
-        }
-
-    .us32-billing .payment-method-icon {
-        font-size: 22px;
-        font-weight: 700;
-    }
-
-    .us32-billing
-    .payment-method-radio:checked + .payment-method-tile {
-        border-color: #a67b3f;
-        background: #fff0d3;
-        box-shadow: inset 0 0 0 1px #a67b3f;
-    }
-
-    .us32-billing
-    .payment-method-radio:focus-visible + .payment-method-tile {
-        outline: 3px solid #896a42;
-        outline-offset: 3px;
-    }
-
-    .us32-billing .payment-method-tile-disabled {
-        opacity: .55;
-        cursor: not-allowed;
-    }
-
-    .us32-billing .payment-readonly-value {
-        min-height: 42px;
-        display: flex;
-        align-items: center;
-        padding: 10px 12px;
-        border: 1px solid #e0d8cc;
-        border-radius: 6px;
-        background: #faf8f4;
-        font-size: 14px;
-        overflow-wrap: anywhere;
-    }
-
-    .us32-billing .payment-result {
-        border-radius: 6px;
-        padding: 12px 14px;
-        font-size: 13px;
-    }
-
-    .us32-billing .payment-result-success {
-        background: #e8f6eb;
-        color: #166534;
-    }
-
-    .us32-billing .payment-result-pending {
-        background: #fff2d6;
-        color: #845400;
-    }
-
-    .us32-billing .payment-result-failed {
-        background: #fce8e7;
-        color: #9b2823;
-    }
-
-    /* =====================================================
-               PRINT-ONLY ELEMENTS
-               ===================================================== */
-
-    .yoru-print-header,
-    .yoru-print-footer {
-        display: none;
-    }
-
-    .yoru-print-logo {
-        display: block;
-        width: 100px;
-        max-height: 85px;
-        object-fit: contain;
-        margin: 0 auto 12px;
-    }
-
-    /* =====================================================
-               PRINT BILL — A4
-               ===================================================== */
-
-    @@media print {
-
-        @@page {
-            size: A4 portrait;
-            margin: 18mm;
-        }
-
-        html, body {
-            background: #fff !important;
-            color: #24201c !important;
-        }
-
-            body * {
-                visibility: hidden !important;
-            }
-
-        #printableBill,
-        #printableBill * {
-            visibility: visible !important;
-        }
-
-        #printableBill {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            background: #fff !important;
-            font-family: var(--font-body) !important;
-            font-weight: 400;
-        }
-
-            #printableBill .card-body {
-                padding: 0 !important;
-            }
-
-            #printableBill .billing-actions,
-            #printableBill .billing-actions-divider,
-            .us32-billing .payment-management-card {
-                display: none !important;
-            }
-            /* Restaurant branding */
-            #printableBill .yoru-print-header {
-                display: block !important;
-                text-align: center;
-                margin-bottom: 28px;
-            }
-
-                #printableBill .yoru-print-brand h1,
-                #printableBill .yoru-print-header h2 {
-                    font-family: var(--font-display) !important;
-                    font-weight: 700;
-                }
-
-            #printableBill .yoru-print-brand h1 {
-                margin: 0;
-                font-size: 34px;
-                letter-spacing: 3px;
-            }
-
-            #printableBill .yoru-print-subtitle {
-                margin-top: 3px;
-                color: #9b8062 !important;
-                font-size: 11px;
-                letter-spacing: 5px;
-            }
-
-            #printableBill .yoru-print-divider {
-                width: 100%;
-                height: 1px;
-                background: #b49a76 !important;
-                margin: 20px 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            #printableBill .yoru-print-header h2 {
-                font-size: 15px;
-                letter-spacing: 1px;
-                margin: 14px 0 5px;
-            }
-
-            #printableBill .yoru-print-header p {
-                color: #77716b !important;
-                font-size: 11px;
-                margin: 0;
-            }
-            /* Avoid duplicate headings */
-            #printableBill .card-body >
-            .yoru-print-header + .d-flex {
-                display: none !important;
-            }
-            /* Item table */
-            #printableBill .table-responsive {
-                overflow: visible !important;
-            }
-
-            #printableBill table {
-                width: 100% !important;
-                border-collapse: collapse;
-                font-size: 12px;
-            }
-
-            #printableBill th {
-                background: #f7f3ed !important;
-                color: #6f5b47 !important;
-                font-size: 10px;
-                letter-spacing: .7px;
-                padding: 12px 8px !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            #printableBill td {
-                padding: 12px 8px !important;
-                border-color: #e8e2d9 !important;
-            }
-
-            #printableBill tr {
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-            /* Bill totals */
-            #printableBill .row.justify-content-end {
-                margin-top: 24px !important;
-            }
-
-                #printableBill
-                .row.justify-content-end > div {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    flex: 0 0 100% !important;
-                }
-
-            #printableBill h4 {
-                color: var(--yoru-red-text) !important;
-                font-size: 22px;
-                font-weight: 700;
-            }
-            /* Balanced Final Total spacing */
-            #printableBill .billing-total-divider {
-                margin-top: 12px !important;
-                margin-bottom: 12px !important;
-            }
-
-            #printableBill .billing-final-total {
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            /* Print footer */
-            #printableBill .yoru-print-footer {
-                display: block !important;
-                text-align: center;
-                margin-top: 0 !important;
-            }
-
-                #printableBill .yoru-print-footer
-                .yoru-print-divider {
-                    margin-top: 12px !important;
-                    margin-bottom: 20px !important;
-                }
-
-                #printableBill .yoru-print-footer p {
-                    font-family: var(--font-body) !important;
-                    font-size: 11px;
-                    color: #77716b !important;
-                    margin: 5px 0;
-                }
-
-                #printableBill .yoru-print-footer
-                .yoru-japanese {
-                    font-family: var(--font-display) !important;
-                    font-size: 17px;
-                    color: #9b8062 !important;
-                }
-
-                #printableBill .yoru-print-footer strong {
-                    display: block;
-                    margin-top: 12px;
-                    font-size: 11px;
-                    letter-spacing: 2px;
-                    color: #a94736 !important;
-                }
-
-                #printableBill .yoru-print-footer
-                .yoru-print-notice {
-                    margin-top: 16px;
-                    font-size: 10px;
-                    font-style: italic;
-                }
-    }
-</style>
+            apply();
+        })();
+    </script>
+}

@@ -66,6 +66,21 @@ namespace RROMS.Services.Interfaces
             string staffUserId,
             string orderSnapshot,
             bool acknowledgeKitchenWarning);
+
+        // US32 (staff billing list, dine-in tab): every open dining session,
+        // plus closed sessions whose bill was paid today. Read only.
+        // Older history is for US40 (admin payment monitoring).
+        Task<IReadOnlyList<SessionBillingRow>> GetSessionBillingRowsAsync();
+
+        // US32 (staff billing list, takeaway tab): takeaway orders not paid
+        // yet (any day, oldest first), plus takeaway bills paid today.
+        // Read only.
+        Task<IReadOnlyList<TakeawayBillingRow>> GetTakeawayBillingRowsAsync();
+
+        // US32: Where a bill belongs, so a bill number (YB-000012) can be
+        // opened: its dining session, or its takeaway order number.
+        // Null if the bill does not exist.
+        Task<BillLocation?> FindBillLocationAsync(int billId);
     }
 
     // Represents one item displayed on the bill.
@@ -157,5 +172,49 @@ namespace RROMS.Services.Interfaces
         SessionBillConfirmStatus Status,
         Bill? Bill,
         IReadOnlyList<string> OrdersInKitchen
+    );
+
+    // US32: One row of the staff billing list (dine-in tab).
+    // TotalAmount is the confirmed bill total once a bill exists,
+    // otherwise the sum of the saved amounts of the non-cancelled orders.
+    // Not a database entity.
+    public sealed record SessionBillingRow(
+        int SessionId,
+        string TableNumber,
+        DateTime OpenedAt,
+        string? ReservationRef,
+        string? CustomerName,
+        int OrderCount,
+        int OrdersInKitchenCount,
+        decimal TotalAmount,
+        int? BillId,
+        BillStatus? BillStatus,
+        // True for a session already closed (shown only when paid today).
+        bool IsClosed,
+        // When the bill was paid (latest Paid payment), if it is Paid.
+        DateTime? PaidAt
+    );
+
+    // US32: One row of the staff billing list (takeaway tab).
+    // Not a database entity.
+    public sealed record TakeawayBillingRow(
+        int OrderId,
+        string OrderNo,
+        DateTime CreatedAt,
+        string? CustomerName,
+        OrderStatus OrderStatus,
+        decimal TotalAmount,
+        int? BillId,
+        BillStatus? BillStatus,
+        // When the bill was paid (shown only for bills paid today).
+        DateTime? PaidAt
+    );
+
+    // US32: Where a bill belongs. DiningSessionId for a dine-in bill,
+    // TakeawayOrderNo for a takeaway bill. Not a database entity.
+    public sealed record BillLocation(
+        int BillId,
+        int? DiningSessionId,
+        string? TakeawayOrderNo
     );
 }
