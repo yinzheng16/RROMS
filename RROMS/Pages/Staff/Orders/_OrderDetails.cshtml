@@ -19,7 +19,7 @@
         </div>
         <div class="sq-detail__meta sq-detail__context">
             <span class="sq-dining sq-dining--@(Model.Dining == OrderType.Takeaway ? "takeaway" : "dinein")"><i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : "bi-people")" aria-hidden="true"></i>@StaffQueueRules.DiningLabel(Model.Dining)</span>
-            <span class="sq-detail__customer-meta">@Model.CustomerName · @Model.CreatedAt.ToString("dd MMM yyyy · HH:mm", CultureInfo.InvariantCulture)</span>
+            <span class="sq-detail__customer-meta">@Model.CustomerName · @Model.CreatedAt.ToString("dd MMM yyyy · h:mm tt", CultureInfo.InvariantCulture)</span>
         </div>
         @if (Model.Status == OrderStatus.Pending)
         {
@@ -39,7 +39,7 @@
         </section>
     }
     <div class="sq-booking">
-        <i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : Model.Booking is null ? "bi-person-walking" : "bi-calendar-check")" aria-hidden="true"></i>
+        <i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : Model.Booking is null ? "bi-clock-history" : "bi-calendar-check")" aria-hidden="true"></i>
         <div>
             @if (Model.Dining == OrderType.Takeaway)
             {
@@ -47,13 +47,13 @@
             }
             else if (Model.Booking is null)
             {
-                <strong>Walk-in</strong><p>No reservation linked</p>
+                <strong>No reservation (older order)</strong><p>@(Model.TableNumber is not null ? "Table " + Model.TableNumber : "No table linked")</p>
             }
             else
             {
                 <strong>Reservation @Model.Booking.Reference</strong>
-                <p>@Model.Booking.ReservedAt.ToString("dd MMM yyyy · HH:mm", CultureInfo.InvariantCulture) · @Model.Booking.Guests guests</p>
-                <p>@(Model.Booking.TableNumber is not null ? "Table " + Model.Booking.TableNumber : "Table not assigned") · @Model.Booking.Status</p>
+                <p>@Model.Booking.ReservedAt.ToString("dd MMM yyyy · h:mm tt", CultureInfo.InvariantCulture) · @Model.Booking.Guests guests</p>
+                <p>@((Model.TableNumber ?? Model.Booking.TableNumber) is string tableNumber ? "Table " + tableNumber : "Table not assigned") · @Model.Booking.Status</p>
             }
         </div>
     </div>
@@ -69,7 +69,8 @@
                         <img src="@Url.Content(dish.ImageUrl)" alt="" loading="lazy" decoding="async" width="64" height="64" />
                     }
                 </span>
-                <div class="sq-dish__body"><div class="sq-dish__title"><strong>@dish.Name</strong><span>× @dish.Quantity</span></div>
+                <div class="sq-dish__body">
+                    <div class="sq-dish__title"><strong>@dish.Name</strong><span>× @dish.Quantity</span></div>
                     <p class="sq-dish__code">@dish.Code <span>·</span> @Money(dish.UnitPrice) each</p>
                     @if (!string.IsNullOrWhiteSpace(dish.Notes))
                     {
@@ -83,9 +84,12 @@
     {
         <div class="sq-overall-note"><i class="bi bi-journal-text" aria-hidden="true"></i><div><strong>Overall remarks</strong><p>@Model.Notes</p></div></div>
     }
-    <dl class="sq-total"><div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div>
-        <div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div><div><dt>Service charge</dt><dd>@Money(Model.ServiceCharge)</dd></div>
-        <div class="sq-total__grand"><dt>Order total</dt><dd>@Money(Model.Total)</dd></div></dl>
+    <dl class="sq-total">
+        <div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div>
+        <div><dt>Service charge</dt><dd>@Money(Model.ServiceCharge)</dd></div>
+        <div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div>
+        <div class="sq-total__grand"><dt>Order total</dt><dd>@Money(Model.Total)</dd></div>
+    </dl>
     <footer class="sq-detail__footer">
         @if (Model.Status == OrderStatus.Pending)
         {

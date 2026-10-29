@@ -123,6 +123,8 @@ namespace RROMS.Data
                 e.Property(c => c.Revision).IsConcurrencyToken();
                 e.HasOne(c => c.User).WithMany().HasForeignKey(c => c.UserId)
                     .OnDelete(DeleteBehavior.Cascade);
+                e.HasOne<DiningSession>().WithMany().HasForeignKey(c => c.DiningSessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
             builder.Entity<CustomerCartLine>(e =>
             {

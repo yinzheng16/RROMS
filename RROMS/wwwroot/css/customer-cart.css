@@ -218,28 +218,32 @@
 .cart-fulfilment .form-select, .cart-fulfilment textarea {
     font-size: .85rem;
 }
-/* Both middle panels contribute to the same grid cell's intrinsic height.
-   Switching order type never removes the column or redistributes its space. */
+/* Reservation and takeaway share the first row to keep switching stable.
+   Table selection, seated-table text and validation messages use later rows. */
 .cart-fulfilment__reservation {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
     min-block-size: 5rem;
 }
 
     .cart-fulfilment__reservation > * {
+        min-inline-size: 0;
+    }
+
+    .cart-fulfilment__reservation > :is(.cart-reservation, .cart-takeaway) {
         grid-column: 1;
         grid-row: 1;
-        min-inline-size: 0;
         opacity: 1;
         transition: opacity .18s ease;
     }
 
-    .cart-fulfilment__reservation > [hidden] {
-        display: block !important;
-        visibility: hidden;
-        pointer-events: none;
-        opacity: 0;
-    }
+        .cart-fulfilment__reservation > :is(.cart-reservation, .cart-takeaway)[hidden] {
+            display: block !important;
+            visibility: hidden;
+            pointer-events: none;
+            opacity: 0;
+        }
 
 .cart-takeaway__message {
     display: flex;

@@ -13,6 +13,8 @@ public class CustomerCart
     public Guid Revision { get; set; } = Guid.NewGuid();
     public OrderType OrderType { get; set; } = OrderType.DineIn;
     public int? ReservationId { get; set; }
+    // Retained for existing drafts/schema; checkout resolves sessions from ReservationId only.
+    public int? DiningSessionId { get; set; }
 
     [StringLength(500)]
     public string? Notes { get; set; }

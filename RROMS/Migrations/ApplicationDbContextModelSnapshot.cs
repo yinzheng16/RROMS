@@ -275,6 +275,9 @@ namespace RROMS.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int?>("DiningSessionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -295,6 +298,8 @@ namespace RROMS.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("UserId");
+
+                    b.HasIndex("DiningSessionId");
 
                     b.ToTable("CustomerCarts");
                 });
@@ -1138,6 +1143,11 @@ namespace RROMS.Migrations
 
             modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
                 {
+                    b.HasOne("RROMS.Models.DiningSession", null)
+                        .WithMany()
+                        .HasForeignKey("DiningSessionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RROMS.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
