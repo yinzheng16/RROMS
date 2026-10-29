@@ -1,0 +1,218 @@
+@using RROMS.Services.Interfaces
+@using static RROMS.Pages.Staff.Reservations.StaffLedgerFormat
+@model StaffDayBoard
+@{
+    var now = Model.Now;
+    var rows = Model.Rows;
+    var nowShown = false;
+    int? lastHour = null;
+
+    // The first booking still to come that staff may need to act on.
+    var nextUpId = Model.IsToday
+        ? rows.Where(r => r.ReservedAt > now && (r.Status == RROMS.Models.ReservationStatus.Pending || r.Status == RROMS.Models.ReservationStatus.Confirmed))
+              .Select(r => (int?)r.Id).FirstOrDefault()
+        : null;
+
+    var (tlStart, tlEnd) = TimelineRange(Model);
+    var hourCount = (int)Math.Round((tlEnd - tlStart).TotalHours);
+}
+<div class="sr-part" data-part="lists" data-now="@now.ToString("yyyy-MM-ddTHH:mm:ss")">
+
+    @* ===================== LEDGER ===================== *@
+    <section class="sr-view sr-ledger" data-pane="ledger" aria-label="Reservation ledger">
+        @if (rows.Count == 0)
+        {
+            <div class="sr-empty">
+                <span class="sr-empty-seal" lang="ja" aria-hidden="true">夜</span>
+                @if (Model.Hours.IsClosed)
+                {
+                    <h2>@(Model.Hours.ClosedReason ?? "Closed")</h2>
+                    <p>There are no reservations on @Model.Date.ToString("dddd, d MMMM yyyy").</p>
+                }
+                else
+                {
+                    <h2>No reservations on @Model.Date.ToString("dddd, d MMMM")</h2>
+                    <p>New bookings appear here as soon as customers make them.</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="sr-tablewrap">
+                <table class="sr-table">
+                    <thead>
+                        <tr><th>Time</th><th>Guest</th><th class="c">Party</th><th>Table</th><th>Requests</th><th>Status</th><th class="sr-th-act"><span class="visually-hidden">Actions</span></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in rows)
+                        {
+                            var newHour = lastHour != r.ReservedAt.Hour;
+                            if (Model.IsToday && !nowShown && r.ReservedAt > now)
+                            {
+                                nowShown = true;
+                                <tr class="sr-now" data-keep="1"><td colspan="7"><span>NOW @Clock(now)</span><i></i></td></tr>
+                            }
+                            if (newHour)
+                            {
+                                lastHour = r.ReservedAt.Hour;
+                                var group = rows.Where(x => x.ReservedAt.Hour == r.ReservedAt.Hour).ToList();
+                                var live = group.Where(x => x.Status is RROMS.Models.ReservationStatus.Pending or RROMS.Models.ReservationStatus.Confirmed or RROMS.Models.ReservationStatus.Seated or RROMS.Models.ReservationStatus.Completed).ToList();
+                                var gone = group.Count - live.Count;
+                                <tr class="sr-hour" data-hour="@r.ReservedAt.Hour"><td colspan="7"><u aria-hidden="true">◆</u><b>@HourLabel(r.ReservedAt.Hour)</b><small>@Plural(live.Count, "booking", "bookings") · @Plural(live.Sum(x => x.Guests), "guest", "guests")@if (gone > 0){<text> · @gone cancelled</text>}</small></td></tr>
+                            }
+                            var visual = Visual(r);
+                            <tr class="sr-row v-@visual@(r.Id == nextUpId ? " is-next" : "")" data-id="@r.Id" data-bucket="@Bucket(r)" data-late="@(r.IsLate ? "1" : "0")" data-ref="@r.ReferenceNo" data-name="@r.GuestName" data-phone="@(r.Phone ?? "")" data-time="@Clock(r.ReservedAt)" data-guests="@r.Guests" data-table="@(r.TableNumber ?? "")" data-confirm="@(r.CanConfirm ? "1" : "0")" data-search="@SearchText(r)">
+                                <td class="tm">@Clock(r.ReservedAt)</td>
+                                <td class="gn"><b>@r.GuestName</b><small>@(r.Phone ?? "No phone")</small></td>
+                                <td class="px">@r.Guests</td>
+                                <td class="tb">@if (r.TableNumber != null){<b>@r.TableNumber</b><small>@(r.AreaName ?? "")</small>}else{<span class="dash">Not assigned</span>}</td>
+                                <td class="rq">
+                                    @if (r.SpecialRequest != null)
+                                    {
+                                        var kind = RequestKind(r.SpecialRequest);
+                                        <span class="rq-ico k-@kind">@Icon(kind)</span><span class="rq-txt@(kind == "warn" ? " is-allergy" : "")">@r.SpecialRequest</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="dash">—</span>
+                                    }
+                                </td>
+                                <td class="st">
+                                    @if (r.IsLate && r.Status == RROMS.Models.ReservationStatus.Confirmed)
+                                    {
+                                        <span class="pl p-late"><i></i>@r.MinutesLate min late</span>
+                                    }
+                                    else if (r.Status == RROMS.Models.ReservationStatus.Pending)
+                                    {
+                                        <span class="pl @(r.IsLate ? "p-late" : "p-pending")@((r.AutoCancelMinutes ?? 99) <= 10 ? " is-hot" : "")" data-autocancel="@r.AutoCancelAt.ToString("yyyy-MM-ddTHH:mm:ss")"><i></i>Pending<small>@RemainingShort(r.AutoCancelAt, now) left</small></span>
+                                    }
+                                    else
+                                    {
+                                        <span class="pl p-@Bucket(r)"><i></i>@StatusText(r)</span>
+                                    }
+                                </td>
+                                <td class="ac">
+                                    @if (r.CanConfirm)
+                                    {
+                                        <button type="button" class="sr-confirm" data-act="confirm" data-id="@r.Id">@Icon("check")Confirm</button>
+                                    }
+                                    <button type="button" class="sr-more" data-act="menu" aria-haspopup="menu" aria-label="More actions for @r.GuestName">@Icon("more")</button>
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.IsToday && !nowShown)
+                        {
+                            <tr class="sr-now" data-keep="1"><td colspan="7"><span>NOW @Clock(now)</span><i></i></td></tr>
+                        }
+                        <tr class="sr-nomatch" hidden><td colspan="7">No reservation matches. <button type="button" data-clear-filters>Clear filters</button></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        }
+        <footer class="sr-foot">
+            <p><b>@Model.Counts.ActiveBookings</b> active @(Model.Counts.ActiveBookings == 1 ? "reservation" : "reservations") <i>·</i> <b>@Model.Counts.ActiveGuests</b> guests <i>·</i> <b>@Model.Counts.Pending</b> pending</p>
+            @if (rows.Count > 0)
+            {
+                <p>Last reservation @Clock(rows.Last().ReservedAt)</p>
+            }
+            <span class="sr-foot-seal" lang="ja" aria-hidden="true">夜</span>
+        </footer>
+    </section>
+
+    @* ===================== TIMELINE ===================== *@
+    <section class="sr-view sr-timeline" data-pane="timeline" aria-label="Reservation timeline">
+        @if (Model.Hours.IsClosed && rows.Count == 0)
+        {
+            <div class="sr-empty">
+                <span class="sr-empty-seal" lang="ja" aria-hidden="true">夜</span>
+                <h2>@(Model.Hours.ClosedReason ?? "Closed")</h2>
+                <p>There is nothing to show on the timeline for @Model.Date.ToString("dddd, d MMMM").</p>
+            </div>
+        }
+        else
+        {
+            <div class="sr-tl" style="--hours:@hourCount">
+                @if (Model.Areas.Count > 1)
+                {
+                    <div class="tl-areas" role="group" aria-label="Dining area">
+                        <span class="tl-areas-label">@Icon("pin")Dining area</span>
+                        <button type="button" class="tl-chip is-on" data-area-filter="" aria-pressed="true">All areas<em>@Model.Areas.Sum(a => a.Tables.Count)</em></button>
+                        @foreach (var a in Model.Areas)
+                        {
+                            <button type="button" class="tl-chip" data-area-filter="@a.AreaName" aria-pressed="false">@a.AreaName<em>@a.Tables.Count</em></button>
+                        }
+                    </div>
+                }
+                <div class="tl-row tl-top">
+                    <div class="tl-label"></div>
+                    <div class="tl-track tl-services">
+                        @if (Model.Hours.BreakStart.HasValue && Model.Hours.BreakEnd.HasValue)
+                        {
+                            <span class="svc" style="left:0;width:@PctWidth(tlStart, Model.Hours.BreakStart.Value, tlStart, tlEnd)%"><i></i>LUNCH SERVICE<i></i></span>
+                            <span class="svc svc-break" style="left:@Pct(Model.Hours.BreakStart.Value, tlStart, tlEnd)%;width:@PctWidth(Model.Hours.BreakStart.Value, Model.Hours.BreakEnd.Value, tlStart, tlEnd)%">@Icon("cup")Break</span>
+                            <span class="svc" style="left:@Pct(Model.Hours.BreakEnd.Value, tlStart, tlEnd)%;right:0"><i></i>DINNER SERVICE<i></i></span>
+                        }
+                        else
+                        {
+                            <span class="svc" style="left:0;right:0"><i></i>SERVICE<i></i></span>
+                        }
+                    </div>
+                </div>
+                <div class="tl-row tl-axis">
+                    <div class="tl-label">Table</div>
+                    <div class="tl-track">
+                        @for (var h = 0; h <= hourCount; h++)
+                        {
+                            var tick = tlStart.AddHours(h);
+                            <span class="tick@(h == 0 ? " first" : h == hourCount ? " last" : "")" style="left:@(((double)h / hourCount * 100).ToString("0.###", System.Globalization.CultureInfo.InvariantCulture))%">@(h == hourCount ? "" : HourLabel(tick.Hour))</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="tl-body">
+                    <div class="tl-overlay" aria-hidden="true">
+                        @if (Model.Hours.BreakStart.HasValue && Model.Hours.BreakEnd.HasValue)
+                        {
+                            <span class="tl-break" style="left:@Pct(Model.Hours.BreakStart.Value, tlStart, tlEnd)%;width:@PctWidth(Model.Hours.BreakStart.Value, Model.Hours.BreakEnd.Value, tlStart, tlEnd)%"></span>
+                        }
+                        @if (Model.IsToday && now >= tlStart && now <= tlEnd)
+                        {
+                            <span class="tl-now" data-tl-now style="left:@Pct(now, tlStart, tlEnd)%"><b>NOW @Clock(now)</b></span>
+                        }
+                    </div>
+                    @foreach (var area in Model.Areas)
+                    {
+                        <div class="tl-area" data-area="@area.AreaName"><u aria-hidden="true">◆</u><b>@area.AreaName</b><small>· @Plural(area.Tables.Count, "table", "tables")</small></div>
+                        @foreach (var lane in area.Tables)
+                        {
+                            <div class="tl-row tl-lane" data-area="@area.AreaName">
+                                <div class="tl-label" data-tip="@LaneTip(lane)"><b>@lane.TableNumber</b>@if (!string.IsNullOrEmpty(lane.TypeName)){<small>@lane.TypeName</small>}</div>
+                                <div class="tl-track">
+                                    @foreach (var r in rows.Where(x => (x.TableId ?? 0) == lane.TableId))
+                                    {
+                                        var visual = Visual(r);
+                                        <button type="button" class="tl-bar v-@visual" data-act="open" data-id="@r.Id" data-bucket="@Bucket(r)" data-late="@(r.IsLate ? "1" : "0")" data-ref="@r.ReferenceNo" data-name="@r.GuestName" data-phone="@(r.Phone ?? "")" data-time="@Clock(r.ReservedAt)" data-guests="@r.Guests" data-table="@(r.TableNumber ?? "")" data-confirm="@(r.CanConfirm ? "1" : "0")" data-search="@SearchText(r)"
+                                                style="left:@Pct(r.ReservedAt, tlStart, tlEnd)%;width:@PctWidth(r.ReservedAt, r.EndsAt, tlStart, tlEnd)%"
+                                                title="@r.GuestName · @Clock(r.ReservedAt) · @StatusText(r)">
+                                            <span class="b-top">@if (RequestKind(r.SpecialRequest) == "warn"){<span class="b-warn" title="Allergy">@Icon("warn")</span>}<b>@r.GuestName</b>
+                                                <em>@if (r.IsLate && r.Status == RROMS.Models.ReservationStatus.Confirmed){<text>@r.MinutesLate min late</text>}else{@StatusText(r)}</em></span>
+                                            <small>@r.Guests · @Clock(r.ReservedAt) – @Clock(r.EndsAt)</small>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+            <footer class="sr-foot sr-legend">
+                <ul>
+                    <li class="l-completed"><i></i>Completed</li><li class="l-confirmed"><i></i>Confirmed</li><li class="l-pending"><i></i>Pending</li>
+                    <li class="l-seated"><i></i>Seated</li><li class="l-late"><i></i>Overdue</li><li class="l-cancelled"><i></i>Cancelled</li>
+                </ul>
+                <p>Each bar is the @(rows.FirstOrDefault() is { } f ? (int)(f.EndsAt - f.ReservedAt).TotalMinutes : 90)-minute hold for one booking.</p>
+                <span class="sr-foot-seal" lang="ja" aria-hidden="true">夜</span>
+            </footer>
+        }
+    </section>
+</div>

@@ -1,0 +1,209 @@
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@using static RROMS.Pages.Staff.Reservations.StaffLedgerFormat
+@model StaffReservationDetails
+@{
+    var r = Model.Row;
+    var now = DateTime.Now;
+    var ci = System.Globalization.CultureInfo.InvariantCulture;
+
+    // 1 Pending, 2 Confirmed, 3 Seated, 4 Completed; 0 = cancelled / no-show
+    var rank = r.Status switch
+    {
+        ReservationStatus.Pending => 1,
+        ReservationStatus.Confirmed => 2,
+        ReservationStatus.Seated => 3,
+        ReservationStatus.Completed => 4,
+        _ => 0
+    };
+    string St(int doneFrom, int currentAt) => rank == 0 ? "" : rank >= doneFrom ? "done" : rank == currentAt ? "cur" : "";
+
+    var telHref = (r.Phone ?? "").Replace(" ", "").Replace("-", "");
+    var hasTable = !string.IsNullOrEmpty(r.TableNumber);
+    var tn = r.TableNumber ?? "";
+    var sealSize = tn.Length >= 8 ? "s8" : tn.Length >= 6 ? "s6" : tn.Length >= 4 ? "s4" : "s3";
+    var numSize = tn.Length >= 8 ? "l8" : tn.Length >= 6 ? "l6" : "l4";
+    var isRoom = (r.TableTypeName ?? "").Contains("room", StringComparison.OrdinalIgnoreCase);
+    var word = isRoom ? "room" : "table";
+    var typeLine = string.Join(" · ", new[] { r.TableTypeName, r.AreaName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+    var visual = r.IsLate ? "late" : Bucket(r);
+    var reqIcon = RequestKind(r.SpecialRequest) switch { "warn" => "warn", "cake" => "gift", _ => "note" };
+
+    var bookedText = r.CreatedAt.Date == r.ReservedAt.Date
+        ? Clock(r.CreatedAt)
+        : r.CreatedAt.ToString("d MMM", ci) + ", " + Clock(r.CreatedAt);
+}
+<div class="dv" data-id="@r.Id" data-status="@r.Status">
+    <i class="dv-corner c1"></i><i class="dv-corner c2"></i><i class="dv-corner c3"></i><i class="dv-corner c4"></i>
+
+    <header class="dv-head">
+        <span class="dv-hanko" lang="ja" aria-hidden="true">夜</span>
+        <div class="dv-who">
+            <p class="dv-eyebrow">YORU IZAKAYA / RESERVATION DETAILS</p>
+            <h2 id="srModalTitle">@r.GuestName</h2>
+            <div class="dv-chips">
+                <span class="dv-chip is-ref">@r.ReferenceNo</span>
+                @if (!string.IsNullOrWhiteSpace(r.Phone))
+                {
+                    <a class="dv-chip" href="tel:@telHref">@Icon("phone")@r.Phone</a>
+                }
+                <button type="button" class="dv-chip" data-copy="@r.ReferenceNo">@Icon("copy")<span>Copy ref</span></button>
+            </div>
+        </div>
+        <span class="dv-status s-@visual">@if (r.Status == ReservationStatus.Confirmed && !r.IsLate){@Icon("check")}@if (r.IsLate && r.Status == ReservationStatus.Confirmed){<text>@r.MinutesLate min late</text>}else{@StatusText(r)}</span>
+        <button type="button" class="dv-close" data-act="close" aria-label="Close">@Icon("x")</button>
+    </header>
+
+    <div class="dv-rule" aria-hidden="true"><i></i></div>
+
+    <div class="dv-grid">
+        <div class="dv-col">
+            <section class="dv-card dv-overview">
+                <h3 class="dv-h">@Icon("calendar")Reservation overview</h3>
+                <div class="dv-trio">
+                    <div><small>@Icon("calendar")Date</small><b>@r.ReservedAt.ToString("ddd, d MMM yyyy", ci)</b></div>
+                    <div><small>@Icon("clock")Arrival</small><b>@Clock(r.ReservedAt)</b></div>
+                    <div><small>@Icon("users")Party</small><b>@Plural(r.Guests, "guest", "guests")</b></div>
+                </div>
+
+                @if (hasTable)
+                {
+                    <div class="dv-table">
+                        <div>
+                            <small>@Icon("table")Assigned @word</small>
+                            <b class="@numSize">@tn</b>
+                            <p>@typeLine</p>
+                        </div>
+                        <div class="dv-seal @sealSize" role="img" aria-label="Table @tn"><img src="~/images/staff/yoru-details-seal.webp" alt="" /><span><small>TABLE</small><b>@tn</b></span></div>
+                    </div>
+                }
+                else
+                {
+                    <div class="dv-table"><div><small>@Icon("table")Assigned table</small><b>Not assigned</b><p>No table yet</p></div></div>
+                }
+
+                <div class="dv-spend">
+                    @Icon("coin")
+                    <div><small>@(r.MinimumSpend > 0 ? "Minimum spend" : "Min. spend")</small><b>@(r.MinimumSpend > 0 ? "RM " + r.MinimumSpend.ToString("#,##0.##", ci) : "None")</b></div>
+                    <i class="dv-vr"></i>
+                    @if (r.MinimumSpend > 0)
+                    {
+                        if (r.MinimumSpendAccepted)
+                        {
+                            <span class="ok"><i>@Icon("check")</i>Accepted by guest</span>
+                        }
+                        else
+                        {
+                            <p>Not accepted yet</p>
+                        }
+                    }
+                    else
+                    {
+                        <p>No minimum required.</p>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <div class="dv-col">
+            @if (r.Status == ReservationStatus.Pending)
+            {
+                <section class="dv-state is-@(r.IsLate ? "late" : "pending")" aria-label="Automatic cancel">
+                    <p class="dv-state-h"><i>@Icon("clock")</i>Awaiting confirmation</p>
+                    <div class="dv-count">
+                        <small>AUTO-CANCEL IN</small>
+                        <div class="dv-num">@RemainingParts(r.AutoCancelAt, now)</div>
+                        <p>@r.AutoCancelAt.ToString("ddd, d MMM", ci) · @Clock(r.AutoCancelAt)</p>
+                    </div>
+                    <p class="note">@(r.IsLate ? "The booking time has passed. Confirm now to keep the table." : "Unconfirmed bookings cancel 15 minutes after arrival time. Confirm to keep the table.")</p>
+                </section>
+            }
+            else if (r.Status == ReservationStatus.Confirmed)
+            {
+                <section class="dv-state is-@(r.IsLate ? "late" : "confirmed")" aria-label="Table hold">
+                    <p class="dv-state-h"><i>@Icon("check")</i>@(r.IsLate ? "Guest is late" : "Reservation confirmed")</p>
+                    <h3>@(r.IsLate ? r.MinutesLate + " min late" : "Table held")</h3>
+                    <p class="lead">@(r.IsLate ? "Guest has not arrived" : "Waiting for the guests")</p>
+                    <div class="dv-hold">@Icon("clock")@(r.IsLate ? "Released at " : "Held until ")@Clock(r.AutoCancelAt)</div>
+                    <p class="note">15-minute arrival grace period.</p>
+                </section>
+            }
+            else
+            {
+                var tone = r.Status == ReservationStatus.Seated ? "seated" : r.Status == ReservationStatus.Completed ? "completed" : "cancelled";
+                <section class="dv-state is-@tone" aria-label="Status">
+                    <p class="dv-state-h"><i>@Icon(r.Status == ReservationStatus.Seated ? "seat" : r.Status == ReservationStatus.Completed ? "check" : "x")</i>@StatusText(r)</p>
+                    <h3>@(r.Status == ReservationStatus.Seated ? "Guests are at the table" : r.Status == ReservationStatus.Completed ? "Visit finished" : "No table is held")</h3>
+                    <p class="lead">@(r.Status == ReservationStatus.Seated ? "The table is open for ordering." : r.Status == ReservationStatus.Completed ? "The table is free again." : "The table was released.")</p>
+                </section>
+            }
+
+            <section class="dv-pref" aria-label="Dining preferences">
+                <h3 class="dv-h">@Icon("cup")Dining preferences<em>From guest profile</em></h3>
+                @if (Model.DiningPreferences != null)
+                {
+                    <p>@Model.DiningPreferences</p>
+                }
+                else
+                {
+                    <p class="is-none">No preferences saved.</p>
+                }
+            </section>
+        </div>
+    </div>
+
+    @if (r.SpecialRequest != null)
+    {
+        <section class="dv-request" aria-label="Special request">
+            @Icon(reqIcon)
+            <div>
+                <small>SPECIAL REQUEST <em>From this booking</em></small>
+                <p>@if (IsAllergy(r.SpecialRequest)){<span class="dv-allergy">@Icon("warn")ALLERGY</span>}@r.SpecialRequest</p>
+            </div>
+        </section>
+    }
+
+    <section class="dv-progress" aria-label="Reservation progress">
+        <h3 class="dv-h">@Icon("list")Reservation progress</h3>
+        <ol class="dv-steps">
+            <li class="done"><i>@Icon("check")</i><b>Booked</b><small>@bookedText</small></li>
+            @if (rank == 0)
+            {
+                <li class="bad"><i>@Icon("x")</i><b>@StatusText(r)</b><small>No table is held</small></li>
+            }
+            else
+            {
+                <li class="@St(2, 1)"><i>@Icon("check")</i><b>@(rank >= 2 ? "Confirmed" : "Pending")</b><small>@(rank >= 2 ? (Model.ConfirmedAt.HasValue ? Clock(Model.ConfirmedAt.Value) : "Confirmed by staff") : "Confirm by " + r.AutoCancelAt.ToString("d MMM", ci) + ", " + Clock(r.AutoCancelAt))</small></li>
+                <li class="@St(3, 2)"><i>@Icon("check")</i><b>Seated</b><small>When guests arrive</small></li>
+                <li class="@St(4, 3)"><i>@Icon("check")</i><b>Completed</b><small>After the meal</small></li>
+            }
+        </ol>
+    </section>
+
+    <footer class="dv-foot">
+        @if (r.Status == ReservationStatus.Pending && hasTable)
+        {
+            <div class="dv-note">
+                <div class="dv-seal is-mini @sealSize" role="img"><img src="~/images/staff/yoru-details-seal.webp" alt="" /><span><small></small><b>YORU</b></span></div>
+                <i class="dv-vr"></i>
+                <p>After confirmation, the @word seal appears in My Reservations. Table assignment may change on the day.</p>
+            </div>
+        }
+        else if (r.Status == ReservationStatus.Confirmed && hasTable)
+        {
+            <div class="dv-note">
+                @Icon("info")
+                <i class="dv-vr"></i>
+                <p>The guest can see this @word seal in My Reservations. Table assignment may change on the day.</p>
+            </div>
+        }
+        <div class="dv-actions">
+            <button type="button" class="dv-link" data-act="close">Close</button>
+            <button type="button" class="dv-ghost" disabled title="Cancelling a booking for a guest comes with the next update">Cancel booking <em>Soon</em></button>
+            @if (r.CanConfirm)
+            {
+                <button type="button" class="dv-confirm" data-act="confirm" data-id="@r.Id">@Icon("check")Confirm reservation</button>
+            }
+        </div>
+    </footer>
+</div>
