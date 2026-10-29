@@ -1,4 +1,4 @@
 <Solution>
   <Project Path="RROMS.csproj" />
-  <Project Path="test/US31-payment-tests/RROMS_US31_Tests.csproj" />
+  <Project Path="../tests/RROMS.Tests/RROMS.Tests.csproj" />
 </Solution>

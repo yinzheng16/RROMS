@@ -20,6 +20,6 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\RROMS.csproj" />
+		<ProjectReference Include="..\..\RROMS\RROMS.csproj" />
 	</ItemGroup>
 </Project>

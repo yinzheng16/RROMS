@@ -6,7 +6,7 @@ using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services;
 
-namespace RROMS_US31_Tests;
+namespace RROMS.Tests;
 
 public class PaymentSqlServerTests
 {
@@ -116,9 +116,14 @@ public class PaymentSqlServerTests
     private static PaymentService CreateService(
         ApplicationDbContext db)
     {
+        // The fake runs the operation directly. The real repository
+        // would start its own transaction, but each test already runs
+        // inside a transaction that is rolled back at the end.
         return new PaymentService(
             new Repository<Payment>(db),
-            new Repository<Order>(db));
+            new Repository<Order>(db),
+            new Repository<Bill>(db),
+            new FakeBillingTransactionRepository());
     }
 
     // ==================================================

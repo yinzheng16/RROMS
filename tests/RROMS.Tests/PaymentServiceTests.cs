@@ -6,7 +6,7 @@ using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services;
 
-namespace RROMS_US31_Tests;
+namespace RROMS.Tests;
 
 public class PaymentServiceTests : IDisposable
 {
@@ -53,8 +53,12 @@ public class PaymentServiceTests : IDisposable
 
         var payments = new Repository<Payment>(_db);
         var orders = new Repository<Order>(_db);
+        var bills = new Repository<Bill>(_db);
 
-        _service = new PaymentService(payments, orders);
+        // SQLite has no sp_getapplock, so use the fake that just runs the operation.
+        _service = new PaymentService(
+            payments, orders, bills,
+            new FakeBillingTransactionRepository());
     }
 
     [Fact]

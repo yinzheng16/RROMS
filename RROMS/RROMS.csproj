@@ -26,9 +26,4 @@
     <Folder Include="Areas\Identity\Pages\Account\" />
   </ItemGroup>
 
-	<!-- Exclude automated tests from the main web application -->
-	<ItemGroup>
-		<Compile Remove="test\**\*.cs" />
-	</ItemGroup>
-
 </Project>
