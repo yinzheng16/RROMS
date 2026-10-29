@@ -64,7 +64,7 @@
         z-index: -1;
         aspect-ratio: 1981 / 277;
         min-height: 170px;
-        background: url('../images/reservations/my-reservations-banner.webp') center top/cover no-repeat;
+        background: url('../images/Reservations/my-reservations-banner.webp') center top/cover no-repeat;
         -webkit-mask-image: linear-gradient(180deg,#000 0%,#000 50%,transparent 100%);
         mask-image: linear-gradient(180deg,#000 0%,#000 50%,transparent 100%);
         pointer-events: none
@@ -136,7 +136,7 @@
     justify-content: center;
     gap: 12px;
     color: #fff2df;
-    background: linear-gradient(145deg,rgba(207,40,28,.6),rgba(109,9,5,.8)),url('../images/reservations/ticket-red.png') center/cover;
+    background: linear-gradient(145deg,rgba(207,40,28,.6),rgba(109,9,5,.8)),url('../images/Reservations/ticket-red.webp') center/cover;
     border: 1px solid #f24a36;
     box-shadow: inset 0 0 0 2px #b72d2c66,0 6px 20px #0004;
     border-radius: 8px;
@@ -177,7 +177,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(#3e00002b,#38000035),url('../images/reservations/ticket-red.png') center/100% 100%;
+    background: linear-gradient(#3e00002b,#38000035),url('../images/Reservations/ticket-red.webp') center/100% 100%;
     padding: 16px 16px;
     border-right: 1px dashed var(--myr-gold)
 }
@@ -219,7 +219,7 @@
 .myr-row-body {
     display: grid;
     grid-template-columns: minmax(0,1fr) 33%;
-    background: url('../images/reservations/ticket-list.png') right bottom/cover #1b1210;
+    background: url('../images/Reservations/ticket-list.webp') right bottom/cover #1b1210;
     min-width: 0
 }
 
@@ -402,7 +402,7 @@
     padding: 55px 20px;
     text-align: center;
     border: 1px solid var(--myr-line);
-    background: url('../images/reservations/ticket-black.png') center/cover;
+    background: url('../images/Reservations/ticket-black.webp') center/cover;
     border-radius: 10px
 }
 
@@ -485,7 +485,7 @@ html.myr-has-dialog {
     position: relative;
     min-width: 0;
     padding: 32px 38px 32px 50px;
-    background: url('../images/reservations/ticket-black.png') right bottom/cover #090a09;
+    background: url('../images/Reservations/ticket-black.webp') right bottom/cover #090a09;
     border: 1px solid var(--myr-gold);
     box-shadow: inset 0 0 0 13px #070807,inset 0 0 0 14px #bc8c42,inset 0 0 0 18px #070807,inset 0 0 0 19px #9d7436
 }
@@ -652,7 +652,7 @@ html.myr-has-dialog {
 .myr-detail-stub {
     position: relative;
     min-width: 0;
-    background: linear-gradient(90deg,#41000020,transparent),url('../images/reservations/ticket-red.png') center/100% 100%;
+    background: linear-gradient(90deg,#41000020,transparent),url('../images/Reservations/ticket-red.webp') center/100% 100%;
     border: 1px solid var(--myr-gold);
     border-left-style: dashed;
     padding: 26px 24px;
@@ -788,7 +788,7 @@ html.myr-has-dialog {
     border: 1px solid var(--myr-gold);
     padding: 30px 31px;
     border-radius: 10px;
-    background: linear-gradient(#100d0de0,#130c0ceb),url('../images/reservations/ticket-black.png') center/cover;
+    background: linear-gradient(#100d0de0,#130c0ceb),url('../images/Reservations/ticket-black.webp') center/cover;
     box-shadow: inset 0 0 0 5px #100b09,inset 0 0 0 6px #b7914a66
 }
 
@@ -1496,7 +1496,7 @@ html.myr-has-dialog {
     border: 1px solid #d6b16f42;
     border-left: 4px solid var(--myr-gold);
     border-radius: 12px;
-    background: linear-gradient(105deg,#241816f2,#1b1210f2),url('../images/reservations/ticket-black.png') center/cover #1f1411;
+    background: linear-gradient(105deg,#241816f2,#1b1210f2),url('../images/Reservations/ticket-black.webp') center/cover #1f1411;
     box-shadow: 0 8px 22px #0006;
     transition: border-color .15s,transform .15s
 }
@@ -1737,13 +1737,13 @@ html.myr-has-dialog {
 }
 
 
-/* ---- Backgrounds: ticket-list.png = list ticket (new wide art), ticket-black.png = details ticket (original). Never stretched. ---- */
+/* ---- Backgrounds: ticket-list.webp = list ticket (new wide art), ticket-black.webp = details ticket (original). Never stretched. ---- */
 .myr-detail-main {
-    background: url('../images/reservations/ticket-black.png') right center/cover no-repeat #090a09
+    background: url('../images/Reservations/ticket-black.webp') right center/cover no-repeat #090a09
 }
 
 .myr-row-body {
-    background: linear-gradient(90deg,rgba(30,20,17,.92) 0,rgba(27,18,16,.76) 60%,rgba(27,18,16,.55) 100%),url('../images/reservations/ticket-list.png') right bottom/cover no-repeat #1b1210
+    background: linear-gradient(90deg,rgba(30,20,17,.92) 0,rgba(27,18,16,.76) 60%,rgba(27,18,16,.55) 100%),url('../images/Reservations/ticket-list.webp') right bottom/cover no-repeat #1b1210
 }
 /* ---- Request box: collapsed = 2 lines + Read more; open = fixed-height box that scrolls ---- */
 .myr-detail-cell .myr-request-box strong {

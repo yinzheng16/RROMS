@@ -74,7 +74,7 @@
                             <div class="myr-status-area@(nextTable is null ? "" : " has-seal")">
                                 @if (nextTable is not null)
                                 {
-                                    <div class="myr-table-seal@(nextTable.Length >= 6 ? " is-long" : "")" role="img" aria-label="Table @nextTable"><img src="~/images/reservations/table-seal.webp" alt="" /><span class="myr-seal-text"><small>TABLE</small><b class="@IndexModel.SealSize(nextTable)">@nextTable</b></span></div>
+                                    <div class="myr-table-seal@(nextTable.Length >= 6 ? " is-long" : "")" role="img" aria-label="Table @nextTable"><img src="~/images/Reservations/table-seal.webp" alt="" /><span class="myr-seal-text"><small>TABLE</small><b class="@IndexModel.SealSize(nextTable)">@nextTable</b></span></div>
                                 }
                                 <span class="myr-status @(confirmed ? "is-confirmed" : "is-pending")"><svg aria-hidden="true"><use href="@(confirmed ? "#myr-check" : "#myr-hourglass")" /></svg>@next.Status</span>
                                 <p>@(!next.CanCancel ? $"Your table is held until {IndexModel.Clock(next.ReservedAt.AddMinutes(Model.NoShowGraceMinutes))}." : nextTable is not null ? "Your table may change on the day." : confirmed ? "We look forward to welcoming you." : "Awaiting restaurant confirmation.")</p>
@@ -145,7 +145,7 @@
     <div class="myr-detail-shell">
         <article class="myr-detail-ticket">
             <div class="myr-detail-main">
-                <div class="myr-table-seal myr-detail-seal" id="myrDetailSeal" role="img" hidden><img src="~/images/reservations/table-seal.webp" alt="" /><span class="myr-seal-text"><small>TABLE</small><b id="myrDetailSealNo"></b></span></div>
+                <div class="myr-table-seal myr-detail-seal" id="myrDetailSeal" role="img" hidden><img src="~/images/Reservations/table-seal.webp" alt="" /><span class="myr-seal-text"><small>TABLE</small><b id="myrDetailSealNo"></b></span></div>
                 <header class="myr-ticket-header"><div class="myr-brand"><span>YORU <b lang="ja">夜</b></span><small>IZAKAYA</small></div><span class="myr-brand-rule"></span><h2 id="myrDetailsTitle" tabindex="-1" autofocus>Reservation Details</h2></header>
                 <div class="myr-detail-grid">
                     <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-user" /></svg><div><span class="myr-label">Guest name</span><strong data-fill="customerName"></strong></div></div>
