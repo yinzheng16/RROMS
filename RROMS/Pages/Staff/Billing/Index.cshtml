@@ -1,0 +1,366 @@
+﻿@page
+@model RROMS.Pages.Staff.Billing.IndexModel
+@using RROMS.Models
+@using RROMS.Pages.Staff.Billing
+
+@{
+    ViewData["Title"] = "Billing & Payment Management";
+    ViewData["FullWidth"] = true;   // banner goes edge to edge, like Staff/Orders; the page draws its own container
+    var showTakeaway = Model.ShowTakeaway;
+
+    // Header counts (dine-in + takeaway together)
+    var allStates = Model.DineInRows.Select(r => IndexModel.BillStateKey(r.BillStatus))
+        .Concat(Model.TakeawayRows.Select(r => IndexModel.BillStateKey(r.BillStatus)))
+        .ToList();
+    var awaitingCount = allStates.Count(k => k == "awaiting");
+    var noBillCount = allStates.Count(k => k == "nobill");
+    var paidCount = allStates.Count(k => k == "paid");
+}
+
+<link rel="stylesheet" href="~/css/staff-billing.css" asp-append-version="true" />
+
+<div class="us32-billing">
+
+    @* Header banner: wwwroot/images/billing/yoru-billing-banner.svg (original artwork) *@
+    <section class="billing-hero" aria-labelledby="billing-title">
+        <div class="billing-hero-inner container-xl container-wide">
+        <div class="billing-hero-copy">
+            <p class="billing-hero-eyebrow">@Brand.FullName · Staff · Billing desk</p>
+            <h1 id="billing-title" class="billing-hero-title">
+                Billing &amp; Payments
+                <span class="billing-hero-seal" lang="ja">お会計</span>
+            </h1>
+            <p class="billing-hero-intro">Today's bills. Pick a table or a takeaway order to open its bill.</p>
+
+            <div class="billing-hero-chips">
+                <span>Awaiting payment <b>@awaitingCount</b></span>
+                <span>No bill <b>@noBillCount</b></span>
+                <span>Paid today <b>@paidCount</b></span>
+                @* Refresh always opens the Dine-in tab (default) *@
+                <a class="billing-hero-refresh" asp-page="./Index">
+                    <i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh
+                </a>
+            </div>
+        </div>
+        </div>
+    </section>
+
+    <div class="container-xl container-wide py-4">
+
+    <div class="card billing-card billing-list-card">
+        <div class="card-body">
+
+            <!-- Tabs + search -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                <ul class="nav nav-pills billing-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(showTakeaway ? "" : "active")"
+                                id="tab-dinein" data-bs-toggle="pill" data-bs-target="#pane-dinein"
+                                data-tab-key="dinein" type="button" role="tab"
+                                aria-controls="pane-dinein" aria-selected="@(showTakeaway ? "false" : "true")">
+                            Dine-in <span class="billing-tab-count">@Model.DineInRows.Count</span>
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link @(showTakeaway ? "active" : "")"
+                                id="tab-takeaway" data-bs-toggle="pill" data-bs-target="#pane-takeaway"
+                                data-tab-key="takeaway" type="button" role="tab"
+                                aria-controls="pane-takeaway" aria-selected="@(showTakeaway ? "true" : "false")">
+                            Takeaway <span class="billing-tab-count">@Model.TakeawayRows.Count</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="billing-search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search" id="billingSearch" class="form-control"
+                           placeholder="Search table, order no., bill no., name or reservation"
+                           aria-label="Search the billing list" autocomplete="off" />
+                </div>
+            </div>
+
+            <div class="tab-content">
+
+                <!-- ================= Dine-in ================= -->
+                <div class="tab-pane fade @(showTakeaway ? "" : "show active")"
+                     id="pane-dinein" role="tabpanel" aria-labelledby="tab-dinein">
+
+                    <div class="billing-filters" role="group" aria-label="Filter dine-in by bill status">
+                        <button type="button" class="billing-filter active" data-filter="all">All</button>
+                        <button type="button" class="billing-filter" data-filter="nobill">No bill</button>
+                        <button type="button" class="billing-filter" data-filter="awaiting">Awaiting payment</button>
+                        <button type="button" class="billing-filter" data-filter="paid">Paid today</button>
+                        <span class="billing-match-count" aria-live="polite"></span>
+                    </div>
+
+                    @if (!Model.DineInRows.Any())
+                    {
+                        <p class="billing-empty">No tables are seated and no table bills were paid today.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 billing-list">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Table</th>
+                                        <th>Guest</th>
+                                        <th>Seated</th>
+                                        <th class="text-center">Orders</th>
+                                        <th class="text-end">Total (RM)</th>
+                                        <th>Bill</th>
+                                        <th class="text-end"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in Model.DineInRows)
+                                    {
+                                        var searchText = string.Join(" ",
+                                            row.TableNumber, row.ReservationRef, row.CustomerName,
+                                            row.BillId is int sb ? IndexModel.FormatBillNo(sb) : null).ToLowerInvariant();
+                                        var isPaid = row.BillStatus == BillStatus.Paid;
+
+                                        <tr class="@(row.IsClosed ? "billing-row-done" : "")"
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            <td>
+                                                <strong>@row.TableNumber</strong>
+                                                @if (row.IsClosed)
+                                                {
+                                                    <div class="billing-sub">Guests left</div>
+                                                }
+                                            </td>
+                                            <td>
+                                                @(row.CustomerName ?? "—")
+                                                @if (!string.IsNullOrWhiteSpace(row.ReservationRef))
+                                                {
+                                                    <div class="billing-sub">Reservation @row.ReservationRef</div>
+                                                }
+                                            </td>
+                                            <td>@row.OpenedAt.ToString("h:mm tt")</td>
+                                            <td class="text-center">
+                                                @row.OrderCount
+                                                @if (row.OrdersInKitchenCount > 0 && row.BillId == null)
+                                                {
+                                                    <div class="billing-sub billing-kitchen">
+                                                        <i class="bi bi-fire" aria-hidden="true"></i>
+                                                        @row.OrdersInKitchenCount in kitchen
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="text-end">@row.TotalAmount.ToString("F2")</td>
+                                            <td>
+                                                <span class="bill-state bill-state-@IndexModel.BillStateKey(row.BillStatus)">
+                                                    @IndexModel.BillStateLabel(row.BillStatus)
+                                                </span>
+                                                @if (row.BillId is int billId)
+                                                {
+                                                    <div class="billing-sub">
+                                                        @IndexModel.FormatBillNo(billId)
+                                                        @if (row.PaidAt is DateTime paidAt)
+                                                        {
+                                                            <span>· @paidAt.ToString("h:mm tt")</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                <a class="billing-open-link @(isPaid ? "" : "is-open")"
+                                                   asp-page="./Bill" asp-route-sessionId="@row.SessionId">
+                                                    @(isPaid ? "View" : "Open") <span aria-hidden="true">→</span>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="billing-empty billing-no-match d-none">No tables match.</p>
+                    }
+                </div>
+
+                <!-- ================= Takeaway ================= -->
+                <div class="tab-pane fade @(showTakeaway ? "show active" : "")"
+                     id="pane-takeaway" role="tabpanel" aria-labelledby="tab-takeaway">
+
+                    <div class="billing-filters" role="group" aria-label="Filter takeaway by bill status">
+                        <button type="button" class="billing-filter active" data-filter="all">All</button>
+                        <button type="button" class="billing-filter" data-filter="nobill">No bill</button>
+                        <button type="button" class="billing-filter" data-filter="awaiting">Awaiting payment</button>
+                        <button type="button" class="billing-filter" data-filter="paid">Paid today</button>
+                        <span class="billing-match-count" aria-live="polite"></span>
+                    </div>
+
+                    @if (!Model.TakeawayRows.Any())
+                    {
+                        <p class="billing-empty">No takeaway orders are waiting for payment and none were paid today.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0 billing-list">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order No.</th>
+                                        <th>Customer</th>
+                                        <th>Ordered</th>
+                                        <th>Kitchen</th>
+                                        <th class="text-end">Total (RM)</th>
+                                        <th>Bill</th>
+                                        <th class="text-end"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in Model.TakeawayRows)
+                                    {
+                                        var searchText = string.Join(" ",
+                                            row.OrderNo, row.CustomerName,
+                                            row.BillId is int tb ? IndexModel.FormatBillNo(tb) : null).ToLowerInvariant();
+                                        var isPaid = row.BillStatus == BillStatus.Paid;
+                                        var isOld = !isPaid && IndexModel.IsBeforeToday(row.CreatedAt);
+
+                                        <tr class="@(isPaid ? "billing-row-done" : "")"
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            <td class="billing-order-no">@row.OrderNo</td>
+                                            <td>@(row.CustomerName ?? "—")</td>
+                                            <td>
+                                                @if (isOld)
+                                                {
+                                                    <span class="billing-old-tag" title="Ordered before today and still not paid">
+                                                        @row.CreatedAt.ToString("d MMM")
+                                                    </span>
+                                                }
+                                                @row.CreatedAt.ToString("h:mm tt")
+                                            </td>
+                                            <td>
+                                                <span class="status-badge status-@row.OrderStatus">
+                                                    @IndexModel.OrderStatusLabel(row.OrderStatus)
+                                                </span>
+                                            </td>
+                                            <td class="text-end">@row.TotalAmount.ToString("F2")</td>
+                                            <td>
+                                                <span class="bill-state bill-state-@IndexModel.BillStateKey(row.BillStatus)">
+                                                    @IndexModel.BillStateLabel(row.BillStatus)
+                                                </span>
+                                                @if (row.BillId is int billId)
+                                                {
+                                                    <div class="billing-sub">
+                                                        @IndexModel.FormatBillNo(billId)
+                                                        @if (row.PaidAt is DateTime paidAt)
+                                                        {
+                                                            <span>· @paidAt.ToString("h:mm tt")</span>
+                                                        }
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                <a class="billing-open-link @(isPaid ? "" : "is-open")"
+                                                   asp-page="./Bill" asp-route-orderNo="@row.OrderNo">
+                                                    @(isPaid ? "View" : "Open") <span aria-hidden="true">→</span>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p class="billing-empty billing-no-match d-none">No takeaway orders match.</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Older bills are not in the list: open them by full order number or bill number -->
+            <p class="billing-lookup d-none" id="billingLookup">
+                Not in today's list?
+                <a href="#" id="billingLookupLink"><span id="billingLookupKind">Open order</span>
+                    <strong id="billingLookupText"></strong></a>
+            </p>
+        </div>
+    </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // US32: client-side search and filters for the billing list.
+        // Nothing is sent to the server; the list is already loaded.
+        (function () {
+            const search = document.getElementById('billingSearch');
+            const lookup = document.getElementById('billingLookup');
+            const lookupLink = document.getElementById('billingLookupLink');
+            const lookupKind = document.getElementById('billingLookupKind');
+            const lookupText = document.getElementById('billingLookupText');
+            const billUrl = '@Url.Page("./Bill")';
+            const billNoPattern = /^yb-?\d{1,9}$/i;
+
+            function activePane() {
+                return document.querySelector('.tab-pane.active');
+            }
+
+            function apply() {
+                const pane = activePane();
+                if (!pane) return;
+
+                const raw = (search.value || '').trim();
+                const query = raw.toLowerCase();
+                const filterBtn = pane.querySelector('.billing-filter.active');
+                const filter = filterBtn ? filterBtn.dataset.filter : 'all';
+                const rows = pane.querySelectorAll('tbody tr');
+                let shown = 0;
+
+                rows.forEach(function (row) {
+                    const matchText = !query || row.dataset.search.indexOf(query) !== -1;
+                    const matchState = filter === 'all' || row.dataset.state === filter;
+                    const visible = matchText && matchState;
+                    row.classList.toggle('d-none', !visible);
+                    if (visible) shown++;
+                });
+
+                // "4 tables · showing 4" on the right of the filters
+                const matchCount = pane.querySelector('.billing-match-count');
+                if (matchCount) {
+                    const noun = pane.id === 'pane-takeaway' ? 'order' : 'table';
+                    matchCount.textContent = rows.length + ' ' + noun + (rows.length === 1 ? '' : 's')
+                        + ' \u00b7 showing ' + shown;
+                }
+
+                const noMatch = pane.querySelector('.billing-no-match');
+                if (noMatch) noMatch.classList.toggle('d-none', rows.length === 0 || shown > 0);
+
+                // Nothing in the list matches: offer to open a full order number
+                // or a bill number (older bills, or dine-in order numbers).
+                const isBillNo = billNoPattern.test(raw);
+                const showLookup = shown === 0 && (isBillNo || raw.length >= 6);
+                lookup.classList.toggle('d-none', !showLookup);
+
+                if (showLookup) {
+                    const value = raw.toUpperCase();
+                    lookupKind.textContent = isBillNo ? 'Open bill' : 'Open order';
+                    lookupText.textContent = value;
+                    lookupLink.href = billUrl + (isBillNo ? '?billNo=' : '?orderNo=') + encodeURIComponent(value);
+                }
+            }
+
+            search.addEventListener('input', apply);
+
+            document.querySelectorAll('.billing-filters').forEach(function (group) {
+                group.addEventListener('click', function (e) {
+                    const btn = e.target.closest('.billing-filter');
+                    if (!btn) return;
+                    group.querySelectorAll('.billing-filter').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    apply();
+                });
+            });
+
+            // Switching tab only re-applies search and filters.
+            // The tab is not kept in the address bar: Refresh and Back always open Dine-in.
+            document.querySelectorAll('[data-tab-key]').forEach(function (tab) {
+                tab.addEventListener('shown.bs.tab', apply);
+            });
+
+            apply();
+        })();
+    </script>
+}

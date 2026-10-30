@@ -23,6 +23,11 @@ namespace RROMS.Models
         // Null for takeaway orders and for dine-in orders placed before the guests are seated.
         public int? DiningSessionId { get; set; }
         public DiningSession? DiningSession { get; set; }
+
+        // US32 (Member 4): Multiple orders can belong to one combined bill.
+        public int? BillId { get; set; }
+        public Bill? Bill { get; set; }
+
         public OrderType OrderType { get; set; } = OrderType.DineIn;
 
         public OrderStatus Status { get; set; } = OrderStatus.Pending;
