@@ -203,7 +203,7 @@
                             </ul>
                         }
 
-                        <!-- Bill totals (saved order amounts; SST is charged on subtotal + service) -->
+                        <!-- Bill totals (saved order amounts; tax is charged on subtotal + service) -->
                         <div class="row justify-content-end mt-4">
                             <div class="col-md-8">
 
@@ -218,7 +218,7 @@
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>SST (@taxRate.ToString("0.##")%)</span>
+                                    <span>Tax (@taxRate.ToString("0.##")%)</span>
                                     <span>RM @taxAmount.ToString("F2")</span>
                                 </div>
 
