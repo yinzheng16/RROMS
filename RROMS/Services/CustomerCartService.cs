@@ -13,7 +13,7 @@ using RROMS.Services.Interfaces;
 namespace RROMS.Services;
 
 // Owner: Member 3 / US24. Prices, ownership, roles and checkout are server-validated.
-public sealed class CustomerCartService : ICustomerCartService
+public sealed partial class CustomerCartService : ICustomerCartService
 {
     private readonly ApplicationDbContext _db;
     private readonly IDataProtector _protector;
