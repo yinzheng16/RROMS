@@ -162,13 +162,6 @@
                                             <td>@IndexModel.FormatListTime(row.OpenedAt, group.Older)</td>
                                             <td class="text-center">
                                                 @row.OrderCount
-                                                @if (row.OrdersInKitchenCount > 0 && row.BillId == null)
-                                                {
-                                                    <div class="billing-sub billing-kitchen">
-                                                        <i class="bi bi-fire" aria-hidden="true"></i>
-                                                        @row.OrdersInKitchenCount in kitchen
-                                                    </div>
-                                                }
                                             </td>
                                             <td class="text-end">@row.TotalAmount.ToString("F2")</td>
                                             <td>
