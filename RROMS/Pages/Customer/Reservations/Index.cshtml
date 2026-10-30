@@ -1,6 +1,7 @@
 ﻿@page
 @model RROMS.Pages.Customer.Reservations.IndexModel
 @using System.Text.Json
+@using RROMS.Services
 @{
     ViewData["Title"] = "My Reservations";
     ViewData["FullWidth"] = true;
@@ -10,6 +11,12 @@
     var config = JsonSerializer.Serialize(new
     {
         cancelUrl = Url.Page("/Customer/Reservations/Index", "Cancel"),
+        changeUrl = Url.Page("/Customer/Reservations/Index", "Change"),
+        slotsUrl = Url.Page("/Customer/Reservations/Index", "Slots"),
+        checkUrl = Url.Page("/Customer/Reservations/Index", "CheckChange"),
+        dates = Model.BookableDates,
+        maxGuests = Model.MaxGuests,
+        minLeadMinutes = BookingRules.MinLeadMinutes,
         graceMinutes = Model.NoShowGraceMinutes,
         serverNowMs = IndexModel.RestaurantEpoch(DateTime.Now),
         customerName = Model.CustomerName,
@@ -20,12 +27,15 @@
             date = r.ReservedAt.ToString("dd MMM yyyy", en),
             weekday = r.ReservedAt.ToString("ddd", en),
             time = IndexModel.Clock(r.ReservedAt),
+            dateIso = r.ReservedAt.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+            timeIso = r.ReservedAt.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
             reservedAtMs = IndexModel.RestaurantEpoch(r.ReservedAt),
             guests = r.Guests,
             seating = IndexModel.Seating(r),
             area = IndexModel.Area(r),
             tableNumber = IndexModel.TableNumber(r),
             request = string.IsNullOrWhiteSpace(r.SpecialRequest) ? "None" : r.SpecialRequest,
+            specialRequest = r.SpecialRequest ?? "",
             spend = IndexModel.Spend(r),
             hasMinimumSpend = r.MinimumSpend > 0m,
             spendAccepted = r.MinimumSpendWasAccepted,
@@ -35,6 +45,7 @@
     });
 }
 <link rel="stylesheet" href="~/css/my-reservations.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/my-reservations-change.css" asp-append-version="true" />
 <partial name="_ReservationIcons" />
 <section class="myr" id="myReservations" aria-labelledby="myrTitle">
     <div class="myr-wrap">
@@ -62,7 +73,7 @@
                             <span class="myr-day">@next.ReservedAt.ToString("dd", en)</span>
                             <span class="myr-month">@next.ReservedAt.ToString("MMM yyyy", en).ToUpperInvariant()</span>
                             <span class="myr-date-rule"></span>
-                            <time>@IndexModel.Clock(next.ReservedAt)</time>
+                            <time>@IndexModel.ClockParts(next.ReservedAt).Time <em class="myr-ampm">@IndexModel.ClockParts(next.ReservedAt).Meridiem</em></time>
                         </div>
                         <div class="myr-row-body">
                             <div class="myr-facts">
@@ -81,6 +92,7 @@
                                 <div class="myr-actions">
                                     @if (next.CanCancel)
                                     {
+                                        <button class="myr-quick-change" type="button" data-change="@next.Id" aria-label="Modify reservation @next.ReferenceNo">Modify</button>
                                         <button class="myr-quick-cancel" type="button" data-cancel="@next.Id" aria-label="Cancel reservation @next.ReferenceNo">Cancel</button>
                                     }
                                     <button class="myr-view" type="button" data-view="@next.Id" aria-label="View reservation @next.ReferenceNo">View Reservation<svg aria-hidden="true"><use href="#myr-arrow" /></svg></button>
@@ -108,7 +120,7 @@
                                     <small>@r.ReservedAt.ToString("MMM", en).ToUpperInvariant()</small>
                                 </div>
                                 <div class="myr-later-main">
-                                    <strong class="myr-later-time"><time>@IndexModel.Clock(r.ReservedAt)</time><span>@IndexModel.When(r.ReservedAt)</span></strong>
+                                    <strong class="myr-later-time"><time>@IndexModel.ClockParts(r.ReservedAt).Time <em class="myr-ampm">@IndexModel.ClockParts(r.ReservedAt).Meridiem</em></time><span>@IndexModel.When(r.ReservedAt)</span></strong>
                                     <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@r.Guests @(r.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@IndexModel.Seating(r)@if (rowArea is not null){<i></i><span>@rowArea</span>}@if (rowTable is not null){<i></i><strong class="myr-later-table">Table @rowTable</strong>}</p>
                                     @if (r.MinimumSpend > 0m)
                                     {
@@ -120,6 +132,7 @@
                                 <div class="myr-later-actions">
                                     @if (r.CanCancel)
                                     {
+                                        <button class="myr-quick-change" type="button" data-change="@r.Id" aria-label="Modify reservation @r.ReferenceNo">Modify</button>
                                         <button class="myr-quick-cancel" type="button" data-cancel="@r.Id" aria-label="Cancel reservation @r.ReferenceNo">Cancel</button>
                                     }
                                     <button class="myr-view" type="button" data-view="@r.Id" aria-label="View reservation @r.ReferenceNo">View<svg aria-hidden="true"><use href="#myr-arrow" /></svg></button>
@@ -166,12 +179,85 @@
         </article>
         <p class="myr-cancel-note" id="myrCancelNote" hidden></p>
         <p class="myr-rule-note" id="myrRuleNote">You can cancel any time before the booking time.</p>
-        <div class="myr-dialog-actions"><button type="button" class="myr-cancel-button" id="myrOpenCancel">Cancel Reservation</button><button type="button" class="myr-close-button" id="myrCloseDetails">Close</button></div>
+        <div class="myr-dialog-actions"><button type="button" class="myr-change-button" id="myrOpenChange">Modify Booking</button><button type="button" class="myr-cancel-button" id="myrOpenCancel">Cancel Reservation</button><button type="button" class="myr-close-button" id="myrCloseDetails">Close</button></div>
     </div>
 </dialog>
 
 <dialog class="myr-confirm-dialog" id="myrConfirm" aria-labelledby="myrConfirmTitle">
     <div class="myr-confirm-inner"><span class="myr-confirm-mark" aria-hidden="true"><svg><use href="#myr-ticket" /></svg></span><p class="myr-confirm-eyebrow">CHANGE OF PLANS</p><h2 id="myrConfirmTitle">Cancel this reservation?</h2><p>Your table will be released for other guests, and one of your upcoming bookings will be freed. You can make a new reservation when your plans settle.</p><div class="myr-confirm-summary"><strong id="myrConfirmReference"></strong><span id="myrConfirmDate"></span></div><p class="myr-confirm-error" id="myrCancelError" role="alert" hidden></p><form id="myrCancelForm"><input type="hidden" name="id" id="myrCancelId" /><button type="submit" class="myr-confirm-submit" id="myrConfirmSubmit">Yes, cancel reservation</button><button type="button" class="myr-close-button" id="myrKeepReservation">Keep my reservation</button></form></div>
 </dialog>
+<dialog class="myr-change-dialog" id="myrChange" aria-labelledby="myrChangeTitle">
+    <div class="myr-change-inner">
+        <button type="button" class="myr-change-x" id="myrChangeX" aria-label="Close"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+        <header class="myr-change-head">
+            <span class="myr-confirm-mark" aria-hidden="true"><svg><use href="#myr-calendar" /></svg></span>
+            <div>
+                <p class="myr-confirm-eyebrow">MODIFY BOOKING</p>
+                <h2 id="myrChangeTitle">Modify your booking</h2>
+                <p class="myr-change-now">Now: <strong id="myrChangeCurrent"></strong></p>
+            </div>
+        </header>
+        <form id="myrChangeForm" novalidate>
+            <input type="hidden" id="myrChangeId" />
+            <div class="myr-change-fields">
+                <div class="myr-change-field">
+                    <span class="myr-label" id="myrChangeDateLabel">Date</span>
+                    <button type="button" class="myr-pick" id="myrDateBtn" aria-haspopup="dialog" aria-expanded="false" aria-labelledby="myrChangeDateLabel myrDateText"><span id="myrDateText">-</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg></button>
+                    <div class="myr-pop myr-cal" id="myrCal" role="dialog" aria-label="Choose a date" hidden>
+                        <div class="myr-cal-head">
+                            <button type="button" class="myr-cal-nav" id="myrCalPrev" aria-label="Previous month">&lsaquo;</button>
+                            <strong id="myrCalTitle">Month</strong>
+                            <button type="button" class="myr-cal-nav" id="myrCalNext" aria-label="Next month">&rsaquo;</button>
+                        </div>
+                        <div class="myr-cal-week" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+                        <div class="myr-cal-grid" id="myrCalGrid"></div>
+                    </div>
+                </div>
+                <div class="myr-change-field">
+                    <span class="myr-label" id="myrChangeTimeLabel">Time</span>
+                    <button type="button" class="myr-pick" id="myrTimeBtn" aria-haspopup="dialog" aria-expanded="false" aria-labelledby="myrChangeTimeLabel myrTimeText"><span id="myrTimeText">-</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg></button>
+                    <div class="myr-pop myr-time-pop" id="myrTimePop" role="dialog" aria-label="Choose a time" hidden>
+                        <div class="myr-slots" id="myrChangeSlots" role="radiogroup" aria-labelledby="myrChangeTimeLabel"></div>
+                    </div>
+                </div>
+                <div class="myr-change-field myr-change-wide">
+                    <span class="myr-label" id="myrChangeGuestsLabel">Guests</span>
+                    <div class="myr-change-step" role="group" aria-labelledby="myrChangeGuestsLabel">
+                        <button type="button" id="myrChangeMinus" aria-label="One guest fewer">&minus;</button>
+                        <label class="myr-change-count"><input type="number" id="myrChangeGuests" inputmode="numeric" min="1" step="1" value="2" aria-label="Number of guests" /><span id="myrChangeGuestsWord">guests</span></label>
+                        <button type="button" id="myrChangePlus" aria-label="One guest more">+</button>
+                    </div>
+                </div>
+                <div class="myr-change-types myr-change-wide" id="myrChangeTypes" hidden>
+                    <span class="myr-label" id="myrChangeTypesLabel">Table type</span>
+                    <div class="myr-change-type-list" id="myrChangeTypeList" role="radiogroup" aria-labelledby="myrChangeTypesLabel"></div>
+                    <label class="myr-change-spend" id="myrChangeSpendRow" hidden><input type="checkbox" id="myrChangeSpend" /><span id="myrChangeSpendText"></span></label>
+                </div>
+            </div>
+            <div class="myr-change-request">
+                <label class="myr-label" for="myrChangeRequest">Special requests <small>(optional)</small></label>
+                <textarea id="myrChangeRequest" maxlength="500" rows="2" placeholder="Birthday, high chair, or anything we should know?"></textarea>
+                <small class="myr-change-count-note"><span id="myrChangeRequestCount">0</span>/500</small>
+            </div>
+            <div class="myr-change-status" id="myrChangeStatus" role="status" aria-live="polite" hidden></div>
+            <div class="myr-change-suggest" id="myrChangeSuggest" hidden></div>
+            <p class="myr-change-note">Your reference stays the same. Adding or removing guests at the same table, or editing your request, keeps your booking as it is. Changing the date, time or table type sends it back to Pending until our team confirms it again.</p>
+            <div class="myr-change-buttons">
+                <button type="submit" class="myr-change-submit" id="myrChangeSubmit" disabled>Save changes</button>
+                <button type="button" class="myr-close-button" id="myrChangeKeep">Keep my booking as it is</button>
+            </div>
+        </form>
+        <div class="myr-change-leave" id="myrChangeLeave" role="alertdialog" aria-labelledby="myrLeaveTitle" hidden>
+            <div class="myr-change-leave-box">
+                <h3 id="myrLeaveTitle">Keep editing or discard?</h3>
+                <p>You have changes that are not saved. If you leave now, your booking stays as it is.</p>
+                <button type="button" class="myr-change-submit" id="myrLeaveKeep">Keep editing</button>
+                <button type="button" class="myr-change-discard" id="myrLeaveDiscard">Discard changes</button>
+            </div>
+        </div>
+    </div>
+</dialog>
 <script type="application/json" id="myrConfig">@Html.Raw(config)</script>
 <script src="~/js/my-reservations.js" asp-append-version="true" defer></script>
+<script src="~/js/my-reservations-change.js" asp-append-version="true" defer></script>
+<script src="~/js/my-reservations-paging.js" asp-append-version="true" defer></script>

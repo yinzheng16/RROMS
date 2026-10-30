@@ -16,6 +16,7 @@ namespace RROMS.Pages.Customer.Reservations;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class IndexModel(
     IMyReservationsService reservations,
+    IReservationService booking,
     INotificationService notifications,
     UserManager<ApplicationUser> users) : PageModel
 {
@@ -27,6 +28,9 @@ public class IndexModel(
     public int UpcomingCount => Reservations.Count(r => r.CanCancel);
     public int MaxActiveBookings => BookingRules.MaxActiveBookings;
     public string CustomerName { get; private set; } = "Guest";
+    // US15: the days a booking can be moved to, and the largest party a table can seat.
+    public IReadOnlyList<string> BookableDates { get; private set; } = Array.Empty<string>();
+    public int MaxGuests { get; private set; } = 2;
     public static readonly CultureInfo DisplayCulture = CultureInfo.GetCultureInfo("en-MY");
 
     public async Task<IActionResult> OnGetAsync(CancellationToken cancellationToken)
@@ -37,7 +41,124 @@ public class IndexModel(
         var user = await users.GetUserAsync(User);
         CustomerName = string.IsNullOrWhiteSpace(user?.FullName) ? "Guest" : user!.FullName;
         Reservations = await _reservations.GetMyUpcomingReservationsAsync(userId, cancellationToken);
+        BookableDates = await booking.GetBookableDatesAsync();
+        MaxGuests = await booking.GetMaxPartySizeAsync();
         return Page();
+    }
+
+    // ---------- US15: change a booking ----------
+
+    private static bool TryStart(string? date, string? time, out DateTime start)
+    {
+        start = default;
+
+        if (!DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var day))
+            return false;
+
+        if (!TimeSpan.TryParseExact(time, "hh\\:mm", CultureInfo.InvariantCulture, out var clock))
+            return false;
+
+        start = day.Date + clock;
+        return true;
+    }
+
+    // The times offered on one date (already without times less than 1 hour from now).
+    public async Task<IActionResult> OnGetSlotsAsync(string? date)
+    {
+        if (!DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var day))
+            return new JsonResult(new { error = "Choose a valid date." }) { StatusCode = 400 };
+
+        var slots = await booking.GetTimeSlotsAsync(day);
+        return new JsonResult(new { slots });
+    }
+
+    // Can the booking be changed like this? Shows the reason, nearby times or other table types when not.
+    public async Task<IActionResult> OnGetCheckChangeAsync(
+        int id, string? date, string? time, int guests, int? typeId, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        if (!TryStart(date, time, out var start))
+            return new JsonResult(new { valid = false, available = false, message = "Choose a valid date and time.", suggestions = Array.Empty<object>() });
+
+        var r = await _reservations.CheckMyChangeAsync(userId, id, start, guests, typeId, cancellationToken);
+
+        return new JsonResult(new
+        {
+            valid = r.Valid,
+            available = r.Available,
+            message = r.Message,
+            backToPending = r.BackToPending,
+            suggestions = r.Suggestions.Select(x => new { date = x.Date, time = x.Time, label = x.Label, kind = x.Kind }),
+            typeOptions = r.TypeOptions?.Select(o => new
+            {
+                id = o.Id,
+                name = o.Name,
+                japaneseName = o.JapaneseName,
+                minGuests = o.MinGuests,
+                maxGuests = o.MaxGuests,
+                minimumSpend = o.MinimumSpend,
+                tablesLeft = o.TablesLeft
+            })
+        });
+    }
+
+    // The customer id always comes from the logged-in user, never from the form.
+    public async Task<IActionResult> OnPostChangeAsync(
+        int id, string? date, string? time, int guests, int? typeId, bool acceptSpend, decimal expectedSpend,
+        string? specialRequest, CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        if (!TryStart(date, time, out var start))
+            return new JsonResult(new { success = false, code = "slot", message = "Choose a valid date and time." })
+            { StatusCode = StatusCodes.Status409Conflict };
+
+        var result = await _reservations.ChangeMyReservationAsync(
+            userId, id, start, guests, typeId, acceptSpend, expectedSpend, specialRequest, cancellationToken);
+
+        if (result.Success && result.NewReservedAt is { } at)
+        {
+            var when = $"{at.ToString("d MMM yyyy", CultureInfo.InvariantCulture)} at " +
+                       $"{at.ToString("h:mm tt", CultureInfo.InvariantCulture)} for " +
+                       $"{result.NewGuests} {(result.NewGuests == 1 ? "guest" : "guests")}";
+            var follow = result.BackToPending
+                ? "Our team will confirm the new details."
+                : result.RequestChanged
+                    ? "Your booking stays confirmed and our team can see your updated request."
+                    : "Your booking stays as it was.";
+
+            // A failed notification must never undo a saved change.
+            try
+            {
+                await notifications.SendAsync(
+                    userId,
+                    "Reservation modified",
+                    $"Your reservation {result.ReferenceNo} is now on {when}. {follow}",
+                    NotificationType.Reservation);
+            }
+            catch
+            {
+                // Intentionally ignored: the customer already sees the result on screen.
+            }
+
+            TempData["SuccessMessage"] = result.BackToPending
+                ? $"{result.ReferenceNo} has been modified to {when}. It is waiting for confirmation again."
+                : result.RequestChanged
+                    ? $"{result.ReferenceNo} has been updated. Our team can see your new details."
+                    : $"{result.ReferenceNo} now has {result.NewGuests} {(result.NewGuests == 1 ? "guest" : "guests")}.";
+        }
+
+        return new JsonResult(new { success = result.Success, code = result.Code, message = result.Message })
+        {
+            StatusCode = result.Success ? StatusCodes.Status200OK
+                : result.Code == "not_found" ? StatusCodes.Status404NotFound
+                : StatusCodes.Status409Conflict
+        };
     }
 
     // Razor Pages automatically validates the antiforgery token on POST.
@@ -92,6 +213,10 @@ public class IndexModel(
 
     // 12-hour clock with AM/PM everywhere, so 12:00 can never be mistaken for midnight.
     public static string Clock(DateTime at) => at.ToString("h:mm tt", CultureInfo.InvariantCulture);
+
+    // The same time in two parts, so the page can show AM/PM smaller.
+    public static (string Time, string Meridiem) ClockParts(DateTime at) =>
+        (at.ToString("h:mm", CultureInfo.InvariantCulture), at.ToString("tt", CultureInfo.InvariantCulture));
     public static string When(DateTime at)
     {
         var days = (at.Date - DateTime.Now.Date).Days;

@@ -231,7 +231,8 @@ public partial class ReservationService
     // ---------- availability ----------
 
     // Table ids that already have a booking touching [start, end], plus a turnover gap.
-    private async Task<HashSet<int>> BusyTableIdsAsync(DateTime start, DateTime end)
+    private async Task<HashSet<int>> BusyTableIdsAsync(
+        DateTime start, DateTime end, int? excludeReservationId = null)
     {
         var from = start.AddHours(-12);
         var to = end.AddHours(12);
@@ -239,6 +240,7 @@ public partial class ReservationService
         var rows = await _db.Reservations
             .AsNoTracking()
             .Where(r => r.TableId != null &&
+                        (excludeReservationId == null || r.Id != excludeReservationId) &&
                         (r.Status == ReservationStatus.Pending ||
                          r.Status == ReservationStatus.Confirmed ||
                          r.Status == ReservationStatus.Seated) &&
@@ -425,11 +427,13 @@ public partial class ReservationService
     //  1. In total at most BookingRules.MaxActiveBookings upcoming bookings.
     //  2. In any BookingTimeRules.RollingWindowDays days in a row, at most BookingTimeRules.MaxPerWindow.
     // Returns the message to show, or null when the new booking is allowed.
-    private async Task<string?> LimitMessageAsync(string userId, DateTime start, DateTime now)
+    private async Task<string?> LimitMessageAsync(
+        string userId, DateTime start, DateTime now, int? excludeReservationId = null)
     {
         var upcoming = await _db.Reservations
             .AsNoTracking()
             .Where(r => r.UserId == userId &&
+                        (excludeReservationId == null || r.Id != excludeReservationId) &&
                         (r.Status == ReservationStatus.Pending ||
                          r.Status == ReservationStatus.Confirmed) &&
                         r.ReservedAt > now)
