@@ -61,7 +61,7 @@
                                 <tr class="sr-hour" data-hour="@r.ReservedAt.Hour"><td colspan="7"><u aria-hidden="true">◆</u><b>@HourLabel(r.ReservedAt.Hour)</b><small>@Plural(live.Count, "booking", "bookings") · @Plural(live.Sum(x => x.Guests), "guest", "guests")@if (gone > 0){<text> · @gone cancelled</text>}</small></td></tr>
                             }
                             var visual = Visual(r);
-                            <tr class="sr-row v-@visual@(r.Id == nextUpId ? " is-next" : "")" data-id="@r.Id" data-bucket="@Bucket(r)" data-late="@(r.IsLate ? "1" : "0")" data-ref="@r.ReferenceNo" data-name="@r.GuestName" data-phone="@(r.Phone ?? "")" data-time="@Clock(r.ReservedAt)" data-guests="@r.Guests" data-table="@(r.TableNumber ?? "")" data-confirm="@(r.CanConfirm ? "1" : "0")" data-search="@SearchText(r)">
+                            <tr class="sr-row v-@visual@(r.Id == nextUpId ? " is-next" : "")" data-id="@r.Id" data-bucket="@Bucket(r)" data-late="@(r.IsLate ? "1" : "0")" data-ref="@r.ReferenceNo" data-name="@r.GuestName" data-phone="@(r.Phone ?? "")" data-time="@Clock(r.ReservedAt)" data-guests="@r.Guests" data-table="@(r.TableNumber ?? "")" data-table-id="@(r.TableId?.ToString() ?? "")" data-confirm="@(r.CanConfirm ? "1" : "0")" data-seat="@(r.CanSeat ? "1" : "0")" data-noshow="@(r.CanNoShow ? "1" : "0")" data-cancel="@(r.CanCancel ? "1" : "0")" data-modify="@(r.CanModify ? "1" : "0")" data-complete="@(r.CanComplete ? "1" : "0")" data-date="@r.ReservedAt.ToString("yyyy-MM-dd")" data-time24="@r.ReservedAt.ToString("HH:mm")" data-request="@(r.SpecialRequest ?? "")" data-status="@r.Status" data-search="@SearchText(r)">
                                 <td class="tm">@Clock(r.ReservedAt)</td>
                                 <td class="gn"><b>@r.GuestName</b><small>@(r.Phone ?? "No phone")</small></td>
                                 <td class="px">@r.Guests</td>
@@ -95,6 +95,14 @@
                                     @if (r.CanConfirm)
                                     {
                                         <button type="button" class="sr-confirm" data-act="confirm" data-id="@r.Id">@Icon("check")Confirm</button>
+                                    }
+                                    else if (r.CanSeat && r.Status == RROMS.Models.ReservationStatus.Confirmed)
+                                    {
+                                        <button type="button" class="sr-confirm is-seat" data-act="seat" data-id="@r.Id">@Icon("seat")Seat</button>
+                                    }
+                                    else if (r.CanComplete)
+                                    {
+                                        <button type="button" class="sr-confirm is-done" data-act="complete" data-id="@r.Id">@Icon("check")Guests left</button>
                                     }
                                     <button type="button" class="sr-more" data-act="menu" aria-haspopup="menu" aria-label="More actions for @r.GuestName">@Icon("more")</button>
                                 </td>
@@ -191,7 +199,7 @@
                                     @foreach (var r in rows.Where(x => (x.TableId ?? 0) == lane.TableId))
                                     {
                                         var visual = Visual(r);
-                                        <button type="button" class="tl-bar v-@visual" data-act="open" data-id="@r.Id" data-bucket="@Bucket(r)" data-late="@(r.IsLate ? "1" : "0")" data-ref="@r.ReferenceNo" data-name="@r.GuestName" data-phone="@(r.Phone ?? "")" data-time="@Clock(r.ReservedAt)" data-guests="@r.Guests" data-table="@(r.TableNumber ?? "")" data-confirm="@(r.CanConfirm ? "1" : "0")" data-search="@SearchText(r)"
+                                        <button type="button" class="tl-bar v-@visual" data-act="open" data-id="@r.Id" data-bucket="@Bucket(r)" data-late="@(r.IsLate ? "1" : "0")" data-ref="@r.ReferenceNo" data-name="@r.GuestName" data-phone="@(r.Phone ?? "")" data-time="@Clock(r.ReservedAt)" data-guests="@r.Guests" data-table="@(r.TableNumber ?? "")" data-table-id="@(r.TableId?.ToString() ?? "")" data-confirm="@(r.CanConfirm ? "1" : "0")" data-seat="@(r.CanSeat ? "1" : "0")" data-noshow="@(r.CanNoShow ? "1" : "0")" data-cancel="@(r.CanCancel ? "1" : "0")" data-modify="@(r.CanModify ? "1" : "0")" data-complete="@(r.CanComplete ? "1" : "0")" data-date="@r.ReservedAt.ToString("yyyy-MM-dd")" data-time24="@r.ReservedAt.ToString("HH:mm")" data-request="@(r.SpecialRequest ?? "")" data-status="@r.Status" data-search="@SearchText(r)"
                                                 style="left:@Pct(r.ReservedAt, tlStart, tlEnd)%;width:@PctWidth(r.ReservedAt, r.EndsAt, tlStart, tlEnd)%"
                                                 title="@r.GuestName · @Clock(r.ReservedAt) · @StatusText(r)">
                                             <span class="b-top">@if (RequestKind(r.SpecialRequest) == "warn"){<span class="b-warn" title="Allergy">@Icon("warn")</span>}<b>@r.GuestName</b>

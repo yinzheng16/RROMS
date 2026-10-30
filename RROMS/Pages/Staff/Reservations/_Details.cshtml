@@ -165,7 +165,7 @@
 
     <section class="dv-progress" aria-label="Reservation progress">
         <h3 class="dv-h">@Icon("list")Reservation progress</h3>
-        <ol class="dv-steps">
+        <ol class="dv-steps@(rank == 0 ? " is-two" : "")">
             <li class="done"><i>@Icon("check")</i><b>Booked</b><small>@bookedText</small></li>
             @if (rank == 0)
             {
@@ -197,13 +197,54 @@
                 <p>The guest can see this @word seal in My Reservations. Table assignment may change on the day.</p>
             </div>
         }
+        else if (r.Status == ReservationStatus.Seated)
+        {
+            <div class="dv-note">
+                @Icon("info")
+                <i class="dv-vr"></i>
+                <p>The table is open for ordering. Press <b>Guests left</b> when they leave. Paying the bill does not end the visit.</p>
+            </div>
+        }
         <div class="dv-actions">
-            <button type="button" class="dv-link" data-act="close">Close</button>
-            <button type="button" class="dv-ghost" disabled title="Cancelling a booking for a guest comes with the next update">Cancel booking <em>Soon</em></button>
-            @if (r.CanConfirm)
-            {
-                <button type="button" class="dv-confirm" data-act="confirm" data-id="@r.Id">@Icon("check")Confirm reservation</button>
-            }
+            <div class="dv-act-l">
+                @if (r.CanCancel)
+                {
+                    <button type="button" class="dv-ghost is-danger" data-act="cancel" data-id="@r.Id">@Icon("x")Cancel booking</button>
+                }
+            </div>
+            <div class="dv-act-r">
+                <button type="button" class="dv-ghost is-light dv-close-btn" data-act="close">Close</button>
+                @if (r.CanModify)
+                {
+                    <button type="button" class="dv-ghost is-light" data-act="modify" data-id="@r.Id">@Icon("edit")Modify</button>
+                }
+                @if (r.CanComplete)
+                {
+                    <button type="button" class="dv-confirm" data-act="complete" data-id="@r.Id">@Icon("check")Guests left</button>
+                }
+                @if (r.CanSeat || r.CanNoShow)
+                {
+                    @* Guests either arrive (seat them) or do not (no-show): one choice, shown together. *@
+                    <div class="dv-choice@(r.CanSeat && r.CanNoShow ? "" : " is-single")" role="group" aria-label="Guest arrival">
+                        @if (r.CanSeat)
+                        {
+                            <button type="button" class="is-seat" data-act="seat" data-id="@r.Id">@Icon("seat")Mark as seated</button>
+                        }
+                        @if (r.CanSeat && r.CanNoShow)
+                        {
+                            <span class="dv-choice-or">or</span>
+                        }
+                        @if (r.CanNoShow)
+                        {
+                            <button type="button" class="is-noshow" data-act="noshow" data-id="@r.Id">@Icon("noshow")No-show</button>
+                        }
+                    </div>
+                }
+                @if (r.CanConfirm)
+                {
+                    <button type="button" class="dv-confirm" data-act="confirm" data-id="@r.Id">@Icon("check")Confirm</button>
+                }
+            </div>
         </div>
     </footer>
 </div>

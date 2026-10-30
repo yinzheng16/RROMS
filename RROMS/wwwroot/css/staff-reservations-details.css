@@ -165,7 +165,7 @@
 
 .dv-trio { display: grid; grid-template-columns: auto auto auto; justify-content: space-between; gap: 0; margin-bottom: 16px }
 
-    .dv-trio > div { padding: 0 12px; border-left: 1px solid var(--g-line); min-width: 0 }
+    .dv-trio > div { padding: 0 12px; border-left: 1px solid var(--g-line); min-width: max-content }
 
         .dv-trio > div:first-child { padding-left: 0; border-left: 0 }
 
@@ -450,45 +450,217 @@
     .dv *, .dv *::before, .dv *::after { animation: none !important; transition: none !important }
 }
 
+/* ---------------------------------------------------------------- US17: status actions */
+.dv-ghost:not(:disabled) { cursor: pointer }
+.dv-ghost:hover:not(:disabled) { background: rgba(224,138,128,.14) }
+.dv-ghost.is-light { display: inline-flex; align-items: center; gap: 8px; border-color: rgba(251,238,222,.45); color: #fbeede }
+    .dv-ghost.is-light svg { width: 17px; height: 17px }
+    .dv-ghost.is-light:hover:not(:disabled) { background: rgba(251,238,222,.12) }
+.dv-confirm.is-seat { background: linear-gradient(#3f9a4c,#2f7a3c); box-shadow: 0 3px 0 #1f5a2b }
+
 /* ---------------------------------------------------------------- fit the card on shorter screens */
-.sr-modal:has(.dv) {
-    padding-top: 2vh;
-    padding-bottom: 2vh
+.sr-modal:has(.dv) { padding-top: 2vh; padding-bottom: 2vh }
+.sr-modal-box:has(.dv) { width: min(900px, 100%); zoom: .86 }
+@media (max-height: 980px) { .sr-modal-box:has(.dv) { zoom: .78 } }
+@media (max-height: 880px) { .sr-modal-box:has(.dv) { zoom: .7 } }
+@media (max-height: 780px) { .sr-modal-box:has(.dv) { zoom: .62 } }
+@media (max-width: 760px) { .sr-modal-box:has(.dv) { zoom: 1 } }
+.dv-spend small, .dv-spend b { white-space: nowrap }
+.sr-modal-box:has(.dv) { margin: auto }
+
+/* ---------------------------------------------------------------- footer: note on top, actions below */
+.dv-foot {
+    display: block;
+    padding: 14px 18px 16px
 }
 
-.sr-modal-box:has(.dv) {
-    width: min(900px, 100%);
-    zoom: .86
-}
-
-@media (max-height: 980px) {
-    .sr-modal-box:has(.dv) {
-        zoom: .78
+    .dv-foot .dv-note {
+        flex: none;
+        padding-bottom: 13px;
+        margin-bottom: 13px;
+        border-bottom: 1px solid var(--g-line)
     }
+
+    .dv-foot .dv-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        width: 100%;
+        margin: 0
+    }
+
+.dv-act-l, .dv-act-r {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px
 }
 
-@media (max-height: 880px) {
-    .sr-modal-box:has(.dv) {
-        zoom: .7
-    }
+.dv-act-r {
+    margin-left: auto
 }
 
-@media (max-height: 780px) {
-    .sr-modal-box:has(.dv) {
-        zoom: .62
-    }
+.dv-ghost svg {
+    width: 16px;
+    height: 16px
 }
+
+/* Cancel booking: clearly a warning button */
+.dv-ghost.is-danger {
+    border-color: rgba(240,120,104,.75);
+    background: rgba(179,38,27,.2);
+    color: #ffb8aa;
+    font-weight: 700
+}
+
+    .dv-ghost.is-danger:hover:not(:disabled) {
+        background: rgba(179,38,27,.42);
+        border-color: #f08a7a;
+        color: #fff
+    }
+
+/* No-show: amber, so it reads differently from Cancel */
+.dv-ghost.is-amber {
+    border-color: rgba(224,181,106,.7);
+    background: rgba(224,181,106,.1);
+    color: #f2cf8d;
+    font-weight: 700
+}
+
+    .dv-ghost.is-amber:hover:not(:disabled) {
+        background: rgba(224,181,106,.24);
+        color: #fff3df
+    }
 
 @media (max-width: 760px) {
-    .sr-modal-box:has(.dv) {
-        zoom: 1
+    .dv-foot .dv-actions {
+        flex-direction: column;
+        align-items: stretch
+    }
+
+    .dv-act-l, .dv-act-r {
+        justify-content: flex-end
     }
 }
 
-.dv-spend small, .dv-spend b {
+/* ---------------------------------------------------------------- arrival choice + slightly smaller buttons */
+.dv-choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--g-soft);
+    border-radius: 12px;
+    background: rgba(0,0,0,.28)
+}
+
+.dv-choice-l {
+    padding: 0 8px 0 10px;
+    font: 700 10px var(--sr-sans, system-ui, sans-serif);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--g)
+}
+
+.dv-choice-or {
+    font: italic 400 13px var(--sr-serif, Georgia, serif);
+    color: var(--mute)
+}
+
+.dv-choice button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 9px;
+    font: 700 14px var(--sr-serif, Georgia, serif);
+    cursor: pointer;
+    transition: filter .15s, background .15s
+}
+
+    .dv-choice button svg {
+        width: 16px;
+        height: 16px
+    }
+
+    .dv-choice button.is-seat {
+        background: linear-gradient(#3f9a4c,#2f7a3c);
+        color: #fff;
+        box-shadow: 0 2px 0 #1f5a2b
+    }
+
+    .dv-choice button.is-noshow {
+        background: rgba(224,181,106,.16);
+        color: #f2cf8d;
+        box-shadow: inset 0 0 0 1px rgba(224,181,106,.55)
+    }
+
+    .dv-choice button:hover {
+        filter: brightness(1.12)
+    }
+
+.dv-confirm {
+    height: 40px;
+    padding: 0 18px;
+    gap: 8px;
+    font-size: 15px;
+    border-radius: 9px
+}
+
+    .dv-confirm svg {
+        width: 16px;
+        height: 16px
+    }
+
+.dv-ghost {
+    height: 38px;
+    padding: 0 14px;
+    gap: 7px;
+    font-size: 14px;
+    border-radius: 9px
+}
+
+.dv-link {
+    font-size: 15px;
+    padding: 8px 10px
+}
+
+/* ---------------------------------------------------------------- footer buttons stay on one line */
+.dv-choice.is-single {
+    padding: 0;
+    border: 0;
+    background: none
+}
+
+    .dv-choice.is-single button {
+        height: 38px;
+        padding: 0 16px
+    }
+
+.dv-foot .dv-actions button {
     white-space: nowrap
 }
 
-.sr-modal-box:has(.dv) {
-    margin: auto
+@media (min-width: 932px) {
+    .dv-foot .dv-actions, .dv-act-l, .dv-act-r {
+        flex-wrap: nowrap
+    }
+
+    .dv-foot .dv-actions {
+        gap: 8px
+    }
+
+    .dv-act-l, .dv-act-r {
+        gap: 8px
+    }
 }
+
+/* two-step progress (booked -> cancelled / no-show): spread the steps apart */
+.dv-steps.is-two { grid-template-columns: 1fr 1fr; padding: 0 12% }
+
+/* Close button in the footer (every details view has one) */
+.dv-close-btn { padding: 0 14px }

@@ -28,7 +28,13 @@ public record StaffReservationRow(
     int MinutesLate,
     // Pending only: whole minutes until the automatic cancel (never negative).
     int? AutoCancelMinutes,
-    bool CanConfirm);
+    bool CanConfirm,
+    // US17: what staff may do with this booking right now.
+    bool CanSeat,
+    bool CanNoShow,
+    bool CanCancel,
+    bool CanModify,
+    bool CanComplete);
 
 public record StaffTableLane(int TableId, string TableNumber, int Capacity, string? TypeName = null);
 
@@ -76,6 +82,22 @@ public record StaffReservationDetails(
 
 public record StaffActionResult(bool Success, string Code, string Message);
 
+// ---- Modify (US17) ----
+public record StaffSlot(string Value, string Label);
+
+public record StaffTableOption(int Id, string Label, string Area, int Capacity, bool Free, string? Note);
+
+// What the "Modify" dialog needs for one date / time / party size.
+public record StaffEditOptions(
+    bool Closed,
+    string? ClosedReason,
+    IReadOnlyList<StaffSlot> Slots,
+    string Time,
+    IReadOnlyList<StaffTableOption> Tables);
+
+// SpecialRequest: the booking's request as it should be after saving (blank = none). The dialog always sends it.
+public record StaffModifyRequest(DateTime Date, string Time, int Guests, int TableId, string? SpecialRequest = null);
+
 public interface IStaffReservationService
 {
     // Releases overdue bookings first, then returns everything for one day.
@@ -85,5 +107,30 @@ public interface IStaffReservationService
 
     // Pending -> Confirmed. role is "Staff" or "Admin" (written to the status history).
     Task<StaffActionResult> ConfirmAsync(int reservationId, string staffUserId, string role,
+        CancellationToken cancellationToken = default);
+
+    // ---- US17 ----
+    // Pending / Confirmed -> Seated. Opens the dining session and attaches pre-arrival orders.
+    Task<StaffActionResult> SeatAsync(int reservationId, string staffUserId, string role,
+        CancellationToken cancellationToken = default);
+
+    // Pending / Confirmed -> NoShow (only once the booking time has been reached).
+    Task<StaffActionResult> NoShowAsync(int reservationId, string staffUserId, string role,
+        CancellationToken cancellationToken = default);
+
+    // Pending / Confirmed -> Cancelled by staff. reason is optional and is shown to the customer.
+    Task<StaffActionResult> CancelAsync(int reservationId, string staffUserId, string role, string? reason,
+        CancellationToken cancellationToken = default);
+
+    // Seated -> Completed: guests have left. Closes the dining session and frees the table.
+    Task<StaffActionResult> CompleteAsync(int reservationId, string staffUserId, string role,
+        CancellationToken cancellationToken = default);
+
+    // Slots and tables for the "Modify" dialog. time may be empty (then the current time is used when valid).
+    Task<StaffEditOptions?> GetEditOptionsAsync(int reservationId, DateTime date, string? time, int guests,
+        CancellationToken cancellationToken = default);
+
+    // Change date / time / party size / table of a Pending or Confirmed booking.
+    Task<StaffActionResult> ModifyAsync(int reservationId, StaffModifyRequest request, string staffUserId, string role,
         CancellationToken cancellationToken = default);
 }

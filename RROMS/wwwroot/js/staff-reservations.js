@@ -1,6 +1,7 @@
 /* Owner: Member 2 — US16 staff "Today's reservations".
    Filtering and search run in the browser on the day that is already loaded.
-   Server calls: ?handler=Board (refresh), ?handler=Details (pop-up), ?handler=Confirm (POST). */
+   Server calls: ?handler=Board (refresh), ?handler=Details (pop-up), ?handler=Options (Modify dialog, GET),
+   POST handlers: Confirm, Seat, NoShow, Cancel, Complete, Modify (each returns { success, code, message }). */
 (() => {
     'use strict';
 
@@ -13,6 +14,8 @@
     const menu = document.getElementById('srMenu');
     const modal = document.getElementById('srModal');
     const modalBox = document.getElementById('srModalBox');
+    const dlg = document.getElementById('srDialog');
+    const dlgBox = document.getElementById('srDialogBox');
     const toast = document.getElementById('srToast');
     const search = document.getElementById('srSearch');
     const refreshBtn = document.getElementById('srRefresh');
@@ -30,7 +33,8 @@
         copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
         seat: '<path d="M6 20V9a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v11M4 14h16M8 20v-3m8 3v-3"/>',
         noshow: '<circle cx="12" cy="12" r="8.5"/><path d="m6 6 12 12"/>',
-        x: '<path d="M6 6l12 12M18 6 6 18"/>'
+        x: '<path d="M6 6l12 12M18 6 6 18"/>',
+        edit: '<path d="M4 20h4L19 9l-4-4L4 16v4Zm9-13 4 4"/>'
     };
 
     // ---------------------------------------------------------------- filters + search
@@ -204,26 +208,405 @@
         }
     }
 
-    async function confirmBooking(id, btn) {
-        if (!id) return;
-        const buttons = root.querySelectorAll(`[data-act="confirm"][data-id="${id}"]`);
-        buttons.forEach(b => { b.disabled = true; });
-        closeMenu();
+    // One POST to a page handler. Returns { ok, data }. Never throws.
+    async function post(handler, id, fields) {
         try {
-            const res = await fetch(`${pageUrl}?handler=Confirm&id=${encodeURIComponent(id)}`, {
+            const res = await fetch(`${pageUrl}?handler=${handler}&id=${encodeURIComponent(id)}`, {
                 method: 'POST', credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'RequestVerificationToken': token() }
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest', 'RequestVerificationToken': token(),
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams(fields || {}).toString()
             });
             let data = {};
-            try { data = await res.json(); } catch { /* not JSON: handled below */ }
-            if (res.ok && data.success) say(data.message || 'Reservation confirmed.');
-            else say(data.message || 'Could not confirm this reservation. Refresh and try again.', true);
+            try { data = await res.json(); } catch { /* not JSON */ }
+            return { ok: res.ok && data.success, data };
         } catch {
-            say('We could not reach the server. Refresh and check this booking before trying again.', true);
+            return { ok: false, data: { message: 'We could not reach the server. Refresh and check this booking before trying again.' } };
         }
+    }
+
+    const FAIL = {
+        confirm: 'Could not confirm this reservation. Refresh and try again.',
+        seat: 'Could not seat these guests. Refresh and try again.',
+        noshow: 'Could not mark this booking as a no-show. Refresh and try again.',
+        cancel: 'Could not cancel this booking. Refresh and try again.',
+        complete: 'Could not complete this visit. Refresh and try again.',
+        modify: 'Could not update this booking. Refresh and try again.'
+    };
+    const HANDLER = { confirm: 'Confirm', seat: 'Seat', noshow: 'NoShow', cancel: 'Cancel', complete: 'Complete', modify: 'Modify' };
+
+    // Runs one action, shows the answer, refreshes the page parts and the open pop-up.
+    async function runAction(name, id, fields) {
+        if (!id) return { ok: false, data: {} };
+        const buttons = root.querySelectorAll(`[data-act="${name}"][data-id="${id}"]`);
+        buttons.forEach(b => { b.disabled = true; });
+        closeMenu();
+        const r = await post(HANDLER[name], id, fields);
+        say(r.data.message || (r.ok ? 'Done.' : FAIL[name]), !r.ok);
         await refreshBoard(true);
         if (!modal.hidden && modalBox.querySelector('.dv')?.dataset.id === String(id)) await openDetails(id, true);
         buttons.forEach(b => { b.disabled = false; });
+        return r;
+    }
+
+    // ---------------------------------------------------------------- small dialog (confirm / reason / modify)
+    function openDialog(html) {
+        state.dlgFocus = document.activeElement;
+        dlgBox.innerHTML = html;
+        dlg.hidden = false;
+        dlgBox.querySelector('[autofocus],input,select,textarea,button.dg-ok')?.focus();
+    }
+    function closeDialog() {
+        if (dlg.hidden) return;
+        dlg.hidden = true;
+        dlgBox.innerHTML = '';
+        state.dlgFocus?.focus?.();
+    }
+
+    function bookingLine(d) {
+        return `${esc(d.name)} · ${esc(d.time)} · ${d.guests} guest${d.guests === '1' ? '' : 's'}${d.table ? ' · table ' + esc(d.table) : ''}`;
+    }
+
+    // ask: { title, lead, d, okLabel, danger, reason }
+    function ask(o) {
+        return new Promise(resolve => {
+            openDialog(
+                `<form class="dg" novalidate><header><h3>${esc(o.title)}</h3><p>${bookingLine(o.d)}</p></header>` +
+                `<p class="dg-lead">${o.lead}</p>` +
+                (o.reason ? `<label class="dg-field">${esc(o.reason)}<textarea name="reason" rows="2" maxlength="200" placeholder="Optional. The customer will see this."></textarea></label>` : '') +
+                `<footer><button type="submit" class="dg-ok${o.danger ? ' is-danger' : ''}">${esc(o.okLabel)}</button>` +
+                `<button type="button" class="dg-no" data-dg="cancel">Keep booking</button></footer></form>`);
+            const form = dlgBox.querySelector('form');
+            form.addEventListener('submit', ev => {
+                ev.preventDefault();
+                const v = form.querySelector('[name="reason"]')?.value.trim() || '';
+                closeDialog();
+                resolve({ yes: true, reason: v });
+            });
+            dlgBox.querySelector('[data-dg="cancel"]').addEventListener('click', () => { closeDialog(); resolve({ yes: false }); });
+            dlg._cancel = () => { closeDialog(); resolve({ yes: false }); };
+        });
+    }
+
+    function dataOf(id) {
+        const host = root.querySelector(`.sr-row[data-id="${id}"], .tl-bar[data-id="${id}"]`);
+        if (host) return host.dataset;
+        // opened from the pop-up of a booking that is not in the list (should not happen): minimal data
+        const dk = modalBox.querySelector('.dv');
+        return { id: String(id), name: dk?.querySelector('h2')?.textContent || 'Guest', time: '', guests: '', table: '' };
+    }
+
+    async function seat(id) { await runAction('seat', id); }
+
+    async function noShow(id) {
+        const d = dataOf(id);
+        const r = await ask({
+            title: 'Mark as no-show?', d, okLabel: 'Mark as no-show', danger: true,
+            lead: 'The guests did not arrive. The table is released and the customer is told. This cannot be undone here.'
+        });
+        if (r.yes) await runAction('noshow', id);
+    }
+
+    async function cancelBooking(id) {
+        const d = dataOf(id);
+        const r = await ask({
+            title: 'Cancel this booking?', d, okLabel: 'Cancel booking', danger: true, reason: 'Reason (optional)',
+            lead: 'The table is released and the customer is notified by app message.'
+        });
+        if (r.yes) await runAction('cancel', id, { reason: r.reason });
+    }
+
+    async function complete(id) {
+        const d = dataOf(id);
+        const r = await ask({
+            title: 'Guests have left?', d, okLabel: 'Yes, guests left',
+            lead: 'This ends the dining session, completes the reservation and frees the table. Guests can no longer order from this table. Paying the bill does not do this by itself.'
+        });
+        if (r.yes) await runAction('complete', id);
+    }
+
+    // ---- Modify ----
+    // The dialog has its own pickers (date calendar, time grid, guest stepper, table list) so it matches the
+    // rest of the page instead of the browser's plain controls.
+    const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const CHEV = icon('<path d="m6 9 6 6 6-6"/>');
+    const CAL_ICON = icon('<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4m8-4v4"/>');
+    const dayText = s => { const x = fromIso(s); return `${DAYS[x.getDay()]}, ${x.getDate()} ${MONTHS[x.getMonth()].slice(0, 3)} ${x.getFullYear()}`; };
+
+    async function modify(id) {
+        const d = dataOf(id);
+        closeMenu();
+        const todayIso = root.dataset.todayDate || iso(new Date());
+        const st = { date: d.date || date, time: d.time24 || '', guests: Number(d.guests) || 2, table: Number(d.tableId) || 0 };
+        let data = null, openKey = null, calMode = 'days', calShown = fromIso(st.date);
+        calShown.setDate(1);
+
+        const field = (key, label, inner) => `<div class="dg-field f-${key}"><span class="dg-label">${label}</span>${inner}</div>`;
+        const dd = (key, ico, cls) =>
+            `<div class="dd" data-dd="${key}"><button type="button" class="dd-btn" aria-haspopup="listbox" aria-expanded="false"><span class="dd-val">Loading…</span>${ico}</button>` +
+            `<div class="dd-pop ${cls}" role="listbox" hidden></div></div>`;
+
+        openDialog(`<form class="dg dg-wide" novalidate><header><h3>Modify reservation</h3><p>${bookingLine(d)}</p></header>` +
+            `<div class="dg-grid">` +
+            field('date', 'Date', dd('date', CAL_ICON, 'dd-cal')) +
+            field('time', 'Time', dd('time', CHEV, 'dd-times')) +
+            field('guests', 'Guests', `<div class="dd-step"><button type="button" data-step="-1" aria-label="One guest fewer">&minus;</button>` +
+                `<input type="number" name="guests" min="1" max="50" value="${st.guests}" inputmode="numeric" aria-label="Number of guests">` +
+                `<button type="button" data-step="1" aria-label="One guest more">+</button></div>`) +
+            field('table', 'Table', dd('table', CHEV, 'dd-tables')) +
+            field('request', `Special request <em>${d.request ? 'entered by the guest, you can edit it' : 'the guest did not add one, add it here if they ask'}</em>`,
+                `<textarea name="specialRequest" rows="3" maxlength="500" placeholder="Allergy, birthday, high chair, or anything the kitchen should know">${esc(d.request || '')}</textarea>` +
+                `<span class="dg-count" aria-live="off"></span>`) +
+            `</div><p class="dg-msg" role="alert" hidden></p>` +
+            `<footer><button type="submit" class="dg-ok" disabled>Save changes</button>` +
+            `<button type="button" class="dg-no" data-dg="cancel">Close</button></footer></form>`);
+
+        const form = dlgBox.querySelector('form');
+        const msg = form.querySelector('.dg-msg');
+        const okBtn = form.querySelector('.dg-ok');
+        const gIn = form.elements.guests;
+        const reqIn = form.elements.specialRequest;
+        const counter = form.querySelector('.dg-count');
+        const box = k => form.querySelector(`.dd[data-dd="${k}"]`);
+        const btn = k => box(k).querySelector('.dd-btn');
+        const popOf = k => box(k).querySelector('.dd-pop');
+        const setVal = (k, html) => { btn(k).querySelector('.dd-val').innerHTML = html; };
+        const showMsg = t => { msg.textContent = t || ''; msg.hidden = !t; };
+        let seq = 0, pending = Promise.resolve(), gTimer, base = null, guardEl = null;
+
+        // ---- unsaved changes: ask before throwing them away ----
+        const snapshot = () => JSON.stringify([st.date, st.time, st.guests, st.table, reqIn.value.trim()]);
+        const dirty = () => base !== null && snapshot() !== base;
+        const lockForm = on => [...form.children].forEach(c => { if (c !== guardEl) c.inert = on; });
+        function hideGuard() {
+            if (!guardEl) return;
+            guardEl.remove(); guardEl = null; lockForm(false);
+            reqIn.focus({ preventScroll: true });
+        }
+        function tryClose() {
+            if (guardEl) return;
+            if (!dirty()) { closeDialog(); return; }
+            closeDD();
+            guardEl = document.createElement('div');
+            guardEl.className = 'dg-guard';
+            guardEl.setAttribute('role', 'alertdialog');
+            guardEl.setAttribute('aria-label', 'Unsaved changes');
+            guardEl.innerHTML = `<div class="dg-guard-box"><h4>Discard your changes?</h4>` +
+                `<p>This reservation has changes that are not saved yet.</p>` +
+                `<div class="dg-guard-btns"><button type="button" class="dg-ok" data-guard="keep">Keep editing</button>` +
+                `<button type="button" class="dg-no is-discard" data-guard="discard">Discard</button></div></div>`;
+            form.appendChild(guardEl);
+            lockForm(true);
+            guardEl.querySelector('[data-guard="keep"]').focus();
+            guardEl.addEventListener('click', e => {
+                const g = e.target.closest('[data-guard]');
+                if (!g) return;
+                if (g.dataset.guard === 'keep') hideGuard(); else { guardEl = null; closeDialog(); }
+            });
+        }
+
+        // ---- open / close one drop-down ----
+        function closeDD() {
+            if (!openKey) return;
+            const b = box(openKey), p = b.querySelector('.dd-pop');
+            b.classList.remove('is-open');
+            b.querySelector('.dd-btn').setAttribute('aria-expanded', 'false');
+            p.hidden = true; p.classList.remove('is-up');
+            openKey = null;
+        }
+        function openDD(k) {
+            if (btn(k).disabled) return;
+            if (openKey === k) { closeDD(); return; }
+            closeDD();
+            if (k === 'date') { calMode = 'days'; calShown = fromIso(st.date); calShown.setDate(1); renderCal(); }
+            const p = popOf(k);
+            p.hidden = false;
+            box(k).classList.add('is-open');
+            btn(k).setAttribute('aria-expanded', 'true');
+            openKey = k;
+            // open upwards when the screen is tighter below than above
+            const r = btn(k).getBoundingClientRect();
+            const below = window.innerHeight - r.bottom - 16, above = r.top - 16;
+            const need = k === 'date' ? 360 : 250;
+            const up = below < need && above > below;
+            p.classList.toggle('is-up', up);
+            p.style.maxHeight = Math.max(170, Math.min(k === 'date' ? 440 : 320, up ? above : below)) + 'px';
+            p.querySelector('.is-sel')?.scrollIntoView({ block: 'nearest' });
+        }
+
+        // ---- time grid ----
+        function renderTimes() {
+            popOf('time').innerHTML = data.slots.map(s =>
+                `<button type="button" class="dd-opt${s.value === st.time ? ' is-sel' : ''}${s.value === d.time24 && st.date === d.date ? ' is-current' : ''}" role="option" aria-selected="${s.value === st.time}" data-v="${esc(s.value)}">${esc(s.label)}</button>`).join('');
+            const cur = data.slots.find(s => s.value === st.time);
+            setVal('time', cur ? esc(cur.label) : '&mdash;');
+        }
+
+        // ---- table list, grouped by dining area ----
+        function renderTables() {
+            let last = null, html = '';
+            data.tables.forEach(t => {
+                if (t.area !== last) { last = t.area; html += `<div class="dd-group">${esc(t.area)}</div>`; }
+                html += `<button type="button" class="dd-row${t.id === st.table ? ' is-sel' : ''}${t.id === Number(d.tableId) ? ' is-current' : ''}" role="option" aria-selected="${t.id === st.table}" data-id="${t.id}"${t.free ? '' : ' disabled'}>` +
+                    `<b>${esc(t.label)}</b><span>seats ${t.capacity}</span>${t.free ? '' : `<em>${esc(t.note || 'unavailable')}</em>`}</button>`;
+            });
+            popOf('table').innerHTML = html;
+            const cur = data.tables.find(t => t.id === st.table);
+            setVal('table', cur ? `<b>${esc(cur.label)}</b><small>${esc(cur.area)} &middot; seats ${cur.capacity}</small>` : 'No table is free');
+        }
+
+        // ---- calendar (days, months, years) ----
+        function renderCal() {
+            const p = popOf('date');
+            const y = calShown.getFullYear(), m = calShown.getMonth();
+            const [ty, tm] = todayIso.split('-').map(Number);
+            const head = (title, canPrev) =>
+                `<div class="pp-head"><button type="button" class="pp-nav" data-pp="-1" aria-label="Previous"${canPrev ? '' : ' disabled'}>${icon('<path d="m14.5 5-7 7 7 7"/>')}</button>${title}` +
+                `<button type="button" class="pp-nav" data-pp="1" aria-label="Next">${icon('<path d="m9.5 5 7 7-7 7"/>')}</button></div>`;
+
+            if (calMode === 'months') {
+                p.innerHTML = head(`<b><button type="button" class="pp-title" data-mode="years">${y}</button></b>`, y > ty) +
+                    `<div class="pp-mgrid">` + MONTHS.map((n, i) =>
+                        `<button type="button" class="pm${i === m ? ' is-sel' : ''}${y === ty && i + 1 === tm ? ' is-today' : ''}" data-m="${i}"${y === ty && i + 1 < tm ? ' disabled' : ''}>${n.slice(0, 3)}</button>`).join('') + `</div>`;
+                return;
+            }
+            if (calMode === 'years') {
+                const from = y - (((y % 12) + 12) % 12);
+                let cells = '';
+                for (let k = 0; k < 12; k++) {
+                    const yy = from + k;
+                    cells += `<button type="button" class="pm${yy === y ? ' is-sel' : ''}${yy === ty ? ' is-today' : ''}" data-y="${yy}"${yy < ty ? ' disabled' : ''}>${yy}</button>`;
+                }
+                p.innerHTML = head(`<b>${from} <span>&ndash; ${from + 11}</span></b>`, from > ty) + `<div class="pp-mgrid">${cells}</div>`;
+                return;
+            }
+            const first = new Date(y, m, 1);
+            const start = new Date(y, m, 1 - ((first.getDay() + 6) % 7));   // weeks start on Monday
+            let cells = '';
+            for (let i = 0; i < 42; i++) {
+                const x = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+                const key = iso(x), cls = ['pd'];
+                if (x.getMonth() !== m) cls.push('is-out');
+                if (key === todayIso) cls.push('is-today');
+                if (key === st.date) cls.push('is-sel');
+                cells += `<button type="button" class="${cls.join(' ')}" data-pick="${key}"${key < todayIso ? ' disabled' : ''}>${x.getDate()}</button>`;
+            }
+            p.innerHTML = head(`<b><button type="button" class="pp-title" data-mode="months">${MONTHS[m]}</button> <button type="button" class="pp-title is-year" data-mode="years">${y}</button></b>`, y * 12 + m > ty * 12 + tm - 1) +
+                `<div class="pp-week" aria-hidden="true">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(x => `<span>${x}</span>`).join('')}</div>` +
+                `<div class="pp-grid">${cells}</div>` +
+                `<div class="pp-foot"><span></span><button type="button" class="pp-today" data-pick="${todayIso}">Today</button></div>`;
+        }
+
+        function calClick(t) {
+            const y = calShown.getFullYear(), m = calShown.getMonth();
+            const nav = t.closest('[data-pp]');
+            if (nav) {
+                const s = Number(nav.dataset.pp);
+                calShown = calMode === 'days' ? new Date(y, m + s, 1) : calMode === 'months' ? new Date(y + s, m, 1) : new Date(y + s * 12, m, 1);
+                renderCal(); return;
+            }
+            const hd = t.closest('[data-mode]');
+            if (hd) { calMode = hd.dataset.mode; renderCal(); return; }
+            const pm = t.closest('[data-m]');
+            if (pm) { calShown = new Date(y, Number(pm.dataset.m), 1); calMode = 'days'; renderCal(); return; }
+            const py = t.closest('[data-y]');
+            if (py) { calShown = new Date(Number(py.dataset.y), m, 1); calMode = 'months'; renderCal(); return; }
+            const pk = t.closest('[data-pick]');
+            if (pk) { st.date = pk.dataset.pick; setVal('date', dayText(st.date)); closeDD(); pending = load(); }
+        }
+
+        // ---- ask the server which times and tables fit ----
+        async function load() {
+            const my = ++seq;
+            showMsg('');
+            closeDD();
+            okBtn.disabled = true;
+            btn('time').disabled = btn('table').disabled = true;
+            const qs = new URLSearchParams({ handler: 'Options', id, date: st.date, time: st.time || '', guests: String(st.guests) });
+            let res;
+            try {
+                const r = await fetch(`${pageUrl}?${qs}`, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }, cache: 'no-store' });
+                if (!r.ok) throw new Error();
+                res = await r.json();
+            } catch { if (my === seq) showMsg('Could not load times and tables. Close and try again.'); return; }
+            if (my !== seq) return;
+
+            if (res.closed) {
+                setVal('time', '&mdash;'); setVal('table', '&mdash;');
+                showMsg(res.closedReason || 'No times on this day.');
+                return;
+            }
+            data = res;
+            st.time = data.time;
+            renderTimes();
+            const free = data.tables.filter(x => x.free);
+            const pick = data.tables.find(x => x.id === st.table && x.free) || free.find(x => x.label === d.table) || free[0];
+            st.table = pick ? pick.id : 0;
+            renderTables();
+            btn('time').disabled = false;
+            btn('table').disabled = !free.length;
+            if (!free.length) showMsg('No table is free for this date, time and party size.');
+            okBtn.disabled = !free.length;
+            if (base === null) base = snapshot();      // what the dialog looked like when it opened
+        }
+
+        function setGuests(n, now) {
+            n = Math.max(1, Math.min(50, Math.round(n) || 1));
+            st.guests = n; gIn.value = n;
+            clearTimeout(gTimer);
+            gTimer = setTimeout(() => { pending = load(); }, now ? 0 : 350);
+        }
+
+        form.addEventListener('click', e => {
+            const t = e.target;
+            const head = t.closest('.dd-btn');
+            if (head) { openDD(head.closest('.dd').dataset.dd); return; }
+            const step = t.closest('[data-step]');
+            if (step) { setGuests(st.guests + Number(step.dataset.step)); return; }
+            if (t.closest('.dd-cal')) { calClick(t); return; }
+            const opt = t.closest('.dd-opt');
+            if (opt) { st.time = opt.dataset.v; closeDD(); renderTimes(); pending = load(); return; }
+            const row = t.closest('.dd-row');
+            if (row && !row.disabled) { st.table = Number(row.dataset.id); closeDD(); renderTables(); return; }
+            if (!t.closest('.dd')) closeDD();
+        });
+        gIn.addEventListener('change', () => setGuests(Number(gIn.value), true));
+        const count = () => { counter.textContent = `${reqIn.value.length} / 500`; };
+        reqIn.addEventListener('input', count);
+        count();
+        form.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            if (guardEl) { e.stopPropagation(); hideGuard(); return; }
+            if (!openKey) return;
+            e.stopPropagation();
+            const k = openKey; closeDD(); btn(k).focus();
+        });
+
+        form.addEventListener('submit', async ev => {
+            ev.preventDefault();
+            closeDD();
+            await pending;            // a reload may still be running
+            if (okBtn.disabled) return;
+            okBtn.disabled = true;
+            const r = await post('Modify', id, { date: st.date, time: st.time, guests: String(st.guests), tableId: String(st.table), specialRequest: reqIn.value.trim() });
+            if (r.ok) {
+                closeDialog();
+                say(r.data.message || 'Reservation updated.');
+                await refreshBoard(true);
+                if (!modal.hidden && modalBox.querySelector('.dv')?.dataset.id === String(id)) await openDetails(id, true);
+            } else {
+                showMsg(r.data.message || FAIL.modify);
+                okBtn.disabled = false;
+                if (r.data.code === 'status_changed') refreshBoard(true);
+            }
+        });
+        form.querySelector('[data-dg="cancel"]').addEventListener('click', tryClose);
+        dlg._cancel = tryClose;
+
+        setVal('date', dayText(st.date));
+        pending = load();
     }
 
     // ---------------------------------------------------------------- "..." menu
@@ -231,6 +614,19 @@
         if (menu.hidden) return;
         menu.hidden = true;
         root.querySelectorAll('.sr-more[aria-expanded="true"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+    }
+
+    // Only the actions that apply to this booking right now (the server checks again).
+    function statusItems(d) {
+        const it = (act, ico, label, cls) =>
+            `<button type="button" class="m-item${cls ? ' ' + cls : ''}" role="menuitem" data-act="${act}" data-id="${esc(d.id)}">${icon(ICONS[ico])}<span>${label}</span></button>`;
+        const list = [];
+        if (d.seat === '1') list.push(it('seat', 'seat', 'Mark as seated'));
+        if (d.complete === '1') list.push(it('complete', 'check', 'Guests left'));
+        if (d.modify === '1') list.push(it('modify', 'edit', 'Modify booking'));
+        if (d.noshow === '1') list.push(it('noshow', 'noshow', 'Mark as no-show', 'is-warn'));
+        if (d.cancel === '1') list.push(it('cancel', 'x', 'Cancel booking', 'is-warn'));
+        return list.length ? `<div class="m-sep">CHANGE STATUS</div>` + list.join('') : '';
     }
 
     function openMenu(btn) {
@@ -255,10 +651,7 @@
             `<button type="button" class="m-item" role="menuitem" data-act="call" data-phone="${esc(phone)}"${phone ? '' : ' disabled'}>${icon(ICONS.phone)}<span>Call guest</span><em>${esc(phone)}</em></button>` +
             `<button type="button" class="m-item" role="menuitem" data-copy="${esc(d.ref)}">${icon(ICONS.copy)}<span>Copy reference</span><em>${esc(d.ref)}</em></button>` +
             `</div>` +
-            `<div class="m-sep">COMING NEXT</div>` +
-            `<button type="button" class="m-item" role="menuitem" disabled>${icon(ICONS.seat)}<span>Mark as seated</span><em>soon</em></button>` +
-            `<button type="button" class="m-item" role="menuitem" disabled>${icon(ICONS.noshow)}<span>Mark as no-show</span><em>soon</em></button>` +
-            `<button type="button" class="m-item" role="menuitem" disabled>${icon(ICONS.x)}<span>Cancel booking</span><em>soon</em></button>`;
+            statusItems(d);
 
         // place it under the button; flip above when the screen bottom is too close
         menu.hidden = false;
@@ -340,7 +733,13 @@
         const act = t.closest('[data-act]');
         if (act) {
             const a = act.dataset.act;
-            if (a === 'confirm') { confirmBooking(act.dataset.id || act.closest('[data-id]')?.dataset.id, act); return; }
+            const aid = act.dataset.id || act.closest('[data-id]')?.dataset.id;
+            if (a === 'confirm') { runAction('confirm', aid); return; }
+            if (a === 'seat') { seat(aid); return; }
+            if (a === 'noshow') { closeMenu(); noShow(aid); return; }
+            if (a === 'cancel') { closeMenu(); cancelBooking(aid); return; }
+            if (a === 'complete') { closeMenu(); complete(aid); return; }
+            if (a === 'modify') { closeMenu(); modify(aid); return; }
             if (a === 'menu') { e.stopPropagation(); openMenu(act); return; }
             if (a === 'open') { openDetails(act.dataset.id || act.closest('[data-id]')?.dataset.id); return; }
             if (a === 'close') { closeDetails(); return; }
@@ -355,10 +754,20 @@
     });
 
     modal.addEventListener('click', e => { if (e.target === modal) closeDetails(); });
+    dlg.addEventListener('click', e => { if (e.target === dlg) (dlg._cancel || closeDialog)(); });
+    dlg.addEventListener('keydown', e => {
+        if (e.key !== 'Tab') return;
+        const f = [...dlgBox.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea')].filter(x => x.offsetParent !== null);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
 
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
         if (!pop.hidden) { closePop(); dateBtn.focus(); return; }
+        if (!dlg.hidden) { (dlg._cancel || closeDialog)(); return; }
         if (!menu.hidden) { const b = root.querySelector('.sr-more[aria-expanded="true"]'); closeMenu(); b?.focus(); }
         else if (!modal.hidden) closeDetails();
     });
@@ -435,7 +844,7 @@
             `<div class="pp-foot"><span></span><button type="button" class="pp-today" data-pick="${todayIso}">Today</button></div>`;
     }
 
-        function renderPop(dir) {
+    function renderPop(dir) {
         if (mode !== 'days') { renderPickList(dir); return; }
         const y = shown.getFullYear(), m = shown.getMonth();
         const first = new Date(y, m, 1);
@@ -500,7 +909,6 @@
         const pick = e.target.closest('[data-pick]');
         if (pick) goToDate(pick.dataset.pick);
     });
-    
     document.addEventListener('click', e => { if (!pop.hidden && !e.target.closest('#srPop')) closePop(); });
 
     // ---------------------------------------------------------------- start
@@ -516,6 +924,6 @@
     setTimeout(() => root.classList.remove('is-boot'), 1700);
 
     // Keep the day fresh while staff work: every 30 seconds, and when the tab comes back into view.
-    setInterval(() => { if (!document.hidden && modal.hidden && menu.hidden) refreshBoard(true); }, 30000);
+    setInterval(() => { if (!document.hidden && modal.hidden && menu.hidden && dlg.hidden) refreshBoard(true); }, 30000);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshBoard(true); });
 })();

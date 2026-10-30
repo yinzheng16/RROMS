@@ -41,18 +41,57 @@ public class IndexModel(IStaffReservationService staff, ILogger<IndexModel> logg
         return details is null ? NotFound() : Partial("_Details", details);
     }
 
-    public async Task<IActionResult> OnPostConfirmAsync(int id, CancellationToken cancellationToken)
+    // ---------- actions (all return JSON: { success, code, message }) ----------
+
+    public Task<IActionResult> OnPostConfirmAsync(int id, CancellationToken ct)
+        => RunAsync("confirm", id, (uid, role) => staff.ConfirmAsync(id, uid, role, ct), ct);
+
+    public Task<IActionResult> OnPostSeatAsync(int id, CancellationToken ct)
+        => RunAsync("seat", id, (uid, role) => staff.SeatAsync(id, uid, role, ct), ct);
+
+    public Task<IActionResult> OnPostNoShowAsync(int id, CancellationToken ct)
+        => RunAsync("mark as no-show", id, (uid, role) => staff.NoShowAsync(id, uid, role, ct), ct);
+
+    public Task<IActionResult> OnPostCancelAsync(int id, string? reason, CancellationToken ct)
+        => RunAsync("cancel", id, (uid, role) => staff.CancelAsync(id, uid, role, reason, ct), ct);
+
+    public Task<IActionResult> OnPostCompleteAsync(int id, CancellationToken ct)
+        => RunAsync("complete", id, (uid, role) => staff.CompleteAsync(id, uid, role, ct), ct);
+
+    public Task<IActionResult> OnPostModifyAsync(int id, string? date, string? time, int guests, int tableId,
+        string? specialRequest, CancellationToken ct)
+        => RunAsync("update", id, (uid, role) =>
+            staff.ModifyAsync(id, new StaffModifyRequest(ParseDate(date), time ?? "", guests, tableId, specialRequest), uid, role, ct), ct);
+
+    // Data for the "Modify" dialog: time slots and which tables are free for the chosen date / time / guests.
+    public async Task<IActionResult> OnGetOptionsAsync(int id, string? date, string? time, int guests,
+        CancellationToken ct)
+    {
+        var options = await staff.GetEditOptionsAsync(id, ParseDate(date), time, guests, ct);
+        if (options is null) return NotFound();
+        return new JsonResult(new
+        {
+            closed = options.Closed,
+            closedReason = options.ClosedReason,
+            time = options.Time,
+            slots = options.Slots.Select(x => new { value = x.Value, label = x.Label }),
+            tables = options.Tables.Select(x => new { id = x.Id, label = x.Label, area = x.Area, capacity = x.Capacity, free = x.Free, note = x.Note })
+        });
+    }
+
+    private async Task<IActionResult> RunAsync(string verb, int id,
+        Func<string, string, Task<StaffActionResult>> action, CancellationToken ct)
     {
         StaffActionResult result;
         try
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
             var role = User.IsInRole(Roles.Admin) ? Roles.Admin : Roles.Staff;
-            result = await staff.ConfirmAsync(id, userId, role, cancellationToken);
+            result = await action(userId, role);
         }
-        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (!ct.IsCancellationRequested)
         {
-            logger.LogError(exception, "Could not confirm reservation {ReservationId}", id);
+            logger.LogError(exception, "Could not {Action} reservation {ReservationId}", verb, id);
             return new JsonResult(new
             {
                 success = false,
@@ -199,7 +238,7 @@ public static class StaffLedgerFormat
         ["clock"] = "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7v5l3 2\"/>",
         ["calendar"] = "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15\" rx=\"2\"/><path d=\"M3.5 10h17M8 3v4m8-4v4\"/>",
         ["users"] = "<circle cx=\"9\" cy=\"8\" r=\"3.2\"/><path d=\"M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 5.5a3 3 0 0 1 0 5.5M18.5 14.5c1.6.8 2.5 2.7 2.5 5.5\"/>",
-        ["table"] = "<path d=\"M4 9h16M6 9v10m12-10v10M3 9l2-4h14l2 4\"/>",
+        ["table"] = "<path d=\"M4 9.5h16M6 9.5v10m12-10v10M3 9.5l2-4h14l2 4\"/>",
         ["pin"] = "<path d=\"M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z\"/><circle cx=\"12\" cy=\"9.5\" r=\"2.5\"/>",
         ["coin"] = "<ellipse cx=\"12\" cy=\"7\" rx=\"7\" ry=\"3\"/><path d=\"M5 7v5c0 1.7 3.1 3 7 3s7-1.3 7-3V7M5 12v5c0 1.7 3.1 3 7 3s7-1.3 7-3v-5\"/>",
         ["phone"] = "<path d=\"M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z\"/>",
@@ -210,7 +249,7 @@ public static class StaffLedgerFormat
         ["warn"] = "<path d=\"M12 3 2 21h20L12 3Zm0 6v6m0 3v.5\"/>",
         ["cake"] = "<path d=\"M5 20h14v-7H5v7Zm0-4c2 1.5 3 1.5 4.5 0s3-1.5 4.5 0 3 1.5 5 0M12 13V9m0-4v1\"/>",
         ["note"] = "<path d=\"M6 3h12v18H6V3Zm3 5h6m-6 4h6m-6 4h3\"/>",
-        ["seat"] = "<path d=\"M6 20V9a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v11M4 14h16M8 20v-3m8 3v-3\"/>",
+        ["seat"] = "<path d=\"M6 19V8a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v11M4 13h16M8 19v-3m8 3v-3\"/>",
         ["noshow"] = "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"m6 6 12 12\"/>",
         ["refresh"] = "<path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/>",
         ["search"] = "<circle cx=\"11\" cy=\"11\" r=\"6.5\"/><path d=\"m16 16 4.5 4.5\"/>",
@@ -222,6 +261,7 @@ public static class StaffLedgerFormat
         ["list"] = "<path d=\"M9 6h11M9 12h11M9 18h11\"/><circle cx=\"4.5\" cy=\"6\" r=\"1\"/><circle cx=\"4.5\" cy=\"12\" r=\"1\"/><circle cx=\"4.5\" cy=\"18\" r=\"1\"/>",
         ["info"] = "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 11v6m0-9.5v.5\"/>",
         ["gift"] = "<rect x=\"4\" y=\"10\" width=\"16\" height=\"10\" rx=\"1.5\"/><path d=\"M3 7h18v3H3zM12 7v13M12 7c-2.5 0-4-1-4-2.5S9.5 2.5 12 7zm0 0c2.5 0 4-1 4-2.5S14.5 2.5 12 7z\"/>",
+        ["edit"] = "<path d=\"M4 20h4L19 9l-4-4L4 16v4Zm9-13 4 4\"/>",
         ["person"] = "<circle cx=\"12\" cy=\"8\" r=\"3.5\"/><path d=\"M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7\"/>"
     };
 
