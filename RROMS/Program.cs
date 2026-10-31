@@ -79,6 +79,7 @@ builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Memb
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
+builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics
 
 //Member 5
 builder.Services.AddScoped<IReportService, ReportService>();
