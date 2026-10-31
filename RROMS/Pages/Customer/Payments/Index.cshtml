@@ -1,0 +1,255 @@
+﻿@page
+@model RROMS.Pages.Customer.Payments.IndexModel
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Pages.Customer.Payments
+@{
+    // Owner: Member 4 — US34 Customer payment records ("My payments").
+    ViewData["Title"] = "My Payments";
+    ViewData["FullWidth"] = true;   // banner goes edge to edge; the page draws its own container
+
+    var en = IndexModel.DisplayCulture;
+    var payments = Model.History.Payments;
+    var hasError = !ViewData.ModelState.IsValid;
+
+    // Newest day first; inside a day the service already sorts newest first.
+    var days = payments
+        .GroupBy(p => p.ShownAt.Date)
+        .OrderByDescending(g => g.Key)
+        .ToList();
+
+    int Count(PaymentStatus s) => payments.Count(p => p.Status == s);
+
+    // Quick ranges (links, so they work without JavaScript).
+    var today = DateOnly.FromDateTime(DateTime.Now);
+    var last7From = today.AddDays(-6);
+    var monthFrom = new DateOnly(today.Year, today.Month, 1);
+    bool Is(DateOnly? f, DateOnly? t) => Model.From == f && Model.To == t;
+
+    // "1 – 30 Oct 2026", "since 1 Oct 2026", "until 30 Oct 2026", "all time"
+    string RangeText()
+    {
+        string D(DateOnly d) => d.ToString("d MMM yyyy", en);
+        if (Model.From is DateOnly f && Model.To is DateOnly t) return $"{D(f)} – {D(t)}";
+        if (Model.From is DateOnly f2) return "since " + D(f2);
+        if (Model.To is DateOnly t2) return "until " + D(t2);
+        return "all time";
+    }
+
+    // Small note under the title of an unpaid attempt.
+    string? StatusNote(PaymentStatus s) => s switch
+    {
+        PaymentStatus.Pending => "awaiting confirmation",
+        PaymentStatus.Failed => "not charged",
+        PaymentStatus.Refunded => "refunded",
+        _ => null
+    };
+}
+
+<link rel="stylesheet" href="~/css/customer-payments.css" asp-append-version="true" />
+
+<div class="us34-payments">
+
+    @* Banner: wwwroot/images/payments/yoru-payments-banner.svg (original artwork, Cart style) *@
+    <section class="pay-hero" aria-labelledby="pay-title">
+        <div class="pay-hero-inner container-xl">
+            <div class="pay-hero-copy">
+                <p class="pay-eyebrow">@Brand.FullName · <span lang="ja">お支払い</span></p>
+                <h1 id="pay-title">My Payments<span>.</span></h1>
+                <p class="pay-intro">Every bill you have paid with us, newest first.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="container-xl pay-body">
+        <div class="pay-cols">
+
+            <!-- ================= Payment records, one card per day ================= -->
+            <div class="pay-list" aria-label="Payment records">
+
+                @if (hasError)
+                {
+                    <div class="pay-empty pay-empty-error" role="alert">
+                        <h2>Please check the dates</h2>
+                        <div asp-validation-summary="All" class="pay-errors"></div>
+                        <p>Choose a From date that is on or before the To date, then apply the filter again.</p>
+                    </div>
+                }
+                else if (!days.Any())
+                {
+                    <div class="pay-empty">
+                        @if (Model.IsFiltered)
+                        {
+                            <h2>No payments in this period</h2>
+                            <p>Nothing was paid @RangeText(). Try another date range.</p>
+                            <a class="pay-empty-link" asp-page="./Index">Show all payments</a>
+                        }
+                        else
+                        {
+                            <h2>No payments yet</h2>
+                            <p>When you pay a bill at YORU, the payment will appear here.</p>
+                            <a class="pay-empty-link" asp-page="/Menu/Index">Browse the menu</a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    foreach (var day in days)
+                    {
+                        var dayPaid = day.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.Amount);
+                        var n = day.Count();
+                        var headingId = "day-" + day.Key.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+
+                        <section class="pay-day" aria-labelledby="@headingId">
+                            <header class="pay-day-head">
+                                <div class="pay-stamp" aria-hidden="true">
+                                    <b>@day.Key.Day</b>
+                                    <small>@day.Key.ToString("MMM", en).ToUpperInvariant()</small>
+                                </div>
+                                <div class="pay-day-title">
+                                    <h2 id="@headingId">@day.Key.ToString("dddd, d MMMM yyyy", en)</h2>
+                                    <p>@n @(n == 1 ? "payment" : "payments")</p>
+                                </div>
+                                <div class="pay-day-total">
+                                    Paid this day
+                                    <b>@IndexModel.Money(dayPaid)</b>
+                                </div>
+                            </header>
+
+                            <ol class="pay-lines" role="list">
+                                @{ var i = 0; }
+                                @foreach (var p in day)
+                                {
+                                    i++;
+                                    var muted = p.Status is PaymentStatus.Failed or PaymentStatus.Refunded;
+                                    var note = StatusNote(p.Status);
+                                    var meta = new List<string>();
+                                    if (p.BillNo is not null) meta.Add("Bill " + p.BillNo);
+                                    else if (p.OrderNo is not null) meta.Add("Order " + p.OrderNo);
+                                    if (p.OrderType == OrderType.DineIn && p.OrderCount > 1) meta.Add($"{p.OrderCount} orders");
+                                    meta.Add(IndexModel.MethodLabel(p.Method) +
+                                             (string.IsNullOrWhiteSpace(p.TransactionRef) ? "" : " · Ref " + p.TransactionRef));
+                                    meta.Add(p.ShownAt.ToString("h:mm tt", en).ToLowerInvariant());
+                                    if (note is not null) meta.Add(note);
+
+                                    <li class="pay-line @(muted ? "is-muted" : "")">
+                                        <span class="pay-num" aria-hidden="true">@i.ToString("D2", CultureInfo.InvariantCulture)</span>
+                                        <div class="pay-line-info">
+                                            <h3>@IndexModel.WhatLabel(p)</h3>
+                                            <p>@string.Join(" · ", meta)</p>
+                                        </div>
+                                        <span class="pay-status pay-status-@IndexModel.StatusKey(p.Status)">@p.Status</span>
+                                        <span class="pay-amount">@IndexModel.Money(p.Amount)</span>
+                                    </li>
+                                }
+                            </ol>
+                        </section>
+                    }
+                }
+            </div>
+
+            <!-- ================= Summary + date filter (dark panel, Cart summary style) ================= -->
+            <aside class="pay-summary" aria-labelledby="pay-summary-title">
+                <svg class="pay-summary-art" viewBox="0 0 340 120" preserveAspectRatio="xMaxYMin meet" aria-hidden="true" focusable="false">
+                    <defs>
+                        <g id="pay-flower">
+                            <g fill="#f4a6a0">
+                                <circle cx="0" cy="-4" r="3.6" /><circle cx="3.8" cy="-1.2" r="3.6" /><circle cx="2.4" cy="3.3" r="3.6" />
+                                <circle cx="-2.4" cy="3.3" r="3.6" /><circle cx="-3.8" cy="-1.2" r="3.6" />
+                            </g>
+                            <circle r="1.6" fill="#c83e2d" />
+                        </g>
+                    </defs>
+                    <path d="M340 4 C300 14 280 22 250 44" stroke="#3a2a22" stroke-width="2.4" fill="none" />
+                    <use href="#pay-flower" transform="translate(252 44) scale(1.1)" />
+                    <use href="#pay-flower" transform="translate(280 24)" />
+                    <use href="#pay-flower" transform="translate(312 14) scale(1.2)" />
+                </svg>
+
+                <div class="pay-summary-in">
+                    <span class="pay-summary-jp" lang="ja">お会計の記録</span>
+                    <h2 id="pay-summary-title">Summary</h2>
+
+                    <div class="pay-total">
+                        <small>Total paid@(hasError ? "" : " · " + RangeText())</small>
+                        <b>@IndexModel.Money(Model.History.TotalPaid)</b>
+                    </div>
+
+                    <ul class="pay-counts">
+                        <li><span>Paid</span><span>@Count(PaymentStatus.Paid)</span></li>
+                        <li><span>Pending</span><span>@Count(PaymentStatus.Pending)</span></li>
+                        <li><span>Failed</span><span>@Count(PaymentStatus.Failed)</span></li>
+                        <li><span>Refunded</span><span>@Count(PaymentStatus.Refunded)</span></li>
+                    </ul>
+
+                    <form method="get" class="pay-filter" id="payFilter" novalidate>
+                        <h3>Filter by date</h3>
+                        <div class="pay-filter-row">
+                            <label>
+                                From
+                                <input type="date" name="from" id="payFrom" value="@IndexModel.DateIso(Model.From)" max="@Model.TodayIso" />
+                            </label>
+                            <label>
+                                To
+                                <input type="date" name="to" id="payTo" value="@IndexModel.DateIso(Model.To)" max="@Model.TodayIso" />
+                            </label>
+                        </div>
+                        <p class="pay-filter-error" id="payFilterError" role="alert" hidden>The To date cannot be before the From date.</p>
+
+                        <div class="pay-quick">
+                            <a class="@(Is(last7From, today) ? "is-on" : "")"
+                               asp-page="./Index" asp-route-from="@IndexModel.DateIso(last7From)" asp-route-to="@IndexModel.DateIso(today)">Last 7 days</a>
+                            <a class="@(Is(monthFrom, today) ? "is-on" : "")"
+                               asp-page="./Index" asp-route-from="@IndexModel.DateIso(monthFrom)" asp-route-to="@IndexModel.DateIso(today)">This month</a>
+                            <a class="@(Model.IsFiltered ? "" : "is-on")" asp-page="./Index">All</a>
+                        </div>
+
+                        <button type="submit" class="pay-apply">Apply filter</button>
+                        @if (Model.IsFiltered || hasError)
+                        {
+                            <a class="pay-clear" asp-page="./Index">Clear filter</a>
+                        }
+                    </form>
+
+                    <p class="pay-hint">Only payments for your own bills are shown. Failed attempts were not charged.</p>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // US34: browser-side date check (the server checks again).
+        (function () {
+            const form = document.getElementById('payFilter');
+            const from = document.getElementById('payFrom');
+            const to = document.getElementById('payTo');
+            const error = document.getElementById('payFilterError');
+            if (!form || !from || !to || !error) return;
+
+            // To cannot be before From, From cannot be after To.
+            function syncLimits() {
+                to.min = from.value || '';
+                from.max = to.value || to.max;
+            }
+
+            function datesValid() {
+                const ok = !from.value || !to.value || from.value <= to.value;
+                error.hidden = ok;
+                return ok;
+            }
+
+            from.addEventListener('change', () => { syncLimits(); datesValid(); });
+            to.addEventListener('change', () => { syncLimits(); datesValid(); });
+
+            form.addEventListener('submit', (e) => {
+                if (!datesValid()) { e.preventDefault(); return; }
+                // Leave empty dates out of the URL (?from=&to= looks untidy).
+                [from, to].forEach(input => { if (!input.value) input.disabled = true; });
+            });
+
+            syncLimits();
+        })();
+    </script>
+}
