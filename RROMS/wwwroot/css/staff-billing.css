@@ -1887,3 +1887,43 @@
 .us32-billing .billing-card h6.billing-group-title {
     margin-top: 0;
 }
+
+/* Newest / oldest first (same look as the search box) */
+.us32-billing .billing-sort {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+    .us32-billing .billing-sort .bi {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--yoru-olive-text);
+        pointer-events: none;
+    }
+
+    .us32-billing .billing-sort .form-select {
+        height: 42px;
+        min-width: 168px;
+        padding-left: 36px;
+        border-color: var(--yoru-line);
+        border-radius: 8px;
+        background-color: var(--yoru-paper);
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+        .us32-billing .billing-sort .form-select:hover {
+            border-color: var(--yoru-gold);
+        }
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-sort {
+        flex-basis: 100%;
+    }
+
+        .us32-billing .billing-sort .form-select {
+            width: 100%;
+        }
+}

@@ -94,6 +94,15 @@
                            placeholder="Search table, order no., bill no., name or reservation"
                            aria-label="Search the billing list" autocomplete="off" />
                 </div>
+
+                @* Sort by seated time (dine-in) / order time (takeaway), inside each table *@
+                <div class="billing-sort">
+                    <i class="bi bi-sort-down" aria-hidden="true"></i>
+                    <select id="billingSort" class="form-select" aria-label="Sort the billing list">
+                        <option value="newest" selected>Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                    </select>
+                </div>
             </div>
 
             <div class="tab-content">
@@ -144,7 +153,8 @@
                                         var isPaid = row.BillStatus == BillStatus.Paid;
 
                                         <tr class="@(row.IsClosed ? "billing-row-done" : "")"
-                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)"
+                                            data-time="@row.OpenedAt.Ticks">
                                             <td>
                                                 <strong>@row.TableNumber</strong>
                                                 @if (row.IsClosed)
@@ -243,7 +253,8 @@
                                         var isPaid = row.BillStatus == BillStatus.Paid;
 
                                         <tr class="@(isPaid ? "billing-row-done" : "")"
-                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)"
+                                            data-time="@row.CreatedAt.Ticks">
                                             <td class="billing-order-no">@row.OrderNo</td>
                                             <td>@(row.CustomerName ?? "—")</td>
                                             <td>@IndexModel.FormatListTime(row.CreatedAt, group.Older)</td>
@@ -368,6 +379,27 @@
             }
 
             search.addEventListener('input', apply);
+
+            // Newest / oldest first: re-orders the rows inside each table (both tabs).
+            const sort = document.getElementById('billingSort');
+            const sortIcon = document.querySelector('.billing-sort .bi');
+
+            function applySort() {
+                const newest = sort.value !== 'oldest';
+                if (sortIcon) sortIcon.className = 'bi ' + (newest ? 'bi-sort-down' : 'bi-sort-up');
+
+                document.querySelectorAll('.billing-list tbody').forEach(function (body) {
+                    Array.from(body.rows)
+                        .sort(function (a, b) {
+                            const diff = Number(a.dataset.time) - Number(b.dataset.time);
+                            return newest ? -diff : diff;
+                        })
+                        .forEach(function (row) { body.appendChild(row); });
+                });
+            }
+
+            sort.addEventListener('change', applySort);
+            applySort();
 
             document.querySelectorAll('.billing-filters').forEach(function (group) {
                 group.addEventListener('click', function (e) {
