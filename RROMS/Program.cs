@@ -32,9 +32,12 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.AllowedForNewUsers = true;
         options.Password.RequiredLength = 8;
+        // US52: reset links use their own 1-hour token provider (change-email links keep 24 hours)
+        options.Tokens.PasswordResetTokenProvider = PasswordResetTokenProviderOptions.ProviderName;
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddTokenProvider<PasswordResetTokenProvider<ApplicationUser>>(PasswordResetTokenProviderOptions.ProviderName);
 
 // ---------- Login cookie: auto logout (Member 1, US02) ----------
 builder.Services.ConfigureApplicationCookie(options =>

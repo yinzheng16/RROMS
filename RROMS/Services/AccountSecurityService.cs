@@ -62,16 +62,7 @@ namespace RROMS.Services
             await _users.ResetAccessFailedCountAsync(user);
             await _signIn.RefreshSignInAsync(user);   // the security stamp changed; keep THIS device logged in
 
-            await SendAsync(user.Email!, "Your YORU password was changed", EmailTemplates.Build(
-                kicker: "Account security",
-                title: "Your password was changed",
-                name: user.FullName,
-                introHtml: "The password for your YORU account was just changed. If this was you, there's nothing else to do.",
-                rows: new[] { new EmailTemplates.Row("When", Now()), new EmailTemplates.Row("Account", user.Email!) },
-                warnHtml: "<b>Wasn't you?</b> Reset your password now so nobody else can use your account.",
-                buttonText: "Reset my password",
-                buttonUrl: resetPasswordUrl,
-                footerLine: await FooterAsync()));
+            await SendPasswordChangedAsync(user, resetPasswordUrl);
 
             _logger.LogInformation("Password changed for user {UserId}.", user.Id);
             return new(true, Email: EmailTemplates.Mask(user.Email));
@@ -187,7 +178,115 @@ namespace RROMS.Services
             return new(true, "Your account now uses this email.", email, signedIn);
         }
 
+        // ================= US52 Forgot password =================
+
+        private const string ResetLinkExpired =
+            "This reset link has expired or was already used. Links work once, for 1 hour. Please ask for a new one.";
+
+        public async Task<SecurityResult> RequestPasswordResetAsync(string? email, Func<string, string, string> buildResetUrl)
+        {
+            email = email?.Trim() ?? "";
+            if (email.Length == 0) return new(false, "Email", "Please enter your email.");
+            if (email.Length > 256 || !new EmailAddressAttribute().IsValid(email))
+                return new(false, "Email", "Please enter a valid email address, e.g. name@example.com.");
+
+            var user = await _users.FindByEmailAsync(email);
+
+            // Unknown or deactivated account: send nothing, but answer exactly like a real one.
+            if (user is null || !user.IsActive || string.IsNullOrEmpty(user.Email))
+            {
+                _logger.LogInformation("Password reset asked for an unknown or inactive email.");
+                return new(true, Email: email);
+            }
+
+            var token = await _users.GeneratePasswordResetTokenAsync(user);   // PasswordReset provider: 1 hour
+            var code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var link = buildResetUrl(user.Id, code);
+
+            await SendAsync(user.Email, "Reset your YORU password", EmailTemplates.Build(
+                kicker: "Password reset",
+                title: "Choose a new password",
+                name: user.FullName,
+                introHtml: "We got a request to reset the password for your YORU account. Click below to choose a new one.",
+                rows: new[]
+                {
+                    new EmailTemplates.Row("Account", user.Email),
+                    new EmailTemplates.Row("Link works for", "1 hour, once")
+                },
+                buttonText: "Choose a new password",
+                buttonUrl: link,
+                smallText: "Didn't ask for this? Ignore this email and your password stays the same.",
+                footerLine: await FooterAsync()));
+
+            _logger.LogInformation("Password reset link sent to user {UserId}.", user.Id);
+            return new(true, Email: email);
+        }
+
+        public async Task<ResetLinkInfo> CheckResetLinkAsync(string? userId, string? code)
+        {
+            var (user, token) = await ReadResetLinkAsync(userId, code);
+            if (user is null || token is null) return new(false, Message: ResetLinkExpired);
+
+            var ok = await _users.VerifyUserTokenAsync(user, _users.Options.Tokens.PasswordResetTokenProvider,
+                UserManager<ApplicationUser>.ResetPasswordTokenPurpose, token);
+            return ok ? new(true, EmailTemplates.Mask(user.Email)) : new(false, Message: ResetLinkExpired);
+        }
+
+        public async Task<SecurityResult> ResetPasswordAsync(string? userId, string? code, string? newPassword,
+            string? confirmPassword, string forgotPasswordUrl)
+        {
+            var (user, token) = await ReadResetLinkAsync(userId, code);
+            if (user is null || token is null) return new(false, Message: ResetLinkExpired);
+
+            if (string.IsNullOrEmpty(newPassword)) return new(false, "NewPassword", "Please enter a new password.");
+            if (newPassword != confirmPassword) return new(false, "ConfirmPassword", "The two new passwords don't match.");
+
+            if (await _users.CheckPasswordAsync(user, newPassword))
+                return new(false, "NewPassword", "Choose a password that is different from your old one.");
+
+            var result = await _users.ResetPasswordAsync(user, token, newPassword);
+            if (!result.Succeeded)
+            {
+                if (result.Errors.Any(e => e.Code == "InvalidToken")) return new(false, Message: ResetLinkExpired);
+                return new(false, "NewPassword", string.Join(" ", result.Errors.Select(e => e.Description)));
+            }
+
+            // A locked account (5 wrong tries) can log in again straight away with the new password.
+            await _users.ResetAccessFailedCountAsync(user);
+            await _users.SetLockoutEndDateAsync(user, null);
+
+            await SendPasswordChangedAsync(user, forgotPasswordUrl);
+
+            _logger.LogInformation("Password reset for user {UserId}.", user.Id);
+            return new(true, Email: EmailTemplates.Mask(user.Email));
+        }
+
+        private async Task<(ApplicationUser? User, string? Token)> ReadResetLinkAsync(string? userId, string? code)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code)) return (null, null);
+            var user = await _users.FindByIdAsync(userId);
+            if (user is null || !user.IsActive) return (null, null);
+            try { return (user, Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code))); }
+            catch (FormatException) { return (null, null); }
+        }
+
         // ================= helpers =================
+
+        // "Your password was changed" (after Change password on My profile, or after a reset).
+        private async Task SendPasswordChangedAsync(ApplicationUser user, string resetPasswordUrl)
+        {
+            if (string.IsNullOrEmpty(user.Email)) return;
+            await SendAsync(user.Email, "Your YORU password was changed", EmailTemplates.Build(
+                kicker: "Account security",
+                title: "Your password was changed",
+                name: user.FullName,
+                introHtml: "The password for your YORU account was just changed. If this was you, there's nothing else to do.",
+                rows: new[] { new EmailTemplates.Row("When", Now()), new EmailTemplates.Row("Account", user.Email) },
+                warnHtml: "<b>Wasn't you?</b> Reset your password now so nobody else can use your account.",
+                buttonText: "Reset my password",
+                buttonUrl: resetPasswordUrl,
+                footerLine: await FooterAsync()));
+        }
 
         // Returns null when the password is right; otherwise counts the failure like a wrong login.
         private async Task<SecurityResult?> CheckPasswordAsync(ApplicationUser user, string password, string field, string message)
