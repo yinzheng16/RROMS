@@ -1,0 +1,22 @@
+@model RROMS.Services.Interfaces.StaffWorkflowCard
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services
+@using RROMS.Services.Interfaces
+@{
+    var row = Model.Order;
+    long wait = StaffQueueRules.WaitSeconds(row.CreatedAt, DateTime.Now);
+    string link = Url.Page("/Staff/Orders/Index", new { status = Model.Status.ToString(), orderId = row.Id, search = Context.Request.Query["search"].ToString(), dining = Context.Request.Query["dining"].ToString(), sort = Context.Request.Query["sort"].ToString(), pageNumber = Context.Request.Query["pageNumber"].FirstOrDefault() ?? "1" })!;
+}
+<article class="order" data-order="@row.Id" data-status="@Model.Status" aria-labelledby="wf-order-@row.Id">
+    <div class="order-head"><strong id="wf-order-@row.Id">@row.OrderNo</strong><time class="order-time" datetime="@row.CreatedAt.ToString("O")">@row.CreatedAt.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture)</time></div>
+    <div class="customer-row"><p class="customer">@row.CustomerName</p><div class="chips"><span class="chip wf-dining-badge @(row.Dining == OrderType.Takeaway ? "wf-dining--takeaway" : "wf-dining--dinein")"><svg class="wf-dining-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="@(row.Dining == OrderType.Takeaway ? "M6 8h12l1 13H5L6 8Z" : "M4 12h16c-.6 5.2-3.3 8-8 8s-7.4-2.8-8-8ZM8 22h8")" /><path d="@(row.Dining == OrderType.Takeaway ? "M9 10V6a3 3 0 0 1 6 0v4" : "M8 8c-3-3 3-3 0-6M12 8c-3-3 3-3 0-6M16 8c-3-3 3-3 0-6")" /></svg><span>@StaffQueueRules.DiningLabel(row.Dining)</span></span>@if (row.TableNumber is not null) { <span class="chip table"><svg class="wf-dining-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-2 3H5L3 9Z" /><path d="M6 12v8M18 12v8M9 12v4h6v-4" /></svg><span>Table @row.TableNumber</span></span> }@if (OrderStatusRules.Active(Model.Status)) { <span class="chip wf-wait-chip" data-wait-chip data-level="@StaffQueueRules.WaitClass(wait)" title="Time since the order was placed"><i class="bi bi-clock" aria-hidden="true"></i><span data-wait="@wait">@StaffQueueRules.WaitLabel(wait)</span><small class="wf-wait-long">Long wait</small></span> }</div></div>
+    <div class="items-preview">@if (row.HasNotes) { <span class="wf-note-pill" title="Kitchen notes · read full details before updating"><i class="bi bi-journal-text" aria-hidden="true"></i>Notes<span class="visually-hidden"> · kitchen notes, read full details before updating</span></span> }@foreach (var line in row.DishPreview ?? Array.Empty<StaffOrderPreview>()) { <div class="preview-line"><span>@line.Quantity ×</span>@line.Name</div> }
+        @* Keep every card the same height on every page: reserve 2 dish rows and the "more lines" row. *@
+        @for (int gap = (row.DishPreview?.Count ?? 0); gap < 2; gap++) { <div class="preview-line wf-preview-spacer" aria-hidden="true">&nbsp;</div> }
+        @if (row.DishLineCount > 2) { <small class="more-dishes">+ @(row.DishLineCount - 2) more lines · view details</small> }
+        else { <small class="more-dishes wf-preview-spacer" aria-hidden="true">&nbsp;</small> }
+    </div>
+    <div class="order-bottom"><span>@row.Portions @(row.Portions == 1 ? "portion" : "portions")</span><b>RM @row.Total.ToString("0.00", CultureInfo.InvariantCulture)</b></div>
+    <div class="card-footer"><a href="@link" class="view-link" data-details="@row.Id">View details <span class="wf-view-arrow" aria-hidden="true">→</span></a>@if (OrderStatusRules.Next(Model.Status).HasValue) { <a href="@link" class="card-action" data-card-action="@row.Id" data-target="@OrderStatusRules.Next(Model.Status)" data-title="@OrderStatusRules.Action(Model.Status)" data-order-number="@row.OrderNo">@OrderStatusRules.Action(Model.Status)</a> }</div>
+</article>

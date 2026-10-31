@@ -1,0 +1,94 @@
+@model RROMS.Services.Interfaces.StaffWorkflowDetails
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services
+@{
+    var o = Model.Order;
+    string Money(decimal value) => "RM " + value.ToString("0.00", CultureInfo.InvariantCulture);
+    string Date(DateTime value) => value.ToString("dd MMM yyyy · h:mm:ss tt", CultureInfo.InvariantCulture);
+    // Small line icons for the order-detail rows (fixed SVG paths, no user input).
+    string Icon(string path) => $"<svg class=\"wf-ctx-icon\" viewBox=\"0 0 24 24\" width=\"18\" height=\"18\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\" focusable=\"false\"><path d=\"{path}\" /></svg>";
+    const string PersonIcon = "M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8ZM4.5 20c1.4-3.8 4.3-5.8 7.5-5.8s6.1 2 7.5 5.8";
+    const string UtensilsIcon = "M7 3v18M4.5 3v5a2.5 2.5 0 0 0 5 0V3M17 21V3c-2.2 1.3-3.3 4-3.3 8.5H17";
+    const string TicketIcon = "M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4ZM14 6v2.5M14 11v2M14 15.5V18";
+    const string CalendarIcon = "M4 6h16v14H4ZM4 10h16M8 3.5V7M16 3.5V7";
+    const string ClockIcon = "M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18ZM12 7.5V12l3 2";
+    const string LeafIcon = "M5 19c0-8.5 5.5-13.5 14-14c0 9-5.5 14-14 14ZM5 19l8.5-8.5";
+    const string InfoIcon = "M12 10.5V17M12 7v.5";
+    // Status-history icons: the shared set in OrderStatusRules.
+    string HistoryIcon(OrderStatus stage) => OrderStatusRules.IconSvg(stage, "wf-history-icon", 22, 2.6);
+}
+<div data-order-details data-order-id="@o.Id" data-status="@o.Status" data-order-number="@o.OrderNo">
+    <header class="drawer-header"><div><p class="eyebrow">ORDER DETAILS</p><h2 tabindex="-1">@o.OrderNo</h2><span class="status @o.Status">@Html.Raw(OrderStatusRules.IconSvg(o.Status, "wf-status-icon", 16, 3.2))<span>@OrderStatusRules.Label(o.Status)</span></span></div><a href="@Url.Page("/Staff/Orders/Index", new { status = o.Status.ToString() })" class="icon" data-close-drawer aria-label="Close order details">×</a></header>
+    <div class="wf-detail-body">
+    <dl class="order-context wf-context"><div><dt>@Html.Raw(Icon(PersonIcon))Customer</dt><dd>@o.CustomerName</dd></div><div><dt>@Html.Raw(Icon(UtensilsIcon))@(o.Dining == OrderType.DineIn ? "Dining type / Table" : "Dining type")</dt><dd><span class="chip wf-dining-badge @(o.Dining == OrderType.Takeaway ? "wf-dining--takeaway" : "wf-dining--dinein")"><svg class="wf-dining-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="@(o.Dining == OrderType.Takeaway ? "M6 8h12l1 13H5L6 8Z" : "M4 12h16c-.6 5.2-3.3 8-8 8s-7.4-2.8-8-8ZM8 22h8")" /><path d="@(o.Dining == OrderType.Takeaway ? "M9 10V6a3 3 0 0 1 6 0v4" : "M8 8c-3-3 3-3 0-6M12 8c-3-3 3-3 0-6M16 8c-3-3 3-3 0-6")" /></svg><span>@RROMS.Services.Interfaces.StaffQueueRules.DiningLabel(o.Dining)@(o.Dining == OrderType.DineIn && o.TableNumber is not null ? " · " + o.TableNumber : "")</span></span>@if (o.Dining == OrderType.DineIn && o.TableNumber is null) { <span class="wf-ctx-muted">Table not assigned</span> }</dd></div>
+        @if (o.Dining == OrderType.DineIn) { <div><dt>@Html.Raw(Icon(TicketIcon))Reservation ref.</dt><dd>@(o.Booking?.Reference ?? "No reservation (older order)")</dd></div> }
+        @if (o.Booking is not null) { <div><dt>@Html.Raw(Icon(CalendarIcon))Booking details</dt><dd>@o.Booking.ReservedAt.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture) · @o.Booking.Guests guests</dd></div> }
+        <div><dt>@Html.Raw(Icon(ClockIcon))Order time</dt><dd>@Date(o.CreatedAt)</dd></div>
+    </dl>
+    @if (!string.IsNullOrWhiteSpace(o.DiningPreferences)) { <div class="allergy wf-allergy"><span class="wf-allergy-icon">@Html.Raw(Icon(LeafIcon))</span><div><strong>Allergies &amp; preferences</strong><p>@o.DiningPreferences</p><small>From the customer profile · also check each dish note.</small></div></div> }
+    <h3 class="section-title">Items (@o.Dishes.Count)</h3>
+    @* Long orders: show the first few dishes; the rest open with "Show all". Without JavaScript every dish stays visible. *@
+    @{ const int DishPreviewCount = 5; int dishIndex = 0; }
+    <div class="wf-dish-list" data-dish-list>
+    @foreach (var dish in o.Dishes)
+    { <div class="detail-line @(dishIndex++ >= DishPreviewCount ? "wf-dish-more" : "")"><span class="dish-mark"><i class="bi bi-cup-hot" aria-hidden="true"></i>@if (dish.ImageUrl is not null) { <img src="@Url.Content(dish.ImageUrl)" width="64" height="64" alt="" loading="lazy" /> }</span><div class="dish-copy"><strong>@dish.Name</strong><small><span class="wf-code">@dish.Code</span> @dish.Quantity × @Money(dish.UnitPrice)</small>@if (!string.IsNullOrWhiteSpace(dish.Notes)) { <p class="wf-dish-note"><b>Dish note:</b> @dish.Notes</p> }</div><strong>@Money(dish.Quantity * dish.UnitPrice)</strong></div> }
+    @if (o.Dishes.Count > DishPreviewCount)
+    {
+        int hiddenNotes = o.Dishes.Skip(DishPreviewCount).Count(d => !string.IsNullOrWhiteSpace(d.Notes));
+        <button type="button" class="wf-dish-toggle" data-dish-toggle aria-expanded="false"><span data-dish-more-label>@($"Show all {o.Dishes.Count} items" + (hiddenNotes > 0 ? $" · {hiddenNotes} more with dish notes" : ""))</span><span data-dish-less-label hidden>Show fewer items</span></button>
+    }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(o.Notes) && !OrderDiningPreferencesRules.IsProfileCopy(o.Notes, o.DiningPreferences)) { <div class="note"><strong>Overall remarks</strong><p>@o.Notes</p></div> }
+    <div class="amounts"><div><span>Subtotal</span><span>@Money(o.Subtotal)</span></div><div><span>Service charge</span><span>@Money(o.ServiceCharge)</span></div><div><span>Tax</span><span>@Money(o.Tax)</span></div><div class="total"><span>Total</span><span>@Money(o.Total)</span></div></div>
+    @if (OrderStatusRules.Next(o.Status) is OrderStatus next)
+    {
+        <form method="post" asp-page="/Staff/Orders/Index" asp-page-handler="ChangeStatus" data-change-form data-kind="advance" data-title="@OrderStatusRules.Action(o.Status)">
+            <input type="hidden" name="id" value="@o.Id" /><input type="hidden" name="expectedStatus" value="@o.Status" /><input type="hidden" name="targetStatus" value="@next" />
+            
+            <input type="hidden" name="status" value="@Context.Request.Query["status"]" />
+            <input type="hidden" name="search" value="@Context.Request.Query["search"]" />
+            <input type="hidden" name="dining" value="@Context.Request.Query["dining"]" />
+            <input type="hidden" name="sort" value="@Context.Request.Query["sort"]" />
+            <input type="hidden" name="pageNumber" value="@(Context.Request.Query["pageNumber"].FirstOrDefault() ?? "1")" />
+            <button type="submit" class="primary">@OrderStatusRules.Action(o.Status) →</button>
+        </form>
+    }
+    @if (OrderStatusRules.CanCancel(o.Status))
+    {
+        @if (Model.CancellationBlocked is not null) { <p class="wf-lock"><i class="bi bi-lock" aria-hidden="true"></i> @Model.CancellationBlocked</p> }
+        else { <form method="post" asp-page="/Staff/Orders/Index" asp-page-handler="ChangeStatus" data-change-form data-kind="cancel" data-title="Cancel this order?">
+            <input type="hidden" name="id" value="@o.Id" /><input type="hidden" name="expectedStatus" value="@o.Status" /><input type="hidden" name="targetStatus" value="Cancelled" />
+            
+            <input type="hidden" name="status" value="@Context.Request.Query["status"]" />
+            <input type="hidden" name="search" value="@Context.Request.Query["search"]" />
+            <input type="hidden" name="dining" value="@Context.Request.Query["dining"]" />
+            <input type="hidden" name="sort" value="@Context.Request.Query["sort"]" />
+            <input type="hidden" name="pageNumber" value="@(Context.Request.Query["pageNumber"].FirstOrDefault() ?? "1")" />
+            <div class="wf-nojs-reason"><label>Cancellation reason @(o.Status == OrderStatus.Preparing ? "(required)" : "(optional)")<textarea name="reason" rows="2" maxlength="250" required="@(o.Status == OrderStatus.Preparing)"></textarea></label></div>
+            <button type="submit" class="danger wf-cancel">Cancel order</button>
+        </form> }
+    }
+    <p class="kitchen-note">@(o.Status == OrderStatus.Completed ? "Kitchen complete. Payment and the dining session are handled separately." : o.Status == OrderStatus.Cancelled ? "Cancelled. Original items and amounts are retained for reference." : "Changes are recorded in the order history.")</p>
+    @{ bool placedIsCurrent = Model.History.Count == 0 && o.Status == OrderStatus.Pending; }
+    <section class="history wf-history"><h3>Status history</h3>
+        @{ bool hasOlder = Model.History.Count > 0; }
+        <div class="wf-history-list" data-history-list>
+        <ol class="wf-timeline">
+            <li class="wf-event @(placedIsCurrent ? "is-current" : "") @(hasOlder ? "wf-history-older" : "")"><span class="wf-node">@Html.Raw(HistoryIcon(OrderStatus.Pending))</span><div><strong>Order placed @if (placedIsCurrent) { <span class="wf-current">Current</span> }</strong><small>@o.CustomerName</small><small class="wf-when">@Html.Raw(Icon(CalendarIcon))@Date(o.CreatedAt)</small></div></li>
+            @if (Model.HasEarlierHistoryGap) { <li class="wf-gap @(hasOlder ? "wf-history-older" : "")"><span class="wf-gap-icon">@Html.Raw(Icon(InfoIcon))</span><p>Earlier status changes were not recorded for this order. The entries below show recorded changes only.</p></li> }
+            @for (int i = 0; i < Model.History.Count; i++)
+            {
+                var change = Model.History[i];
+                bool isCurrent = i == Model.History.Count - 1 && change.To == o.Status;
+                <li class="wf-event @(isCurrent ? "is-current" : "") @(i < Model.History.Count - 1 ? "wf-history-older" : "")"><span class="wf-node">@Html.Raw(HistoryIcon(change.To))</span><div><strong>@OrderStatusRules.Label(change.From) → @OrderStatusRules.Label(change.To)@if (isCurrent) { <span class="wf-current">Current</span> }</strong><small>@change.StaffName · @change.StaffRole</small><small class="wf-when">@Html.Raw(Icon(CalendarIcon))@Date(change.ChangedAt)</small>@if (!string.IsNullOrWhiteSpace(change.Reason)) { <p><b>Reason:</b> @change.Reason</p> }</div></li>
+            }
+        </ol>
+        @if (hasOlder)
+        {
+            <button type="button" class="wf-dish-toggle wf-history-toggle" data-history-toggle aria-expanded="false"><span data-more-label>@($"Show full history ({Model.History.Count + 1} entries)")</span><span data-less-label hidden>Show latest only</span></button>
+        }
+        </div>
+    </section>
+    </div>
+</div>
