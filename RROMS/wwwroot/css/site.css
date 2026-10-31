@@ -422,28 +422,18 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 /* Left: welcome panel */
 .auth2-side {
     position: relative;
-    background: var(--yoru-ink);
+    /* Night izakaya scene (same art as the Security pop-ups, flipped so the lantern sits on the right).
+       Darker on the left so the logo and text stay easy to read; clearer on the right edge and the top. */
+    background:
+        linear-gradient(90deg, rgba(15, 10, 8, .88) 0%, rgba(15, 10, 8, .82) 52%, rgba(15, 10, 8, .35) 100%),
+        linear-gradient(180deg, rgba(15, 10, 8, 0) 0%, rgba(15, 10, 8, .25) 100%),
+        var(--yoru-ink) url("../images/auth/auth-night.webp") right top / cover no-repeat;
     color: var(--yoru-cream);
     padding: 3.25rem 3rem 3rem; /* top matches the gold line on the right */
     display: flex;
     flex-direction: column;
     justify-content: flex-start; /* content starts at the top, level with the form */
 }
-
-    .auth2-side::after { /* faint gold waves at the bottom of the panel */
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 9rem;
-        pointer-events: none;
-        background-image: radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.14) 19% 21%, transparent 22% 38%, rgba(183,155,114,.14) 39% 41%, transparent 42% 58%, rgba(183,155,114,.14) 59% 61%, #191919 62%), radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.14) 19% 21%, transparent 22% 38%, rgba(183,155,114,.14) 39% 41%, transparent 42% 58%, rgba(183,155,114,.14) 59% 61%, #191919 62%);
-        background-size: 56px 28px;
-        background-position: 0 0, 28px 14px;
-        -webkit-mask-image: linear-gradient(to top, #000, transparent);
-        mask-image: linear-gradient(to top, #000, transparent);
-    }
 
     .auth2-side > * {
         position: relative;

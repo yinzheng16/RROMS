@@ -86,8 +86,9 @@
 
             <details>
                 <summary class="em-meta">Show the email</summary>
-                @* sandbox: the email is shown as it would look, but cannot run scripts *@
-                <iframe class="em-frame mt-2" sandbox srcdoc="@e.Html"></iframe>
+                @* sandbox: the email is shown as it would look, but cannot run scripts.
+                   Links open in a new tab, like clicking them in a real inbox. *@
+                <iframe class="em-frame mt-2" sandbox="allow-popups allow-popups-to-escape-sandbox" srcdoc="@("<base target=\"_blank\">" + e.Html)"></iframe>
             </details>
         </div>
     }

@@ -32,9 +32,12 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.AllowedForNewUsers = true;
         options.Password.RequiredLength = 8;
+        // US52: reset links use their own 1-hour token provider (change-email links keep 24 hours)
+        options.Tokens.PasswordResetTokenProvider = PasswordResetTokenProviderOptions.ProviderName;
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddTokenProvider<PasswordResetTokenProvider<ApplicationUser>>(PasswordResetTokenProviderOptions.ProviderName);
 
 // ---------- Login cookie: auto logout (Member 1, US02) ----------
 builder.Services.ConfigureApplicationCookie(options =>
@@ -71,6 +74,7 @@ builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();   // EN06 / Member 4
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();   // Member 1: US03 / US04 My profile
+builder.Services.AddScoped<IAccountSecurityService, AccountSecurityService>();   // Member 1: US03 / US04 change password / email
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IMyReservationsService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
@@ -112,7 +116,9 @@ var hiddenManagePages = new[]
 {
     "TwoFactorAuthentication", "EnableAuthenticator", "Disable2fa", "GenerateRecoveryCodes",
     "ResetAuthenticator", "ShowRecoveryCodes", "PersonalData", "DownloadPersonalData",
-    "DeletePersonalData", "ExternalLogins"
+    "DeletePersonalData", "ExternalLogins",
+    // US03 / US04: replaced by the Security pop-ups on My profile
+    "ChangePassword", "SetPassword", "Email"
 };
 app.Use(async (context, next) =>
 {
