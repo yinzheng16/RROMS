@@ -1,4 +1,4 @@
-/* =====================================================================
+﻿/* =====================================================================
    US03 / US04 (Member 1): Security pop-ups on My profile
    (Change password · Change email) + the email-confirmation page.
    Art: wwwroot/images/profile/security-bg.webp, security-stamp-red.webp, security-stamp-green.webp
@@ -801,3 +801,183 @@ a.sx-btn {
         background: rgba(255, 255, 255, .06);
         box-shadow: inset 0 0 0 1px rgba(185, 177, 164, .3);
     }
+
+
+/* ---------- US52 Forgot / Reset password pages (same look as the pop-ups) ---------- */
+.sx-page .sx-box {
+    min-height: 34rem;
+}
+
+.sx-page .sx-card > form {
+    margin: auto 0;             /* form sits in the middle of the card, like the "done" panes */
+}
+
+.sx-in > svg,
+.sx-note > svg,
+.sx-chip > svg {
+    fill: none;
+}
+
+.sx-tick > svg {
+    width: 1.9rem;
+    height: 1.9rem;
+}
+
+/* expired / used link */
+.sx-tick.is-bad {
+    background: #fff1ee;
+    box-shadow: 0 0 0 8px rgba(200, 62, 45, .1);
+}
+
+    .sx-tick.is-bad svg {
+        width: 2.2rem;
+        height: 2rem;
+    }
+
+.sx-arrow-ic {
+    width: 1rem;
+    height: 1rem;
+    margin-left: .35rem;
+    vertical-align: -.15rem;
+}
+
+.sx-btns form {
+    display: contents;          /* "Send again" button sits in the row like the others */
+}
+
+
+/* ---------- US52: full-page scene (Forgot / Reset password) ---------- */
+.sx-scene {
+    position: relative;
+    min-height: calc(100vh - 5rem);
+    padding: 4rem 1rem 5rem;
+    background:
+        radial-gradient(ellipse at center, rgba(20, 12, 8, .35) 0%, rgba(20, 12, 8, 0) 60%),
+        #2a1d16 url("../images/auth/reset-scene.webp") center / cover no-repeat;
+}
+
+    .sx-scene .sx-box {
+        grid-template-columns: 20rem minmax(0, 1fr);
+        width: min(58rem, 100%);
+        min-height: 36rem;
+        box-shadow: 0 50px 90px -30px rgba(0, 0, 0, .85), 0 0 0 1px rgba(214, 178, 110, .6);
+    }
+
+    /* left panel: gold bar under the title, steps joined by a thin line (Japanese line hidden here) */
+    .sx-scene .sx-jp {
+        display: none;
+    }
+
+    .sx-scene .sx-art h2::after {
+        content: "";
+        display: block;
+        width: 100%;
+        max-width: 16rem;
+        height: 2px;
+        margin: 1rem 0 1.1rem;
+        background: linear-gradient(90deg, #d9b56e, rgba(217, 181, 110, 0));
+    }
+
+    .sx-scene .sx-steps {
+        gap: 1.1rem;
+    }
+
+        .sx-scene .sx-steps li {
+            position: relative;
+        }
+
+            .sx-scene .sx-steps li:not(:last-child)::after {
+                content: "";
+                position: absolute;
+                left: .76rem;
+                top: 1.6rem;
+                width: 1px;
+                height: 1.05rem;
+                background: rgba(217, 191, 146, .45);
+            }
+
+    /* right panel: warm parchment, a stronger sakura corner */
+    .sx-scene .sx-card {
+        margin: 0;
+        border-radius: 0 22px 22px 0;
+        padding: 2.2rem 2.4rem 2rem;
+        background: linear-gradient(rgba(250, 242, 228, .94), rgba(246, 236, 218, .96)), url("../images/settings/washi.webp") center / 420px;
+        box-shadow: inset 1px 0 0 rgba(214, 178, 110, .5);
+        overflow: hidden;           /* no scroll bar: the card grows with its content */
+    }
+
+        .sx-scene .sx-card::after {
+            right: 0;
+            top: 0;
+            width: 11rem;
+            height: 5rem;
+            opacity: .9;
+        }
+
+    .sx-scene .sx-head h3 {
+        font-size: 1.65rem;
+    }
+
+    .sx-scene .sx-head p {
+        font-size: .95rem;
+        color: #3b3530;
+    }
+
+    .sx-scene .sx-btn.main {
+        background: linear-gradient(180deg, #b8321f, #8e1c12);
+        box-shadow: 0 12px 22px -12px rgba(142, 28, 18, .9);
+    }
+
+    .sx-scene .sx-btn.ghost {
+        background: #fffaf0;
+        border-color: #d8c49d;
+        font-family: var(--font-display);
+    }
+
+/* small ornament above the heading:  ——— ✿ ——— */
+.sx-orn {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin: 0 0 1.1rem;
+    color: #a8241a;
+}
+
+    .sx-orn i {
+        width: 5.5rem;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(168, 36, 26, 0), #a8241a);
+    }
+
+        .sx-orn i:last-child {
+            background: linear-gradient(90deg, #a8241a, rgba(168, 36, 26, 0));
+        }
+
+    .sx-orn span {
+        font-size: 1.05rem;
+        line-height: 1;
+    }
+
+.sx-done .sx-orn {
+    justify-content: center;
+}
+
+@media (max-width: 760px) {
+    .sx-scene {
+        padding: 1.5rem .6rem 3rem;
+    }
+
+        .sx-scene .sx-box {
+            grid-template-columns: 1fr;
+        }
+
+        .sx-scene .sx-card {
+            margin: .6rem;
+            border-radius: 16px;
+            padding: 1.4rem 1.2rem;
+        }
+
+        .sx-scene .sx-art h2::after {
+            display: none;
+        }
+}
