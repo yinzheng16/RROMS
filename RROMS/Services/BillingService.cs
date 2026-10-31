@@ -857,7 +857,7 @@ namespace RROMS.Services
                             "Please refresh the bill preview and try again.");
 
                     // 6a. The linked orders' saved totals must still equal
-                    // the bill (e.g. no partial cancellation in between).
+                    // the bill (e.g. no order changed in between).
                     var linkedTotals = await _orders.Query()
                         .AsNoTracking()
                         .Where(o => o.BillId == billId)
