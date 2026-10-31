@@ -60,7 +60,7 @@ namespace RROMS.Services
                         email, subject,
                         links.Count == 0 ? "    (none)" : string.Join("\n", links.Select(l => "    " + l)),
                         Indent(ToPlainText(htmlMessage)));
-                    _outbox.Add(new OutboxEmail(DateTime.Now, email, subject, htmlMessage, links,
+                    _outbox.Add(new OutboxEmail(DateTime.Now, email, subject, ForPreview(htmlMessage), links,
                         "Not sent: no password (Output only)", true));
                 }
                 else
@@ -77,11 +77,13 @@ namespace RROMS.Services
                 message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromAddress));
                 message.To.Add(MailboxAddress.Parse(email.Trim()));
                 message.Subject = subject;
-                message.Body = new BodyBuilder
+                var body = new BodyBuilder
                 {
                     HtmlBody = htmlMessage,
                     TextBody = ToPlainText(htmlMessage)   // for mail apps that don't show HTML
-                }.ToMessageBody();
+                };
+                AddInlineImages(body, htmlMessage);       // logo + emblem inside the email (see EmailTemplates)
+                message.Body = body.ToMessageBody();
 
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
                 using var client = new SmtpClient { Timeout = 15000 };
@@ -98,19 +100,45 @@ namespace RROMS.Services
 
                 _logger.LogInformation("Email sent to {To}: {Subject}", email, subject);
                 if (_env.IsDevelopment())
-                    _outbox.Add(new OutboxEmail(DateTime.Now, email, subject, htmlMessage, links, "Sent through Gmail", true));
+                    _outbox.Add(new OutboxEmail(DateTime.Now, email, subject, ForPreview(htmlMessage), links, "Sent through Gmail", true));
             }
             catch (Exception ex)
             {
                 // Logged, never thrown: the caller carries on.
                 _logger.LogError(ex, "Email to {To} failed ({Subject}): {Reason}", email, subject, ex.Message);
                 if (_env.IsDevelopment())
-                    _outbox.Add(new OutboxEmail(DateTime.Now, email, subject, htmlMessage, links,
+                    _outbox.Add(new OutboxEmail(DateTime.Now, email, subject, ForPreview(htmlMessage), links,
                         "Failed: " + Explain(ex), false));
             }
         }
 
         // ---------- helpers ----------
+
+        // Images an email can embed by writing src="cid:<name>" (Gmail can't load localhost links).
+        private static readonly Dictionary<string, string> InlineImages = new()
+        {
+            ["yoru-logo"] = "images/email/yoru-logo-email.png",
+            ["yoru-emblem"] = "images/email/yoru-emblem-email.png"
+        };
+
+        private void AddInlineImages(BodyBuilder body, string html)
+        {
+            foreach (var (cid, path) in InlineImages)
+            {
+                if (!html.Contains("cid:" + cid, StringComparison.Ordinal)) continue;
+                var file = Path.Combine(_env.WebRootPath, path.Replace('/', Path.DirectorySeparatorChar));
+                if (!File.Exists(file)) { _logger.LogWarning("Email image missing: {File}", file); continue; }
+                var image = body.LinkedResources.Add(file);
+                image.ContentId = cid;
+            }
+        }
+
+        // /Dev/Emails shows the email in the browser, where the same images load from wwwroot.
+        private static string ForPreview(string html)
+        {
+            foreach (var (cid, path) in InlineImages) html = html.Replace("cid:" + cid, "/" + path);
+            return html;
+        }
 
         private static List<string> FindLinks(string html) =>
             LinkPattern.Matches(html)
