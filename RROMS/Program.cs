@@ -47,6 +47,14 @@ builder.Services.ConfigureApplicationCookie(options =>
     // "Keep me logged in" ticked: 7 days instead (set in AccountService.LoginAsync)
 });
 
+// ---------- US05 / US07 (Member 1): role changes and deactivation reach logged-in users quickly ----------
+// Every minute each login is re-checked against the database: a new role shows on the next page,
+// and a deactivated account (new security stamp) is logged out.
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.FromMinutes(1);
+});
+
 
 // ---------- Role-based access control (Member 1) ----------
 builder.Services.AddAuthorization(options =>
@@ -75,6 +83,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();   // EN
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();   // Member 1: US03 / US04 My profile
 builder.Services.AddScoped<IAccountSecurityService, AccountSecurityService>();   // Member 1: US03 / US04 change password / email
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();   // Member 1: US05 / US07 Admin → Users
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IMyReservationsService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();

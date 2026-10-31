@@ -241,7 +241,10 @@ namespace RROMS.Services
             if (string.IsNullOrEmpty(newPassword)) return new(false, "NewPassword", "Please enter a new password.");
             if (newPassword != confirmPassword) return new(false, "ConfirmPassword", "The two new passwords don't match.");
 
-            if (await _users.CheckPasswordAsync(user, newPassword))
+            // US05: an account created by an Admin has no password until this link is used.
+            var firstPassword = !await _users.HasPasswordAsync(user);
+
+            if (!firstPassword && await _users.CheckPasswordAsync(user, newPassword))
                 return new(false, "NewPassword", "Choose a password that is different from your old one.");
 
             var result = await _users.ResetPasswordAsync(user, token, newPassword);
@@ -255,9 +258,11 @@ namespace RROMS.Services
             await _users.ResetAccessFailedCountAsync(user);
             await _users.SetLockoutEndDateAsync(user, null);
 
-            await SendPasswordChangedAsync(user, forgotPasswordUrl);
+            // "Your password was changed" only makes sense when there was a password before.
+            if (!firstPassword) await SendPasswordChangedAsync(user, forgotPasswordUrl);
 
-            _logger.LogInformation("Password reset for user {UserId}.", user.Id);
+            if (firstPassword) _logger.LogInformation("First password set for user {UserId}.", user.Id);
+            else _logger.LogInformation("Password reset for user {UserId}.", user.Id);
             return new(true, Email: EmailTemplates.Mask(user.Email));
         }
 
