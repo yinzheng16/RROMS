@@ -72,13 +72,43 @@ public record StaffDayBoard(
 
 public record StaffStatusLogItem(DateTime At, string From, string To, string Role, string? Note);
 
+// ---- US19: this guest's earlier bookings (read-only) ----
+// One step of an earlier booking: the status it reached and when.
+// By is "Guest", "Staff", "Automatic" or "Our team".
+public record StaffPastStep(string Status, DateTime At, string By);
+
+public record StaffPastVisit(
+    int Id,
+    string ReferenceNo,
+    ReservationStatus Status,
+    DateTime ReservedAt,
+    int Guests,
+    string? TableTypeName,
+    string? AreaName,
+    string? TableNumber,
+    decimal MinimumSpend,
+    string? SpecialRequest,
+    IReadOnlyList<StaffPastStep> Steps);
+
+// Counts cover ALL earlier bookings of the guest; Recent holds the latest ones (newest first).
+public record StaffGuestHistory(
+    int Total,
+    int Completed,
+    int Cancelled,
+    int NoShow,
+    // "Type · Area" the guest books most often (only when it happened at least twice), else null.
+    string? UsualTable,
+    IReadOnlyList<StaffPastVisit> Recent);
+
 public record StaffReservationDetails(
     StaffReservationRow Row,
     string? Email,
     // Read-only summary from the customer's profile (allergies, diet). Not the booking's own request.
     string? DiningPreferences,
     DateTime? ConfirmedAt,
-    IReadOnlyList<StaffStatusLogItem> History);
+    IReadOnlyList<StaffStatusLogItem> History,
+    // US19: null when it could not be read (the section is then left out).
+    StaffGuestHistory? GuestHistory = null);
 
 public record StaffActionResult(bool Success, string Code, string Message);
 

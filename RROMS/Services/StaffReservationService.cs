@@ -261,8 +261,106 @@ public class StaffReservationService(
         var confirmedAt = logs.Where(l => l.To == nameof(ReservationStatus.Confirmed))
             .Select(l => (DateTime?)l.At).LastOrDefault();
 
-        return new StaffReservationDetails(ToRow(raw, DateTime.Now), owner.Email, dining, confirmedAt, logs);
+        // US19: the guest's earlier bookings. A failure here must never stop the details from opening.
+        StaffGuestHistory? guestHistory = null;
+        try { guestHistory = await LoadGuestHistoryAsync(owner.UserId, reservationId, raw.ReservedAt, ct); }
+        catch (Exception ex) { logger.LogWarning(ex, "Could not read the earlier bookings for reservation {Id}", reservationId); }
+
+        return new StaffReservationDetails(ToRow(raw, DateTime.Now), owner.Email, dining, confirmedAt, logs, guestHistory);
     }
+
+    // ---------- US19: this guest's earlier bookings (read only) ----------
+
+    private const int GuestHistoryLimit = 30;
+
+    private async Task<StaffGuestHistory> LoadGuestHistoryAsync(string userId, int reservationId, DateTime reservedAt,
+        CancellationToken ct)
+    {
+        // "Earlier" = the same guest, another booking, booked for a time before this one.
+        var earlier = db.Reservations.AsNoTracking()
+            .Where(r => r.UserId == userId && r.Id != reservationId && r.ReservedAt < reservedAt);
+
+        // Counts and the usual table come from every earlier booking, not only the ones listed.
+        var summary = await earlier
+            .Select(r => new
+            {
+                r.Status,
+                Type = r.Table != null && r.Table.TableTypeDefinition != null ? r.Table.TableTypeDefinition.Name : null,
+                Area = r.Table != null ? r.Table.DiningArea.Name : null
+            })
+            .ToListAsync(ct);
+
+        var completed = summary.Count(x => x.Status == ReservationStatus.Completed);
+        var cancelled = summary.Count(x => x.Status == ReservationStatus.Cancelled);
+        var noShow = summary.Count(x => x.Status == ReservationStatus.NoShow);
+
+        // Cancelled bookings say nothing about what the guest likes, so they do not count here.
+        string? usual = null;
+        var favourite = summary
+            .Where(x => x.Status != ReservationStatus.Cancelled && !string.IsNullOrWhiteSpace(x.Type))
+            .GroupBy(x => new { x.Type, x.Area })
+            .Select(g => new { g.Key.Type, g.Key.Area, Count = g.Count() })
+            .OrderByDescending(g => g.Count).ThenBy(g => g.Type)
+            .FirstOrDefault();
+        if (favourite != null && favourite.Count >= 2)
+            usual = string.Join(" · ", new[] { favourite.Type, favourite.Area }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+        var recent = await earlier
+            .OrderByDescending(r => r.ReservedAt).ThenByDescending(r => r.Id)
+            .Take(GuestHistoryLimit)
+            .Select(r => new
+            {
+                r.Id,
+                r.ReferenceNo,
+                r.Status,
+                r.ReservedAt,
+                r.Guests,
+                r.SpecialRequest,
+                r.CreatedAt,
+                Type = r.Table != null && r.Table.TableTypeDefinition != null ? r.Table.TableTypeDefinition.Name : null,
+                Area = r.Table != null ? r.Table.DiningArea.Name : null,
+                TableNo = r.Table != null ? r.Table.TableNumber : null,
+                Spend = r.MinimumSpendAccepted ?? 0m
+            })
+            .ToListAsync(ct);
+
+        var ids = recent.Select(x => x.Id).ToList();
+        var logs = await db.ReservationStatusLogs.AsNoTracking()
+            .Where(l => ids.Contains(l.ReservationId))
+            .OrderBy(l => l.ChangedAt).ThenBy(l => l.Id)
+            .Select(l => new { l.ReservationId, l.FromStatus, l.ToStatus, l.ChangedAt, l.ChangedByRole })
+            .ToListAsync(ct);
+
+        var visits = new List<StaffPastVisit>(recent.Count);
+        foreach (var x in recent)
+        {
+            // Start with "Pending" at booking time, then one step per real change.
+            var steps = new List<StaffPastStep> { new(nameof(ReservationStatus.Pending), x.CreatedAt, "Guest") };
+            foreach (var l in logs.Where(l => l.ReservationId == x.Id && l.FromStatus != l.ToStatus))
+                steps.Add(new StaffPastStep(l.ToStatus.ToString(), l.ChangedAt, PastBy(l.ChangedByRole)));
+
+            // Releasing an overdue booking writes no log, so the last step is added here.
+            if (steps[^1].Status != x.Status.ToString())
+            {
+                var automatic = x.Status is ReservationStatus.Cancelled or ReservationStatus.NoShow;
+                steps.Add(new StaffPastStep(x.Status.ToString(),
+                    automatic ? x.ReservedAt.AddMinutes(BookingRules.NoShowGraceMinutes) : x.ReservedAt,
+                    automatic ? "Automatic" : "Our team"));
+            }
+
+            visits.Add(new StaffPastVisit(x.Id, x.ReferenceNo, x.Status, x.ReservedAt, x.Guests, x.Type, x.Area,
+                x.TableNo, x.Spend, string.IsNullOrWhiteSpace(x.SpecialRequest) ? null : x.SpecialRequest.Trim(), steps));
+        }
+
+        return new StaffGuestHistory(summary.Count, completed, cancelled, noShow, usual, visits);
+    }
+
+    private static string PastBy(string? role) => role switch
+    {
+        "Customer" => "Guest",
+        "Staff" or "Admin" => "Staff",
+        _ => "Automatic"
+    };
 
     // ---------- Confirm ----------
 
