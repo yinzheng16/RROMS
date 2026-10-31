@@ -25,16 +25,6 @@
     var tabs = new[] { ("All", "All orders"), ("InProgress", "In progress"), ("Finished", "Finished"), ("Cancelled", "Cancelled") };
     bool dateSort = filter.Sort is "newest" or "oldest";
     string? previousMonth = null;
-    string StatusIcon(OrderStatus status) => status switch
-    {
-        OrderStatus.Pending => "M6 3h12M6 21h12M7 3v4l5 5-5 5v4M17 3v4l-5 5 5 5v4M9 6h6M9 18h6",
-        OrderStatus.Preparing => "m4 3 17 18M3 5l4 4M5 3l4 4M3 21l8-8M14 10l6-7c3 4 0 8-3 9",
-        OrderStatus.ReadyToServe => "M3 18h18M5 16a7 7 0 0 1 14 0M12 5v3M10 4h4",
-        OrderStatus.Served => "m5 12 4 4 10-10",
-        OrderStatus.Completed => "m2 12 5 5 9-10M12 16l3 3 7-8",
-        OrderStatus.Cancelled => "m6 6 12 12M18 6 6 18",
-        _ => "M12 4v8l5 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0"
-    };
 
 }
 <link rel="stylesheet" href="~/css/customer-order-history.css" asp-append-version="true" />
@@ -137,7 +127,7 @@
                             <h3><time datetime="@order.CreatedAt.ToString("s")">@order.CreatedAt.ToString("dddd, d MMM", CultureInfo.InvariantCulture)</time></h3>
                             <p class="oj-reference">@order.OrderNo</p>
                             <p class="oj-order-time">@order.CreatedAt.ToString("h:mm tt", CultureInfo.InvariantCulture)</p>
-                            <div class="oj-receipt-badges"><span class="oh-status is-@order.Status"><svg class="oj-status-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="@StatusIcon(order.Status)" /></svg>@CustomerOrderHistoryRules.StatusLabel(order.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(order.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(order.Dining)</span></div>
+                            <div class="oj-receipt-badges"><span class="oh-status is-@order.Status">@Html.Raw(OrderStatusRules.IconSvg(order.Status, "oj-status-icon yoru-status-icon", 14, 3.4))@CustomerOrderHistoryRules.StatusLabel(order.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(order.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(order.Dining)</span></div>
                             <ul class="oj-dishes">
                                 @foreach (var dish in order.Dishes)
                                 {

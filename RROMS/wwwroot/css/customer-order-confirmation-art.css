@@ -554,3 +554,49 @@ body:has(.cart-confirmation) {
     -webkit-mask-image: linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 22%,#000 62%);
     mask-image: linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.35) 22%,#000 62%);
 }
+
+/* 31 Oct: the status badge now carries the shared status icon, so the old hourglass is removed. */
+.cart-confirmation__status .status-badge.status-Pending::before {
+    content: none;
+    display: none;
+}
+
+/* Detail rows and remarks: icon in its own column, vertically centred on the label and value. */
+.cart-confirmation .cart-confirmation__details > div {
+    display: grid;
+    grid-template-columns: 1.4rem minmax(0, 1fr);
+    column-gap: 1rem;
+    align-items: center;
+    padding: .7rem 0;
+}
+
+    .cart-confirmation .cart-confirmation__details > div::before {
+        position: static;
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        align-self: center;
+        justify-self: center;
+    }
+
+    .cart-confirmation .cart-confirmation__details > div > dt,
+    .cart-confirmation .cart-confirmation__details > div > dd {
+        grid-column: 2;
+        margin: 0;
+    }
+
+.cart-confirmation .cart-confirmation__remarks {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+    .cart-confirmation .cart-confirmation__remarks > i {
+        flex: 0 0 1.4rem;
+        display: grid;
+        place-items: center;
+        margin: 0;
+    }
+
+    .cart-confirmation .cart-confirmation__remarks > div {
+        min-width: 0;
+    }

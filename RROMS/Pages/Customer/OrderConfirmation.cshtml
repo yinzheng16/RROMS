@@ -26,7 +26,8 @@
                  data-status-url="@Url.Page("/Customer/OrderConfirmation", "Status", new { id = receipt.Id })"
                  data-order-id="@receipt.Id" data-current-status="@receipt.Status">
                 <div class="order-status-heading">
-                    <span class="status-badge status-@receipt.Status" data-order-status-badge>@RROMS.Pages.Customer.OrderConfirmationModel.StatusLabel(receipt.Status)</span>
+                    <span class="status-badge status-@receipt.Status" data-order-status-badge><span data-order-status-icon>@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(receipt.Status, "yoru-status-icon", 15, 3.4))</span><span data-order-status-label>@RROMS.Pages.Customer.OrderConfirmationModel.StatusLabel(receipt.Status)</span></span>
+                    @foreach (var s in RROMS.Services.OrderStatusRules.Stages) { <template data-order-status-icon-template="@s">@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(s, "yoru-status-icon", 15, 3.4))</template> }
                     <button type="button" class="order-status-update" data-order-status-update hidden>
                         <i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span>Update status</span>
                     </button>

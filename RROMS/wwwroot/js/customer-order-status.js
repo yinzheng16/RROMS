@@ -61,7 +61,11 @@
         const hadFocus = toast?.contains(document.activeElement) || document.activeElement === updateButton;
         // Only replace the badge and explanatory text; photos, prices and page position stay intact.
         for (const status of statuses) badge.classList.remove('status-' + status);
-        badge.classList.add('status-' + data.status); badge.textContent = data.label;
+        badge.classList.add('status-' + data.status);
+        // Keep the shared status icon: swap it from the page's templates, then update only the label.
+        const icon = badge.querySelector('[data-order-status-icon]'), template = root.querySelector(`template[data-order-status-icon-template="${data.status}"]`);
+        if (icon && template) icon.replaceChildren(template.content.cloneNode(true));
+        const text = badge.querySelector('[data-order-status-label]'); if (text) text.textContent = data.label; else badge.textContent = data.label;
         displayed = data.status; root.dataset.currentStatus = displayed;
         description.textContent = data.message; latest = null; dismissed = '';
         updateButton.hidden = true; removeToast();

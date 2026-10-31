@@ -3,15 +3,6 @@
 @using RROMS.Models
 @using RROMS.Services
 @{
-    string statusIcon = Model.Status switch
-    {
-        OrderStatus.Pending => "M6 3h12M6 21h12M7 3v4l5 5-5 5v4M17 3v4l-5 5 5 5v4M9 6h6M9 18h6",
-        OrderStatus.Preparing => "m4 3 17 18M3 5l4 4M5 3l4 4M3 21l8-8M14 10l6-7c3 4 0 8-3 9",
-        OrderStatus.ReadyToServe => "M3 18h18M5 16a7 7 0 0 1 14 0M12 5v3M10 4h4",
-        OrderStatus.Cancelled => "m6 6 12 12M18 6 6 18",
-        OrderStatus.Completed => "m2 12 5 5 9-10M12 16l3 3 7-8",
-        _ => "m5 12 4 4 10-10"
-    };
     string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
 }
 <div class="oj-detail-receipt oj-detail-horizontal" data-history-detail="@Model.Id">
@@ -25,7 +16,7 @@
         <p class="oj-reference">@Model.OrderNo</p>
         <p class="oj-order-time">@Model.CreatedAt.ToString("h:mm tt", CultureInfo.InvariantCulture)</p>
         </div>
-        <div class="oj-receipt-badges"><span class="oh-status is-@Model.Status"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="@statusIcon" /></svg>@CustomerOrderHistoryRules.StatusLabel(Model.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(Model.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(Model.Dining)</span></div>
+        <div class="oj-receipt-badges"><span class="oh-status is-@Model.Status">@Html.Raw(OrderStatusRules.IconSvg(Model.Status, "oj-accent-icon yoru-status-icon", 17, 3.4))@CustomerOrderHistoryRules.StatusLabel(Model.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(Model.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(Model.Dining)</span></div>
     </header>
     <div class="oj-detail-receipt-content">
     <section class="oj-detail-main" aria-label="Dishes and reservation">

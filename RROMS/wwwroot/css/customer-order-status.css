@@ -25,3 +25,16 @@
 @media (prefers-reduced-motion: reduce) {
     .order-status-update, .order-status-toast-action { transition: none; }
 }
+
+/* 31 Oct: status badge shows the shared order-status icon (same set as the staff order board). */
+.cart-confirmation__status .status-badge[data-order-status-badge] { display: inline-flex; align-items: center; gap: .4rem; }
+.cart-confirmation__status [data-order-status-icon] { display: inline-flex; }
+.cart-confirmation__status .yoru-status-icon { display: block; flex: none; width: 15px; height: 15px; }
+
+/* 31 Oct: confirmation status badge uses the same colours as the staff order board. */
+.cart-confirmation__status .status-badge.status-Pending { background: #a7824a; border-color: #8f6c37; color: #fff; }
+.cart-confirmation__status .status-badge.status-Preparing { background: #c4651f; border-color: #a8551a; color: #fff; }
+.cart-confirmation__status .status-badge.status-ReadyToServe { background: #2c7372; border-color: #215b5a; color: #fff; }
+.cart-confirmation__status .status-badge.status-Served { background: #6b4a78; border-color: #573c62; color: #fff; }
+.cart-confirmation__status .status-badge.status-Completed { background: #315b38; border-color: #24472a; color: #fff; }
+.cart-confirmation__status .status-badge.status-Cancelled { background: #ac3025; border-color: #8e271e; color: #fff; }
