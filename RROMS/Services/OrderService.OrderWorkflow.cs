@@ -136,8 +136,12 @@ public partial class OrderService
             await _context.SaveChangesAsync(cancellationToken);
             return new(StaffStatusOutcome.Success, $"Order {current.OrderNo} is now {OrderStatusRules.Label(targetStatus)}.");
         }
-        return location.DiningSessionId is int sessionId
+        var result = location.DiningSessionId is int sessionId
             ? await _orderTransactions.ExecuteForSessionBillAsync(sessionId, Apply)
             : await _orderTransactions.ExecuteForTakeawayOrderAsync(id, Apply);
+        // US27: tell the customer only after the change and its history row are saved.
+        if (result.Outcome == StaffStatusOutcome.Success)
+            await _statusNotifier.OrderStatusChangedAsync(id, targetStatus);
+        return result;
     }
 }

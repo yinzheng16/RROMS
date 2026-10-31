@@ -24,7 +24,8 @@
             </header>
             <div class="cart-confirmation__status" data-customer-order-status
                  data-status-url="@Url.Page("/Customer/OrderConfirmation", "Status", new { id = receipt.Id })"
-                 data-order-id="@receipt.Id" data-current-status="@receipt.Status">
+                 data-order-id="@receipt.Id" data-current-status="@receipt.Status"
+                 data-hub-url="@Url.Content("~" + RROMS.Hubs.OrderStatusHub.Path)">
                 <div class="order-status-heading">
                     <span class="status-badge status-@receipt.Status" data-order-status-badge><span data-order-status-icon>@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(receipt.Status, "yoru-status-icon", 15, 3.4))</span><span data-order-status-label>@RROMS.Pages.Customer.OrderConfirmationModel.StatusLabel(receipt.Status)</span></span>
                     @foreach (var s in RROMS.Services.OrderStatusRules.Stages) { <template data-order-status-icon-template="@s">@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(s, "yoru-status-icon", 15, 3.4))</template> }
@@ -33,6 +34,25 @@
                     </button>
                 </div>
                 <p data-order-status-message>@RROMS.Pages.Customer.OrderConfirmationModel.StatusMessage(receipt.Status)</p>
+                @{
+                    var progressSteps = new (OrderStatus Status, string Label)[] {
+                        (OrderStatus.Pending, "Pending"), (OrderStatus.Preparing, "Preparing"),
+                        (OrderStatus.ReadyToServe, "Ready"), (OrderStatus.Served, "Served"),
+                        (OrderStatus.Completed, "Completed") };
+                    int progressIndex = Array.FindIndex(progressSteps, step => step.Status == receipt.Status);
+                }
+                <ol class="order-progress" data-order-progress data-state="@receipt.Status" aria-label="Order progress">
+                    @for (int i = 0; i < progressSteps.Length; i++)
+                    {
+                        var step = progressSteps[i];
+                        bool done = progressIndex >= 0 && i < progressIndex, current = i == progressIndex;
+                        <li class="order-progress__step@(done ? " is-done" : "")@(current ? " is-current" : "")"
+                            data-step="@step.Status" aria-current="@(current ? "step" : null)">
+                            <span class="order-progress__dot" aria-hidden="true">@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(step.Status, "yoru-status-icon", 14, 3.2))</span>
+                            <span class="order-progress__label">@step.Label<span class="visually-hidden" data-step-state>@(done ? " (done)" : current ? " (current)" : "")</span></span>
+                        </li>
+                    }
+                </ol>
                 <p class="order-status-feedback" data-order-status-feedback role="status" hidden></p>
                 <span class="visually-hidden" data-order-status-live role="status" aria-live="polite" aria-atomic="true"></span>
                 <noscript><p>Refresh this page to check the latest order status.</p></noscript>
@@ -101,5 +121,6 @@
 </div>
 
 @section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/customer-order-status.js" asp-append-version="true"></script>
 }
