@@ -1174,3 +1174,475 @@
     margin-block: .35rem .5rem;
     font-size: .76rem;
 }
+
+
+/* US30: "Picked for you" tabs (For you / Popular this week / New) above the shared carousel. */
+.customer-menu .menu-picks__tabs {
+    grid-area: 2 / 1 / auto / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: -.25rem 0 1rem;
+}
+
+.customer-menu .menu-picks__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-block-size: 2.4rem;
+    padding: .35rem 1rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: 999px;
+    background: rgba(255, 253, 248, .9);
+    color: #2b241c;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: .92rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+    .customer-menu .menu-picks__tab:hover {
+        border-color: #8a6a3c;
+        background: #f6efe2;
+    }
+
+    .customer-menu .menu-picks__tab:focus-visible {
+        outline: .15rem solid #8a6a3c;
+        outline-offset: .15rem;
+    }
+
+    .customer-menu .menu-picks__tab[aria-selected="true"] {
+        border-color: transparent;
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%);
+        color: #fff8ec;
+        box-shadow: 0 .3rem .8rem rgba(0, 0, 0, .18);
+    }
+
+.customer-menu .menu-picks__tab-count {
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 1.5rem;
+    block-size: 1.5rem;
+    padding: 0 .35rem;
+    border-radius: 999px;
+    background: rgba(183, 155, 114, .2);
+    color: #6a4b1d;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.customer-menu .menu-picks__tab[aria-selected="true"] .menu-picks__tab-count {
+    background: rgba(25, 25, 25, .25);
+    color: #fff8ec;
+}
+
+/* Tabs sit on row 2; every tab panel shares row 3 (only one is visible). */
+.customer-menu .menu-picks > .menu-new-arrivals__viewport {
+    grid-area: 3 / 1 / auto / -1 !important;
+}
+
+.customer-menu .menu-picks [data-menu-pick-panel][hidden] {
+    display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .menu-picks__tab {
+        transition: none;
+    }
+}
+
+/* US30 fix: the gradient fills the whole pill, so its edges stay clean. */
+.customer-menu .menu-picks__tab[aria-selected="true"] {
+    background-origin: border-box;
+    background-clip: border-box;
+}
+
+/* US30 polish: sort dropdown in the YORU style (cream paper, gold accents, icon per option). */
+.customer-menu .menu-sort-options {
+    padding: .55rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: 1rem;
+    background: #fffaf0 linear-gradient(180deg, rgba(183, 155, 114, .08), transparent 3.5rem);
+    box-shadow: 0 1.1rem 2.4rem rgba(25, 25, 25, .16), 0 0 0 4px rgba(255, 250, 240, .6);
+    overflow: hidden;
+}
+
+/* Heading: small gold caps with a fine rule. */
+.customer-menu .menu-sort-options__heading {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: .2rem .55rem .5rem;
+    color: #8a6a3c;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+}
+
+    .customer-menu .menu-sort-options__heading::after {
+        content: "";
+        flex: 1;
+        block-size: 1px;
+        background: linear-gradient(90deg, rgba(183, 155, 114, .6), transparent);
+    }
+
+.customer-menu .menu-sort-option {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    inline-size: 100%;
+    min-block-size: 2.9rem;
+    margin: .1rem 0;
+    padding: .5rem .75rem .5rem .55rem;
+    border: 0;
+    border-radius: .7rem;
+    background: transparent;
+    color: #2b241c;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: .95rem;
+    font-weight: 500;
+    text-align: start;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+    /* Icon tile on the left of each option. */
+    .customer-menu .menu-sort-option::before {
+        content: "";
+        flex: none;
+        inline-size: 2rem;
+        block-size: 2rem;
+        border-radius: .55rem;
+        background: rgba(183, 155, 114, .16) center / 1.05rem no-repeat;
+        transition: background-color .15s ease;
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="menu"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v14H4zM9 5v14M12 9h5M12 13h5'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="name"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 15l3-9 3 9M4 12h4M13 6h6l-6 9h6M17 18v3M15 19l2 2 2-2'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="name-desc"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h6l-6 9h6M14 15l3-9 3 9M15 12h4M6 18v3M4 19l2 2 2-2'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="price"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19h4M4 14h8M4 9h12M4 4h16'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="price-desc"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h4M4 9h8M4 14h12M4 19h16'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option > span:first-child {
+        flex: 1;
+        display: grid;
+        gap: .1rem;
+        line-height: 1.2;
+    }
+
+    .customer-menu .menu-sort-option small {
+        color: #73766b;
+        font-size: .74rem;
+        font-weight: 400;
+    }
+
+    .customer-menu .menu-sort-option:hover,
+    .customer-menu .menu-sort-option:focus-visible {
+        background: rgba(183, 155, 114, .16);
+        outline: none;
+    }
+
+        .customer-menu .menu-sort-option:hover::before,
+        .customer-menu .menu-sort-option:focus-visible::before {
+            background-color: rgba(183, 155, 114, .3);
+        }
+
+    /* Selected: the same gold gradient as the selected category and the "Picked for you" tab. */
+    .customer-menu .menu-sort-option[aria-selected="true"] {
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%);
+        background-origin: border-box;
+        color: #fff8ec;
+        font-weight: 600;
+        box-shadow: 0 .3rem .8rem rgba(0, 0, 0, .15);
+    }
+
+        .customer-menu .menu-sort-option[aria-selected="true"]::before {
+            background-color: rgba(255, 248, 236, .2);
+            filter: brightness(0) invert(1);
+        }
+
+        .customer-menu .menu-sort-option[aria-selected="true"] small {
+            color: rgba(255, 248, 236, .8);
+        }
+
+.customer-menu .menu-sort-option__check {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+    border-radius: 50%;
+    font-size: .75rem;
+    visibility: hidden;
+}
+
+.customer-menu .menu-sort-option[aria-selected="true"] .menu-sort-option__check {
+    visibility: visible;
+    background: rgba(255, 248, 236, .25);
+    color: #fff8ec;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .menu-sort-option,
+    .customer-menu .menu-sort-option::before {
+        transition: none;
+    }
+}
+
+/* Sort dropdown: no tick; same left/right edges as the sort button. */
+.customer-menu .menu-sort-option__check {
+    display: none !important;
+}
+
+.customer-menu .menu-sort-picker {
+    position: relative;
+}
+
+.customer-menu .menu-sort-options {
+    inset-inline: 0 !important;
+    inline-size: auto !important;
+    min-inline-size: 0 !important;
+    max-inline-size: none !important;
+    margin-block-start: .4rem;
+}
+
+.customer-menu .menu-sort-option {
+    padding-inline-end: .55rem;
+}
+
+/* Toolbar, carousel arrows and Add to cart in the same style as the sort dropdown. */
+
+/* Search bar */
+.customer-menu .menu-search .form-control {
+    min-block-size: 3.2rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: .85rem;
+    background: #fffaf0;
+    color: #2b241c;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05);
+}
+
+    .customer-menu .menu-search .form-control::placeholder {
+        color: #8b8676;
+    }
+
+    .customer-menu .menu-search .form-control:hover {
+        border-color: #b79b72;
+        background: #fffaf0;
+    }
+
+    .customer-menu .menu-search .form-control:focus {
+        border-color: #9a7a4c;
+        background: #fffdf8;
+        box-shadow: 0 0 0 .22rem rgba(183, 155, 114, .25);
+    }
+
+.customer-menu .menu-search__field > svg {
+    color: #8a6a3c;
+}
+
+/* Sort button */
+.customer-menu .menu-sort-trigger {
+    min-block-size: 3.2rem;
+    border: 1px solid rgba(183, 155, 114, .55) !important;
+    border-radius: .85rem !important;
+    background: #fffaf0 !important;
+    color: #2b241c;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+    .customer-menu .menu-sort-trigger:hover {
+        border-color: #b79b72 !important;
+    }
+
+    .customer-menu .menu-sort-trigger[aria-expanded="true"],
+    .customer-menu .menu-sort-trigger:focus-visible {
+        border-color: #9a7a4c !important;
+        box-shadow: 0 0 0 .22rem rgba(183, 155, 114, .25);
+        outline: none;
+    }
+
+/* Reset: same font, gold-brown text; red only on hover */
+.customer-menu .menu-reset--tool {
+    color: #8a6a3c !important;
+}
+
+.customer-menu a.menu-reset--tool:hover,
+.customer-menu a.menu-reset--tool:focus-visible {
+    color: #a83224 !important;
+}
+
+.customer-menu .menu-reset--tool:disabled {
+    color: #b9b3a6 !important;
+}
+
+/* Carousel arrows: cream circles with a gold edge; gold gradient on hover */
+.customer-menu .menu-new-arrivals__arrow {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 1px solid rgba(183, 155, 114, .6);
+    border-radius: 50%;
+    background: #fffaf0;
+    color: #6a4b1d;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .08);
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+
+    .customer-menu .menu-new-arrivals__arrow:hover:not(:disabled),
+    .customer-menu .menu-new-arrivals__arrow:focus-visible {
+        border-color: transparent;
+        background: linear-gradient(135deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%);
+        background-origin: border-box;
+        color: #fff8ec;
+    }
+
+    .customer-menu .menu-new-arrivals__arrow:disabled {
+        border-color: rgba(183, 155, 114, .3);
+        background: rgba(255, 250, 240, .6);
+        color: #c9bfae;
+        box-shadow: none;
+    }
+
+/* Add to cart: the same gold gradient as the selected sort option */
+.customer-menu .tasting-card__add {
+    border: 0 !important;
+    border-radius: .7rem !important;
+    background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    font-weight: 600;
+    box-shadow: 0 .35rem .9rem rgba(111, 84, 48, .25);
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+    .customer-menu .tasting-card__add:hover:not(:disabled),
+    .customer-menu .tasting-card__add:focus-visible {
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+        box-shadow: 0 .5rem 1.1rem rgba(111, 84, 48, .32);
+    }
+
+    .customer-menu .tasting-card__add:disabled {
+        background: #d9d3c7 !important;
+        color: #8b8676 !important;
+        box-shadow: none;
+        transform: none;
+    }
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .tasting-card__add,
+    .customer-menu .menu-new-arrivals__arrow,
+    .customer-menu .menu-sort-trigger {
+        transition: none;
+    }
+}
+
+/* Red version of the dropdown-style buttons: Reset, card Add to cart, pop-up Add to cart. */
+.customer-menu a.menu-reset--tool,
+.customer-menu .tasting-card__add,
+.customer-menu .dish-detail__cart button[type="submit"] {
+    border: 0 !important;
+    border-radius: .7rem !important;
+    background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    font-weight: 600;
+    box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28);
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+    .customer-menu a.menu-reset--tool:hover,
+    .customer-menu a.menu-reset--tool:focus-visible,
+    .customer-menu .tasting-card__add:hover:not(:disabled),
+    .customer-menu .tasting-card__add:focus-visible,
+    .customer-menu .dish-detail__cart button[type="submit"]:hover:not(:disabled),
+    .customer-menu .dish-detail__cart button[type="submit"]:focus-visible {
+        color: #fff8ec !important;
+        filter: brightness(1.07);
+        transform: translateY(-1px);
+        box-shadow: 0 .5rem 1.1rem rgba(168, 50, 36, .35);
+        outline: none;
+    }
+
+/* Reset: same height and corners as the search bar and the sort button. */
+.customer-menu .menu-reset--tool {
+    min-block-size: 3.2rem;
+    padding-inline: 1.1rem !important;
+    border-radius: .85rem !important;
+}
+
+    /* Nothing to reset: a quiet cream button with a gold edge. */
+    .customer-menu .menu-reset--tool:disabled {
+        border: 1px solid rgba(183, 155, 114, .45) !important;
+        background: #fffaf0 !important;
+        color: #b9b3a6 !important;
+        box-shadow: none !important;
+        transform: none;
+        filter: none;
+    }
+
+/* Unavailable dishes keep a greyed button. */
+.customer-menu .tasting-card__add:disabled,
+.customer-menu .dish-detail__cart button[type="submit"]:disabled {
+    background: #d9d3c7 !important;
+    color: #8b8676 !important;
+    box-shadow: none;
+    transform: none;
+    filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu a.menu-reset--tool,
+    .customer-menu .tasting-card__add,
+    .customer-menu .dish-detail__cart button[type="submit"] {
+        transition: none;
+    }
+}
+
+/* Dish pop-up: the photo fills the whole left side, so there is no white strip under it. */
+.menu-dish-dialog {
+    overflow: hidden;
+}
+
+    .menu-dish-dialog .dish-detail {
+        align-items: stretch;
+    }
+
+    .menu-dish-dialog .dish-detail__photo {
+        align-self: stretch;
+        block-size: auto;
+        min-block-size: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+        .menu-dish-dialog .dish-detail__photo img,
+        .menu-dish-dialog .dish-detail__photo .menu-photo-placeholder {
+            display: block;
+            inline-size: 100%;
+            block-size: 100%;
+            min-block-size: 100%;
+            object-fit: cover;
+        }
+
+    /* A little breathing room under the price row, so the button isn't pressed against the edge. */
+    .menu-dish-dialog .dish-detail__body,
+    .menu-dish-dialog .dish-detail__content {
+        padding-block-end: 1.75rem;
+    }

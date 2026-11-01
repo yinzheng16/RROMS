@@ -44,7 +44,9 @@ namespace RROMS.Pages.Menu
             Search = string.IsNullOrWhiteSpace(Search) ? null : Search.Trim();
             if (Search?.Length > 100) Search = Search[..100];
             Sort = CustomerMenuBrowsing.NormalizeSort(Sort);
-            Menu = await _menu.GetCustomerMenuPageAsync(Search, CategoryId, Sort, Limit, cancellationToken);
+            // US30: "Recommended for you" only for signed-in customer accounts.
+            string? customerId = User.IsInRole(Roles.Customer) ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
+            Menu = await _menu.GetCustomerMenuPageAsync(Search, CategoryId, Sort, Limit, cancellationToken, customerId);
             Limit = Menu.Limit;
             if (ItemId.HasValue)
             {
