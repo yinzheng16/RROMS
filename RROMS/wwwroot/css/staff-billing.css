@@ -1835,3 +1835,26 @@
     opacity: .45;
     pointer-events: none;
 }
+
+/* US33: QR code shown while the customer pays on their phone */
+.us32-billing .online-qr {
+    margin-top: 12px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 6px;
+    text-align: center;
+    color: #191919;
+}
+
+    .us32-billing .online-qr img {
+        display: block;
+        width: 200px;
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto 6px;
+        image-rendering: pixelated;
+    }
+
+    .us32-billing .online-qr span {
+        font-weight: 600;
+    }

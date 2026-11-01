@@ -64,6 +64,15 @@ namespace RROMS.Services.Interfaces
         // online payment (normally only a few).
         Task ReconcileAllPendingAsync();
 
+        // Staff bill page (QR code): start Stripe Checkout for a confirmed bill
+        // on behalf of the customer at the counter. Returns the Stripe page URL
+        // (shown as a QR code). Reuses a payment page that is still open.
+        Task<string> StartStaffQrCheckoutAsync(int billId, string staffUserId, OnlineCheckoutUrls urls);
+
+        // The Stripe page URL of the bill's unfinished online payment, if it is
+        // still open (to show the QR code again after a reload). Null otherwise.
+        Task<string?> GetOpenCheckoutUrlAsync(int billId);
+
         // Check every unfinished online payment of a bill with Stripe
         // (paid / expired / timed out). Safe to call on every page load;
         // this replaces a webhook on localhost.
@@ -92,7 +101,8 @@ namespace RROMS.Services.Interfaces
         bool ConfirmedByCustomer,
         int? PendingPaymentId,
         DateTime? StartedAt,
-        DateTime? LockedUntil
+        DateTime? LockedUntil,
+        bool StartedByStaff   // QR code shown at the counter
     )
     {
         public bool InProgress => PendingPaymentId != null;

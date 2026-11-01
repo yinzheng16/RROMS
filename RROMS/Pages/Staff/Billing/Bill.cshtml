@@ -439,9 +439,18 @@
                                 {
                                     <div class="payment-result payment-result-pending online-progress mb-3" role="status">
                                         <strong>Customer is paying online</strong>
-                                        Started @(Model.OnlineInfo!.StartedAt?.ToString("h:mm tt"))
+                                        @(Model.OnlineInfo!.StartedByStaff ? "QR code · " : "")Started @(Model.OnlineInfo.StartedAt?.ToString("h:mm tt"))
                                         <span class="bill-sep" aria-hidden="true"></span>
                                         counter payment locked until @(Model.OnlineInfo.LockedUntil?.ToString("h:mm tt")).
+                                        @if (Model.QrImageDataUri != null)
+                                        {
+                                            @* US33: QR code of the Stripe payment page for the customer's phone *@
+                                            <div class="online-qr">
+                                                <img src="@Model.QrImageDataUri" width="200" height="200"
+                                                     alt="QR code: scan with your phone to pay this bill on Stripe" />
+                                                <span>Scan to pay RM @Model.CurrentBill!.TotalAmount.ToString("F2")</span>
+                                            </div>
+                                        }
                                         <div class="online-progress-actions">
                                             @* "check" changes on every load, so the link always reloads the page
                                                (a link to the same address plus #billActions would only scroll). *@
@@ -526,12 +535,13 @@
                                             <div class="col-4">
                                                 <input type="radio"
                                                        class="visually-hidden payment-method-radio"
-                                                       name="method" id="paymentOnline" value="Online" disabled />
-                                                <label class="payment-method-tile payment-method-tile-disabled"
+                                                       name="method" id="paymentOnline" value="Online" required
+                                                       disabled="@(onlineLocked || !Model.OnlinePaymentAvailable)" />
+                                                <label class="payment-method-tile @(Model.OnlinePaymentAvailable ? "" : "payment-method-tile-disabled")"
                                                        for="paymentOnline">
                                                     <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-280v-280h80v280h-80Zm240 0v-280h80v280h-80ZM80-120v-80h800v80H80Zm600-160v-280h80v280h-80ZM80-640v-80l400-200 400 200v80H80Zm178-80h444-444Zm0 0h444L480-830 258-720Z"/></svg></span>
                                                     <strong>Online</strong>
-                                                    <small>By customer</small>
+                                                    <small>@(Model.OnlinePaymentAvailable ? "QR code" : "Not set up")</small>
                                                 </label>
                                             </div>
                                         </div>
@@ -545,7 +555,7 @@
                                                maxlength="100" autocomplete="off" placeholder="e.g. approval code" />
                                     </div>
 
-                                    <button type="submit" class="btn btn-dark w-100 mt-3" disabled="@onlineLocked">
+                                    <button type="submit" id="recordPaymentButton" class="btn btn-dark w-100 mt-3" disabled="@onlineLocked">
                                         Record Payment
                                     </button>
 
@@ -724,6 +734,11 @@
             const radios = document.querySelectorAll('input[name="method"]');
 
             function syncRef() {
+                // US33: Online = show a Stripe QR code instead of recording a payment.
+                const online = document.getElementById('paymentOnline');
+                const button = document.getElementById('recordPaymentButton');
+                if (button) button.textContent = online && online.checked ? 'Show QR code' : 'Record Payment';
+
                 if (!refGroup) return;
                 const card = document.getElementById('paymentCard');
                 const isCard = card && card.checked;

@@ -91,6 +91,11 @@ namespace RROMS.Pages.Staff.Billing
         public OnlineBillInfo? OnlineInfo { get; private set; }
         public bool OnlinePaymentInProgress => OnlineInfo?.InProgress == true;
         public bool ConfirmedForOnlinePayment => OnlineInfo?.ConfirmedByCustomer == true;
+        public bool OnlinePaymentAvailable => _onlinePayments.IsOnlinePaymentAvailable;
+
+        // US33: QR code (PNG data URI) of the open Stripe page, when staff
+        // started the online payment at the counter.
+        public string? QrImageDataUri { get; private set; }
 
         // US33: short fingerprint of the bill / payment state. The page asks
         // OnGetStatusAsync every 5 seconds and reloads when it changes (e.g.
@@ -360,6 +365,31 @@ namespace RROMS.Pages.Staff.Billing
             if (string.IsNullOrEmpty(staffUserId))
                 return Forbid();
 
+            // US33: Online = show a Stripe QR code for the customer's phone.
+            if (method == PaymentMethod.Online)
+            {
+                try
+                {
+                    await _onlinePayments.StartStaffQrCheckoutAsync(billId, staffUserId, QrCheckoutUrls());
+
+                    return sessionId.HasValue
+                        ? RedirectToPage(ThisPage, null, new { sessionId }, ActionsFragment)
+                        : RedirectToPage(ThisPage, null, new { orderNo }, ActionsFragment);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ErrorMessage = ex.Message;
+                }
+                catch (Exception ex) when (ex is Stripe.StripeException or HttpRequestException)
+                {
+                    ErrorMessage = "Could not open a Stripe payment page. Nothing was charged. " +
+                                   "Please try again, or take Cash or Card.";
+                }
+
+                await ReloadAsync(sessionId, orderNo);
+                return Page();
+            }
+
             try
             {
                 var payment = await _paymentService.RecordCounterPaymentAsync(
@@ -483,6 +513,31 @@ namespace RROMS.Pages.Staff.Billing
         {
             await _onlinePayments.ReconcileBillAsync(billId);
             OnlineInfo = await _onlinePayments.GetOnlineBillInfoAsync(billId);
+
+            if (OnlineInfo.InProgress && OnlineInfo.StartedByStaff &&
+                await _onlinePayments.GetOpenCheckoutUrlAsync(billId) is string stripeUrl)
+            {
+                QrImageDataUri = MakeQrDataUri(stripeUrl);
+            }
+        }
+
+        // QR code as a PNG data URI (QRCoder), so no image file or CDN is needed.
+        private static string MakeQrDataUri(string text)
+        {
+            using var generator = new QRCoder.QRCodeGenerator();
+            using var data = generator.CreateQrCode(text, QRCoder.QRCodeGenerator.ECCLevel.M);
+            byte[] png = new QRCoder.PngByteQRCode(data).GetGraphic(6);
+            return "data:image/png;base64," + Convert.ToBase64String(png);
+        }
+
+        // Where Stripe sends the customer's PHONE after a QR payment: a public
+        // page (no login). Stripe fills in the session id.
+        private OnlineCheckoutUrls QrCheckoutUrls()
+        {
+            string thanks = Url.Page("/Payments/Thanks", null, null, Request.Scheme)!;
+            return new OnlineCheckoutUrls(
+                thanks + "?session_id=" + OnlineCheckoutUrls.SessionIdToken,
+                thanks + "?cancelled=true&payment=" + OnlineCheckoutUrls.PaymentIdToken);
         }
 
         private async Task ReloadAsync(int? sessionId, string? orderNo)

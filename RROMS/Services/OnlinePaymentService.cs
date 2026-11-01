@@ -104,11 +104,33 @@ namespace RROMS.Services
             return await StartBillCheckoutAsync(bill.Id, customerId, urls);
         }
 
-        public async Task<string> StartBillCheckoutAsync(
+        public Task<string> StartBillCheckoutAsync(
             int billId, string customerId, OnlineCheckoutUrls urls)
         {
             RequireAvailable();
             ValidateCustomer(customerId);
+            return StartCheckoutAsync(billId, customerId, null, urls);
+        }
+
+        // Staff bill page: a QR code of the Stripe page for the customer's
+        // phone. Same rules as the customer's own online payment; the staff
+        // member is saved in Payment.RecordedByUserId.
+        public Task<string> StartStaffQrCheckoutAsync(
+            int billId, string staffUserId, OnlineCheckoutUrls urls)
+        {
+            RequireAvailable();
+
+            if (string.IsNullOrWhiteSpace(staffUserId))
+                throw new InvalidOperationException("Staff user ID is required.");
+
+            return StartCheckoutAsync(billId, null, staffUserId.Trim(), urls);
+        }
+
+        // customerId: the bill must belong to this customer (customer pages).
+        // null = started by staff (staffUserId), no customer check.
+        private async Task<string> StartCheckoutAsync(
+            int billId, string? customerId, string? staffUserId, OnlineCheckoutUrls urls)
+        {
             ValidateUrls(urls);
 
             if (billId <= 0)
@@ -124,7 +146,7 @@ namespace RROMS.Services
                         .Include(b => b.DiningSession)
                         .FirstOrDefaultAsync(b => b.Id == billId);
 
-                    if (bill == null || !CustomerOwnsBill(bill, customerId))
+                    if (bill == null || (customerId != null && !CustomerOwnsBill(bill, customerId)))
                         throw new InvalidOperationException("Bill not found.");
 
                     if (bill.Status == BillStatus.Paid)
@@ -196,7 +218,7 @@ namespace RROMS.Services
                         TransactionRef = null,
                         CreatedAt = now,
                         PaidAt = null,
-                        RecordedByUserId = null
+                        RecordedByUserId = staffUserId   // null = started by the customer
                     };
 
                     await _payments.AddAsync(payment);
@@ -327,13 +349,13 @@ namespace RROMS.Services
                     Pending = b.Payments
                         .Where(p => p.Status == PaymentStatus.Pending && p.Method == PaymentMethod.Online)
                         .OrderByDescending(p => p.Id)
-                        .Select(p => new { p.Id, p.CreatedAt })
+                        .Select(p => new { p.Id, p.CreatedAt, p.RecordedByUserId })
                         .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync();
 
             if (info == null)
-                return new OnlineBillInfo(false, null, null, null);
+                return new OnlineBillInfo(false, null, null, null, false);
 
             bool byCustomer =
                 info.DiningSessionId == null &&
@@ -344,7 +366,39 @@ namespace RROMS.Services
                 byCustomer,
                 info.Pending?.Id,
                 info.Pending?.CreatedAt,
-                info.Pending?.CreatedAt.Add(CheckoutTime));
+                info.Pending?.CreatedAt.Add(CheckoutTime),
+                info.Pending?.RecordedByUserId != null);
+        }
+
+        public async Task<string?> GetOpenCheckoutUrlAsync(int billId)
+        {
+            if (!_stripe.IsEnabled || billId <= 0)
+                return null;
+
+            var sessionId = await _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    p.BillId == billId &&
+                    p.Status == PaymentStatus.Pending &&
+                    p.Method == PaymentMethod.Online &&
+                    p.TransactionRef != null)
+                .OrderByDescending(p => p.Id)
+                .Select(p => p.TransactionRef)
+                .FirstOrDefaultAsync();
+
+            if (sessionId == null)
+                return null;
+
+            try
+            {
+                var session = await _stripe.GetSessionAsync(sessionId);
+                return session.IsOpen ? session.Url : null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "US33: could not read Stripe session for bill {BillId}.", billId);
+                return null;
+            }
         }
 
         public async Task<OnlinePaymentState> CancelForCounterPaymentAsync(int billId)
