@@ -67,10 +67,10 @@ public class IndexModel : PageModel
         [Required(ErrorMessage = "Choose a dining area.")]
         public int? DefaultDiningAreaId { get; set; }
 
-        [Range(1, 20)]
+        [Range(1, int.MaxValue)]
         public int DefaultMinGuests { get; set; } = 1;
 
-        [Range(1, 20)]
+        [Range(1, int.MaxValue)]
         public int DefaultMaxGuests { get; set; } = 2;
 
         [Range(0, 100000)]
@@ -110,6 +110,10 @@ public class IndexModel : PageModel
 
         [StringLength(40)]
         public string IconName { get; set; } = "layout-grid";
+
+        [StringLength(20)]
+        public string? ThemeKey { get; set; }
+
         // Occupied area: all its tables become Out of service.
         public bool IsOccupied { get; set; }
     }
@@ -292,6 +296,22 @@ public class IndexModel : PageModel
                 "Please select a valid area icon.");
         }
 
+        var allowedThemes = new HashSet<string>
+        {
+            "wine", "gold", "plum", "sage", "midnight", "terracotta"
+        };
+
+        if (string.IsNullOrWhiteSpace(AreaForm.ThemeKey))
+        {
+            AreaForm.ThemeKey = null;
+        }
+        else if (!allowedThemes.Contains(AreaForm.ThemeKey))
+        {
+            ModelState.AddModelError(
+                "AreaForm.ThemeKey",
+                "Please select a valid card theme.");
+        }
+
         if (!ModelState.IsValid)
             return InvalidInput();
 
@@ -301,6 +321,7 @@ public class IndexModel : PageModel
             Name = AreaForm.Name,
             Description = AreaForm.Description,
             IconName = AreaForm.IconName,
+            ThemeKey = AreaForm.ThemeKey,
             IsOccupied = AreaForm.IsOccupied
         };
 

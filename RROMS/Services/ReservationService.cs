@@ -66,13 +66,15 @@ public partial class ReservationService : IReservationService
         string nextNumber = TableNumberHelper.NextNumber(
             type.Code,
             type.NumberPadding,
-            existingNames);
+            existingNames,
+            legacyOk: true);
 
         // Build the complete table number.
         return TableNumberHelper.Build(
             type.Code,
             nextNumber,
-            type.NumberPadding);
+            type.NumberPadding,
+            legacyOk: true);
     }
 
 
@@ -250,9 +252,7 @@ public partial class ReservationService : IReservationService
                 "Number padding must be between 1 and 4.");
 
         if (input.DefaultMinGuests < 1 ||
-            input.DefaultMinGuests > 20 ||
             input.DefaultMaxGuests < 1 ||
-            input.DefaultMaxGuests > 20 ||
             input.DefaultMinGuests > input.DefaultMaxGuests)
             return ReservationResult.Fail(
                 "Invalid guest capacity range.");
@@ -301,8 +301,10 @@ public partial class ReservationService : IReservationService
 
             try
             {
+                // Code + digits may not exceed 8 characters (e.g. VVIPR + 001).
                 code = TableTypeCodeGenerator.Generate(
-                    name, existingCodes);
+                    name, existingCodes,
+                    TableNumberHelper.MaxCodeLength(input.NumberPadding));
             }
             catch (ArgumentException)
             {
@@ -315,11 +317,13 @@ public partial class ReservationService : IReservationService
                     "Unable to generate a unique table type code.");
             }
 
-            if (code.Length > 6 ||
+            if (code.Length > TableNumberHelper.MaxCodeLength(input.NumberPadding) ||
                 !System.Text.RegularExpressions.Regex.IsMatch(
                     code, @"^[A-Z]+$"))
                 return ReservationResult.Fail(
-                    "Generated code must contain 1–6 English letters.");
+                    "Generated code must contain English letters only and, " +
+                    $"with {input.NumberPadding} digits, fit within " +
+                    $"{TableNumberHelper.MaxLength} characters.");
         }
         else
         {
@@ -337,6 +341,15 @@ public partial class ReservationService : IReservationService
                 return ReservationResult.Fail(
                     "This table type has no code. " +
                     "Complete the legacy data migration first.");
+
+            // The code never changes, so the digits have to fit around it.
+            // (A type that is already longer is left alone unless the digits grow.)
+            if (code.Length + input.NumberPadding > TableNumberHelper.MaxLength &&
+                input.NumberPadding > existing.NumberPadding)
+                return ReservationResult.Fail(
+                    $"Code {code} plus {input.NumberPadding} digits is more than " +
+                    $"{TableNumberHelper.MaxLength} characters. Use at most " +
+                    $"{Math.Max(1, TableNumberHelper.MaxLength - code.Length)} digits.");
         }
 
         // 3. Prepare new table numbers
@@ -420,7 +433,8 @@ public partial class ReservationService : IReservationService
                     newName = TableNumberHelper.Build(
                         code,
                         value.ToString($"D{input.NumberPadding}"),
-                        input.NumberPadding);
+                        input.NumberPadding,
+                        legacyOk: input.NumberPadding <= existing.NumberPadding);
                 }
                 catch (ArgumentException ex)
                 {
@@ -468,6 +482,21 @@ public partial class ReservationService : IReservationService
                         r.DurationMinutes
                     })
                     .ToListAsync();
+
+                // The tables follow the type's dining area, so moving the type moves
+                // every booked table too. Not while guests are expecting a table.
+                if (existing.DefaultDiningAreaId != input.DefaultDiningAreaId)
+                {
+                    var upcoming = reservations.FirstOrDefault(r =>
+                        r.ReservedAt.AddMinutes(r.DurationMinutes) > now);
+
+                    if (upcoming != null)
+                        return ReservationResult.Fail(
+                            "Cannot move this table type to another dining area " +
+                            "while it has upcoming reservations " +
+                            $"(for example {upcoming.ReferenceNo}). " +
+                            "Move it after those reservations are finished or cancelled.");
+                }
 
                 var conflict = reservations.FirstOrDefault(r =>
                     r.ReservedAt.AddMinutes(r.DurationMinutes) > now &&
@@ -522,6 +551,9 @@ public partial class ReservationService : IReservationService
             }
 
             type.Name = name;
+            type.JapaneseName = string.IsNullOrWhiteSpace(input.JapaneseName)
+                ? null
+                : input.JapaneseName.Trim();
             type.NumberPadding = input.NumberPadding;
             type.DefaultDiningAreaId = input.DefaultDiningAreaId;
             type.DefaultMinGuests = input.DefaultMinGuests;
@@ -624,6 +656,7 @@ public partial class ReservationService : IReservationService
                 Name = name,
                 Description = input.Description,
                 IconName = input.IconName,
+                ThemeKey = input.ThemeKey,
                 IsOccupied = input.IsOccupied
             });
 
@@ -664,6 +697,7 @@ public partial class ReservationService : IReservationService
         area.Name = name;
         area.Description = input.Description;
         area.IconName = input.IconName;
+        area.ThemeKey = input.ThemeKey;
         area.IsOccupied = input.IsOccupied;
 
         foreach (var table in area.Tables)
@@ -760,7 +794,7 @@ public partial class ReservationService : IReservationService
         try
         {
             fullName = TableNumberHelper.Build(
-                code, number, type.NumberPadding);
+                code, number, type.NumberPadding, legacyOk: true);
         }
         catch (ArgumentException ex)
         {
@@ -995,11 +1029,11 @@ public partial class ReservationService : IReservationService
 
     private static string TablePhotoPath(TableType type) => type switch
     {
-        TableType.Counter => "/images/tables/counter.jpg",
-        TableType.Double => "/images/tables/double.jpg",
-        TableType.Standard => "/images/tables/standard.jpg",
-        TableType.Vip => "/images/tables/vip.jpg",
-        TableType.Vvip => "/images/tables/vvip.jpg",
+        TableType.Counter => "/images/tables/counter.webp",
+        TableType.Double => "/images/tables/double.webp",
+        TableType.Standard => "/images/tables/standard.webp",
+        TableType.Vip => "/images/tables/vip.webp",
+        TableType.Vvip => "/images/tables/vvip.webp",
         _ => ""
     };
 
@@ -1008,7 +1042,8 @@ public partial class ReservationService : IReservationService
     {
         if (string.IsNullOrWhiteSpace(path) || !path.StartsWith("/images/tables/", StringComparison.Ordinal)) return;
         var fileName = Path.GetFileName(path);
-        if (new[] { "counter.jpg", "double.jpg", "standard.jpg", "vip.jpg", "vvip.jpg" }
+        if (new[] { "counter.webp", "double.webp", "standard.webp", "vip.webp", "vvip.webp",
+                    "counter.jpg", "double.jpg", "standard.jpg", "vip.jpg", "vvip.jpg" }
             .Contains(fileName, StringComparer.OrdinalIgnoreCase)) return;
         if (await _db.RestaurantTables.AnyAsync(t => t.PhotoPath == path)) return;
         if (await _db.TableTypeDefinitions.AnyAsync(t => t.PhotoPath == path)) return;

@@ -15,6 +15,12 @@ namespace RROMS.Models
         public string? Description { get; set; }
         [StringLength(40)]
         public string IconName { get; set; } = "layout-grid";
+
+        // One of the six fixed card themes (wine, gold, plum, sage, midnight, terracotta).
+        // Null = use the default colour picked from the area Id.
+        [StringLength(20)]
+        public string? ThemeKey { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public bool IsOccupied { get; set; }

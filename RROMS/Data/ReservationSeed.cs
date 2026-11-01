@@ -32,35 +32,35 @@ public static class ReservationSeed
             "Counter seat", "CS", "C",
             "Bar Counter", TableType.Counter,
             6, 1, 1, 0,
-            "/images/tables/counter.jpg",
+            "/images/tables/counter.webp",
             "Single seat at the long counter beside the bar."
         ),
         new(
             "Standard table", "ST", "T",
             "Main Hall", TableType.Standard,
             10, 3, 6, 0,
-            "/images/tables/standard.jpg",
+            "/images/tables/standard.webp",
             "Table for small groups and families."
         ),
         new(
             "Table for two", "TFT", "D",
             "Main Hall", TableType.Double,
             10, 1, 2, 0,
-            "/images/tables/double.jpg",
+            "/images/tables/double.webp",
             "Cosy table for two."
         ),
         new(
             "VIP room", "VR", "VIP",
             "Private Rooms", TableType.Vip,
             3, 1, 10, 500,
-            "/images/tables/vip.jpg",
+            "/images/tables/vip.webp",
             "Private room for 6-10 guests."
         ),
         new(
             "VVIP room", "VVIPR", "VVIP",
             "Private Rooms", TableType.Vvip,
             1, 1, 20, 1000,
-            "/images/tables/vvip.jpg",
+            "/images/tables/vvip.webp",
             "Our largest private room for 10-20 guests."
         )
     };
@@ -71,8 +71,29 @@ public static class ReservationSeed
 
         SeedAreas(db);
         SeedTypesAndTables(db);
+        UpgradeSamplePhotos(db);
 
         transaction.Commit();
+    }
+
+    // The five sample photos are now WebP. Databases created earlier still point to the JPG files.
+    private static void UpgradeSamplePhotos(ApplicationDbContext db)
+    {
+        string[] names = { "counter", "double", "standard", "vip", "vvip" };
+
+        foreach (var name in names)
+        {
+            var oldPath = $"/images/tables/{name}.jpg";
+            var newPath = $"/images/tables/{name}.webp";
+
+            foreach (var type in db.TableTypeDefinitions.Where(t => t.PhotoPath == oldPath))
+                type.PhotoPath = newPath;
+
+            foreach (var table in db.RestaurantTables.Where(t => t.PhotoPath == oldPath))
+                table.PhotoPath = newPath;
+        }
+
+        db.SaveChanges();
     }
 
     private static void SeedAreas(ApplicationDbContext db)

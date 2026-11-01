@@ -102,7 +102,7 @@
 <div class="yoru-summary mb-4">
  
     <div class="yoru-summary-item yoru-summary-dark">
-        <img src="~/images/decorations/sakura.png" class="yoru-summary-sakura" alt="" aria-hidden="true" />
+        <img src="~/images/decorations/sakura-branch.webp" class="yoru-summary-sakura" alt="" aria-hidden="true" />
         <div class="yoru-summary-icon"><i data-lucide="armchair"></i></div>
         <div class="yoru-summary-number">
             @Model.AllTables.Count
@@ -115,7 +115,7 @@
     </div>
     
     <div class="yoru-summary-item yoru-summary-red">
-        <img src="~/images/decorations/sakura.png" class="yoru-summary-sakura" alt="" aria-hidden="true" />
+        <img src="~/images/decorations/sakura-branch.webp" class="yoru-summary-sakura" alt="" aria-hidden="true" />
         <div class="yoru-summary-icon"><i data-lucide="layers-3"></i></div>
         <div class="yoru-summary-number">
             @Model.TableTypes.Count
@@ -128,7 +128,7 @@
     </div>
 
     <div class="yoru-summary-item yoru-summary-light">
-            <img src="~/images/decorations/sakura.png" class="yoru-summary-sakura" alt="" aria-hidden="true" />
+            <img src="~/images/decorations/sakura-branch.webp" class="yoru-summary-sakura" alt="" aria-hidden="true" />
         <div class="yoru-summary-icon"><i data-lucide="door-open"></i></div>
         <div class="yoru-summary-number">
             @Model.Areas.Count
@@ -180,7 +180,7 @@
         }
     }
     <div class="yoru-summary-item yoru-summary-light yoru-summary-hours @(openToday ? "is-open" : "is-closed")">
-        <img src="~/images/decorations/sakura.png" class="yoru-summary-sakura" alt="" aria-hidden="true" />
+        <img src="~/images/decorations/sakura-branch.webp" class="yoru-summary-sakura" alt="" aria-hidden="true" />
         <div class="yoru-summary-icon"><i data-lucide="clock-3"></i></div>
         <div class="yoru-summary-number">
             @(openToday ? "Open" : "Closed")
@@ -209,11 +209,11 @@
     };
     var sampleImages = new Dictionary<TableType, string>
     {
-        [TableType.Counter] = "/images/tables/counter.jpg",
-        [TableType.Double] = "/images/tables/double.jpg",
-        [TableType.Standard] = "/images/tables/standard.jpg",
-        [TableType.Vip] = "/images/tables/vip.jpg",
-        [TableType.Vvip] = "/images/tables/vvip.jpg"
+        [TableType.Counter] = "/images/tables/counter.webp",
+        [TableType.Double] = "/images/tables/double.webp",
+        [TableType.Standard] = "/images/tables/standard.webp",
+        [TableType.Vip] = "/images/tables/vip.webp",
+        [TableType.Vvip] = "/images/tables/vvip.webp"
     };
 }
 <style>
@@ -249,7 +249,7 @@
     #opening-hours-section .yoru-hours-editing .yoru-hours-row.yoru-day-closed .yoru-hours-closed-message {display:none!important;}
     #opening-hours-section .yoru-hour-native[hidden] {display:none!important;}
     /* Restaurant Spaces hero — no gradient, opacity overlay, or border line */
-    .yoru-tables-hero {position:relative; display:flex; align-items:center; min-height:290px; padding:42px 48px 55px; overflow:hidden; border:none; border-radius:18px; background-color:#fcfaf5; background-image:url('/images/tables-hero.png'); background-position:center; background-size:cover; background-repeat:no-repeat; color:#29231e;}
+    .yoru-tables-hero {position:relative; display:flex; align-items:center; min-height:290px; padding:42px 48px 55px; overflow:hidden; border:none; border-radius:18px; background-color:#fcfaf5; background-image:url('/images/tables-hero.webp'); background-position:center; background-size:cover; background-repeat:no-repeat; color:#29231e;}
     .yoru-tables-hero-content {position:relative; z-index:1; max-width:680px;}
     .yoru-tables-brand {display:flex; align-items:center; gap:14px; font-size:11px; color:#796e62; margin-bottom:20px;}
     .yoru-tables-brand strong {color:#29231e; font-weight:700;}
@@ -265,17 +265,20 @@
     .yoru-hero-nav-link.active {background:#b72f25; color:#fff; box-shadow:0 3px 8px rgba(150,35,25,.16);}
     .yoru-hero-nav-link:hover:not(.active) {background:#eee7dc; color:#29231e;}
     .yoru-hero-nav-link svg {width:16px; height:16px;}
-    /* Compact summary cards, full-card Sakura image */
+    /* Summary cards: wine lacquer panel, gold line icon, sakura branch and seigaiha waves (card size unchanged) */
     .yoru-summary {display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:0;}
-    .yoru-summary-item {position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; justify-content:center; min-height:105px; padding:15px 20px 15px 82px; border:1px solid #e8ded2; border-radius:12px; background:#fcfaf5; color:#29231e; box-shadow:0 3px 12px rgba(60,40,25,.035); cursor:default;}
-    .yoru-summary-dark,.yoru-summary-red,.yoru-summary-light {background:#fcfaf5; color:#29231e; border-color:#e8ded2;}
-    .yoru-summary-sakura {position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; opacity:.24; z-index:0; pointer-events:none;}
-    .yoru-summary-icon {position:absolute; left:23px; top:50%; transform:translateY(-50%); color:#b72f25; z-index:2;}
-    .yoru-summary-icon svg {width:36px; height:36px; stroke-width:1.8;}
-    .yoru-summary-number {position:relative; z-index:1; font-family:Georgia,serif; font-size:30px; line-height:1; margin:0 0 4px;}
-    .yoru-summary-title {position:relative; z-index:1; font-size:12px; font-weight:700; margin:0;}
-    .yoru-summary-desc {position:relative; z-index:1; font-size:11px; margin-top:3px; color:#685b50; opacity:1;}
-    .yoru-summary-item:hover {box-shadow:0 3px 12px rgba(60,40,25,.035); border-color:#e8ded2;}
+    .yoru-summary-item {position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; justify-content:center; min-height:105px; padding:15px 20px 15px 84px; border:1px solid #e0c98f; border-radius:12px; background:linear-gradient(135deg,#fffaf1 0%,#fbf3e5 100%); color:#29231e; box-shadow:0 4px 14px rgba(110,60,30,.09),inset 0 0 0 1px rgba(255,255,255,.65); cursor:default; transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;}
+    .yoru-summary-dark,.yoru-summary-red,.yoru-summary-light {background:linear-gradient(135deg,#fffaf1 0%,#fbf3e5 100%); color:#29231e; border-color:#e0c98f;}
+    .yoru-summary-item::before {content:""; position:absolute; left:0; top:0; bottom:0; width:92px; z-index:1; pointer-events:none; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 105' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238C1820'/%3E%3Cstop offset='1' stop-color='%23650C16'/%3E%3C/linearGradient%3E%3ClinearGradient id='f' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23f3dca0' stop-opacity='0'/%3E%3Cstop offset='.16' stop-color='%23f3dca0' stop-opacity='.9'/%3E%3Cstop offset='.55' stop-color='%23c99e57'/%3E%3Cstop offset='1' stop-color='%23ecd08f'/%3E%3C/linearGradient%3E%3ClinearGradient id='h' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23e9d09a' stop-opacity='0'/%3E%3Cstop offset='.22' stop-color='%23e9d09a' stop-opacity='.5'/%3E%3Cstop offset='1' stop-color='%23e9d09a' stop-opacity='.5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 0H72C87 0 91 15 85 33C79 54 62 82 31 96C19 101 9 104 0 105Z' fill='url%28%23g%29'/%3E%3Cpath d='M66 0C84 0 91 15 85 33C79 54 62 82 31 96C19 101 9 104 0 105' fill='none' stroke='url%28%23f%29' stroke-width='2.4' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M70 0C93 1 95 17 89 35C82 58 64 87 32 101C20 106 10 108 0 108' fill='none' stroke='url%28%23h%29' stroke-width='.9' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0/100% 100%; filter:drop-shadow(2px 0 3px rgba(80,20,10,.28));}
+    .yoru-summary-item::after {content:""; position:absolute; right:0; bottom:0; width:110px; height:55px; z-index:0; pointer-events:none; background:url('/images/decorations/seigaiha.svg') no-repeat right bottom/100% 100%; opacity:.85; -webkit-mask-image:radial-gradient(ellipse at 100% 100%,#000 25%,transparent 72%); mask-image:radial-gradient(ellipse at 100% 100%,#000 25%,transparent 72%);}
+    .yoru-summary-sakura {position:absolute; inset:auto; top:-8px; right:-8px; width:140px; height:auto; opacity:.96; z-index:0; pointer-events:none;}
+    .yoru-summary-icon {position:absolute; left:18px; top:calc(50% - 7px); transform:translateY(-50%); color:#efd491; z-index:2; filter:drop-shadow(0 1px 1px rgba(60,10,10,.5));}
+    .yoru-summary-icon svg {width:36px; height:36px; stroke-width:1.6;}
+    .yoru-summary-number {position:relative; z-index:1; font-family:Georgia,serif; font-size:33px; line-height:1; margin:0 0 4px; color:#7d1a1a;}
+    .yoru-summary-title {position:relative; z-index:1; font-size:14px; font-weight:700; margin:0; color:#211a16;}
+    .yoru-summary-desc {position:relative; z-index:1; font-size:12.5px; margin-top:3px; color:#7a685b; opacity:1;}
+    .yoru-summary-item:hover {transform:translateY(-3px); border-color:#d2ad63; box-shadow:0 10px 24px rgba(110,60,30,.16),inset 0 0 0 1px rgba(255,255,255,.7);}
+    @@media (prefers-reduced-motion:reduce) {.yoru-summary-item {transition:none;} .yoru-summary-item:hover {transform:none;}}
     @@media (max-width:768px) {.yoru-tables-hero {min-height:240px; padding:30px 22px;} .yoru-tables-hero-title {font-size:34px;} .yoru-hero-navigation {margin-left:22px; margin-right:22px;}}
     @@media (max-width:1000px) {.yoru-summary {grid-template-columns:repeat(2,minmax(0,1fr));}}
     @@media (max-width:720px) {.yoru-summary {grid-template-columns:1fr;} .yoru-summary-item {min-height:100px;}}
@@ -635,28 +638,65 @@
     .yoru-area-search input {width:100%; height:100%; border:0; outline:0; background:transparent; color:#332720; font-size:13px;}
     .yoru-area-search:focus-within {border-color:#b72f25; box-shadow:0 0 0 3px rgba(183,47,37,.08);}
     .yoru-area-filter {height:44px; min-width:155px; padding:0 12px; border:1px solid #e5d9ca; border-radius:9px; background:#fffdfa; color:#62564c; font-size:13px;}
-    .yoru-area-card-grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:14px;}
-    .yoru-area-card {display:flex; flex-direction:column; min-width:0; padding:17px; border:1px solid #e9ded3; border-radius:14px; background:#fffdfa; box-shadow:0 3px 12px rgba(54,34,26,.04); transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;}
-    .yoru-area-card:hover {transform:translateY(-3px); border-color:#c99b89; box-shadow:0 10px 24px rgba(54,34,26,.09);}
+    /* ---- Dining Area cards (six fixed themes; Step 3 can set data-theme from a saved choice) ---- */
+    .yoru-area-card-grid {display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr)); gap:18px;}
+    .yoru-area-card {--area-main:#8C2437; --area-light:#F2D9DB; --area-line:color-mix(in srgb,var(--area-main) 62%,#ecd9a6); position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; min-width:0; padding:26px 22px 16px; border:1px solid color-mix(in srgb,var(--area-main) 30%,#e7d4a8); border-radius:16px; background:linear-gradient(180deg,#fffaf2 0%,#fbf3e6 100%); box-shadow:0 5px 16px rgba(80,45,25,.09); transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;}
+    .yoru-area-card[data-theme="wine"] {--area-main:#8C2437; --area-light:#F2D9DB;}
+    .yoru-area-card[data-theme="gold"] {--area-main:#C99A52; --area-light:#F7E9CE;}
+    .yoru-area-card[data-theme="plum"] {--area-main:#684267; --area-light:#EADCEB;}
+    .yoru-area-card[data-theme="sage"] {--area-main:#6C8670; --area-light:#E1EBDF;}
+    .yoru-area-card[data-theme="midnight"] {--area-main:#455A78; --area-light:#E0E7F1;}
+    .yoru-area-card[data-theme="terracotta"] {--area-main:#BA7156; --area-light:#F5E3D8;}
+    .yoru-area-card:hover {transform:translateY(-3px); border-color:var(--area-main); box-shadow:0 12px 26px rgba(80,45,25,.15);}
     .yoru-area-card[hidden] {display:none!important;}
-    .yoru-area-card-top {display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:16px;}
-    .yoru-area-card-title {font-family:Georgia,serif; font-size:19px; color:#332720; margin:0 0 9px; overflow-wrap:anywhere;}
-    .yoru-area-card-description {font-size:15px; line-height:1.6; color:#62534a; min-height:39px; margin:0 0 15px; overflow-wrap:anywhere;}
-    .yoru-area-status {display:inline-flex; align-items:center; padding:7px 12px; border-radius:20px; font-size:13px; font-weight:600; white-space:nowrap;}
-    .yoru-area-status.available {background:#e8f5eb; color:#287a40;}
-    .yoru-area-status.occupied {background:#fde9e7; color:#b72f25;}
-    .yoru-area-status.no-tables {background:#efeeeb; color:#726b63;}
-    .yoru-area-card-meta {display:flex; align-items:center; flex-wrap:wrap; gap:12px; padding:12px 0; border-top:1px solid #eee3d9; border-bottom:1px solid #eee3d9;}
-    .yoru-area-card-meta span {display:inline-flex; align-items:center; gap:7px; color:#78695f; font-size:15px; font-weight:500;} 
-    .yoru-area-card-meta svg {width:16px; height:16px; color:#a83228;}
-    .yoru-area-card-types {flex:1; padding:14px 0; min-height:88px;}
-    .yoru-area-card-label {font-size:10px; font-weight:700; letter-spacing:1px; color:#8c7a6f; margin-bottom:9px;}
-    .yoru-area-type-tags {display:flex; flex-wrap:wrap; align-content:flex-start; gap:6px;}
-    .yoru-area-type-tag {display:inline-flex; align-items:center; padding:5px 9px; border:1px solid #e9dcd1; border-radius:6px; background:#f6eee8; color:#624d42; font-size:14px; font-weight:500; line-height:1.4; overflow-wrap:anywhere;}    
-    .yoru-area-no-types {font-size:11px; color:#a2978d;}
-    .yoru-area-card-footer {display:flex; align-items:center; justify-content:space-between; gap:8px; padding-top:12px; border-top:1px solid #eee3d9;}
-    .yoru-area-mode {display:inline-flex; align-items:center; gap:7px; color:#62534a; font-size:14px; font-weight:500;}
-    .yoru-area-mode svg {width:17px; height:17px;}
+    .yoru-area-corner {position:absolute; left:0; top:0; width:130px; height:84px; z-index:0; pointer-events:none; background-color:var(--area-main); background-image:radial-gradient(circle at 100% 150%,var(--area-main) 24%,var(--area-line) 25%,var(--area-line) 28%,var(--area-main) 29%,var(--area-main) 36%,var(--area-line) 36%,var(--area-line) 40%,transparent 40%),radial-gradient(circle at 0 150%,var(--area-main) 24%,var(--area-line) 25%,var(--area-line) 28%,var(--area-main) 29%,var(--area-main) 36%,var(--area-line) 36%,var(--area-line) 40%,transparent 40%),radial-gradient(circle at 50% 100%,var(--area-main) 10%,var(--area-line) 11%,var(--area-line) 23%,var(--area-main) 24%,var(--area-main) 30%,var(--area-line) 31%,var(--area-line) 43%,var(--area-main) 44%,var(--area-main) 50%,var(--area-line) 51%,var(--area-line) 63%,var(--area-main) 64%,var(--area-main) 71%,transparent 71%); background-size:44px 22px; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 84' preserveAspectRatio='none'%3E%3Cpath d='M0 0H98C88 15 68 40 44 57C29 67 13 74 0 78Z'/%3E%3C/svg%3E") no-repeat 0 0/100% 100%; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 84' preserveAspectRatio='none'%3E%3Cpath d='M0 0H98C88 15 68 40 44 57C29 67 13 74 0 78Z'/%3E%3C/svg%3E") no-repeat 0 0/100% 100%;}
+    .yoru-area-corner-edge {position:absolute; left:0; top:0; width:130px; height:84px; z-index:0; pointer-events:none; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 130 84' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='f' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f3dca0' stop-opacity='0'/%3E%3Cstop offset='.25' stop-color='%23f0d594'/%3E%3Cstop offset='.6' stop-color='%23c99e57'/%3E%3Cstop offset='1' stop-color='%23ecd08f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M98 0C88 15 68 40 44 57C29 67 13 74 0 78' fill='none' stroke='url%28%23f%29' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") no-repeat 0 0/100% 100%;}
+    .yoru-area-wave {position:absolute; left:0; right:0; bottom:0; height:54px; z-index:0; pointer-events:none; background-color:transparent; background-image:radial-gradient(circle at 100% 150%,#fbf3e6 24%,#e6d2a0 25%,#e6d2a0 28%,#fbf3e6 29%,#fbf3e6 36%,#e6d2a0 36%,#e6d2a0 40%,transparent 40%),radial-gradient(circle at 0 150%,#fbf3e6 24%,#e6d2a0 25%,#e6d2a0 28%,#fbf3e6 29%,#fbf3e6 36%,#e6d2a0 36%,#e6d2a0 40%,transparent 40%),radial-gradient(circle at 50% 100%,#fbf3e6 10%,#e6d2a0 11%,#e6d2a0 23%,#fbf3e6 24%,#fbf3e6 30%,#e6d2a0 31%,#e6d2a0 43%,#fbf3e6 44%,#fbf3e6 50%,#e6d2a0 51%,#e6d2a0 63%,#fbf3e6 64%,#fbf3e6 71%,transparent 71%); background-size:60px 30px; background-position:bottom; -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.35) 55%,transparent 100%); mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.35) 55%,transparent 100%);}
+    .yoru-area-card > :not(.yoru-area-corner):not(.yoru-area-corner-edge):not(.yoru-area-wave):not(.yoru-area-card-top) {position:relative; z-index:1;}
+    .yoru-area-badge {position:relative; z-index:1;}
+    .yoru-area-card-top {display:flex; justify-content:center; margin-bottom:12px;}
+    .yoru-area-badge {display:grid; place-items:center; width:66px; height:66px; border-radius:22px; background:linear-gradient(145deg,var(--area-main),color-mix(in srgb,var(--area-main) 78%,#000)); color:#f7e7bd; border:2px solid #e3c887; box-shadow:0 0 0 3px #fffaf2,0 0 0 4.5px color-mix(in srgb,var(--area-main) 55%,#e3c887),0 6px 14px rgba(60,30,20,.22);}
+    .yoru-area-badge svg {width:30px; height:30px; stroke-width:1.6;}
+    .yoru-area-status {position:absolute!important; top:14px; right:14px; z-index:2; display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap;}
+    .yoru-area-status::before {content:""; width:7px; height:7px; border-radius:50%; background:currentColor;}
+    .yoru-area-status.available {background:#e6f1e3; color:#2f6b3a;}
+    .yoru-area-status.occupied {background:#fbe3e0; color:#b72f25;}
+    .yoru-area-status.no-tables {background:#eeeae3; color:#6f665d;}
+    .yoru-area-card-title {font-family:Georgia,serif; font-size:26px; font-weight:600; line-height:1.2; text-align:center; color:#2b211b; margin:4px 0 6px; overflow-wrap:anywhere;}
+    .yoru-area-card-description {font-size:15px; line-height:1.5; text-align:center; color:#62534a; min-height:3em; margin:0; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+    .yoru-area-divider {position:relative; height:14px; margin:12px 0 10px; display:flex; align-items:center; justify-content:center;}
+    .yoru-area-divider::before {content:""; position:absolute; left:8%; right:8%; top:50%; height:1px; background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--area-main) 45%,#e3c887),transparent);}
+    .yoru-area-divider i {position:relative; width:8px; height:8px; background:var(--area-main); transform:rotate(45deg); box-shadow:0 0 0 4px #fdf6ea;}
+    .yoru-area-card-meta {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); padding:6px 0 14px;}
+    .yoru-area-stat {display:flex; flex-direction:column; align-items:center; gap:2px; min-width:0; padding:0 4px; text-align:center;}
+    .yoru-area-stat + .yoru-area-stat {border-left:1px solid color-mix(in srgb,var(--area-main) 18%,#eadfcc);}
+    .yoru-area-stat > div {display:flex; align-items:center; gap:6px; color:var(--area-main);}
+    .yoru-area-stat svg {width:18px; height:18px; flex-shrink:0;}
+    .yoru-area-stat strong {font-family:Georgia,serif; font-size:23px; line-height:1.1; color:#2b211b; white-space:nowrap;}
+    .yoru-area-stat small {font-size:12px; color:#7a685b;}
+    .yoru-area-card-types {flex:1; padding:6px 0 14px;}
+    .yoru-area-card-label {font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#5d4a3f; margin-bottom:8px;}
+    .yoru-area-type-tags {display:flex; flex-wrap:wrap; align-content:flex-start; gap:7px;}
+    .yoru-area-type-tag {display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px; background:var(--area-light); color:#4a372e; font-size:13.5px; font-weight:600; line-height:1.3; overflow-wrap:anywhere;}
+    .yoru-area-type-tag::before {content:""; width:7px; height:7px; flex-shrink:0; border-radius:50%; background:var(--area-main);}
+    .yoru-area-no-types {font-size:13.5px; color:#7a6e64;}
+    .yoru-area-card-footer {display:flex; align-items:center; justify-content:flex-end; gap:8px; padding-top:12px; border-top:1px solid color-mix(in srgb,var(--area-main) 18%,#eadfcc);}
+    #dining-areas-section .yoru-area-action {width:40px; height:40px; border:1px solid color-mix(in srgb,var(--area-main) 30%,#e3d3b5); background:#fffaf2; color:color-mix(in srgb,var(--area-main) 85%,#000);}
+    #dining-areas-section .yoru-area-action:hover {background:var(--area-light); color:var(--area-main);}
+    #dining-areas-section .yoru-area-action.delete:hover {background:#fce4e1; color:#ba3225;}
+    #dining-areas-section .yoru-area-action svg {width:19px; height:19px;}
+    /* ---- Dining Areas section background + ornamental stepped card frame (visual only) ---- */
+    #dining-areas-section > .yoru-luxury-card {position:relative; isolation:isolate; background:#FFFAF4;}
+    #dining-areas-section > .yoru-luxury-card::before {content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit; pointer-events:none; background-repeat:no-repeat; background-image:url('/images/decorations/dining-sakura.webp'),url('/images/decorations/dining-waves-right.webp'),url('/images/decorations/dining-waves-left.webp'),radial-gradient(ellipse 70% 45% at 78% 100%,rgba(247,209,196,.38),transparent 72%),radial-gradient(ellipse 60% 38% at 12% 8%,rgba(249,226,205,.42),transparent 70%),radial-gradient(ellipse 50% 30% at 52% 58%,rgba(246,226,184,.20),transparent 72%),linear-gradient(180deg,#FFFAF4 0%,#FDF1EA 100%); background-size:min(44%,600px) auto,min(24%,330px) auto,min(30%,420px) auto,auto,auto,auto,auto; background-position:100% 0,100% 58%,0 100%,0 0,0 0,0 0,0 0;}
+    @@supports (-webkit-mask-box-image:url(a.svg) 36 fill / 36px stretch) {
+        .yoru-area-card-grid {filter:drop-shadow(0 5px 7px rgba(80,45,25,.12));}
+        .yoru-area-card {border-color:transparent; box-shadow:none; -webkit-mask-box-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108' width='108' height='108'%3E%3Cpath d='M15 4H93Q99 4 99 10V13C99 19 105 17 105 23V96Q105 104 97 104H11Q3 104 3 96V23C3 17 9 19 9 13V10Q9 4 15 4Z' fill='%23000'/%3E%3C/svg%3E") 36 fill / 36px stretch;}
+        .yoru-area-card::before,.yoru-area-card::after {content:""; position:absolute; inset:0; z-index:3; pointer-events:none; -webkit-mask-repeat:no-repeat;}
+        .yoru-area-card::after {background:var(--area-main); -webkit-mask-box-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108' width='108' height='108'%3E%3Cpath d='M15 4H93Q99 4 99 10V13C99 19 105 17 105 23V96Q105 104 97 104H11Q3 104 3 96V23C3 17 9 19 9 13V10Q9 4 15 4Z' fill='none' stroke='%23000' stroke-width='1.6'/%3E%3C/svg%3E") 36 / 36px stretch;}
+        .yoru-area-card::before {background:linear-gradient(135deg,#f3dca0,#d2ab63 55%,#f0d796); opacity:.85; -webkit-mask-box-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108' width='108' height='108'%3E%3Cpath d='M17 7.4H91Q95.6 7.4 95.6 12V14C95.6 19.5 101.6 18.5 101.6 24V95Q101.6 100.6 96 100.6H12Q6.4 100.6 6.4 95V24C6.4 18.5 12.4 19.5 12.4 14V12Q12.4 7.4 17 7.4Z' fill='none' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E") 36 / 36px stretch;}
+        .yoru-area-card:hover {box-shadow:none;}
+    }
+    @@media(max-width:760px) {.yoru-area-card {padding:24px 18px 14px;} .yoru-area-card-title {font-size:23px;}}
     .yoru-area-no-results {padding:35px 15px; text-align:center; color:#8c7a6f;}
     .yoru-area-no-results[hidden] {display:none!important;}
     .yoru-area-no-results svg {width:27px; height:27px; color:#a83228;}
@@ -680,7 +720,7 @@
     @@media(max-width:760px) {.yoru-area-workspace,.yoru-area-workspace.drawer-open {grid-template-columns:minmax(0,1fr); column-gap:0;} .yoru-area-workspace.drawer-open .yoru-area-drawer-overlay {grid-column:2; grid-row:1; position:relative; top:0; align-self:stretch; width:100%; min-width:0; height:auto; min-height:0; overflow:hidden; background:transparent; z-index:auto; display:block;}}
     @@media(prefers-reduced-motion:reduce) {.yoru-area-workspace,.yoru-area-drawer {transition:none;}}
     .yoru-area-drawer-backdrop {display:none!important;}
-    .yoru-area-drawer {position:relative; display:flex; flex-direction:column; width:100%; height:100%; min-width:0; overflow:hidden; background:#fffdfa; border:1px solid #e7d9cc; border-radius:14px; box-shadow:0 8px 25px rgba(40,25,18,.08); transform:translateX(12px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .55s ease,transform .65s cubic-bezier(.22,1,.36,1);}
+    .yoru-area-drawer {position:relative; isolation:isolate; display:flex; flex-direction:column; width:100%; height:100%; min-width:0; overflow:hidden; background:#FFFAF4; border:1px solid #e7d9cc; border-radius:14px; box-shadow:0 8px 25px rgba(40,25,18,.08); transform:translateX(12px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .55s ease,transform .65s cubic-bezier(.22,1,.36,1);}
     .yoru-area-workspace.drawer-open .yoru-area-drawer {transform:translateX(0); opacity:1; visibility:visible; pointer-events:auto;}
 
     /* Drawer Form */
@@ -689,6 +729,52 @@
     .yoru-area-drawer-header h2 {font-family:Georgia,serif; font-size:26px; font-weight:500; margin:0; color:#30231d;}
     .yoru-area-drawer-body {flex:1; min-height:0; overflow-y:auto; padding:22px 24px; overscroll-behavior:contain;}
     .yoru-area-drawer-footer {display:flex; justify-content:flex-end; gap:10px; padding:15px 24px; border-top:1px solid #eee3d9; flex-shrink:0; background:#fffdfa;}
+    /* ---- Dining Area drawer (Step 3): full-height background image, translucent form panels ---- */
+    .yoru-area-drawer::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/decorations/dining-drawer-bg.webp') no-repeat center top/cover;}
+    .yoru-area-drawer-header {align-items:center; padding:20px 22px 12px; border-bottom:0; background:transparent;}
+    .yoru-area-drawer-heading {display:flex; align-items:center; gap:13px; min-width:0;}
+    .yoru-area-drawer-mark {display:grid; place-items:center; flex-shrink:0; width:46px; height:46px; border-radius:14px; background:linear-gradient(145deg,#a02a3f,#6f1727); color:#f3dca0; border:1px solid #e3c887; box-shadow:0 4px 10px rgba(110,25,40,.25);}
+    .yoru-area-drawer-mark svg {width:22px; height:22px; stroke-width:1.8;}
+    .yoru-area-drawer-header h2 {font-size:25px; line-height:1.15; margin:0 0 3px;}
+    .yoru-area-drawer-sub {margin:0; font-size:12.5px; color:#7a685b;}
+    .yoru-area-drawer .mode-edit {display:none;}
+    .yoru-area-drawer[data-mode="edit"] .mode-edit {display:revert;}
+    .yoru-area-drawer[data-mode="edit"] .mode-add {display:none;}
+    .yoru-area-drawer-header .yoru-type-drawer-close {border-color:#e3c887; background:rgba(255,250,244,.85); color:#7a1c2c;}
+    .yoru-area-drawer-body {display:flex; flex-direction:column; gap:14px; padding:6px 22px 18px;}
+    .yoru-area-drawer-section {padding:14px 16px 15px; border:1px solid #eadcc3; border-radius:14px; background:rgba(255,252,247,.8);}
+    .yoru-area-drawer-section-title {margin:0 0 12px; padding-left:10px; border-left:3px solid #8C2437; font-size:13px; font-weight:700; letter-spacing:.04em; line-height:1.2; color:#2b211b;}
+    .yoru-area-drawer .form-label {margin-bottom:6px; font-size:13px; font-weight:600; color:#4a3a30;}
+    .yoru-area-drawer .form-text {margin-top:8px; font-size:12px; line-height:1.45; color:#7a685b;}
+    .yoru-required {color:#8C2437;}
+    .yoru-area-drawer .form-control {border:1px solid #e3d0a6; border-radius:10px; background:#fffaf2; color:#2b211b; font-size:14px; transition:border-color .2s,box-shadow .2s;}
+    .yoru-area-drawer input.form-control {height:42px;}
+    .yoru-area-drawer .form-control:focus {border-color:#8C2437; box-shadow:0 0 0 3px rgba(140,36,55,.13); background:#fff;}
+    .yoru-area-drawer .yoru-icon-picker {gap:8px;}
+    .yoru-area-drawer .yoru-icon-choice {padding:10px 4px 9px; border:1px solid #e8d9b5; border-radius:11px; background:#fffaf2; color:#7a685b; font-size:11.5px; font-weight:600;}
+    .yoru-area-drawer .yoru-icon-choice:hover {border-color:#c99a52; transform:translateY(-2px);}
+    .yoru-area-drawer .yoru-icon-choice.selected {border-color:#8C2437; background:#f8e6e7; color:#8C2437; box-shadow:0 0 0 1px #8C2437 inset; animation:yoruPickPop .28s ease;}
+    @@keyframes yoruPickPop {0% {transform:scale(.92);} 60% {transform:scale(1.06);} 100% {transform:scale(1);}}
+    .yoru-theme-picker {display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px;}
+    .yoru-theme-swatch {position:relative; overflow:hidden; height:46px; padding:0; border:1px solid rgba(255,255,255,.55); border-radius:11px; background:var(--sw); cursor:pointer; transition:transform .2s ease,box-shadow .2s ease;}
+    .yoru-theme-swatch[data-theme-choice="wine"] {--sw:#8C2437;}
+    .yoru-theme-swatch[data-theme-choice="gold"] {--sw:#C99A52;}
+    .yoru-theme-swatch[data-theme-choice="plum"] {--sw:#684267;}
+    .yoru-theme-swatch[data-theme-choice="sage"] {--sw:#6C8670;}
+    .yoru-theme-swatch[data-theme-choice="midnight"] {--sw:#455A78;}
+    .yoru-theme-swatch[data-theme-choice="terracotta"] {--sw:#BA7156;}
+    .yoru-theme-swatch::before {content:""; position:absolute; left:0; right:0; bottom:0; height:56%; pointer-events:none; --ln:color-mix(in srgb,var(--sw) 45%,#f3dca0); background-color:transparent; background-image:radial-gradient(circle at 100% 150%,var(--sw) 24%,var(--ln) 25%,var(--ln) 28%,var(--sw) 29%,var(--sw) 36%,var(--ln) 36%,var(--ln) 40%,transparent 40%),radial-gradient(circle at 0 150%,var(--sw) 24%,var(--ln) 25%,var(--ln) 28%,var(--sw) 29%,var(--sw) 36%,var(--ln) 36%,var(--ln) 40%,transparent 40%),radial-gradient(circle at 50% 100%,var(--sw) 10%,var(--ln) 11%,var(--ln) 23%,var(--sw) 24%,var(--sw) 30%,var(--ln) 31%,var(--ln) 43%,var(--sw) 44%,var(--sw) 50%,var(--ln) 51%,var(--ln) 63%,var(--sw) 64%,var(--sw) 71%,transparent 71%); background-size:26px 13px; background-position:bottom;}
+    .yoru-theme-swatch:hover {transform:translateY(-3px);}
+    .yoru-theme-swatch:focus-visible {outline:2px solid #8C2437; outline-offset:2px;}
+    .yoru-theme-swatch-check {position:absolute; inset:0; display:grid; place-items:center; color:#fff; opacity:0; transform:scale(.5); transition:opacity .2s,transform .2s;}
+    .yoru-theme-swatch-check svg {width:20px; height:20px; stroke-width:3; filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));}
+    .yoru-theme-swatch[aria-pressed="true"] {box-shadow:0 0 0 2px #fffaf4,0 0 0 4px #8C2437;}
+    .yoru-theme-swatch[aria-pressed="true"] .yoru-theme-swatch-check {opacity:1; transform:scale(1);}
+    .yoru-area-drawer-footer {padding:14px 22px; border-top:1px solid rgba(201,154,82,.6); background:rgba(255,250,244,.72); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+    .yoru-area-drawer-footer .yoru-type-drawer-cancel {border-color:#e3c887; background:rgba(255,252,247,.9);}
+    .yoru-area-drawer-footer .yoru-type-drawer-save {border-color:#7a1c2c; background:linear-gradient(135deg,#a02a3f,#7a1c2c);}
+    .yoru-area-drawer-footer .yoru-type-drawer-save:hover {background:linear-gradient(135deg,#8f2236,#6a1625);}
+    @@media (max-width:520px) {.yoru-theme-picker {grid-template-columns:repeat(3,minmax(0,1fr));} }
     #yoruAreaManualStatusWrap[hidden] {display:none!important;}
 
     /* Responsive */
@@ -704,41 +790,17 @@
     #dining-areas-section .yoru-area-filter {font-size:14px;}
 
     /* Cards */
-    #dining-areas-section .yoru-area-card {padding:22px; border-radius:14px;}
-    #dining-areas-section .yoru-area-card-top {margin-bottom:18px;}
-    #dining-areas-section .yoru-area-card-title {font-size:23px; line-height:1.3; margin-bottom:10px; font-weight:600;}
-    #dining-areas-section .yoru-area-card-description {font-size:18px; line-height:1.6; color:#615249; min-height:48px; margin-bottom:18px;}
 
     /* Status */
-    #dining-areas-section .yoru-area-status {font-size:12px; font-weight:700; padding:8px 12px;}
 
     /* Table Count and Type Count */
-    #dining-areas-section .yoru-area-card-meta {gap:18px; padding:15px 0;}
-    #dining-areas-section .yoru-area-card-meta span {font-size:15px; font-weight:500; color:#62534a; gap:7px;}
-    #dining-areas-section .yoru-area-card-meta svg {width:21px; height:17px;}
 
     /* Table Types Section */
-    #dining-areas-section .yoru-area-card .yoru-area-card-label {font-size: 18px !important; font-weight: 700 !important; color: #594338 !important; letter-spacing: .7px !important;}
-    #dining-areas-section .yoru-area-card-types {padding:18px 0; min-height:100px;}
-    #dining-areas-section .yoru-area-card-label {font-size:13px; font-weight:700; letter-spacing:1px; color:#62483c; margin-bottom:12px;}
-    #dining-areas-section .yoru-area-type-tags {gap:9px;}
-    #dining-areas-section .yoru-area-type-tag {display:inline-flex; align-items:center; padding:9px 13px; border:1px solid #e8d5c8; border-radius:8px; background:#f5e9e1; color:#654338; font-size:14px; font-weight:600; line-height:1.3;}
-    #dining-areas-section .yoru-area-no-types {font-size:14px; color:#67584e;}
 
     /* Bottom Actions */
-    #dining-areas-section .yoru-area-card-footer {padding-top:15px;}
-    #dining-areas-section .yoru-area-mode {font-size:14px; font-weight:600; color:#62534a; gap:7px;}
-    #dining-areas-section .yoru-area-mode svg {width:17px; height:17px;}
-    #dining-areas-section .yoru-area-action {width:40px; height:40px;}
-    #dining-areas-section .yoru-area-action svg {width:19px; height:19px;}
 
     /* Keep the cards tidy when the drawer opens */
-    #dining-areas-section .yoru-area-card-grid {gap:16px;}
-    #dining-areas-section .yoru-area-card {min-width:0;}
-    @@media(max-width:760px) {#dining-areas-section .yoru-area-card {padding:18px;} #dining-areas-section .yoru-area-card-title {font-size:21px;}}
     
-    #dining-areas-section .yoru-area-card .yoru-area-mode {font-size: 18px !important; font-weight: 600 !important; color: #51433b !important;}
-    #dining-areas-section .yoru-area-card .yoru-area-mode svg {width: 21px !important; height: 18px !important;}
     
     /* Opening Hours — Three Independent Cards (6:4) */
     #opening-hours-section > .yoru-luxury-card {height:auto; padding:0; border:0; background:transparent; box-shadow:none;}
@@ -1112,6 +1174,51 @@
         #yoruAreaWorkspace.drawer-open .yoru-area-drawer-overlay {position:relative!important; align-self:stretch!important; height:auto!important;}
         #yoruAreaWorkspace.drawer-open #areaModal {position:absolute!important; top:0; right:0; bottom:0; left:0; height:auto!important;}
     }
+
+    /* ---- US11 revisions ---- */
+    .yoru-type-code-row {display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; padding:11px 14px; border:1px solid #eadfd2; border-radius:12px; background:#fbf8f5;}
+    .yoru-type-code-row span {color:#8a7566; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;}
+    .yoru-type-code-row strong {font-family:Consolas,Menlo,monospace; font-size:16px; letter-spacing:.08em; color:#30231d;}
+    .yoru-type-code-row strong.is-none {font-family:inherit; font-size:14px; letter-spacing:0; font-weight:500; color:#9c9085;}
+    .yoru-details-jp {color:rgba(255,255,255,.92); font-size:15px; text-shadow:0 2px 8px rgba(0,0,0,.45);}
+    .yoru-custom-filter .dropdown-item:disabled {opacity:1; color:#9c9085; cursor:not-allowed; background:transparent;}
+    .yoru-custom-filter .dropdown-item.is-placeholder:disabled {font-style:italic;}
+    .yoru-custom-filter .yoru-menu-search {position:sticky; top:-6px; z-index:1; margin:-6px -6px 6px; padding:8px; background:#fffaf4; border-bottom:1px solid #eee3d9;}
+    .yoru-custom-filter .yoru-menu-search input {width:100%; height:38px; padding:0 12px; border:1px solid #dfd2c3; border-radius:9px; background:#fff; color:#624a3d; font-size:13px;}
+    .yoru-custom-filter .yoru-menu-search input:focus {outline:none; border-color:#b72f25; box-shadow:0 0 0 3px rgba(183,47,37,.12);}
+    .yoru-custom-filter .yoru-menu-empty {padding:10px 12px; color:#9c9085; font-size:13px; list-style:none;}
+
+    /* Manage Tables / Rooms: one line normally; with a drawer open it becomes "Manage" over "Tables"/"Rooms" */
+    :is(#yoruTypeWorkspace.drawer-open,#yoruTypeWorkspace.table-drawer-open) .yoru-type-actions {gap:4px;}
+    :is(#yoruTypeWorkspace.drawer-open,#yoruTypeWorkspace.table-drawer-open) .yoru-type-actions .yoru-type-icon-btn {flex:0 0 32px; width:32px; min-width:0;}
+    :is(#yoruTypeWorkspace.drawer-open,#yoruTypeWorkspace.table-drawer-open) .yoru-type-manage-btn {min-width:0; gap:5px; padding:6px 8px; line-height:1.2;}
+    :is(#yoruTypeWorkspace.drawer-open,#yoruTypeWorkspace.table-drawer-open) .yoru-type-manage-btn > svg:first-child {display:none;}
+    :is(#yoruTypeWorkspace.drawer-open,#yoruTypeWorkspace.table-drawer-open) .yoru-type-manage-btn svg {margin:0;}
+    :is(#yoruTypeWorkspace.drawer-open,#yoruTypeWorkspace.table-drawer-open) .yoru-manage-label {display:flex; flex-direction:column; align-items:center; flex:1 0 auto; text-align:center; word-break:keep-all; overflow-wrap:normal; white-space:nowrap;}
+
+    /* Same rhythm in every drawer */
+    /* Bootstrap already puts the vertical gap on each column, so no extra row-gap (it was doubling it) */
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .row {--bs-gutter-y:20px; --bs-gutter-x:16px; row-gap:0!important;}
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .form-label {margin-bottom:6px; font-size:13px; font-weight:600; color:#4a3a30;}
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .form-text,
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .col-12 > small,
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .col-6 > small {display:block; margin-top:6px; font-size:12px; line-height:1.45;}
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .yoru-form-section {margin-top:calc(var(--bs-gutter-y) + 10px)!important;}
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .yoru-form-section:first-child {margin-top:var(--bs-gutter-y)!important;}
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .yoru-active-row,
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) .yoru-first-table-box {padding:14px 16px;}
+
+    /* Choose File: same look as the other fields, no white strip under the button */
+    #tableTypePhotoInput,
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) input[type="file"].form-control {display:flex; align-items:center; height:44px; padding:0; overflow:hidden; border:1px solid #dfd2c3; border-radius:12px; background:#fffaf4; color:#6f5a4d; font-size:13px; line-height:42px; cursor:pointer;}
+    #tableTypePhotoInput::file-selector-button,
+    :is(#yoruTypeDrawer,#tableModal,#areaModal) input[type="file"].form-control::file-selector-button {box-sizing:border-box; height:42px; margin:0 14px 0 0; padding:0 18px; border:0; border-right:1px solid #e5d3c4; border-radius:0; background:#f4e7dc; color:#8a2f25; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; transition:background .2s;}
+    #tableTypePhotoInput:hover::file-selector-button {background:#ecd5c5;}
+    #tableTypePhotoInput:focus {outline:none; border-color:#b72f25; box-shadow:0 0 0 3px rgba(183,47,37,.12);}
+
+    /* "No photo" box: a closed dashed outline, rounded corners included */
+    .yoru-photo-preview-button.is-empty {border:0; border-radius:12px; background:#f7f1ea url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' rx='12' ry='12' fill='none' stroke='%23c9b7a6' stroke-width='4' stroke-dasharray='7 6'/%3E%3C/svg%3E") no-repeat center/100% 100%;}
+    .yoru-photo-preview-button.is-empty .yoru-no-photo {background:transparent;}
     /* ---- UI fixes ---- */
     .yoru-photo-row {display:flex; align-items:flex-end; gap:12px;}
     .yoru-photo-row #tableTypeRemovePhoto[hidden] {display:none!important;}
@@ -1367,7 +1474,7 @@
                             aria-expanded="false"
                             aria-controls="modal-@(sectionId)">
                         <i data-lucide="settings-2"></i>
-                        @(isRoom ? "Manage Rooms" : "Manage Tables")
+                        <span class="yoru-manage-label"><span>Manage</span> <span>@(isRoom ? "Rooms" : "Tables")</span></span>
                         <i data-lucide="arrow-right"></i>
                     </button>
 
@@ -1587,6 +1694,11 @@
 
             <input type="hidden" asp-for="TableTypeForm.Id" />
 
+                    <div class="yoru-type-code-row">
+                        <span>Table Type Code</span>
+                        <strong id="tableTypeCodeValue" class="is-none">None</strong>
+                    </div>
+
                     <div class="row g-3 yoru-type-form-grid">
 
                         <div class="col-12 yoru-form-section"><span>Basic info</span></div>
@@ -1628,8 +1740,9 @@
                                 <option value="4">4 Digits — 0001</option>
                             </select>
 
-                            <small class="text-muted">
-                                The table code is generated automatically.
+                            <small class="text-muted" id="tableTypePaddingHint">
+                                The table code is generated automatically
+                                and fits within 8 characters together with the digits.
                                 Example: CS001.
                             </small>
                         </div>
@@ -1661,6 +1774,7 @@
                             <select asp-for="TableTypeForm.DefaultDiningAreaId"
                                     asp-items="@(new SelectList(Model.Areas, "Id", "Name"))"
                                     class="form-select"
+                                    data-search="Search dining areas..."
                                     required>
                                 <option value="">Choose an area...</option>
                             </select>
@@ -1673,7 +1787,6 @@
                             <input asp-for="TableTypeForm.DefaultMinGuests"
                                    type="number"
                                    min="1"
-                                   max="20"
                                    class="form-control"
                                    required />
                         </div>
@@ -1687,7 +1800,6 @@
                             <input asp-for="TableTypeForm.DefaultMaxGuests"
                                    type="number"
                                    min="1"
-                                   max="20"
                                    class="form-control"
                                    required />
 
@@ -2051,41 +2163,68 @@
                         .OrderBy(name => name)
                         .ToList();
 
+                    // Six fixed themes, picked from the area Id so the colour never changes
+                    // on refresh, search, filter or re-order. (Step 3 can save a manual choice.)
+                    var themeKeys = new[] { "wine", "gold", "plum", "sage", "midnight", "terracotta" };
+                    var themeKey = a.ThemeKey != null && themeKeys.Contains(a.ThemeKey)
+                        ? a.ThemeKey
+                        : themeKeys[((a.Id - 1) % themeKeys.Length + themeKeys.Length) % themeKeys.Length];
+
+                    var guestsText = !a.Tables.Any()
+                        ? "–"
+                        : a.Tables.Min(t => t.MinGuests) == a.Tables.Max(t => t.Capacity)
+                            ? a.Tables.Min(t => t.MinGuests).ToString()
+                            : a.Tables.Min(t => t.MinGuests) + "–" + a.Tables.Max(t => t.Capacity);
+
                     <article class="yoru-area-card"
+                             data-theme="@themeKey"
                              data-area-name="@a.Name"
                              data-area-status="@areaStatus">
 
+                        <span class="yoru-area-corner" aria-hidden="true"></span>
+                        <span class="yoru-area-corner-edge" aria-hidden="true"></span>
+                        <span class="yoru-area-wave" aria-hidden="true"></span>
+
                         <div class="yoru-area-card-top">
-                            <div class="yoru-area-icon">
+                            <div class="yoru-area-badge">
                                 <i data-lucide="@iconName"></i>
                             </div>
 
-                            <span class="yoru-area-status @areaStatus">
+                            <span class="yoru-area-status @areaStatus"
+                                  title="@(a.IsOccupied
+                                      ? "Marked as Occupied: all tables are out of service."
+                                      : "Tables in this area follow their own status.")">
                                 @statusText
                             </span>
                         </div>
 
                         <h3 class="yoru-area-card-title">@a.Name</h3>
 
-                        <p class="yoru-area-card-description">
+                        <p class="yoru-area-card-description" title="@a.Description">
                             @(string.IsNullOrWhiteSpace(a.Description)
                                 ? "No description provided."
                                 : a.Description)
                         </p>
 
+                        <div class="yoru-area-divider" aria-hidden="true"><i></i></div>
+
                         <div class="yoru-area-card-meta">
-                            <span>
-                                <i data-lucide="armchair"></i>
-                                @a.Tables.Count Tables
-                            </span>
-                            <span>
-                                <i data-lucide="layers-3"></i>
-                                @tableTypes.Count Types
-                            </span>
+                            <div class="yoru-area-stat">
+                                <div><i data-lucide="armchair"></i><strong>@a.Tables.Count</strong></div>
+                                <small>@(a.Tables.Count == 1 ? "Table" : "Tables")</small>
+                            </div>
+                            <div class="yoru-area-stat">
+                                <div><i data-lucide="layers-3"></i><strong>@tableTypes.Count</strong></div>
+                                <small>@(tableTypes.Count == 1 ? "Type" : "Types")</small>
+                            </div>
+                            <div class="yoru-area-stat">
+                                <div><i data-lucide="users"></i><strong>@guestsText</strong></div>
+                                <small>Guests</small>
+                            </div>
                         </div>
 
                         <div class="yoru-area-card-types">
-                            <div class="yoru-area-card-label">TABLE TYPES</div>
+                            <div class="yoru-area-card-label">Table Types</div>
 
                             <div class="yoru-area-type-tags">
                                 @if (tableTypes.Any())
@@ -2103,14 +2242,6 @@
                         </div>
 
                         <div class="yoru-area-card-footer">
-                            <span class="yoru-area-mode"
-                                  title="@(a.IsOccupied
-                                      ? "Marked as Occupied: all tables are out of service."
-                                      : "Tables in this area follow their own status.")">
-                                <i data-lucide="@(a.IsOccupied ? "ban" : "check-circle-2")"></i>
-                                @(a.IsOccupied ? "Occupied (closed)" : "Open")
-                            </span>
-
                             <div class="yoru-area-actions">
                                 <button type="button"
                                         class="yoru-area-action"
@@ -2121,6 +2252,7 @@
                                         data-name="@a.Name"
                                         data-desc="@a.Description"
                                         data-icon="@iconName"
+                                        data-theme="@themeKey"
                                         data-manual-status="@(a.IsOccupied ? "Occupied" : "Available")">
                                     <i data-lucide="pencil"></i>
                                 </button>
@@ -2171,9 +2303,16 @@
                   class="yoru-area-drawer-form">
 
                 <div class="yoru-area-drawer-header">
-                    <div>
-                        <div class="yoru-luxury-eyebrow">THE DINING COLLECTION</div>
-                        <h2 id="areaTitle">Add Dining Area</h2>
+                    <div class="yoru-area-drawer-heading">
+                        <span class="yoru-area-drawer-mark" aria-hidden="true">
+                            <i data-lucide="plus" class="mode-add"></i>
+                            <i data-lucide="pencil" class="mode-edit"></i>
+                        </span>
+                        <div>
+                            <h2 id="areaTitle">Add Dining Area</h2>
+                            <p class="yoru-area-drawer-sub mode-add">Create a new dining area for your restaurant.</p>
+                            <p class="yoru-area-drawer-sub mode-edit">Update the dining area details.</p>
+                        </div>
                     </div>
                     <button type="button" class="yoru-type-drawer-close"
                             data-area-drawer-close="true" aria-label="Close">
@@ -2184,23 +2323,27 @@
                 <div class="yoru-area-drawer-body">
                     <input type="hidden" asp-for="AreaForm.Id" />
 
-                    <div class="mb-3">
-                        <label asp-for="AreaForm.Name" class="form-label">Name</label>
-                        <input asp-for="AreaForm.Name" class="form-control"
-                               required maxlength="50" />
-                    </div>
+                    <section class="yoru-area-drawer-section">
+                        <h3 class="yoru-area-drawer-section-title">Basic Information</h3>
 
-                    <div class="mb-3">
-                        <label asp-for="AreaForm.Description" class="form-label">
-                            Description (optional)
-                        </label>
-                        <textarea asp-for="AreaForm.Description"
-                                  class="form-control" maxlength="200"
-                                  rows="3"></textarea>
-                    </div>
+                        <div class="mb-3">
+                            <label asp-for="AreaForm.Name" class="form-label">Name <span class="yoru-required">*</span></label>
+                            <input asp-for="AreaForm.Name" class="form-control"
+                                   required maxlength="50" />
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Area Icon</label>
+                        <div>
+                            <label asp-for="AreaForm.Description" class="form-label">
+                                Description <small class="text-muted">(optional)</small>
+                            </label>
+                            <textarea asp-for="AreaForm.Description"
+                                      class="form-control" maxlength="200"
+                                      rows="2"></textarea>
+                        </div>
+                    </section>
+
+                    <section class="yoru-area-drawer-section">
+                        <h3 class="yoru-area-drawer-section-title">Area Icon</h3>
                         <input type="hidden" name="AreaForm.IconName"
                                id="yoruAreaIconName" value="layout-grid" />
 
@@ -2228,29 +2371,75 @@
                             Suggested automatically from the name.
                             You can choose another.
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="form-check form-switch yoru-switch mb-3">
-                        <input type="checkbox" role="switch"
-                               class="form-check-input"
-                               name="AreaForm.IsOccupied" value="true"
-                               id="yoruAreaOccupied" />
-                        <label class="form-check-label" for="yoruAreaOccupied">
-                            Mark area as Occupied
-                        </label>
-                    </div>
-                    <div class="form-text mb-3">
-                        When on, every table in this area becomes
-                        Out of service and cannot be booked. Turn it off to
-                        restore their previous status.
-                    </div>
+                    @{
+                        // Default colour for a NEW area = the one its future Id would get.
+                        var themeOrder = new[] { "wine", "gold", "plum", "sage", "midnight", "terracotta" };
+                        var nextAreaId = (Model.Areas.Any() ? Model.Areas.Max(x => x.Id) : 0) + 1;
+                        var defaultTheme = themeOrder[((nextAreaId - 1) % themeOrder.Length + themeOrder.Length) % themeOrder.Length];
+                    }
+
+                    <section class="yoru-area-drawer-section">
+                        <h3 class="yoru-area-drawer-section-title">Card Theme</h3>
+                        <input type="hidden" name="AreaForm.ThemeKey"
+                               id="yoruAreaThemeKey" value="@defaultTheme"
+                               data-default-theme="@defaultTheme" />
+
+                        <div class="yoru-theme-picker" id="yoruThemePicker">
+                            <button type="button" class="yoru-theme-swatch" data-theme-choice="wine"
+                                    title="Wine Red" aria-label="Wine Red" aria-pressed="false">
+                                <span class="yoru-theme-swatch-check"><i data-lucide="check"></i></span>
+                            </button>
+                            <button type="button" class="yoru-theme-swatch" data-theme-choice="gold"
+                                    title="Champagne Gold" aria-label="Champagne Gold" aria-pressed="false">
+                                <span class="yoru-theme-swatch-check"><i data-lucide="check"></i></span>
+                            </button>
+                            <button type="button" class="yoru-theme-swatch" data-theme-choice="plum"
+                                    title="Royal Plum" aria-label="Royal Plum" aria-pressed="false">
+                                <span class="yoru-theme-swatch-check"><i data-lucide="check"></i></span>
+                            </button>
+                            <button type="button" class="yoru-theme-swatch" data-theme-choice="sage"
+                                    title="Sage Green" aria-label="Sage Green" aria-pressed="false">
+                                <span class="yoru-theme-swatch-check"><i data-lucide="check"></i></span>
+                            </button>
+                            <button type="button" class="yoru-theme-swatch" data-theme-choice="midnight"
+                                    title="Midnight Blue" aria-label="Midnight Blue" aria-pressed="false">
+                                <span class="yoru-theme-swatch-check"><i data-lucide="check"></i></span>
+                            </button>
+                            <button type="button" class="yoru-theme-swatch" data-theme-choice="terracotta"
+                                    title="Terracotta" aria-label="Terracotta" aria-pressed="false">
+                                <span class="yoru-theme-swatch-check"><i data-lucide="check"></i></span>
+                            </button>
+                        </div>
+                        <div class="form-text">Colour of this area's card. You can change it any time.</div>
+                    </section>
+
+                    <section class="yoru-area-drawer-section">
+                        <h3 class="yoru-area-drawer-section-title">Area Status</h3>
+
+                        <div class="form-check form-switch yoru-switch mb-3">
+                            <input type="checkbox" role="switch"
+                                   class="form-check-input"
+                                   name="AreaForm.IsOccupied" value="true"
+                                   id="yoruAreaOccupied" />
+                            <label class="form-check-label" for="yoruAreaOccupied">
+                                Mark area as Occupied
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            When on, every table in this area becomes
+                            Out of service and cannot be booked. Turn it off to
+                            restore their previous status.
+                        </div>
+                    </section>
                 </div>
 
                 <div class="yoru-area-drawer-footer">
                     <button type="button" class="yoru-type-drawer-cancel"
                             data-area-drawer-close="true">Cancel</button>
                     <button type="submit" class="yoru-type-drawer-save">
-                        <i data-lucide="save"></i> Save Area
+                        <i data-lucide="save"></i> <span id="yoruAreaSaveLabel">Save Area</span>
                     </button>
                 </div>
             </form>
@@ -2758,6 +2947,7 @@
                     <div class="yoru-details-hero-text">
                         <span class="yoru-details-badge" id="yoruTypeDetailsBadge"></span>
                         <strong id="yoruTypeDetailsHeroName"></strong>
+                        <span class="yoru-details-jp" id="yoruTypeDetailsJp" lang="ja" hidden></span>
                     </div>
                     <button type="button"
                             class="yoru-type-details-photo-btn"
@@ -3064,6 +3254,58 @@
             tableTypePhotoPreviewUrl = tableTypePhotoPreview.src;
         });
 
+        // Top of the drawer: "None" while adding, the (read-only) code while editing.
+        // The code never changes, so only digit counts that still fit in 8 characters stay selectable.
+        function showTypeCode(code, currentPadding) {
+            const el = document.getElementById('tableTypeCodeValue');
+            el.textContent = code || 'None';
+            el.classList.toggle('is-none', !code);
+
+            const padding = tableTypeForm.querySelector('[name="TableTypeForm.NumberPadding"]');
+            const maxDigits = code ? Math.max(1, 8 - code.length) : 4;
+
+            Array.from(padding.options).forEach(o => {
+                const n = Number(o.value);
+                o.disabled = n > maxDigits && String(n) !== String(currentPadding || '');
+            });
+        }
+
+        // Min Guests can never be above Capacity (no fixed upper limit).
+        (() => {
+            const minG = tableTypeForm.querySelector('[name="TableTypeForm.DefaultMinGuests"]');
+            const maxG = tableTypeForm.querySelector('[name="TableTypeForm.DefaultMaxGuests"]');
+            const sync = () => {
+                const lo = parseInt(minG.value, 10), hi = parseInt(maxG.value, 10);
+                maxG.min = Number.isFinite(lo) && lo > 1 ? String(lo) : '1';
+                if (Number.isFinite(hi)) minG.max = String(hi); else minG.removeAttribute('max');
+                maxG.setCustomValidity(Number.isFinite(lo) && Number.isFinite(hi) && lo > hi
+                    ? 'Capacity must be at least Min Guests (' + lo + ').' : '');
+            };
+            minG.addEventListener('input', sync);
+            maxG.addEventListener('input', sync);
+            tableTypeForm.addEventListener('reset', () => setTimeout(sync));
+            window.syncTypeGuestRange = sync;
+        })();
+
+        // Every typed field: clicking or tabbing in selects what is already there.
+        (() => {
+            const skip = '[type="checkbox"],[type="radio"],[type="file"],[type="hidden"],[type="button"],[type="submit"],[type="range"],[type="color"],[readonly],[disabled]';
+            let fresh = null;
+
+            document.addEventListener('focusin', e => {
+                const t = e.target;
+                if (!(t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) || t.matches(skip)) return;
+                fresh = t;
+                try { t.select(); } catch (_) { }
+            });
+            // The mouse-up of the same click would otherwise drop the selection again.
+            document.addEventListener('mouseup', e => {
+                if (fresh && e.target === fresh) e.preventDefault();
+                fresh = null;
+            });
+            document.addEventListener('keydown', () => { fresh = null; });
+        })();
+
         function resetTableTypeForm() {
             tableTypeForm.reset();
 
@@ -3080,8 +3322,10 @@
             setTypeFormValue('IsActive', 'true');
             setTypeFormValue('CreateFirstTable', 'false');
             setTypeFormValue('AllowBelowMinGuests', 'false');
+            window.syncTypeGuestRange?.();
 
             typeFormTitle.textContent = 'Add New Table Type';
+            showTypeCode('');
 
             createFirstSection.classList.remove('d-none');
             tableTypePhotoInput.value = '';
@@ -3105,11 +3349,13 @@
             setTypeFormValue('Description', d.desc);
             setTypeFormValue('IsActive', d.active);
             setTypeFormValue('AllowBelowMinGuests', d.allowBelow)
+            window.syncTypeGuestRange?.();
 
             tableTypePhotoInput.value = '';
             originalTableTypePhoto = d.photo || '';
             setTableTypePhotoPreview(originalTableTypePhoto);
             typeFormTitle.textContent = 'Edit Table Type: ' + d.name;
+            showTypeCode(d.prefix, d.padding);
 
             createFirstSection.classList.add('d-none');
         }
@@ -4527,6 +4773,39 @@
         });
     });
     </script>
+    <script>
+    // Dining Area drawer (Step 3): mode icon/title, card theme, Automatic / Manual status.
+    // Works next to the existing open/close handlers; it only adds on top of them.
+    document.addEventListener('DOMContentLoaded', function () {
+        const drawer = document.getElementById('areaModal');
+        if (!drawer) return;
+
+        const themeField = document.getElementById('yoruAreaThemeKey');
+        const swatches = Array.from(drawer.querySelectorAll('[data-theme-choice]'));
+        const saveLabel = document.getElementById('yoruAreaSaveLabel');
+
+        function selectTheme(key) {
+            const valid = swatches.some(s => s.dataset.themeChoice === key);
+            const value = valid ? key : themeField.dataset.defaultTheme;
+            themeField.value = value;
+            swatches.forEach(s => s.setAttribute('aria-pressed', String(s.dataset.themeChoice === value)));
+        }
+
+        swatches.forEach(s => s.addEventListener('click', () => selectTheme(s.dataset.themeChoice)));
+
+        // Runs after the existing handler has already filled the form.
+        document.querySelectorAll('[data-area-drawer-open]').forEach(button => {
+            button.addEventListener('click', () => {
+                const isEdit = Boolean(button.dataset.id);
+                drawer.dataset.mode = isEdit ? 'edit' : 'add';
+                if (saveLabel) saveLabel.textContent = isEdit ? 'Save Changes' : 'Save Area';
+                selectTheme(isEdit ? button.dataset.theme : themeField.dataset.defaultTheme);
+            });
+        });
+
+        selectTheme(themeField.value);
+    });
+    </script>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -4876,6 +5155,44 @@
                     menu.replaceChildren();
                     choices = [];
 
+                    if (select.dataset.search) {
+                        const box = document.createElement('li');
+                        box.className = 'yoru-menu-search';
+                        const input = document.createElement('input');
+                        input.type = 'search';
+                        input.placeholder = select.dataset.search;
+                        input.setAttribute('aria-label', select.dataset.search);
+                        input.autocomplete = 'off';
+                        const none = document.createElement('li');
+                        none.className = 'yoru-menu-empty';
+                        none.textContent = 'No match found';
+                        none.hidden = true;
+
+                        input.addEventListener('input', () => {
+                            const q = input.value.trim().toLowerCase();
+                            let shown = 0;
+                            choices.forEach(({ option, button }) => {
+                                const hit = option.value !== '' && button.dataset.label.includes(q);
+                                button.parentElement.hidden = option.value === '' ? q !== '' : !hit;
+                                if (!button.parentElement.hidden) shown++;
+                            });
+                            none.hidden = shown > 0;
+                        });
+                        input.addEventListener('keydown', e => {
+                            if (e.key === 'Enter') e.preventDefault();
+                            e.stopPropagation();
+                        });
+                        wrapper.addEventListener('shown.bs.dropdown', () => input.focus());
+                        wrapper.addEventListener('hide.bs.dropdown', () => {
+                            input.value = '';
+                            input.dispatchEvent(new Event('input'));
+                        });
+
+                        box.appendChild(input);
+                        menu.appendChild(box);
+                        menu.appendChild(none);
+                    }
+
                     Array.from(select.options).forEach(option => {
                         const item = document.createElement('li');
                         const button = document.createElement('button');
@@ -4883,6 +5200,7 @@
                         button.type = 'button';
                         button.className = 'dropdown-item' +
                             (option.value === '' ? ' is-placeholder' : '');
+                        button.dataset.label = option.textContent.trim().toLowerCase();
                         button.textContent = option.textContent;
 
                         button.addEventListener('click', () => {
@@ -4919,8 +5237,10 @@
                             option.selected
                         );
 
+                        // "Choose …" is a hint on a required field, not something to pick.
                         button.disabled =
                             option.disabled ||
+                            (option.value === '' && select.required) ||
                             (
                                 option.parentElement.tagName === 'OPTGROUP' &&
                                 option.parentElement.disabled
@@ -5647,6 +5967,10 @@
                         badge.classList.toggle('is-inactive', !isActive);
 
                         document.getElementById('yoruTypeDetailsHeroName').textContent = data.name;
+
+                        const jpName = document.getElementById('yoruTypeDetailsJp');
+                        jpName.textContent = (data.jp || '').trim();
+                        jpName.hidden = !jpName.textContent;
                         document.getElementById('yoruTypeDetailsArea').textContent = button.dataset.areaName;
 
                         window.lucide?.createIcons();
