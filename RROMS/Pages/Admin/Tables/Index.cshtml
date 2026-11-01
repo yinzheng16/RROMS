@@ -198,24 +198,6 @@
 
 </div>
 
-@{
-    var typeNames = new Dictionary<TableType, string>
-    {
-        [TableType.Counter] = "Counter seat",
-        [TableType.Double] = "Table for two",
-        [TableType.Standard] = "Standard table",
-        [TableType.Vip] = "VIP room",
-        [TableType.Vvip] = "VVIP room"
-    };
-    var sampleImages = new Dictionary<TableType, string>
-    {
-        [TableType.Counter] = "/images/tables/counter.webp",
-        [TableType.Double] = "/images/tables/double.webp",
-        [TableType.Standard] = "/images/tables/standard.webp",
-        [TableType.Vip] = "/images/tables/vip.webp",
-        [TableType.Vvip] = "/images/tables/vvip.webp"
-    };
-}
 <style>
     .yoru-type-card .yoru-type-badge {display:inline-flex; align-items:center; justify-content:center; height:26px; min-width:72px; padding:0 12px; box-sizing:border-box; font-size:14px; line-height:1; text-align:center;}
     /* Weekly Timeline — Compact Layout */
@@ -232,17 +214,16 @@
     .yoru-timeline-tooltip {position:absolute; top:50%; right:14px; transform:translate(5px,-50%); grid-column:auto; padding:4px 8px; border-radius:5px; background:#fffdfa; color:#8a7467; font-size:10px; font-weight:600; white-space:nowrap; max-height:none; opacity:0; visibility:hidden; pointer-events:none; box-shadow:0 2px 8px rgba(60,40,25,.12); transition:opacity .2s ease,transform .2s ease,visibility .2s ease;}
     .yoru-timeline-row:hover .yoru-timeline-tooltip {opacity:1; visibility:visible; transform:translate(0,-50%);}
     /* Weekly Timeline — Heading Alignment */
-    .yoru-hours-side-heading {display:flex; align-items:center; gap:10px; margin-bottom:8px;}
     .yoru-hours-side-heading i,.yoru-hours-side-heading svg {width:22px; height:22px; flex-shrink:0;}
-    .yoru-hours-side-heading h3 {margin:0; line-height:1.2;}
+    .yoru-hours-side-heading h3 {line-height:1.2;}
     @@media (prefers-reduced-motion:reduce) {.yoru-timeline-row,.yoru-timeline-bar,.yoru-timeline-tooltip {transition:none;} .yoru-timeline-row:hover {transform:none;}}
     /* Opening Hours — Fixed Row Layout */
-    #opening-hours-section .yoru-hours-row {grid-template-rows:auto; align-items:center; min-height:62px; box-sizing:border-box;}
+    #opening-hours-section .yoru-hours-row {grid-template-rows:auto; align-items:center; box-sizing:border-box;}
     #opening-hours-section .yoru-hours-row .yoru-hours-day {grid-column:1; grid-row:1;}
     #opening-hours-section .yoru-hours-row .yoru-hours-time-group {grid-column:2; grid-row:1;}
     #opening-hours-section .yoru-hours-row .yoru-hours-status {grid-column:3; grid-row:1;}
     #opening-hours-section .yoru-hours-row .yoru-hours-closed-message {grid-column:2; grid-row:1;}
-    #opening-hours-section .yoru-hours-row.yoru-day-closed {min-height:62px; box-sizing:border-box;}
+    #opening-hours-section .yoru-hours-row.yoru-day-closed {box-sizing:border-box;}
     #opening-hours-section .yoru-hours-row.yoru-day-closed .yoru-hours-time-group {display:none!important;}
     #opening-hours-section .yoru-hours-row.yoru-day-closed .yoru-hours-closed-message {display:flex; align-self:center; margin:0;}
     #opening-hours-section .yoru-hours-editing .yoru-hours-row.yoru-day-closed .yoru-hours-time-group {display:flex!important;}
@@ -261,10 +242,9 @@
     /* Navigation overlaps hero, without the former top border */
     .yoru-hero-navigation {position:relative; display:flex; justify-content:flex-start; margin:-48px 0 16px 48px; z-index:5; padding:0; border:0;}
     .yoru-hero-nav-buttons {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; width:min(100%,560px); padding:4px; border:1px solid #e7ded2; border-radius:10px; background:#f8f5ef; box-shadow:0 5px 16px rgba(60,40,25,.07);}
-    .yoru-hero-nav-link {display:flex; align-items:center; justify-content:center; gap:9px; padding:13px 15px; border:0; border-radius:7px; background:transparent; color:#625d55; font-family:inherit; font-size:13px; font-weight:600; text-decoration:none; cursor:pointer; transition:background .2s,color .2s;}
+    .yoru-hero-nav-link {padding:13px 15px; border-radius:7px; background:transparent; color:#625d55; font-size:13px; font-weight:600; text-decoration:none; transition:background .2s,color .2s;}
     .yoru-hero-nav-link.active {background:#b72f25; color:#fff; box-shadow:0 3px 8px rgba(150,35,25,.16);}
     .yoru-hero-nav-link:hover:not(.active) {background:#eee7dc; color:#29231e;}
-    .yoru-hero-nav-link svg {width:16px; height:16px;}
     /* Summary cards: wine lacquer panel, gold line icon, sakura branch and seigaiha waves (card size unchanged) */
     .yoru-summary {display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:0;}
     .yoru-summary-item {position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; justify-content:center; min-height:105px; padding:15px 20px 15px 84px; border:1px solid #e0c98f; border-radius:12px; background:linear-gradient(135deg,#fffaf1 0%,#fbf3e5 100%); color:#29231e; box-shadow:0 4px 14px rgba(110,60,30,.09),inset 0 0 0 1px rgba(255,255,255,.65); cursor:default; transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;}
@@ -284,27 +264,20 @@
     @@media (max-width:720px) {.yoru-summary {grid-template-columns:1fr;} .yoru-summary-item {min-height:100px;}}
     @@media (max-width:600px) {.yoru-hero-nav-buttons {width:100%;} .yoru-hero-nav-link {padding:11px 6px; font-size:11px; gap:5px;}}
     .yoru-type-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
-    .yoru-type-card { border:1px solid #e5d9c9; border-radius:12px; overflow:hidden; background:#fffdfa; display:flex; flex-direction:column; height:100%; transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+    .yoru-type-card { display:flex; flex-direction:column; height:100%; transition:transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
     .yoru-type-card:hover {transform: translateY(-3px); border-color: #a83228; box-shadow: 0 10px 24px rgba(0, 0, 0, .12); }
-    .yoru-type-card.yoru-selected {border-color: #a83228; box-shadow: 0 0 0 1px #a83228; }
     .yoru-type-card:focus-visible {outline: 3px solid #a83228; outline-offset: 3px; }
-    .yoru-type-image-wrap { overflow: hidden; }
-    .yoru-type-image { display: block; width:100%; height:145px; object-fit:cover; background:#eee8df; transition: transform 180ms ease; }
+    .yoru-type-image { display: block; background:#eee8df; transition: transform 180ms ease; }
     .yoru-type-card:hover .yoru-type-image {transform: scale(1.03); }
-    .yoru-type-body { padding:14px; display:flex; flex-direction:column; flex:1; }
-    .yoru-type-title { font-weight:700; margin:0; }
     .yoru-type-meta { color:#796e62; font-size:.86rem; margin:7px 0 8px; }
     .yoru-type-spend { color:#8e2b24; font-size:.82rem; font-weight:600; margin:0 0 12px; }
-    .yoru-type-actions {display:flex; flex-wrap:nowrap; align-items:center; gap:5px; width:100%; margin-top:auto;}
+    .yoru-type-actions {display:flex; flex-wrap:nowrap; align-items:center; gap:5px; }
     .yoru-type-icon-btn {display:grid; place-items:center; flex:0 0 30px; width:30px; height:36px; padding:0; border:1px solid #daccc0; border-radius:8px; background:#fffdfa; color:#a83228; cursor:pointer;}
     .yoru-type-icon-btn:hover {background:#f5e9e2;}
     .yoru-type-icon-btn svg {width:14px; height:14px;}
     .yoru-type-icon-delete {color:#b72f25; border-color:#ead0cd;}
     .yoru-type-icon-delete:hover {background:#fce9e6;}
-    .yoru-type-manage-btn {display:flex; flex:1 1 auto; align-items:center; justify-content:center; min-width:0; width:auto; gap:5px; padding:10px 6px; font-size:10px; white-space:nowrap;}
-    .yoru-type-manage-btn svg {flex-shrink:0; width:13px; height:13px;}
-    .yoru-type-manage-btn svg:last-child {margin-left:auto;}
-    .yoru-status-select { min-width:145px; }
+    .yoru-type-manage-btn svg {flex-shrink:0; }
     .yoru-search-toolbar {display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
     .yoru-search-toolbar .form-control { flex: 1; min-width: 160px; }
     .yoru-search-toolbar .form-select { width: auto; min-width: 150px; }
@@ -317,24 +290,11 @@
     .yoru-type-detail .modal-content { height: 100% !important; min-height: 0 !important;max-height: 100% !important; display: flex; flex-direction: column; }
     .yoru-type-detail .modal-header, .yoru-type-detail .modal-footer { flex: 0 0 auto; }
     .yoru-type-detail .yoru-search-toolbar { flex-shrink: 0;}
-    .yoru-secondary-section {border: 1px solid #e5d9c9; border-radius: 12px; background: #fffdfa; padding: 20px;}
     @@media(max-width:1200px) { .yoru-type-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
     @@media(max-width:720px) { .yoru-type-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @@media(max-width:450px) { .yoru-type-grid { grid-template-columns:1fr; } }
     @@media (prefers-reduced-motion: reduce) {.yoru-type-card, .yoru-type-image, .yoru-type-detail.collapsing {transition: none;} }
 
-    #tableModal .yoru-advanced-field { display: none !important;}
-    #tableModal.yoru-edit-mode .yoru-advanced-field { display: block !important;}
-    #manageTableTypesModal #tableTypesListView th:nth-child(1) { width: 28%; }
-    #manageTableTypesModal #tableTypesListView th:nth-child(2) { width: 17%; }
-    #manageTableTypesModal #tableTypesListView th:nth-child(3) { width: 17%; }
-    #manageTableTypesModal #tableTypesListView th:nth-child(4) { width: 17%; }
-    #manageTableTypesModal #tableTypesListView th:nth-child(5) { width: 21%; text-align: center;}
-    #manageTableTypesModal #tableTypesListView th:last-child,
-    #manageTableTypesModal #tableTypesListView td:last-child {
-        text-align: center;
-        white-space: nowrap;
-    }
     html {scroll-behavior: smooth;}
     #tables-section, #dining-areas-section, #opening-hours-section {scroll-margin-top: 0;}
     @@media (prefers-reduced-motion: reduce) {html {scroll-behavior: auto;}}
@@ -350,7 +310,7 @@
     .yoru-luxury-btn,.yoru-type-manage-btn {display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 15px; border:1px solid #b72f25; border-radius:9px; background:#b72f25; color:#fff; font-size:14px; font-weight:600; cursor:pointer; transition:background .2s ease,border-color .2s ease;}
     .yoru-luxury-btn:hover,.yoru-type-manage-btn:hover {background:#92271f; border-color:#92271f; color:#fff;}
     .yoru-luxury-btn svg,.yoru-type-manage-btn svg {width:15px; height:15px; flex-shrink:0;}
-    .yoru-type-manage-btn {flex:1 1 auto; min-width:0; padding:10px 9px; white-space:nowrap;}
+    .yoru-type-manage-btn {flex:1 1 auto; min-width:0; white-space:nowrap;}
     .yoru-luxury-btn svg {width:15px; height:15px;}
     .yoru-luxury-btn.secondary {background:#fffdfa; color:#715b51; border-color:#daccc0;}
     .yoru-luxury-btn.secondary:hover {background:#f4e9e2;}
@@ -423,8 +383,7 @@
     .yoru-wheel-preview {text-align:center; color:#5b4034; font-family:Georgia,serif; font-size:24px; margin:10px 0 15px;}
     @@keyframes yoruFade {from {opacity:0;} to {opacity:1;}}
     @@keyframes yoruWheelEnter {from {opacity:0; transform:translateY(16px) scale(.97);} to {opacity:1; transform:translateY(0) scale(1);}}
-    #deleteAreaModal.fade .modal-dialog {transform:translateY(14px) scale(.97); opacity:0; transition:transform .28s ease,opacity .28s ease;}    
-    #deleteAreaModal.fade .modal-dialog {transform:translateY(14px) scale(.97); opacity:0; transition:transform .28s ease,opacity .28s ease;}
+    #deleteAreaModal.fade .modal-dialog {transform:translateY(14px) scale(.97); opacity:0; }
     #deleteAreaModal.show .modal-dialog {transform:translateY(0) scale(1); opacity:1;}    
     @@media (max-width:650px) {.yoru-luxury-card {padding:16px;} .yoru-hours-row {grid-template-columns:minmax(80px,1fr) minmax(155px,1.7fr); gap:6px; padding:10px 8px;} .yoru-hours-status {grid-column:1/-1; justify-content:flex-end;} .yoru-hours-time-group {gap:6px;} .yoru-hours-value {font-size:12px;} .yoru-area-item {flex-wrap:wrap;} .yoru-area-count {margin-left:auto;} }
     @@media (prefers-reduced-motion:reduce) {.yoru-luxury-card,.yoru-area-item,.yoru-area-icon,.yoru-hours-row,.yoru-luxury-btn,.yoru-area-action,.yoru-hours-time-btn,.yoru-icon-choice,#deleteAreaModal.show .modal-dialog {transform:translateY(0) scale(1); opacity:1;} }
@@ -435,7 +394,6 @@
     .yoru-tab-panel.yoru-tab-enter {animation:yoruTabEnter .3s ease;}
     @@keyframes yoruTabEnter {from {opacity:0;}to {opacity:1;}}
     @@media (prefers-reduced-motion:reduce) {.yoru-tab-panel.yoru-tab-enter {animation:none;}}
-    #tableTypeDetailModal {z-index: 1065 !important;}
     #tableModal {z-index: 1 !important;}
     .modal-backdrop {z-index: 1050 !important;}  
     .yoru-type-card {border:1px solid #e9ded3; border-radius:14px; background:#fffdfa; overflow:hidden; box-shadow:0 3px 12px rgba(54,34,26,.04);}
@@ -445,22 +403,16 @@
     .yoru-type-badge.is-active {background:#f1f8f0; color:#397c43;}
     .yoru-type-badge.is-inactive {background:#b72f25; color:#fff;}
     .yoru-type-inactive .yoru-type-image {filter:saturate(.65);}
-    .yoru-type-body {padding:16px; display:flex; flex-direction:column; flex:1;}
+    .yoru-type-body {display:flex; flex-direction:column; flex:1;}
     .yoru-type-title {font-family:Georgia,serif; font-size:19px; font-weight:600; color:#332720; margin:0 0 14px;}
-    .yoru-type-details {display:grid; gap:10px; margin-bottom:18px;}
+    .yoru-type-details {display:grid; }
     .yoru-type-details>div {display:flex; align-items:center; gap:9px; color:#76685e; font-size:12px;}
     .yoru-type-details svg {width:15px; height:15px; color:#a83228; flex-shrink:0;}
-    .yoru-type-actions {margin-top:auto; width:100%;}
+    .yoru-type-actions {width:100%;}
     .yoru-type-manage-btn {display:flex; align-items:center; justify-content:center; gap:9px; width:100%; padding:10px 12px; border:1px solid #b72f25; border-radius:8px; background:#b72f25; color:#fff; font-size:12px; font-weight:600; transition:background .2s ease;}
     .yoru-type-manage-btn:hover {background:#92271f;}
     .yoru-type-manage-btn svg {width:15px; height:15px;}
     .yoru-type-manage-btn svg:last-child {margin-left:auto;}   
-    .yoru-type-edit-btn {display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 12px; border:1px solid #daccc0; border-radius:8px; background:#fffdfa; color:#a83228; font-size:12px; font-weight:600; cursor:pointer; transition:background .2s ease;}
-    .yoru-type-edit-btn:hover {background:#f5e9e2;}
-    .yoru-type-edit-btn svg {width:15px; height:15px;}
-    .yoru-type-delete-btn {display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:10px 12px; border:1px solid #ead0cd; border-radius:8px; background:#fffdfa; color:#b72f25; font-size:12px; font-weight:600; cursor:pointer; transition:background .2s ease;}
-    .yoru-type-delete-btn:hover {background:#fce9e6;}
-    .yoru-type-delete-btn svg {width:15px; height:15px;}
     .yoru-type-toolbar {display:flex; align-items:center; gap:10px; margin:18px 0 10px; flex-wrap:nowrap;}
     .yoru-type-search {display:flex; align-items:center; gap:10px; flex:1 1 auto; min-width:120px; padding:0 14px; height:44px; background:#fffdfa; border:1px solid #e5d9ca; border-radius:9px;}    .yoru-type-search:focus-within {border-color:#b72f25; box-shadow:0 0 0 3px rgba(183,47,37,.08);}
     .yoru-type-search svg {width:17px; height:17px; color:#a83228; flex-shrink:0;}
@@ -480,20 +432,17 @@
     
     
     /* Table Type Side-by-Side Workspace */
-    .yoru-type-workspace {display:grid; grid-template-columns:minmax(0,1fr) 0px; column-gap:0; align-items:start; width:100%; transition:grid-template-columns .65s cubic-bezier(.22,1,.36,1),column-gap .65s cubic-bezier(.22,1,.36,1);}
-    .yoru-type-workspace.drawer-open {grid-template-columns:minmax(0,1fr) 440px; column-gap:18px;}
-    .yoru-type-workspace #tables-section {min-width:0; margin-bottom:0!important;}
-    .yoru-type-workspace .yoru-type-grid {grid-template-columns:repeat(5,minmax(0,1fr));}    .yoru-type-workspace .yoru-type-toolbar {flex-wrap:wrap;}
+    .yoru-type-workspace #tables-section {margin-bottom:0!important;}
+.yoru-type-workspace .yoru-type-toolbar {flex-wrap:wrap;}
     .yoru-type-workspace .yoru-type-search {flex-basis:180px;}
     .yoru-type-workspace .yoru-type-filter {min-width:140px; flex:1 1 140px;}
 
     /* Drawer Container */
     .yoru-type-drawer {position:sticky; top:0; display:flex; flex-direction:column; width:100%; min-width:0; height:calc(100dvh); overflow:hidden; background:#fffdfa; border:1px solid #e7d9cc; border-radius:14px; box-shadow:0 8px 25px rgba(40,25,18,.08); opacity:0; visibility:hidden; transform:translateX(12px); pointer-events:none; transition:opacity .55s ease,transform .65s cubic-bezier(.22,1,.36,1),visibility .65s;}
-    .yoru-type-workspace.drawer-open .yoru-type-drawer {opacity:1; visibility:visible; transform:translateX(0); pointer-events:auto;}
 
 
     /* Smooth Drawer Opening and Closing */
-    .yoru-type-workspace.drawer-open .yoru-type-drawer {width:100%; opacity:1; visibility:visible; transform:translateX(0); pointer-events:auto;}
+    .yoru-type-workspace.drawer-open .yoru-type-drawer {width:100%; }
 
     /* Drawer Header */
     .yoru-type-drawer-header {display:flex; align-items:flex-start; justify-content:space-between; gap:15px; flex-shrink:0; padding:22px 24px 18px; border-bottom:1px solid #eee3d9;}
@@ -505,7 +454,7 @@
     .yoru-type-drawer-close svg {width:18px; height:18px;}
 
     /* Independent Form Scrolling */
-    .yoru-type-drawer-body {flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:22px 24px;}
+    .yoru-type-drawer-body {flex:1; min-height:0; overflow-y:auto; overscroll-behavior:auto; padding:22px 24px;}
     .yoru-type-drawer-body #tableTypeFormView {display:block; animation:none; transform:none;}
     .yoru-type-drawer-body #tableTypeForm .row {row-gap:16px;}
 
@@ -518,7 +467,6 @@
     .yoru-type-drawer-save svg {width:15px; height:15px;}
     
     /* Responsive Layout */
-    @@media(max-width:1050px) {.yoru-type-workspace.drawer-open {grid-template-columns:minmax(0,1fr) 380px;}}
     @@media(max-width:760px) {.yoru-type-workspace,.yoru-type-workspace.drawer-open {grid-template-columns:minmax(0,1fr); column-gap:0;} .yoru-type-drawer {position:relative; top:auto; height:min(75dvh,700px);} .yoru-type-workspace.drawer-open .yoru-type-drawer {grid-row:2;}}
     @@media(max-width:600px) {.yoru-type-drawer-header {padding:20px;} .yoru-type-drawer-body {padding:20px;} .yoru-type-drawer-footer {padding:15px 20px;}}
     @@media(prefers-reduced-motion:reduce) {.yoru-type-workspace,.yoru-type-drawer {transition:none;}}
@@ -549,7 +497,7 @@
     @@media (prefers-reduced-motion:reduce) {
         .yoru-type-workspace.managing-tables .yoru-inline-table-header,.yoru-type-workspace.managing-tables .yoru-search-toolbar,.yoru-type-workspace.managing-tables .table-responsive,.yoru-type-workspace.managing-tables .yoru-pagination {animation:none;}
     }
-    .yoru-inline-table-panel {margin-top:20px; margin-bottom:22px; border:1px solid #e7d9cc; border-radius:14px; background:#fffdfa; overflow:hidden;}
+    .yoru-inline-table-panel {margin-top:20px; margin-bottom:22px; border:1px solid #e7d9cc; background:#fffdfa; }
     .yoru-inline-table-content {width:100%; min-width:0;}
     .yoru-inline-table-header {display:flex; align-items:center; justify-content:space-between; padding:18px 22px; background:#faf5ef; border-bottom:1px solid #eee3d9;}
     .yoru-inline-table-header h5 {margin:0; font-family:Georgia,serif; font-size:20px; color:#30231d;}
@@ -570,7 +518,6 @@
     .yoru-table-drawer-header h2 {font-family:Georgia,serif; font-size:24px; color:#30231d; margin:0;}
     .yoru-table-drawer-body {flex:1; min-height:0; overflow-y:auto; align-content:start; padding:16px 24px 22px; margin:0;}
     .yoru-table-drawer-footer {display:flex; justify-content:flex-end; gap:10px; flex-shrink:0; padding:15px 24px; border-top:1px solid #eee3d9;}
-    .yoru-table-drawer .yoru-advanced-field {display:block!important;}
     @@media(max-width:1050px) {.yoru-type-workspace.table-drawer-open {grid-template-columns:minmax(0,1fr) 380px;}}
     @@media(max-width:760px) {.yoru-type-workspace.table-drawer-open {grid-template-columns:minmax(0,1fr);} .yoru-table-drawer {position:relative; top:auto; height:min(75dvh,700px);} .yoru-type-workspace.table-drawer-open .yoru-table-drawer {grid-row:2;}} 
     .yoru-table-drawer .yoru-edit-status-field {display:none;}
@@ -716,21 +663,18 @@
     .yoru-area-workspace #dining-areas-section {grid-column:1; grid-row:1; min-width:0; margin-bottom:0!important;}
 
     /* Drawer Container */
-    .yoru-area-drawer-overlay[hidden] {display:none!important;}
-    @@media(max-width:760px) {.yoru-area-workspace,.yoru-area-workspace.drawer-open {grid-template-columns:minmax(0,1fr); column-gap:0;} .yoru-area-workspace.drawer-open .yoru-area-drawer-overlay {grid-column:2; grid-row:1; position:relative; top:0; align-self:stretch; width:100%; min-width:0; height:auto; min-height:0; overflow:hidden; background:transparent; z-index:auto; display:block;}}
-    @@media(prefers-reduced-motion:reduce) {.yoru-area-workspace,.yoru-area-drawer {transition:none;}}
     .yoru-area-drawer-backdrop {display:none!important;}
     .yoru-area-drawer {position:relative; isolation:isolate; display:flex; flex-direction:column; width:100%; height:100%; min-width:0; overflow:hidden; background:#FFFAF4; border:1px solid #e7d9cc; border-radius:14px; box-shadow:0 8px 25px rgba(40,25,18,.08); transform:translateX(12px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .55s ease,transform .65s cubic-bezier(.22,1,.36,1);}
     .yoru-area-workspace.drawer-open .yoru-area-drawer {transform:translateX(0); opacity:1; visibility:visible; pointer-events:auto;}
 
     /* Drawer Form */
     .yoru-area-drawer-form {display:flex; flex-direction:column; height:100%; min-height:0;}
-    .yoru-area-drawer-header {display:flex; justify-content:space-between; align-items:flex-start; gap:14px; padding:22px 24px 18px; border-bottom:1px solid #eee3d9; flex-shrink:0;}
-    .yoru-area-drawer-header h2 {font-family:Georgia,serif; font-size:26px; font-weight:500; margin:0; color:#30231d;}
-    .yoru-area-drawer-body {flex:1; min-height:0; overflow-y:auto; padding:22px 24px; overscroll-behavior:contain;}
-    .yoru-area-drawer-footer {display:flex; justify-content:flex-end; gap:10px; padding:15px 24px; border-top:1px solid #eee3d9; flex-shrink:0; background:#fffdfa;}
+    .yoru-area-drawer-header {display:flex; justify-content:space-between; gap:14px; flex-shrink:0;}
+    .yoru-area-drawer-header h2 {font-family:Georgia,serif; font-weight:500; color:#30231d;}
+    .yoru-area-drawer-body {flex:1; min-height:0; overflow-y:auto; overscroll-behavior:auto;}
+    .yoru-area-drawer-footer {display:flex; justify-content:flex-end; gap:10px; flex-shrink:0; }
     /* ---- Dining Area drawer (Step 3): full-height background image, translucent form panels ---- */
-    .yoru-area-drawer::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/decorations/dining-drawer-bg.webp') no-repeat center top/cover;}
+    .yoru-area-drawer::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/decorations/dining-drawer-bg.webp') no-repeat center top/cover; opacity:.5;}
     .yoru-area-drawer-header {align-items:center; padding:20px 22px 12px; border-bottom:0; background:transparent;}
     .yoru-area-drawer-heading {display:flex; align-items:center; gap:13px; min-width:0;}
     .yoru-area-drawer-mark {display:grid; place-items:center; flex-shrink:0; width:46px; height:46px; border-radius:14px; background:linear-gradient(145deg,#a02a3f,#6f1727); color:#f3dca0; border:1px solid #e3c887; box-shadow:0 4px 10px rgba(110,25,40,.25);}
@@ -775,7 +719,393 @@
     .yoru-area-drawer-footer .yoru-type-drawer-save {border-color:#7a1c2c; background:linear-gradient(135deg,#a02a3f,#7a1c2c);}
     .yoru-area-drawer-footer .yoru-type-drawer-save:hover {background:linear-gradient(135deg,#8f2236,#6a1625);}
     @@media (max-width:520px) {.yoru-theme-picker {grid-template-columns:repeat(3,minmax(0,1fr));} }
-    #yoruAreaManualStatusWrap[hidden] {display:none!important;}
+    /* ---- Table Types: same look as Dining Areas (background, stepped gold frame, serif titles) ---- */
+    #tables-section {position:relative; isolation:isolate; background:#FFFAF4; border-color:#e7d9cc; border-radius:18px;}
+    #tables-section::before {content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit; pointer-events:none; background-repeat:no-repeat; background-image:url('/images/decorations/dining-sakura.webp'),url('/images/decorations/dining-waves-right.webp'),url('/images/decorations/dining-waves-left.webp'),radial-gradient(ellipse 70% 45% at 78% 100%,rgba(247,209,196,.38),transparent 72%),radial-gradient(ellipse 60% 38% at 12% 8%,rgba(249,226,205,.42),transparent 70%),radial-gradient(ellipse 50% 30% at 52% 58%,rgba(246,226,184,.20),transparent 72%),linear-gradient(180deg,#FFFAF4 0%,#FDF1EA 100%); background-size:min(44%,600px) auto,min(24%,330px) auto,min(30%,420px) auto,auto,auto,auto,auto; background-position:100% 0,100% 58%,0 100%,0 0,0 0,0 0,0 0;}
+    #tables-section h2.h5 {font-family:Georgia,serif; font-size:26px; font-weight:600; color:#2b211b;}
+    #tables-section .yoru-type-search, #tables-section .yoru-type-filter {border-color:#e3d0a6; background:rgba(255,252,247,.9);}
+    #tables-section .yoru-type-card {--area-main:#8C2437; --area-light:#F2D9DB; position:relative; background:#FFFCF7;}
+    #tables-section .yoru-type-card:hover {border-color:var(--area-main); box-shadow:0 12px 26px rgba(80,45,25,.15);}
+    #tables-section .yoru-type-image-wrap {border-bottom:2px solid #d9b873;}
+    #tables-section .yoru-type-badge {top:16px; right:16px;}
+    #tables-section .yoru-type-badge.yoru-type-badge-warn {top:auto; bottom:12px; left:16px;}
+    #tables-section .yoru-type-body {padding:16px 16px 14px;}
+    #tables-section .yoru-type-title {font-size:22px; line-height:1.2; text-align:center; margin:2px 0 4px; color:#2b211b;}
+    #tables-section .yoru-type-jp {text-align:center; color:#8a7a6c;}
+    #tables-section .yoru-type-details svg {color:var(--area-main);}
+    #tables-section .yoru-type-details > div {color:#62534a; font-size:12.5px;}
+    #tables-section .yoru-type-icon-btn {border:1px solid color-mix(in srgb,var(--area-main) 30%,#e3d3b5); background:#fffaf2; color:color-mix(in srgb,var(--area-main) 85%,#000);}
+    #tables-section .yoru-type-icon-btn:hover {background:var(--area-light); color:var(--area-main);}
+    #tables-section .yoru-type-icon-btn.yoru-type-icon-delete:hover {background:#fce4e1; color:#ba3225;}
+    #tables-section .yoru-type-manage-btn {border-color:#d2ab63; background:linear-gradient(135deg,#a02a3f,#7a1c2c);}
+    #tables-section .yoru-type-manage-btn:hover {background:linear-gradient(135deg,#8f2236,#6a1625);}
+    @@supports (-webkit-mask-box-image:url(a.svg) 36 fill / 36px stretch) {
+        #tables-section .yoru-type-grid {filter:drop-shadow(0 5px 7px rgba(80,45,25,.12));}
+        #tables-section .yoru-type-card {border-color:transparent; box-shadow:none; -webkit-mask-box-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108' width='108' height='108'%3E%3Cpath d='M15 4H93Q99 4 99 10V13C99 19 105 17 105 23V96Q105 104 97 104H11Q3 104 3 96V23C3 17 9 19 9 13V10Q9 4 15 4Z' fill='%23000'/%3E%3C/svg%3E") 36 fill / 36px stretch;}
+        #tables-section .yoru-type-card::before,#tables-section .yoru-type-card::after {content:""; position:absolute; inset:0; z-index:3; pointer-events:none; -webkit-mask-repeat:no-repeat;}
+        #tables-section .yoru-type-card::after {background:var(--area-main); -webkit-mask-box-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108' width='108' height='108'%3E%3Cpath d='M15 4H93Q99 4 99 10V13C99 19 105 17 105 23V96Q105 104 97 104H11Q3 104 3 96V23C3 17 9 19 9 13V10Q9 4 15 4Z' fill='none' stroke='%23000' stroke-width='1.6'/%3E%3C/svg%3E") 36 / 36px stretch;}
+        #tables-section .yoru-type-card::before {background:linear-gradient(135deg,#f3dca0,#d2ab63 55%,#f0d796); opacity:.85; -webkit-mask-box-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108' width='108' height='108'%3E%3Cpath d='M17 7.4H91Q95.6 7.4 95.6 12V14C95.6 19.5 101.6 18.5 101.6 24V95Q101.6 100.6 96 100.6H12Q6.4 100.6 6.4 95V24C6.4 18.5 12.4 19.5 12.4 14V12Q12.4 7.4 17 7.4Z' fill='none' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E") 36 / 36px stretch;}
+        #tables-section .yoru-type-card:hover {box-shadow:none;}
+    }
+    /* ---- Add / Edit Table Type drawer: same look as the Dining Area drawer ---- */
+    #yoruTypeDrawer {isolation:isolate; background:#FFFAF4;}
+    #yoruTypeDrawer::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/decorations/dining-drawer-bg.webp') no-repeat center top/cover; opacity:.5;}
+    #yoruTypeDrawer .yoru-type-drawer-header {align-items:center; padding:20px 22px 12px; border-bottom:0; background:transparent;}
+    #yoruTypeDrawer .yoru-type-drawer-header h2 {font-size:25px; line-height:1.15; margin:0 0 3px;}
+    #yoruTypeDrawer .yoru-type-drawer-header p {font-size:12.5px; color:#7a685b;}
+    #yoruTypeDrawer .yoru-type-drawer-close {border-color:#e3c887; background:rgba(255,250,244,.85); color:#7a1c2c;}
+    #yoruTypeDrawer .yoru-type-drawer-body {padding:6px 22px 18px;}
+    #yoruTypeDrawer #tableTypeFormView {padding:14px 16px 16px; border:1px solid #eadcc3; border-radius:14px; background:rgba(255,252,247,.8);}
+    #yoruTypeDrawer .yoru-form-section span {display:block; padding-left:10px; border-left:3px solid #8C2437; font-size:13px; font-weight:700; letter-spacing:.04em; line-height:1.2; text-transform:none; color:#2b211b;}
+    #yoruTypeDrawer .form-label {margin-bottom:6px; font-size:13px; font-weight:600; color:#4a3a30;}
+    #yoruTypeDrawer .form-control, #yoruTypeDrawer .form-select {border:1px solid #e3d0a6; border-radius:10px; background-color:#fffaf2; color:#2b211b; transition:border-color .2s,box-shadow .2s;}
+    #yoruTypeDrawer .form-control:focus, #yoruTypeDrawer .form-select:focus {border-color:#8C2437; box-shadow:0 0 0 3px rgba(140,36,55,.13); background-color:#fff;}
+    #yoruTypeDrawer .yoru-type-drawer-footer {padding:14px 22px; border-top:1px solid rgba(201,154,82,.6); background:rgba(255,250,244,.72); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+    #yoruTypeDrawer .yoru-type-drawer-cancel {border-color:#e3c887; background:rgba(255,252,247,.9);}
+    #yoruTypeDrawer .yoru-type-drawer-save {border-color:#7a1c2c; background:linear-gradient(135deg,#a02a3f,#7a1c2c);}
+    #yoruTypeDrawer .yoru-type-drawer-save:hover {background:linear-gradient(135deg,#8f2236,#6a1625);}
+    /* ---- Add / Edit Table drawer: same look as the other drawers ---- */
+    #tableModal {isolation:isolate; background:#FFFAF4;}
+    #tableModal::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/decorations/dining-drawer-bg.webp') no-repeat center top/cover; opacity:.5;}
+    #tableModal .yoru-table-drawer-header {padding:20px 22px 12px; border-bottom:0; background:transparent;}
+    #tableModal .yoru-table-drawer-header h2 {font-size:25px; line-height:1.15; margin:0 0 3px;}
+    #tableModal .btn-close {border:1px solid #e3c887; border-radius:50%; background-color:rgba(255,250,244,.85); padding:10px; opacity:1;}
+    #tableModal .yoru-table-drawer-body {flex:0 1 auto; margin:6px 22px 18px; padding:16px; border:1px solid #eadcc3; border-radius:14px; background:rgba(255,252,247,.8);}
+    #tableModal .yoru-table-drawer-footer {margin-top:auto; padding:14px 22px; border-top:1px solid rgba(201,154,82,.6); background:rgba(255,250,244,.72); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+    #tableModal .form-label {margin-bottom:6px; font-size:13px; font-weight:600; color:#4a3a30;}
+    #tableModal .form-control, #tableModal .form-select, #tableModal .input-group-text {border:1px solid #e3d0a6; border-radius:10px; background-color:#fffaf2; color:#2b211b; transition:border-color .2s,box-shadow .2s;}
+    #tableModal .input-group > .form-control {border-top-left-radius:0; border-bottom-left-radius:0;}
+    #tableModal .input-group > .input-group-text {border-top-right-radius:0; border-bottom-right-radius:0; font-weight:600; color:#8C2437;}
+    #tableModal .form-control:focus, #tableModal .form-select:focus {border-color:#8C2437; box-shadow:0 0 0 3px rgba(140,36,55,.13); background-color:#fff;}
+    #tableModal .yoru-table-drawer-footer .btn-outline-secondary {border-color:#e3c887; background:rgba(255,252,247,.9); color:#4a3a30;}
+    #tableModal .yoru-table-drawer-footer .btn-primary {border-color:#7a1c2c; background:linear-gradient(135deg,#a02a3f,#7a1c2c); color:#fff;}
+    #tableModal .yoru-table-drawer-footer .btn-primary:hover {background:linear-gradient(135deg,#8f2236,#6a1625);}
+    /* ---- Table Type Details modal: horizontal Japanese membership-card layout ---- */
+    #yoruTypeDetailsModal .modal-dialog.modal-dialog-centered {max-width:min(940px,calc(100vw - 32px));}
+    #yoruTypeDetailsModal .modal-content {position:relative; isolation:isolate; overflow:hidden; box-shadow:0 24px 60px rgba(40,25,18,.35);}
+    #yoruTypeDetailsModal .modal-content::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/tables/yoru-table-type-details-bg.webp') no-repeat center/cover;}
+    #yoruTypeDetailsModal .modal-content .modal-header {position:absolute; top:12px; right:14px; z-index:3; padding:0; border:0; background:transparent;}
+    #yoruTypeDetailsModal .modal-content .modal-title {position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+    #yoruTypeDetailsModal .modal-content .btn-close {width:34px; height:34px; margin:0; padding:9px; border:1px solid #e3c887; border-radius:50%; background-color:rgba(255,250,244,.92); opacity:1;}
+    #yoruTypeDetailsModal .modal-content .modal-body {display:grid; grid-template-columns:minmax(0,35fr) minmax(0,65fr); column-gap:34px; align-items:start; padding:48px 44px 8px;}
+    #yoruTypeDetailsModal .modal-content .modal-body > * {margin-left:0; margin-right:0;}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-photo-wrap {margin:0; border:2px solid #d9b873; border-radius:16px; box-shadow:0 14px 28px rgba(60,30,20,.28);}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-photo-wrap::after {display:none;}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-photo-wrap .yoru-type-details-photo {height:300px; transition:transform .4s ease;}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-photo-wrap:hover .yoru-type-details-photo {transform:scale(1.04);}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-photo-wrap .yoru-no-photo {height:300px;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-hero-text {top:12px; left:12px; right:auto; bottom:auto;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-badge {background:rgba(240,250,240,.92); border:1px solid rgba(82,115,66,.45);}
+    #yoruTypeDetailsModal .modal-content .yoru-details-badge.is-inactive {background:rgba(183,47,37,.9); border-color:rgba(255,255,255,.5); color:#fff;}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-code {top:auto; left:12px; bottom:10px;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-info {min-width:0; padding-top:4px;}
+    .yoru-details-eyebrow {font-size:11px; font-weight:700; letter-spacing:.2em; color:#a8803c;}
+    .yoru-details-name {display:block; margin:6px 0 2px; font-family:Georgia,serif; font-size:34px; font-weight:600; line-height:1.1; color:#7a1c2c; overflow-wrap:anywhere;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-jp {display:block; color:#8a7566; text-shadow:none; font-size:15px;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-jp[hidden] {display:none;}
+    .yoru-details-intro {margin:10px 0 16px; font-size:14px; line-height:1.55; color:#62534a; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-stats {grid-template-columns:repeat(4,minmax(0,1fr)); gap:0; padding:12px 0; border-top:1px solid rgba(201,154,82,.55); border-bottom:1px solid rgba(201,154,82,.55);}
+    #yoruTypeDetailsModal .modal-content .yoru-details-stat {align-items:center; text-align:center; padding:2px 10px; border:0; border-radius:0; background:transparent; border-left:1px solid rgba(201,154,82,.4);}
+    #yoruTypeDetailsModal .modal-content .yoru-details-stat:first-child {border-left:0;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-stat svg {color:#8C2437; width:22px; height:22px;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-stat strong {font-size:18px; color:#2b211b;}
+    #yoruTypeDetailsModal .modal-content .yoru-details-area {margin-top:14px; border:1px solid #e3c887; background:rgba(255,250,242,.9); box-shadow:0 4px 12px rgba(80,45,25,.08);}
+    #yoruTypeDetailsModal .modal-content .yoru-details-area svg {color:#8C2437;}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-description {grid-column:1/-1; position:relative; margin:22px 0 0; padding:14px 18px 14px 22px; border:1px solid rgba(227,200,135,.8); border-radius:12px; background:rgba(255,252,247,.86);}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-description::before {content:""; position:absolute; left:10px; top:18px; width:7px; height:7px; background:#C99A52; transform:rotate(45deg);}
+    #yoruTypeDetailsModal .modal-content .yoru-type-details-description strong {font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:#8C2437;}
+    #yoruTypeDetailsModal .modal-content .modal-footer {border:0; background:transparent; padding:12px 44px 22px;}
+    #yoruTypeDetailsModal .modal-content .modal-footer .btn {min-width:110px; padding:9px 24px; border:1px solid #d9b873; border-radius:10px; background:linear-gradient(135deg,#a02a3f,#7a1c2c); color:#fff; font-weight:600; transition:transform .2s ease,box-shadow .2s ease;}
+    #yoruTypeDetailsModal .modal-content .modal-footer .btn:hover {transform:translateY(-2px); box-shadow:0 8px 16px rgba(80,20,30,.3);}
+    @@media (max-width:760px) {
+        #yoruTypeDetailsModal .modal-content .modal-body {grid-template-columns:minmax(0,1fr); padding:52px 22px 8px; row-gap:18px;}
+        #yoruTypeDetailsModal .modal-content .yoru-type-details-photo-wrap .yoru-type-details-photo,#yoruTypeDetailsModal .modal-content .yoru-type-details-photo-wrap .yoru-no-photo {height:220px;}
+        #yoruTypeDetailsModal .modal-content .yoru-details-stats {grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 0;}
+        #yoruTypeDetailsModal .modal-content .yoru-details-stat:nth-child(3) {border-left:0;}
+        #yoruTypeDetailsModal .modal-content .modal-footer {padding:12px 22px 20px;}
+        .yoru-details-name {font-size:28px;}
+    }
+    .yoru-area-type-tags:not(.is-open) .yoru-area-type-extra {display:none;}
+    .yoru-area-type-more {display:inline-flex; align-items:center; padding:6px 12px; border:1px dashed color-mix(in srgb,var(--area-main) 55%,#fff); border-radius:999px; background:transparent; color:var(--area-main); font-size:13px; font-weight:700; line-height:1.3; cursor:pointer; transition:background .2s;}
+    .yoru-area-type-more:hover {background:var(--area-light);}
+    .yoru-area-type-more:focus-visible {outline:2px solid var(--area-main); outline-offset:2px;}
+    /* ---- Operating Hours: three section backgrounds, schedule banner, day badges ---- */
+    #opening-hours-section .yoru-hours-main {position:relative; isolation:isolate; overflow:hidden; background:#FFF8F0!important; border-color:#e3c887!important;}
+    #opening-hours-section .yoru-hours-main::before,#opening-hours-section .yoru-hours-main::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/tables/yoru-weekly-schedule-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
+    #opening-hours-section .yoru-hours-main::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 62%,transparent); mask-image:linear-gradient(180deg,#000 62%,transparent);}
+    #opening-hours-section .yoru-hours-main::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 62%,transparent); mask-image:linear-gradient(0deg,#000 62%,transparent);}
+    #opening-hours-section .yoru-timeline-card {position:relative; isolation:isolate; overflow:hidden; background:#FFF8F0!important; border-color:#e3c887!important;}
+    #opening-hours-section .yoru-timeline-card::before,#opening-hours-section .yoru-timeline-card::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/tables/yoru-weekly-timeline-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
+    #opening-hours-section .yoru-timeline-card::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 62%,transparent); mask-image:linear-gradient(180deg,#000 62%,transparent);}
+    #opening-hours-section .yoru-timeline-card::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 62%,transparent); mask-image:linear-gradient(0deg,#000 62%,transparent);}
+    #opening-hours-section #yoruSpecialDatesCard {position:relative; isolation:isolate; overflow:hidden; background:#FFF8F0!important; border-color:#e3c887!important;}
+    #opening-hours-section #yoruSpecialDatesCard::before,#opening-hours-section #yoruSpecialDatesCard::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/tables/yoru-special-dates-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
+    #opening-hours-section #yoruSpecialDatesCard::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 62%,transparent); mask-image:linear-gradient(180deg,#000 62%,transparent);}
+    #opening-hours-section #yoruSpecialDatesCard::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 62%,transparent); mask-image:linear-gradient(0deg,#000 62%,transparent);}
+    #opening-hours-section .yoru-luxury-eyebrow {font-size:11px; letter-spacing:.22em; color:#8C2437;}
+    #opening-hours-section .yoru-hours-main .yoru-luxury-title {font-size:28px; font-weight:600; color:#2b211b; position:relative; display:inline-block; padding-bottom:8px;}
+    #opening-hours-section .yoru-hours-main .yoru-luxury-title::after {content:""; position:absolute; left:0; bottom:0; width:100%; height:6px; background:linear-gradient(90deg,#d2ab63,#f3dca0 60%,transparent); border-radius:6px 20px 20px 6px / 4px 6px 6px 4px; transform:skewX(-24deg); opacity:.9;}
+    #opening-hours-section .yoru-hours-main .yoru-luxury-subtitle {font-size:13.5px; color:#62534a;}
+    #opening-hours-section .yoru-hours-workspace {align-items:stretch!important;}
+    #opening-hours-section .yoru-hours-main {display:flex!important; flex-direction:column;}
+    #opening-hours-section .yoru-hours-main > form {flex:1 1 auto; display:flex; flex-direction:column; min-height:0;}
+    #opening-hours-section .yoru-hours-sidebar {grid-template-rows:auto 1fr!important; align-content:stretch!important;}
+    #opening-hours-section .yoru-luxury-btn {background:linear-gradient(135deg,#a02a3f,#7a1c2c); border:1px solid #d2ab63; color:#fff;}
+    #opening-hours-section .yoru-luxury-btn:hover {background:linear-gradient(135deg,#8f2236,#6a1625);}
+    #opening-hours-section .yoru-luxury-btn.secondary {background:rgba(255,252,247,.92); color:#4a3a30;}
+    #opening-hours-section .yoru-hours-banner {--bh:128px; position:relative; isolation:isolate; display:flex; flex-direction:column; align-items:center; gap:10px; height:auto; min-height:var(--bh); margin:0 0 12px; padding:11px 20px 12px; border-radius:0; background:transparent; color:#fff;}
+    #opening-hours-section .yoru-hours-banner::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; border:solid transparent; border-width:0 calc(var(--bh) * 2.01) 0 calc(var(--bh) * 1.38); border-image:url('/images/tables/yoru-weekly-banner.webp') 0 700 0 480 fill / 0 calc(var(--bh) * 2.01) 0 calc(var(--bh) * 1.38) stretch;}
+    #opening-hours-section .yoru-hours-banner-title {display:block; position:relative; font-family:Georgia,serif; font-size:23px; font-weight:600; letter-spacing:.03em; color:#FBEFD2; text-shadow:0 2px 6px rgba(40,5,15,.55);}
+    #opening-hours-section .yoru-hours-banner-title::before,#opening-hours-section .yoru-hours-banner-title::after {content:""; display:inline-block; width:16px; height:16px; margin:0 12px; vertical-align:-1px; background:#F3DCA0; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.5' cy='20.0' r='7.4'/%3E%3Ccircle cx='23.6' cy='30.9' r='7.4'/%3E%3Ccircle cx='10.7' cy='26.8' r='7.4'/%3E%3Ccircle cx='10.7' cy='13.2' r='7.4'/%3E%3Ccircle cx='23.6' cy='9.1' r='7.4'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.5' cy='20.0' r='7.4'/%3E%3Ccircle cx='23.6' cy='30.9' r='7.4'/%3E%3Ccircle cx='10.7' cy='26.8' r='7.4'/%3E%3Ccircle cx='10.7' cy='13.2' r='7.4'/%3E%3Ccircle cx='23.6' cy='9.1' r='7.4'/%3E%3C/svg%3E") center/contain no-repeat;}
+    .yoru-hours-sr {position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+    #opening-hours-section .yoru-hours-banner-strip {display:flex; align-items:stretch; width:84%; margin-top:auto; padding:8px 6px; border:1px solid rgba(243,220,160,.9); border-radius:14px; background:linear-gradient(100deg,#FFFAF3 0%,#FDEBDD 55%,#F9DCC8 100%); box-shadow:0 4px 12px rgba(40,5,15,.3),inset 0 1px 0 rgba(255,255,255,.8);}
+    #opening-hours-section .yoru-hours-banner-item {display:flex; flex:1 1 0; min-width:0; align-items:center; gap:8px; padding:0 12px; border-left:1px solid rgba(160,90,70,.35);}
+    #opening-hours-section .yoru-hours-banner-item:first-child {border-left:0;}
+    #opening-hours-section .yoru-hours-banner-item[hidden] {display:none;}
+    #opening-hours-section .yoru-hours-banner-item svg {flex-shrink:0; width:26px; height:26px; color:#8C2437; stroke-width:1.7;}
+    #opening-hours-section .yoru-hours-banner-item > div {min-width:0; line-height:1.2;}
+    #opening-hours-section .yoru-hours-banner-item small {display:block; font-size:11.5px; font-weight:500; letter-spacing:.02em; text-transform:none; color:#4a3a30;}
+    #opening-hours-section .yoru-hours-banner-item b {display:block; font-size:14px; color:#2b211b; white-space:nowrap;}
+    #opening-hours-section .yoru-hours-banner-item em {display:block; font-style:normal; font-size:10.5px; color:#8a6a5a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+    #opening-hours-section .yoru-hours-list {flex:1 1 auto; gap:5px; grid-auto-rows:minmax(48px,1fr);}
+    #opening-hours-section .yoru-hours-row.yoru-day-closed {min-height:48px;}
+    #opening-hours-section .yoru-hours-row {min-height:48px; padding:5px 14px 5px 12px; background:rgba(255,248,240,.94); border:1px solid #e3c887; border-radius:12px; transition:transform .2s ease,box-shadow .2s ease,background .2s ease;}
+    #opening-hours-section .yoru-hours-row:hover {background:#fff; border-color:#d2ab63; box-shadow:0 7px 18px rgba(80,45,25,.12);}
+    #opening-hours-section .yoru-hours-row.yoru-day-closed {background:rgba(253,236,234,.95); border-color:#e8b9b3;}
+    #opening-hours-section .yoru-hours-day {position:relative; display:flex; align-items:center; min-height:36px; padding-left:48px; font-family:Georgia,serif; font-size:16px; font-weight:600; color:#2b211b;}
+    #opening-hours-section .yoru-hours-day::before {content:""; position:absolute; left:0; top:50%; width:36px; height:36px; transform:translateY(-50%); background:#8C2437; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='28.13' cy='28.13' r='7.6'/%3E%3Ccircle cx='20.00' cy='31.50' r='7.6'/%3E%3Ccircle cx='11.87' cy='28.13' r='7.6'/%3E%3Ccircle cx='8.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='11.87' cy='11.87' r='7.6'/%3E%3Ccircle cx='20.00' cy='8.50' r='7.6'/%3E%3Ccircle cx='28.13' cy='11.87' r='7.6'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='28.13' cy='28.13' r='7.6'/%3E%3Ccircle cx='20.00' cy='31.50' r='7.6'/%3E%3Ccircle cx='11.87' cy='28.13' r='7.6'/%3E%3Ccircle cx='8.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='11.87' cy='11.87' r='7.6'/%3E%3Ccircle cx='20.00' cy='8.50' r='7.6'/%3E%3Ccircle cx='28.13' cy='11.87' r='7.6'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3C/svg%3E") center/contain no-repeat;}
+    #opening-hours-section .yoru-hours-day::after {content:attr(data-kanji); position:absolute; left:0; top:50%; width:36px; transform:translateY(-50%); text-align:center; font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP',serif; font-size:17px; font-weight:700; line-height:1; color:#FBEFD2;}
+    #opening-hours-section .yoru-hours-row:nth-child(even) .yoru-hours-day::before {background:#C99A52;}
+    #opening-hours-section .yoru-hours-row:nth-child(even) .yoru-hours-day::after {color:#5b1522;}
+    #opening-hours-section .yoru-hours-caption {font-size:9.5px; letter-spacing:.14em; color:#8a7566;}
+    #opening-hours-section .yoru-hours-value {font-size:14px; color:#2b211b;}
+    #opening-hours-section .yoru-hours-arrow {color:#c99a52;}
+    #opening-hours-section .yoru-hours-status:not(.is-closed) [data-hours-status] {padding:4px 13px; border:1px solid rgba(82,115,66,.4); border-radius:999px; background:#e6f2e2; color:#3a6b2c; font-size:11.5px; font-weight:700;}
+    #opening-hours-section .yoru-hours-status.is-closed [data-hours-status] {padding:4px 13px; border:1px solid rgba(183,47,37,.35); border-radius:999px; background:#fbe0dc; color:#b3261e; font-size:11.5px; font-weight:700;}
+    #opening-hours-section .yoru-timeline-tooltip {display:flex; align-items:center; justify-content:center; padding:5px 10px; line-height:1.35; text-align:center; white-space:pre;}
+    #opening-hours-section .yoru-hours-row .yoru-hours-status [data-hours-status] {display:inline-flex; align-items:center; justify-content:center; min-width:58px; height:26px; padding:0 13px; line-height:1;}
+    #opening-hours-section .yoru-hours-day::after {display:flex; align-items:center; justify-content:center; height:36px; padding-bottom:1px;}
+    #opening-hours-section .yoru-timeline-row {background:rgba(255,248,240,.92); border-color:#e8d6b0;}
+    #opening-hours-section .yoru-timeline-row:hover {border-color:#d2ab63;}
+    #opening-hours-section .yoru-timeline-bar {background:linear-gradient(90deg,#8C2437,#b8384c);}
+    .yoru-timeline-break {position:absolute; top:0; bottom:0; background:repeating-linear-gradient(135deg,#f6e7c4 0 3px,#d2ab63 3px 5px);}
+    #opening-hours-section .yoru-special-header .yoru-hours-side-heading h3,#opening-hours-section .yoru-timeline-card .yoru-hours-side-heading h3 {font-size:22px; color:#2b211b;}
+    #opening-hours-section .yoru-special-header .yoru-hours-side-heading svg,#opening-hours-section .yoru-timeline-card .yoru-hours-side-heading svg {color:#8C2437;}
+    #opening-hours-section .yoru-hours-main .yoru-luxury-head > div:first-child {padding:8px 18px 6px; border-radius:14px; background:rgba(255,249,242,.8);}
+    #opening-hours-section .yoru-timeline-card > .yoru-hours-side-heading {width:fit-content; margin:0; padding:8px 16px 2px; border-radius:12px 12px 0 0; background:rgba(255,249,242,.8);}
+    #opening-hours-section .yoru-timeline-card > p {width:fit-content; padding:0 16px 8px; border-radius:0 12px 12px 12px; background:rgba(255,249,242,.8);}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-header .yoru-hours-side-heading {padding:8px 16px 2px; border-radius:12px 12px 0 0; background:rgba(255,249,242,.8);}
+    #opening-hours-section #yoruSpecialDatesCard > p {width:fit-content; padding:0 16px 8px; border-radius:0 12px 12px 12px; background:rgba(255,249,242,.8);}
+    @@media (max-width:650px) {
+        #opening-hours-section .yoru-hours-banner {background:#7a1c2c; border-radius:18px; padding:14px 12px 14px;}
+        #opening-hours-section .yoru-hours-banner::before {border:0; border-radius:18px; border-image:none; background:url('/images/tables/yoru-weekly-banner.webp') no-repeat center/auto 100%;}
+        #opening-hours-section .yoru-hours-banner-title {font-size:20px; text-align:center;}
+        #opening-hours-section .yoru-hours-banner-strip {width:100%; flex-direction:column; gap:6px; margin-top:6px; padding:8px 10px;}
+        #opening-hours-section .yoru-hours-banner-item {padding:0; border-left:0;}
+        #opening-hours-section .yoru-hours-day {padding-left:46px; font-size:15px;}
+        #opening-hours-section .yoru-hours-banner {border:1px solid #d2ab63;}
+        #opening-hours-section .yoru-hours-list .yoru-hours-row {grid-template-columns:minmax(0,1fr) auto; row-gap:6px; padding:8px 10px;}
+        #opening-hours-section .yoru-hours-list .yoru-hours-row .yoru-hours-day {grid-column:1; grid-row:1;}
+        #opening-hours-section .yoru-hours-list .yoru-hours-row .yoru-hours-status {grid-column:2; grid-row:1;}
+        #opening-hours-section .yoru-hours-list .yoru-hours-row .yoru-hours-time-group,#opening-hours-section .yoru-hours-list .yoru-hours-row .yoru-hours-closed-message {grid-column:1/-1; grid-row:2; justify-content:center;}
+    }
+    /* ---- Edit Weekly Schedule + Special Dates modals ---- */
+    #yoruSchedOverlay .yoru-sched-panel,#yoruCalOverlay .yoru-cal-panel {position:relative; isolation:isolate; border:1px solid #e3c887; background:#FFF8F0; box-shadow:0 25px 65px rgba(40,10,15,.38);}
+    #yoruSchedOverlay .yoru-sched-panel .yoru-luxury-eyebrow {display:inline-block; padding:3px 11px; border-radius:999px; background:linear-gradient(180deg,#9a2a40,#7a1a30); color:#fff4dc;}
+    #yoruSchedOverlay .yoru-sched-panel::before,#yoruSchedOverlay .yoru-sched-panel::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:min(42%,320px); pointer-events:none; background:url('/images/tables/yoru-edit-schedule-bg.webp') no-repeat; background-size:100% auto;}
+    #yoruSchedOverlay .yoru-sched-panel::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 66%,transparent); mask-image:linear-gradient(180deg,#000 66%,transparent);}
+    #yoruSchedOverlay .yoru-sched-panel::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 66%,transparent); mask-image:linear-gradient(0deg,#000 66%,transparent);}
+    #yoruCalOverlay .yoru-cal-panel::before,#yoruCalOverlay .yoru-cal-panel::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:60%; pointer-events:none; background:url('/images/tables/yoru-special-dates-modal-bg.webp') no-repeat; background-size:100% auto;}
+    #yoruCalOverlay .yoru-cal-panel::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 66%,transparent); mask-image:linear-gradient(180deg,#000 66%,transparent);}
+    #yoruCalOverlay .yoru-cal-panel::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 66%,transparent); mask-image:linear-gradient(0deg,#000 66%,transparent);}
+    #yoruSchedOverlay .yoru-sched-head,#yoruCalOverlay .yoru-sched-head {border-bottom:0; background:transparent; align-items:center;}
+    #yoruSchedOverlay .yoru-luxury-eyebrow,#yoruCalOverlay .yoru-luxury-eyebrow {font-size:11px; letter-spacing:.2em; color:#8C2437;}
+    #yoruSchedOverlay .yoru-sched-head h2,#yoruCalOverlay .yoru-sched-head h2 {font-size:30px; font-weight:600; color:#2b211b;}
+    #yoruSchedOverlay .yoru-type-drawer-close,#yoruCalOverlay .yoru-type-drawer-close {border-color:#e3c887; background:rgba(255,250,244,.9); color:#7a1c2c;}
+    #yoruSchedOverlay .yoru-sched-body {counter-reset:schedq; padding:6px 26px 14px;}
+    #yoruSchedOverlay .yoru-sched-q {counter-increment:schedq; margin:0 0 14px; padding:16px 18px; border:1px solid #eadcc3; border-radius:16px; background:rgba(255,250,244,.84); box-shadow:0 4px 14px rgba(80,45,25,.07);}
+    #yoruSchedOverlay .yoru-sched-q:last-child {margin-bottom:0; padding-bottom:16px;}
+    #yoruSchedOverlay .yoru-sched-q h4 {display:flex; align-items:center; gap:10px; margin:0 0 4px; font-family:Georgia,serif; font-size:19px; font-weight:600; color:#2b211b;}
+    #yoruSchedOverlay .yoru-sched-q h4::before {content:counter(schedq,decimal-leading-zero); display:inline-grid; place-items:center; min-width:30px; height:24px; padding:0 6px; border-radius:7px; background:linear-gradient(135deg,#a02a3f,#7a1c2c); color:#FBEFD2; font-family:Inter,system-ui,sans-serif; font-size:12px; font-weight:700; letter-spacing:.04em;}
+    #yoruSchedOverlay .yoru-sched-q > p {margin:0 0 12px; font-size:12.5px; color:#7a685b;}
+    #yoruSchedOverlay .yoru-seg {border-color:#e3c887; background:rgba(255,252,247,.9);}
+    #yoruSchedOverlay .yoru-seg button {color:#6d5a4f;}
+    #yoruSchedOverlay .yoru-seg button.on {background:linear-gradient(135deg,#a02a3f,#7a1c2c); color:#fff; box-shadow:0 2px 6px rgba(122,28,44,.35);}
+    #yoruSchedOverlay .yoru-seg button.on::before {content:"✓ ";}
+    #yoruSchedOverlay .yoru-sched-break,#yoruSchedOverlay .yoru-sched-card {border:1px solid #eadcc3; background:rgba(255,252,247,.9);}
+    #yoruSchedOverlay .yoru-time-btn {border-color:#e3c887; background:#fffaf2;}
+    #yoruSchedOverlay .yoru-time-btn:hover {border-color:#8C2437; color:#8C2437;}
+    #yoruSchedOverlay .yoru-chips {gap:10px;}
+    #yoruSchedOverlay .yoru-chip {position:relative; min-width:0; width:54px; height:54px; padding:0; border:0; border-radius:0; background:#8C2437; color:#FBEFD2; font-size:13px; font-weight:700; text-decoration:none; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='28.13' cy='28.13' r='7.6'/%3E%3Ccircle cx='20.00' cy='31.50' r='7.6'/%3E%3Ccircle cx='11.87' cy='28.13' r='7.6'/%3E%3Ccircle cx='8.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='11.87' cy='11.87' r='7.6'/%3E%3Ccircle cx='20.00' cy='8.50' r='7.6'/%3E%3Ccircle cx='28.13' cy='11.87' r='7.6'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='28.13' cy='28.13' r='7.6'/%3E%3Ccircle cx='20.00' cy='31.50' r='7.6'/%3E%3Ccircle cx='11.87' cy='28.13' r='7.6'/%3E%3Ccircle cx='8.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='11.87' cy='11.87' r='7.6'/%3E%3Ccircle cx='20.00' cy='8.50' r='7.6'/%3E%3Ccircle cx='28.13' cy='11.87' r='7.6'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3C/svg%3E") center/contain no-repeat; transition:transform .2s ease;}
+    #yoruSchedOverlay .yoru-chip:nth-child(even) {background:#C99A52; color:#5b1522;}
+    #yoruSchedOverlay .yoru-chip:hover {transform:translateY(-2px);}
+    #yoruSchedOverlay .yoru-chip.off {background:#e8dccb; color:#a99a8c; text-decoration:none;}
+    #yoruSchedOverlay .yoru-day-grid {grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+    #yoruSchedOverlay .yoru-day-card {border:1px solid #eadcc3; background:rgba(255,252,247,.92);}
+    #yoruSchedOverlay .yoru-day-card.is-closed {background:rgba(244,236,226,.92);}
+    #yoruSchedOverlay .yoru-day-head strong {position:relative; display:inline-flex; align-items:center; min-height:34px; padding-left:42px; font-size:16px;}
+    #yoruSchedOverlay .yoru-day-head strong::before {content:""; position:absolute; left:0; top:50%; width:34px; height:34px; transform:translateY(-50%); background:#8C2437; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='28.13' cy='28.13' r='7.6'/%3E%3Ccircle cx='20.00' cy='31.50' r='7.6'/%3E%3Ccircle cx='11.87' cy='28.13' r='7.6'/%3E%3Ccircle cx='8.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='11.87' cy='11.87' r='7.6'/%3E%3Ccircle cx='20.00' cy='8.50' r='7.6'/%3E%3Ccircle cx='28.13' cy='11.87' r='7.6'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='28.13' cy='28.13' r='7.6'/%3E%3Ccircle cx='20.00' cy='31.50' r='7.6'/%3E%3Ccircle cx='11.87' cy='28.13' r='7.6'/%3E%3Ccircle cx='8.50' cy='20.00' r='7.6'/%3E%3Ccircle cx='11.87' cy='11.87' r='7.6'/%3E%3Ccircle cx='20.00' cy='8.50' r='7.6'/%3E%3Ccircle cx='28.13' cy='11.87' r='7.6'/%3E%3Ccircle cx='20' cy='20' r='13'/%3E%3C/svg%3E") center/contain no-repeat;}
+    #yoruSchedOverlay .yoru-day-card:nth-child(even) .yoru-day-head strong::before {background:#C99A52;}
+    #yoruSchedOverlay .yoru-day-card.is-closed .yoru-day-head strong::before {background:#b9aa99;}
+    #yoruSchedOverlay .yoru-day-head strong::after {content:attr(data-kanji); position:absolute; left:0; top:50%; display:flex; align-items:center; justify-content:center; width:34px; height:34px; transform:translateY(-50%); font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP',serif; font-size:15px; font-weight:700; color:#FBEFD2;}
+    #yoruSchedOverlay .yoru-day-card:nth-child(even) .yoru-day-head strong::after {color:#5b1522;}
+    #yoruSchedOverlay .yoru-mini-switch input:checked {background:#8C2437;}
+    #yoruSchedOverlay .yoru-sched-foot,#yoruCalOverlay .yoru-cal-body {border-top:0;}
+    #yoruSchedOverlay .yoru-sched-foot {border-top:1px solid rgba(201,154,82,.6); background:rgba(255,250,244,.72); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);}
+    #yoruSchedOverlay .yoru-luxury-btn,#yoruCalOverlay .yoru-luxury-btn {background:linear-gradient(135deg,#a02a3f,#7a1c2c); border:1px solid #d2ab63; color:#fff;}
+    #yoruSchedOverlay .yoru-luxury-btn.secondary {background:rgba(255,252,247,.92); color:#4a3a30; border-color:#e3c887;}
+    #yoruCalOverlay .yoru-cal-main,#yoruCalOverlay .yoru-cal-side {padding:16px 18px; border:1px solid #eadcc3; border-radius:16px; background:rgba(255,250,244,.86); box-shadow:0 4px 14px rgba(80,45,25,.07);}
+    #yoruCalOverlay .yoru-cal-body {align-items:start;}
+    #yoruCalOverlay .yoru-cal-nav strong {color:#2b211b;}
+    #yoruCalOverlay .yoru-cal-nav button {border-color:#e3c887; background:#fffaf2; color:#8C2437;}
+    #yoruCalOverlay .yoru-cal-weekdays span {color:#8C2437;}
+    #yoruCalOverlay .yoru-cal-cell {border-color:#e8d6b0; background:rgba(255,252,247,.95);}
+    #yoruCalOverlay .yoru-cal-cell.is-other {background:rgba(247,240,230,.9);}
+    #yoruCalOverlay .yoru-cal-cell.is-today {border-color:#7a1c2c; background:#8C2437; box-shadow:none;}
+    #yoruCalOverlay .yoru-cal-cell.is-today > b {color:#fff;}
+    #yoruCalOverlay .yoru-cal-chip.closed {background:#fbe0dc; color:#a3261e;}
+    #yoruCalOverlay .yoru-cal-chip.special {background:#f6ecd0; color:#7a5a12;}
+    #yoruCalOverlay .yoru-cal-side h3 {font-size:20px; color:#2b211b;}
+    #yoruCalOverlay .yoru-cal-item {border-color:#e8d6b0; background:rgba(255,252,247,.95);}
+    #yoruCalOverlay .yoru-cal-item.is-focus {border-color:#8C2437; box-shadow:0 0 0 2px rgba(140,36,55,.14);}
+    /* ---- Special Dates: heading block, small cards ---- */
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-header {min-height:0; margin-bottom:0; align-items:flex-start;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-header .yoru-hours-side-heading {width:fit-content; margin:0; padding-bottom:4px;}
+    #opening-hours-section #yoruSpecialDatesCard > p {margin:0 0 10px; padding-top:0;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {position:relative; overflow:hidden; background:linear-gradient(135deg,rgba(255,252,246,.96),rgba(255,243,226,.92))!important; box-shadow:0 3px 10px rgba(140,36,55,.07); transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item::before {content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:linear-gradient(180deg,#e3c887,#c99a45);}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item:has(.yoru-special-status.closed)::before {background:linear-gradient(180deg,#a83248,#7a1a30);}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item:hover {transform:translateY(-2px); border-color:#d2ab63!important; box-shadow:0 8px 18px rgba(140,36,55,.14);}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item .yoru-special-date {color:#8c2437; font-size:11.5px; font-weight:700; letter-spacing:.02em;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item .yoru-special-name {font-family:Georgia,serif; font-size:17px; font-weight:600; color:#2b211b;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item .yoru-special-status.closed {display:inline-flex; width:fit-content; margin-top:3px; padding:2px 9px; border:1px solid rgba(183,47,37,.35); border-radius:999px; background:#fbe0dc; color:#b3261e; font-size:10.5px; font-weight:700; line-height:1.4;}
+
+    /* ---- Shared special-date modal pieces ---- */
+    #yoruSpecialModal .modal-dialog {max-width:640px;}
+    #yoruSpecialDetailsModal .modal-dialog {max-width:460px;}
+    #yoruSpecialModal .modal-content.yoru-special-modal,#yoruSpecialDetailsModal .modal-content.yoru-special-modal {position:relative; isolation:isolate; overflow:visible; border:1.5px solid #dcb866; border-radius:20px; background:#fdf4e8; box-shadow:0 28px 70px rgba(60,20,20,.38);}
+    #yoruSpecialModal .modal-content::before,#yoruSpecialModal .modal-content::after,#yoruSpecialDetailsModal .modal-content::before,#yoruSpecialDetailsModal .modal-content::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:min(48%,340px); border-radius:18px; pointer-events:none; opacity:.5; background:url('/images/tables/yoru-add-special-date-bg.webp') no-repeat; background-size:100% auto;}
+    #yoruSpecialModal .modal-content::before,#yoruSpecialDetailsModal .modal-content::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 68%,transparent); mask-image:linear-gradient(180deg,#000 68%,transparent);}
+    #yoruSpecialModal .modal-content::after,#yoruSpecialDetailsModal .modal-content::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 68%,transparent); mask-image:linear-gradient(0deg,#000 68%,transparent);}
+    #yoruSpecialModal .modal-header,#yoruSpecialDetailsModal .modal-header {align-items:flex-start; padding:20px 26px 8px; border:0; background:transparent;}
+    #yoruSpecialModal .yoru-luxury-eyebrow,#yoruSpecialDetailsModal .yoru-luxury-eyebrow {display:inline-block; padding:3px 11px; border-radius:999px; background:linear-gradient(180deg,#9a2a40,#7a1a30); color:#fff4dc; font-size:10.5px; letter-spacing:.2em; margin-bottom:10px;}
+    #yoruSpecialModal .modal-title,#yoruSpecialDetailsModal .modal-title {position:relative; display:block; margin:0!important; font-family:Georgia,'Times New Roman',serif; font-size:30px; font-weight:600; line-height:1.15; color:#7a1a30;}
+    #yoruSpecialModal .modal-title::after,#yoruSpecialDetailsModal .modal-title::after {content:""; display:block; width:74px; height:7px; margin-top:6px; border-radius:7px 2px 7px 2px; background:linear-gradient(90deg,#c99a45,#f0d796 60%,transparent);}
+    #yoruSpecialModal .btn-close,#yoruSpecialDetailsModal .btn-close {flex:none; width:34px; height:34px; margin:0 0 0 auto; padding:0; border:1px solid #e3c887; border-radius:50%; background-color:rgba(255,250,244,.92); background-size:11px; opacity:1;}
+    .yoru-sd-titlewrap {display:flex; flex-direction:column; align-items:flex-start;}
+    #yoruSpecialModal .modal-body {position:relative; z-index:2; padding:6px 26px 6px;}
+    #yoruSpecialDetailsModal .modal-body {padding:8px 26px 10px;}
+    #yoruSpecialModal .modal-footer,#yoruSpecialDetailsModal .modal-footer {gap:10px; padding:10px 26px 22px; border:0; background:transparent;}
+
+    .yoru-sd-ico {position:relative; z-index:1; display:inline-grid; place-items:center; flex:none; width:36px; height:36px; color:#fff;}
+    .yoru-sd-ico::before {content:""; position:absolute; inset:0; z-index:-1; background:linear-gradient(135deg,#e3c887,#c08d3b); -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg%3E%3Ccircle cx='50' cy='20' r='19'/%3E%3Ccircle cx='71' cy='29' r='19'/%3E%3Ccircle cx='80' cy='50' r='19'/%3E%3Ccircle cx='71' cy='71' r='19'/%3E%3Ccircle cx='50' cy='80' r='19'/%3E%3Ccircle cx='29' cy='71' r='19'/%3E%3Ccircle cx='20' cy='50' r='19'/%3E%3Ccircle cx='29' cy='29' r='19'/%3E%3Ccircle cx='50' cy='50' r='28'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg%3E%3Ccircle cx='50' cy='20' r='19'/%3E%3Ccircle cx='71' cy='29' r='19'/%3E%3Ccircle cx='80' cy='50' r='19'/%3E%3Ccircle cx='71' cy='71' r='19'/%3E%3Ccircle cx='50' cy='80' r='19'/%3E%3Ccircle cx='29' cy='71' r='19'/%3E%3Ccircle cx='20' cy='50' r='19'/%3E%3Ccircle cx='29' cy='29' r='19'/%3E%3Ccircle cx='50' cy='50' r='28'/%3E%3C/g%3E%3C/svg%3E") center/contain no-repeat;}
+    .yoru-sd-ico.wine::before {background:linear-gradient(135deg,#a83248,#7a1a30);}
+    .yoru-sd-ico svg {width:17px; height:17px;}
+
+    /* ---- Add / Edit modal ---- */
+    #yoruSpecialModal .yoru-sd-card {margin:0 0 12px; padding:14px 18px 16px; border:1px solid #eadcc3; border-radius:16px; background:rgba(255,250,244,.9); box-shadow:0 4px 14px rgba(140,36,55,.07);}
+    .yoru-sd-sechead {display:flex; align-items:center; margin:0 0 12px;}
+    .yoru-sd-tag {display:inline-flex; align-items:center; margin:0 0 0 -8px; padding:5px 18px 5px 16px; border-radius:999px; background:linear-gradient(180deg,#9a2a40,#7a1a30); color:#fff4dc; font-family:Inter,system-ui,sans-serif; font-size:13px; font-weight:700; letter-spacing:.05em; box-shadow:0 2px 6px rgba(122,26,48,.25);}
+    .yoru-sd-tag label {margin:0; color:inherit; font:inherit; letter-spacing:inherit;}
+    #yoruSpecialModal .form-label {margin-bottom:5px; color:#6b4a3e; font-size:12px; font-weight:700; letter-spacing:.04em;}
+    #yoruSpecialModal .form-control {min-height:42px; border:1px solid #e3c887; border-radius:12px; background-color:#fffdf8; color:#2b211b; font-weight:600; box-shadow:0 2px 6px rgba(140,36,55,.05);}
+    #yoruSpecialModal .form-control::placeholder {color:#b59a86; font-weight:500;}
+    #yoruSpecialModal .form-control:focus {border-color:#b8384c; box-shadow:0 0 0 3px rgba(140,36,55,.14);}
+    .yoru-sd-hint {display:block; color:#8a6f60; font-size:12px;}
+    .yoru-dp-field {position:relative;}
+    .yoru-dp-input {cursor:pointer; padding-right:40px; background:#fffdf8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238c2437' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='5' width='16' height='15' rx='2'/%3E%3Cpath d='M8 3v4M16 3v4M4 10h16'/%3E%3C/svg%3E") no-repeat right 12px center;}
+
+    #yoruSpecialModal .yoru-sd-closed {position:relative; display:block; margin:0 0 12px; padding:0; border:1px solid #eadcc3; border-radius:16px; background:rgba(255,250,244,.9); box-shadow:0 4px 14px rgba(140,36,55,.07); transition:background .18s,border-color .18s;}
+    #yoruSpecialModal .yoru-sd-closed .form-check-input {position:absolute; left:18px; top:50%; width:20px; height:20px; margin:-10px 0 0; border:1.5px solid #c9a35a; border-radius:6px; background-color:#fffdf8; cursor:pointer;}
+    #yoruSpecialModal .yoru-sd-closed .form-check-input:checked {border-color:#8c2437; background-color:#8c2437;}
+    #yoruSpecialModal .yoru-sd-closed .form-check-label {display:block; margin:0; padding:14px 18px 14px 52px; color:#2b211b; font-size:14.5px; font-weight:700; cursor:pointer;}
+    #yoruSpecialModal .yoru-sd-closed:has(.form-check-input:checked) {border-color:#8c2437; background:#fbe3df;}
+    #yoruSpecialModal .yoru-sd-closed:has(.form-check-input:checked) .form-check-label {color:#7a1a30;}
+
+    #yoruSpecialModal .yoru-luxury-btn {min-height:44px; padding:10px 22px; border-radius:12px; font-size:14px; font-weight:700;}
+    #yoruSpecialModal .yoru-luxury-btn.secondary {background:#fffdf8; color:#6b4a3e; border:1px solid #e3c887;}
+    #yoruSpecialModal .yoru-luxury-btn.secondary:hover {background:#fbf0dc;}
+    #yoruSpecialModal .yoru-sd-save {border-color:#7a1a30; background:linear-gradient(180deg,#a02a42,#7a1a30); box-shadow:0 6px 14px rgba(122,26,48,.3);}
+    #yoruSpecialModal .yoru-sd-save:hover {background:linear-gradient(180deg,#8c2437,#681528); border-color:#681528;}
+    #yoruSpecialModal .yoru-sd-save svg {width:16px; height:16px;}
+
+    /* ---- Custom date dropdown ---- */
+    .yoru-dp {position:absolute; z-index:60; top:calc(100% + 6px); left:0; width:290px; padding:12px; border:1px solid #e3c887; border-radius:16px; background:rgba(255,252,246,.98); box-shadow:0 18px 40px rgba(60,20,20,.25); background-color:#fffcf6;}
+    .yoru-dp[hidden] {display:none;}
+    .yoru-dp-head {display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:8px;}
+    .yoru-dp-nav {display:grid; place-items:center; flex:none; width:30px; height:30px; padding:0; border:1px solid #e3c887; border-radius:50%; background:#fffdf8; color:#8c2437; cursor:pointer;}
+    .yoru-dp-nav:hover {background:#8c2437; color:#fff;}
+    .yoru-dp-nav svg {width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round;}
+    .yoru-dp-selects {display:flex; gap:6px; flex:1; justify-content:center;}
+    .yoru-dp-select {height:30px; padding:0 24px 0 12px; border:1px solid #e3c887; border-radius:999px; color:#7a1a30; font-family:Georgia,serif; font-size:13.5px; font-weight:700; cursor:pointer; background:#fffdf8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238c2437' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center;}
+    .yoru-dp-select:hover,.yoru-dp-select.is-open {border-color:#b8384c; background-color:#fbe9c6;}
+    .yoru-dp-select:focus-visible {outline:none; box-shadow:0 0 0 3px rgba(140,36,55,.14);}
+    .yoru-dp-menu {position:absolute; left:12px; right:12px; top:52px; z-index:2; display:grid; gap:6px; padding:10px; border:1px solid #e3c887; border-radius:14px; background:#fffcf6; box-shadow:0 12px 28px rgba(60,20,20,.22);}
+    .yoru-dp-menu.is-months,.yoru-dp-menu.is-years {grid-template-columns:repeat(3,1fr);}
+    .yoru-dp-opt {height:34px; padding:0; border:1px solid transparent; border-radius:10px; background:transparent; color:#2b211b; font-family:Georgia,serif; font-size:13.5px; font-weight:600; cursor:pointer;}
+    .yoru-dp-opt:hover {background:#fbe9c6;}
+    .yoru-dp-opt.is-on {background:linear-gradient(180deg,#a02a42,#7a1a30); border-color:#7a1a30; color:#fff;}
+    .yoru-dp-week,.yoru-dp-grid {display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+    .yoru-dp-week span {padding:4px 0; color:#8c2437; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-align:center; text-transform:uppercase;}
+    .yoru-dp-day {height:34px; padding:0; border:1px solid transparent; border-radius:10px; background:transparent; color:#2b211b; font-size:13px; font-weight:600; cursor:pointer; transition:background .12s;}
+    .yoru-dp-day:hover:not(:disabled) {background:#fbe9c6;}
+    .yoru-dp-day.is-out {color:#c3ad9d; font-weight:500;}
+    .yoru-dp-day.is-today {border-color:#d2ab63; color:#8c2437;}
+    .yoru-dp-day.is-selected,.yoru-dp-day.is-selected:hover {background:linear-gradient(180deg,#a02a42,#7a1a30); border-color:#7a1a30; color:#fff;}
+    .yoru-dp-day.is-disabled {opacity:.3; cursor:not-allowed;}
+    .yoru-dp-foot {display:flex; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid #efe1c8;}
+    .yoru-dp-link {padding:3px 8px; border:0; border-radius:8px; background:transparent; color:#8c2437; font-size:12.5px; font-weight:700; cursor:pointer;}
+    .yoru-dp-link:hover {background:#fbe9c6;}
+
+    /* ---- Details (confirmation) modal ---- */
+    .yoru-sd-detail-row {display:flex; align-items:center; gap:12px; margin:0 0 10px; border:1px solid #eadcc3; border-radius:14px; background:rgba(255,250,244,.9); box-shadow:0 4px 12px rgba(140,36,55,.06);}
+    .yoru-sd-detail-text {display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0;}
+    .yoru-sd-detail-row {padding:14px 18px 14px 14px;}
+    .yoru-sd-detail-row p {margin:0; color:#2b211b; font-size:15px; font-weight:600;}
+    .yoru-sd-detail-row strong {color:#2b211b; font-size:15px;}
+    .yoru-sd-detail-row strong.is-closed {display:inline-flex; align-items:center; padding:3px 12px; border:1px solid rgba(183,47,37,.35); border-radius:999px; background:#fbe0dc; color:#b3261e; font-size:13.5px;}
+    #yoruSpecialDetailsModal .modal-footer .btn {min-height:44px; padding:9px 24px; border-radius:12px; font-size:14px; font-weight:700;}
+    #yoruSpecialDetailsModal .yoru-sd-delete {border:1px solid #c9566a; background:#fffdf8; color:#a02a42;}
+    #yoruSpecialDetailsModal .yoru-sd-delete:hover {background:#fbe0dc; border-color:#a02a42; color:#7a1a30;}
+    #yoruSpecialDetailsModal .yoru-sd-edit {border:1px solid #7a1a30; background:linear-gradient(180deg,#a02a42,#7a1a30); color:#fff; box-shadow:0 6px 14px rgba(122,26,48,.3);}
+    #yoruSpecialDetailsModal .yoru-sd-edit:hover {background:linear-gradient(180deg,#8c2437,#681528);}
+    @@media (max-width:575px) {
+        #yoruSpecialModal .modal-header,#yoruSpecialDetailsModal .modal-header {padding:16px 18px 6px;}
+        #yoruSpecialModal .modal-body,#yoruSpecialDetailsModal .modal-body {padding-left:16px; padding-right:16px;}
+        #yoruSpecialModal .modal-footer,#yoruSpecialDetailsModal .modal-footer {padding:10px 16px 18px;}
+        #yoruSpecialModal .modal-title,#yoruSpecialDetailsModal .modal-title {font-size:25px;}
+        .yoru-dp {width:min(290px,calc(100vw - 72px));}
+    }
+    /* ---- Responsive safety (narrow screens) ---- */
+    @@media (max-width:900px) {#opening-hours-section .yoru-hours-workspace {grid-template-columns:minmax(0,1fr)!important;}}
+    #yoruCalOverlay .yoru-cal-body > * {min-width:0;}
+    @@media (max-width:600px) {
+        #yoruCalOverlay .yoru-cal-body {padding:10px 12px 16px; gap:12px;}
+        #yoruCalOverlay .yoru-cal-main,#yoruCalOverlay .yoru-cal-side {padding:12px;}
+        #yoruCalOverlay .yoru-cal-nav {gap:6px;}
+        #yoruCalOverlay .yoru-cal-nav strong {min-width:0; flex:1; font-size:18px;}
+        #yoruCalOverlay .yoru-cal-nav button {width:34px; height:34px; flex:none;}
+        #yoruCalOverlay .yoru-cal-nav .yoru-cal-today {width:auto; padding:0 10px; font-size:12px;}
+        #yoruCalOverlay .yoru-cal-weekdays,#yoruCalOverlay .yoru-cal-grid {gap:3px;}
+        #yoruCalOverlay .yoru-cal-weekdays span {font-size:10px; letter-spacing:.02em;}
+        #yoruCalOverlay .yoru-cal-cell {min-width:0; min-height:54px; padding:3px; border-radius:8px;}
+        #yoruCalOverlay .yoru-cal-cell > b {font-size:11px;}
+        #yoruCalOverlay .yoru-cal-cell [class*="event"],#yoruCalOverlay .yoru-cal-cell span {max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        #yoruCalOverlay .yoru-sched-head {flex-wrap:wrap; gap:10px; padding:16px 16px 6px;}
+        #yoruCalOverlay .yoru-sched-head h2 {font-size:24px;}
+        #yoruSchedOverlay .yoru-sched-head {padding:16px 16px 6px;}
+        #yoruSchedOverlay .yoru-sched-head h2 {font-size:24px;}
+        #yoruSchedOverlay .yoru-sched-body {padding:6px 14px 12px;}
+        #yoruSchedOverlay .yoru-sched-q {padding:14px;}
+        #yoruSchedOverlay .yoru-day-grid {grid-template-columns:minmax(0,1fr);}
+    }
+    /* bottom art: crop its top so the corner ornament never shows mid-panel on tall/narrow layouts */
+    #opening-hours-section .yoru-hours-main::after {width:100%!important; height:auto!important; aspect-ratio:2.5; max-height:none;}
+    #opening-hours-section .yoru-timeline-card::after {width:100%!important; height:auto!important; aspect-ratio:2.96; max-height:none;}
+    #opening-hours-section #yoruSpecialDatesCard::after {width:100%!important; height:auto!important; aspect-ratio:2.96; max-height:none;}
+    #yoruSchedOverlay .yoru-sched-panel::after {width:100%!important; height:auto!important; aspect-ratio:2.96; max-height:none;}
+    #yoruCalOverlay .yoru-cal-panel::after {width:100%!important; height:auto!important; aspect-ratio:3.46; max-height:none;}
+    #yoruSpecialModal .modal-content::after,#yoruSpecialDetailsModal .modal-content::after {width:100%!important; height:auto!important; aspect-ratio:2.24; max-height:none;}
 
     /* Responsive */
     @@media(max-width:1050px) {.yoru-area-workspace.drawer-open {grid-template-columns:minmax(0,1fr) 380px;}}
@@ -803,7 +1133,6 @@
     
     
     /* Opening Hours — Three Independent Cards (6:4) */
-    #opening-hours-section > .yoru-luxury-card {height:auto; padding:0; border:0; background:transparent; box-shadow:none;}
     #opening-hours-section .yoru-luxury-head {padding:20px 24px; margin-bottom:18px; border:1px solid #e7d9cc; border-radius:14px; background:#fffdfa;}
     .yoru-hours-workspace {display:grid; grid-template-columns:minmax(0,3fr) minmax(0,2fr); gap:18px; align-items:start; width:100%;}    .yoru-hours-main {min-width:0; padding:24px; border:1px solid #e7d9cc; border-radius:14px; background:#fffdfa;}
     .yoru-hours-sidebar {display:grid!important; grid-template-columns:1fr; align-content:start; gap:18px; min-width:0;}
@@ -829,7 +1158,7 @@
     .yoru-special-btn:hover {background:#92271f; border-color:#92271f; color:#fff; transform:translateY(-2px);}
     .yoru-special-btn svg {width:16px; height:16px; stroke-width:2;}
     .yoru-special-btn:focus-visible {outline:3px solid rgba(183,47,37,.25); outline-offset:3px;}
-    .yoru-special-list { display:grid; gap:10px; }
+    .yoru-special-list { gap:10px; }
     .yoru-special-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px; background:#fff; border:1px solid #eadfd4; border-radius:11px; }
     .yoru-special-info { min-width:0; }
     .yoru-special-date { color:#722b32; font-size:13px; font-weight:700; }
@@ -886,9 +1215,6 @@
         #yoruTypeWorkspace.drawer-open .yoru-type-drawer-header,
         #yoruTypeWorkspace.drawer-open .yoru-type-drawer-footer {flex-shrink:0;}
     }
-    .yoru-table-drawer-body .col-4 > .form-label {display:flex; align-items:center; min-height:24px; margin-bottom:8px; font-size:13px; white-space:nowrap;}
-    .yoru-table-drawer-body .col-4 > .form-control {height:44px; border-radius:8px;}
-    #tableTypeForm .col-md-3 > .form-label {display:block; min-height:20px; margin-bottom:8px; font-size:16px; white-space:nowrap;}
     .yoru-photo-preview-button {display:inline-flex; flex-direction:column; gap:8px; padding:8px; border:1px solid #dfd3c6; border-radius:12px; background:#fffaf4; cursor:zoom-in; text-align:center;}
     .yoru-photo-preview-button img {display:block; width:180px; height:120px; object-fit:cover; border-radius:8px;}
     .yoru-photo-preview-button span {color:#806454; font-size:12px;}
@@ -926,9 +1252,6 @@
     .yoru-table-name-cell {min-width:190px; max-width:280px;}
     .yoru-table-name-cell > strong {display:block; font-size:14px; overflow-wrap:anywhere;}
     .yoru-table-description {margin:5px 0 0; color:#8a7566; font-size:12px; line-height:1.5; white-space:pre-line; overflow-wrap:anywhere;}
-    .yoru-table-active-badge {display:inline-flex; align-items:center; padding:5px 10px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap;}
-    .yoru-table-active-badge.is-active {background:#e8f1e5; color:#527342;}
-    .yoru-table-active-badge.is-inactive {background:#eee7e1; color:#8a7566;}
     .yoru-special-month-nav:not([hidden]) {display:flex; align-items:center; justify-content:space-between; gap:12px; margin:16px 0 8px; padding:10px 0; border-bottom:1px solid #e8dbcf;}
     .yoru-special-month-nav > div {display:flex; flex-direction:column; gap:3px; text-align:center;}
     .yoru-special-month-nav strong {color:#624536; font-size:15px; font-weight:600;}
@@ -936,7 +1259,7 @@
     .yoru-special-month-nav > button {display:flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0; border:1px solid #e3d4c5; border-radius:50%; background:#fffaf4; color:#a83228; font-size:24px; cursor:pointer;}
     .yoru-special-month-nav > button:hover:not(:disabled) {background:#f4e7dc; border-color:#bd9580;}
     .yoru-special-month-nav > button:disabled {opacity:.3; cursor:default;}
-    .yoru-special-list {display:block; max-height:340px; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#cbb39f transparent;}
+    .yoru-special-list {display:block; max-height:340px; overflow-y:auto; overscroll-behavior:auto; scrollbar-width:thin; scrollbar-color:#cbb39f transparent;}
     .yoru-special-list .yoru-special-item {display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0; padding:14px 4px; border:0; border-bottom:1px solid #eee3d9; border-radius:0; background:transparent; box-shadow:none;}
     .yoru-special-list .yoru-special-item[hidden] {display:none!important;}
     .yoru-special-list .yoru-special-info {min-width:0;}
@@ -947,28 +1270,26 @@
     #yoruSpecialDatesCard .yoru-special-header {min-height:38px; margin-bottom:4px;}
     #yoruSpecialDatesCard > p {margin:0 0 8px; font-size:13px; line-height:1.5;}
     #yoruSpecialDatesCard .yoru-special-month-nav {margin:0 0 10px; padding:6px 0;}
-    #yoruSpecialDatesCard .yoru-special-list {display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,180px)); align-content:start; gap:10px; max-height:380px; overflow-y:auto; padding:0;}
-    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {display:flex!important; flex-direction:column!important; align-items:stretch!important; justify-content:flex-start!important; width:100%; aspect-ratio:1; min-height:0; box-sizing:border-box; margin:0; padding:12px!important; gap:8px; border:1px solid #eadfd4!important; border-radius:12px!important;}
+    #yoruSpecialDatesCard .yoru-special-list {padding:0;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {display:flex!important; flex-direction:column!important; width:100%; margin:0; gap:8px; border:1px solid #eadfd4!important; border-radius:12px!important;}
     #opening-hours-section #yoruSpecialDatesCard .yoru-special-item[hidden] {display:none!important;}
-    #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {flex:1; min-height:0; gap:5px; overflow:auto;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {min-height:0; overflow:auto;}
     #yoruSpecialDatesCard .yoru-special-date {margin:0; font-size:12px;}
     #yoruSpecialDatesCard .yoru-special-name {margin:0; font-size:14px; line-height:1.4; overflow-wrap:anywhere;}
     #yoruSpecialDatesCard .yoru-special-status {font-size:11px; padding:4px 8px;}
     #opening-hours-section #yoruSpecialDatesCard .yoru-special-actions {width:100%; justify-content:flex-end; gap:6px; margin-top:auto;}
     #yoruSpecialDatesCard .yoru-special-icon-btn {display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; padding:0;}
     #yoruSpecialDatesCard .yoru-special-icon-btn svg {width:15px; height:15px;}
-    #yoruSpecialDatesCard .yoru-special-list {grid-template-columns:repeat(auto-fill,minmax(110px,140px));}
-    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {align-items:center!important; justify-content:center!important; text-align:center; cursor:pointer;}
-    #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {flex:none; align-items:center; width:100%;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {justify-content:center!important; cursor:pointer;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {flex:none; width:100%;}
     #opening-hours-section #yoruSpecialDatesCard .yoru-special-actions {display:none!important;}
     #yoruSpecialDatesCard .yoru-special-item .yoru-special-status {display:none;}
     #yoruSpecialDatesCard .yoru-special-item:focus-visible {outline:2px solid #b72f25; outline-offset:2px;}
     #yoruSpecialDatesCard .yoru-special-month-nav > button {display:grid; place-items:center; width:34px; height:34px; padding:0; line-height:1;}
     #yoruSpecialDatesCard .yoru-special-month-nav > button svg {display:block; width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;}
-    #yoruSpecialDatesCard .yoru-special-list {grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;}
-    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {aspect-ratio:auto; min-height:80px; padding:12px 16px!important; align-items:flex-start!important; text-align:left;}
+    #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {padding:12px 16px!important; align-items:flex-start!important; text-align:left;}
     #opening-hours-section #yoruSpecialDatesCard .yoru-special-info {align-items:flex-start; gap:5px;}
-    #yoruSpecialDatesCard .yoru-special-list {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:92px; align-content:start; gap:10px; max-height:92px; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:#c7a48d transparent;}
+    #yoruSpecialDatesCard .yoru-special-list {display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:92px; align-content:start; gap:10px; max-height:92px; overflow-y:auto; overflow-x:hidden; overscroll-behavior:auto; scrollbar-gutter:stable; scrollbar-width:thin; scrollbar-color:#c7a48d transparent;}
     #opening-hours-section #yoruSpecialDatesCard .yoru-special-item {height:92px; min-height:0; aspect-ratio:auto; box-sizing:border-box;}
     #yoruSpecialDatesCard .yoru-special-list::-webkit-scrollbar {width:5px;}
     #yoruSpecialDatesCard .yoru-special-list::-webkit-scrollbar-track {background:transparent;}
@@ -985,9 +1306,7 @@
     #yoruTypeDetailsModal .modal-title {font-family:Georgia,serif; color:#513c30;}
     #yoruTypeDetailsModal .modal-header,#yoruTypeDetailsModal .modal-footer {border-color:#eadfd2;}
     .yoru-type-details-photo {display:block; width:100%; height:180px; margin-bottom:18px; border-radius:10px; object-fit:cover;}
-    .yoru-type-details-fields {display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:11px 16px; margin:0;}
-    .yoru-type-details-fields dt {color:#8a7566; font-size:13px; font-weight:400;}
-    .yoru-type-details-fields dd {margin:0; color:#513c30; font-size:13px; font-weight:600; text-align:right; overflow-wrap:anywhere;}
+    .yoru-type-details-fields {margin:0;}
     .yoru-type-details-description {margin-top:18px; padding-top:14px; border-top:1px solid #eadfd2;}
     .yoru-type-details-description strong {color:#8a7566; font-size:13px; font-weight:400;}
     .yoru-type-details-description p {margin:8px 0 0; color:#513c30; font-size:13px; line-height:1.6; white-space:pre-line; overflow-wrap:anywhere;}
@@ -1659,12 +1978,15 @@
        tabindex="-1">
 
     <div class="yoru-type-drawer-header">
-        <div>
-            <div class="yoru-type-drawer-eyebrow">
-                YORU IZAKAYA · TABLE MANAGEMENT
+        <div class="yoru-area-drawer-heading">
+            <span class="yoru-area-drawer-mark" aria-hidden="true"><i data-lucide="armchair"></i></span>
+            <div>
+                <div class="yoru-type-drawer-eyebrow">
+                    YORU IZAKAYA · TABLE MANAGEMENT
+                </div>
+                <h2 id="yoruTypeDrawerTitle">Add Table Type</h2>
+                <p>Configure your restaurant seating experience.</p>
             </div>
-            <h2 id="yoruTypeDrawerTitle">Add Table Type</h2>
-            <p>Configure your restaurant seating experience.</p>
         </div>
 
         <button type="button"
@@ -1942,7 +2264,13 @@
     <aside id="tableModal" class="yoru-table-drawer" tabindex="-1" aria-label="Table editor" aria-hidden="true">
         <form id="tableForm" method="post" asp-page-handler="SaveTable" class="yoru-table-drawer-form">
             <div class="yoru-table-drawer-header">
-                <h2 class="modal-title h5" id="tableTitle">Add New Table</h2>
+                <div class="yoru-area-drawer-heading">
+                    <span class="yoru-area-drawer-mark" aria-hidden="true"><i data-lucide="armchair"></i></span>
+                    <div>
+                        <h2 class="modal-title h5" id="tableTitle">Add New Table</h2>
+                        <p class="yoru-area-drawer-sub">Choose a table type and give the table a number.</p>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-close-table-drawer aria-label="Close"></button>
             </div>
 
@@ -2229,9 +2557,16 @@
                             <div class="yoru-area-type-tags">
                                 @if (tableTypes.Any())
                                 {
-                                    @foreach (var typeName in tableTypes)
+                                    @foreach (var (typeName, typeIndex) in tableTypes.Select((name, index) => (name, index)))
                                     {
-                                        <span class="yoru-area-type-tag">@typeName</span>
+                                        <span class="yoru-area-type-tag@(typeIndex >= 3 ? " yoru-area-type-extra" : "")">@typeName</span>
+                                    }
+                                    @if (tableTypes.Count > 3)
+                                    {
+                                        <button type="button" class="yoru-area-type-more"
+                                                aria-expanded="false"
+                                                data-more-label="+@(tableTypes.Count - 3) more"
+                                                title="Show all table types">+@(tableTypes.Count - 3) more</button>
                                     }
                                 }
                                 else
@@ -2463,11 +2798,33 @@
                             <button type="submit" form="hoursForm" id="yoruSaveHours" class="yoru-luxury-btn d-none"><i data-lucide="save"></i> Save Changes</button>
                         </div>
                     </div>
-                    <div class="yoru-hours-summary">
-                        <i data-lucide="clock-3"></i>
-                        <div>
-                            <strong>Weekly Operating Schedule</strong>
-                            <span id="yoruHoursSummary"></span>
+                    <div class="yoru-hours-summary yoru-hours-banner">
+                        <strong class="yoru-hours-banner-title">Weekly Operating Schedule</strong>
+                        <span id="yoruHoursSummary" class="yoru-hours-sr"></span>
+                        <div class="yoru-hours-banner-strip">
+                            <div class="yoru-hours-banner-item">
+                                <i data-lucide="calendar-check"></i>
+                                <div>
+                                    <small>Operating Days</small>
+                                    <b id="yoruHoursOpenCount">-</b>
+                                    <em id="yoruHoursOpenRange"></em>
+                                </div>
+                            </div>
+                            <div class="yoru-hours-banner-item">
+                                <i data-lucide="calendar-x"></i>
+                                <div>
+                                    <small>Closed Days</small>
+                                    <b id="yoruHoursClosedCount">-</b>
+                                    <em id="yoruHoursClosedList"></em>
+                                </div>
+                            </div>
+                            <div class="yoru-hours-banner-item" id="yoruHoursBreakItem" hidden>
+                                <i data-lucide="coffee"></i>
+                                <div>
+                                    <small>Break Time</small>
+                                    <b id="yoruHoursBreakValue">-</b>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -2476,7 +2833,7 @@
                     @for (var i = 0; i < Model.Hours.Count; i++)
                     {
                         <div class="yoru-hours-row" data-hour-index="@i">
-                            <div class="yoru-hours-day">@Model.Hours[i].Day<input type="hidden" asp-for="Hours[i].Id" /><input type="hidden" asp-for="Hours[i].Day" /></div>
+                            <div class="yoru-hours-day" data-kanji="@(Model.Hours[i].Day switch { DayOfWeek.Monday => "月", DayOfWeek.Tuesday => "火", DayOfWeek.Wednesday => "水", DayOfWeek.Thursday => "木", DayOfWeek.Friday => "金", DayOfWeek.Saturday => "土", _ => "日" })">@Model.Hours[i].Day<input type="hidden" asp-for="Hours[i].Id" /><input type="hidden" asp-for="Hours[i].Day" /></div>
                             <div class="yoru-hours-time-group">
                                 <div class="yoru-hours-time">
                                     <span class="yoru-hours-caption">OPENS</span>
@@ -2518,7 +2875,7 @@
     </div>
 
     <aside class="yoru-hours-sidebar" style="display:grid!important; grid-template-columns:minmax(0,1fr); gap:18px; min-width:0;">
-        <div class="yoru-hours-side-card" style="padding:22px; background:#fffdfa; border:1px solid #e7d9cc; border-radius:14px;">
+        <div class="yoru-hours-side-card yoru-timeline-card" style="padding:22px; background:#fffdfa; border:1px solid #e7d9cc; border-radius:14px;">
             <div class="yoru-hours-side-heading">
                 <i data-lucide="chart-no-axes-gantt"></i>
                 <h3>Weekly Timeline</h3>
@@ -2648,73 +3005,90 @@
     <div class="modal-dialog modal-dialog-centered">
         <form method="post" asp-page-handler="SaveSpecialDate" class="modal-content yoru-special-modal">
             <div class="modal-header">
-                <h5 class="modal-title" id="yoruSpecialModalTitle">Add Special Date</h5>
+                <div class="yoru-sd-titlewrap">
+                    <div class="yoru-luxury-eyebrow">HOLIDAYS &amp; SPECIAL OPENINGS</div>
+                    <h5 class="modal-title" id="yoruSpecialModalTitle">Add Special Date</h5>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
             <div class="modal-body">
                 <input type="hidden" name="SpecialDateInput.Id" id="yoruSpecialId" value="0" />
 
-                <div class="row g-3 mb-3">
-                    <div class="col-6">
-                        <label for="yoruSpecialDate" class="form-label">
-                            Start Date
-                        </label>
+                <section class="yoru-sd-card">
+                    <div class="yoru-sd-sechead"><span class="yoru-sd-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span><h4 class="yoru-sd-tag">Date Range</h4></div>
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-6">
+                            <label for="yoruSpecialDate" class="form-label">
+                                Start Date
+                            </label>
 
-                        <input type="date"
-                               class="form-control"
-                               name="SpecialDateInput.Date"
-                               id="yoruSpecialDate"
-                               required />
+                            <div class="yoru-dp-field">
+                                <input type="text"
+                                       class="form-control yoru-dp-input"
+                                       name="SpecialDateInput.Date"
+                                       id="yoruSpecialDate"
+                                       data-yoru-datepicker
+                                       autocomplete="off"
+                                       placeholder="Select date"
+                                       required />
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6">
+                            <label for="yoruSpecialEndDate" class="form-label">
+                                End Date
+                            </label>
+
+                            <div class="yoru-dp-field">
+                                <input type="text"
+                                       class="form-control yoru-dp-input"
+                                       name="SpecialDateInput.EndDate"
+                                       id="yoruSpecialEndDate"
+                                       data-yoru-datepicker
+                                       autocomplete="off"
+                                       placeholder="Select date"
+                                       required />
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <small class="yoru-sd-hint">
+                                For one day, select the same start and end date.
+                            </small>
+                        </div>
                     </div>
+                </section>
 
-                    <div class="col-6">
-                        <label for="yoruSpecialEndDate" class="form-label">
-                            End Date
-                        </label>
-
-                        <input type="date"
-                               class="form-control"
-                               name="SpecialDateInput.EndDate"
-                               id="yoruSpecialEndDate"
-                               required />
-                    </div>
-
-                    <div class="col-12">
-                        <small class="text-muted">
-                            For one day, select the same start and end date.
-                        </small>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="yoruSpecialName" class="form-label">Event / Holiday Name</label>
+                <section class="yoru-sd-card">
+                    <div class="yoru-sd-sechead"><span class="yoru-sd-ico wine"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="6.8" r="3.6"/><circle cx="16.95" cy="10.39" r="3.6"/><circle cx="15.06" cy="16.21" r="3.6"/><circle cx="8.94" cy="16.21" r="3.6"/><circle cx="7.05" cy="10.39" r="3.6"/><circle cx="12" cy="12" r="1.6" fill="#8c2437"/></svg></span><h4 class="yoru-sd-tag"><label for="yoruSpecialName">Event / Holiday Name</label></h4></div>
                     <input type="text" class="form-control" name="SpecialDateInput.Name" id="yoruSpecialName" maxlength="100" placeholder="e.g. Christmas Day" required />
-                </div>
+                </section>
 
-                <div class="form-check mb-3">
+                <div class="form-check yoru-sd-closed">
                     <input type="checkbox" class="form-check-input" name="SpecialDateInput.IsClosed" value="true" id="yoruSpecialClosed" />
                     <label class="form-check-label" for="yoruSpecialClosed">Closed for the whole day</label>
                 </div>
 
-                <div id="yoruSpecialTimeFields">
+                <section id="yoruSpecialTimeFields" class="yoru-sd-card">
+                    <div class="yoru-sd-sechead"><span class="yoru-sd-ico wine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><h4 class="yoru-sd-tag">Special Opening Hours</h4></div>
                     <div class="row g-3">
-                        <div class="col-6">
+                        <div class="col-12 col-sm-6">
                             <label for="yoruSpecialOpen" class="form-label">Opening Time</label>
                             <input type="time" class="form-control" name="SpecialDateInput.OpenTime" id="yoruSpecialOpen" value="11:00" />
                         </div>
-                        <div class="col-6">
+                        <div class="col-12 col-sm-6">
                             <label for="yoruSpecialClose" class="form-label">Closing Time</label>
                             <input type="time" class="form-control" name="SpecialDateInput.CloseTime" id="yoruSpecialClose" value="23:00" />
                         </div>
                     </div>
-                    <div class="form-text mt-2">Overnight hours are supported, e.g. 18:00 – 02:00.</div>
-                </div>
+                    <div class="yoru-sd-hint mt-2">Overnight hours are supported, e.g. 18:00 – 02:00.</div>
+                </section>
             </div>
 
             <div class="modal-footer">
                 <button type="button" class="yoru-luxury-btn secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="yoru-luxury-btn">Save Special Date</button>
+                <button type="submit" class="yoru-luxury-btn yoru-sd-save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg><span id="yoruSpecialSaveText">Save Special Date</span></button>
             </div>
         </form>
     </div>
@@ -2893,9 +3267,12 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content yoru-special-modal">
             <div class="modal-header">
-                <h5 class="modal-title" id="yoruSpecialDetailsTitle">
-                    Special Date
-                </h5>
+                <div class="yoru-sd-titlewrap">
+                    <div class="yoru-luxury-eyebrow">SPECIAL DATE</div>
+                    <h5 class="modal-title" id="yoruSpecialDetailsTitle">
+                        Special Date
+                    </h5>
+                </div>
 
                 <button type="button"
                         class="btn-close"
@@ -2904,20 +3281,19 @@
             </div>
 
             <div class="modal-body">
-                <p id="yoruSpecialDetailsDate"></p>
-                <strong id="yoruSpecialDetailsStatus"></strong>
+                <div class="yoru-sd-detail-row"><span class="yoru-sd-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg></span><div class="yoru-sd-detail-text"><p id="yoruSpecialDetailsDate"></p><strong id="yoruSpecialDetailsStatus"></strong></div></div>
             </div>
 
             <div class="modal-footer">
                 <button type="button"
                         id="yoruSpecialDetailsDelete"
-                        class="btn btn-outline-danger">
+                        class="btn btn-outline-danger yoru-sd-delete">
                     Delete
                 </button>
 
                 <button type="button"
                         id="yoruSpecialDetailsEdit"
-                        class="btn btn-primary">
+                        class="btn btn-primary yoru-sd-edit">
                     Edit
                 </button>
             </div>
@@ -2946,8 +3322,6 @@
                 <div id="yoruTypeDetailsPhotoWrap" class="yoru-type-details-photo-wrap">
                     <div class="yoru-details-hero-text">
                         <span class="yoru-details-badge" id="yoruTypeDetailsBadge"></span>
-                        <strong id="yoruTypeDetailsHeroName"></strong>
-                        <span class="yoru-details-jp" id="yoruTypeDetailsJp" lang="ja" hidden></span>
                     </div>
                     <button type="button"
                             class="yoru-type-details-photo-btn"
@@ -2965,13 +3339,20 @@
                     <span class="yoru-type-details-zoom-hint">Click photo to enlarge</span>
                 </div>
 
-                <div id="yoruTypeDetailsFields" class="yoru-details-stats"></div>
-                    
-                <div class="yoru-details-area">
-                    <i data-lucide="map-pin"></i>
-                    <div>
-                        <small>Default dining area</small>
-                        <strong id="yoruTypeDetailsArea"></strong>
+                <div class="yoru-details-info">
+                    <div class="yoru-details-eyebrow">YORU · TABLE COLLECTION</div>
+                    <strong class="yoru-details-name" id="yoruTypeDetailsHeroName"></strong>
+                    <span class="yoru-details-jp" id="yoruTypeDetailsJp" lang="ja" hidden></span>
+                    <p class="yoru-details-intro" id="yoruTypeDetailsIntro"></p>
+
+                    <div id="yoruTypeDetailsFields" class="yoru-details-stats"></div>
+
+                    <div class="yoru-details-area">
+                        <i data-lucide="map-pin"></i>
+                        <div>
+                            <small>Default dining area</small>
+                            <strong id="yoruTypeDetailsArea"></strong>
+                        </div>
                     </div>
                 </div>
 
@@ -3396,124 +3777,31 @@
             }
         });
 
-        // Dining Area Drawer - independent of Table Types
+        // Dining Area drawer: keep keyboard focus inside the drawer while it is open.
+        // (Opening, closing and Escape are handled by the Dining Area script below.)
         const yoruAreaOverlay = document.getElementById('yoruAreaDrawerOverlay');
         const yoruAreaModal = document.getElementById('areaModal');
-        const yoruAreaIconField = document.getElementById('yoruAreaIconName');
-        const yoruAreaNameField = yoruAreaModal.querySelector('[name="AreaForm.Name"]');
-        const yoruAreaStatusMode = document.getElementById('yoruAreaStatusMode');
-        const yoruAreaManualStatus = document.getElementById('yoruAreaManualStatus');
-        const yoruAreaManualWrap = document.getElementById('yoruAreaManualStatusWrap');
-
-        let yoruIconManuallyChosen = false;
-        let yoruAreaPreviousFocus = null;
-
-        function yoruSuggestIcon(name) {
-            name = (name || '').toLowerCase();
-            if (/bar|counter/.test(name)) return 'wine';
-            if (/private|vip|room/.test(name)) return 'door-closed';
-            if (/outdoor|garden|terrace/.test(name)) return 'trees';
-            if (/roof/.test(name)) return 'sunset';
-            if (/cafe|coffee/.test(name)) return 'coffee';
-            if (/lounge/.test(name)) return 'sofa';
-            if (/hall|dining/.test(name)) return 'utensils-crossed';
-            return 'layout-grid';
-        }
-
-        function yoruSelectIcon(icon, manual = false) {
-            yoruAreaIconField.value = icon;
-            if (manual) yoruIconManuallyChosen = true;
-
-            yoruAreaModal.querySelectorAll('[data-icon-choice]').forEach(btn => {
-                const selected = btn.dataset.iconChoice === icon;
-                btn.classList.toggle('selected', selected);
-                btn.setAttribute('aria-pressed', String(selected));
-            });
-        }
-
-        function yoruSyncAreaStatus() {
-            const manual = yoruAreaStatusMode.value === 'Manual';
-            yoruAreaManualWrap.hidden = !manual;
-            yoruAreaManualStatus.disabled = !manual;
-        }
-
-        function yoruOpenAreaDrawer(trigger) {
-            const data = trigger.dataset;
-            const isEdit = Boolean(data.id);
-
-            yoruAreaPreviousFocus = trigger;
-
-            yoruAreaModal.querySelector('[name="AreaForm.Id"]').value = data.id || '0';
-            yoruAreaNameField.value = data.name || '';
-            yoruAreaModal.querySelector('[name="AreaForm.Description"]').value = data.desc || '';
-
-            document.getElementById('areaTitle').textContent =
-                isEdit ? 'Edit Dining Area' : 'Add Dining Area';
-
-            yoruIconManuallyChosen = isEdit;
-            yoruSelectIcon(data.icon || yoruSuggestIcon(data.name || ''));
-
-            yoruAreaStatusMode.value =
-                data.statusMode === 'Manual' ? 'Manual' : 'Auto';
-
-            yoruAreaManualStatus.value =
-                data.manualStatus === 'Occupied' ? 'Occupied' : 'Available';
-
-            yoruSyncAreaStatus();
-
-            yoruAreaOverlay.hidden = false;
-            document.body.classList.add('yoru-area-drawer-active');
-
-            requestAnimationFrame(() => {
-                yoruAreaOverlay.classList.add('is-open');
-                yoruAreaNameField.focus();
-            });
-        }
-
-        function yoruCloseAreaDrawer() {
-            if (yoruAreaOverlay.hidden) return;
-
-            yoruAreaOverlay.classList.remove('is-open');
-            document.body.classList.remove('yoru-area-drawer-active');
-
-            const drawer = yoruAreaModal;
-            const finishClose = () => {
-                yoruAreaOverlay.hidden = true;
-                yoruAreaPreviousFocus?.focus();
-            };
-
-            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                finishClose();
-            } else {
-                drawer.addEventListener('transitionend', finishClose, { once: true });
-            }
-        }
 
         document.addEventListener('keydown', e => {
-            if (yoruAreaOverlay.hidden) return;
+            if (!yoruAreaOverlay || !yoruAreaModal || yoruAreaOverlay.hidden) return;
+            if (e.key !== 'Tab') return;
 
-            if (e.key === 'Escape') {
+            const controls = Array.from(
+                yoruAreaModal.querySelectorAll(
+                    'button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled])'
+                )
+            ).filter(el => el.getClientRects().length);
+
+            const first = controls[0];
+            const last = controls[controls.length - 1];
+            if (!first) return;
+
+            if (e.shiftKey && document.activeElement === first) {
                 e.preventDefault();
-                yoruCloseAreaDrawer();
-            }
-
-            if (e.key === 'Tab') {
-                const controls = Array.from(
-                    yoruAreaModal.querySelectorAll(
-                        'button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled])'
-                    )
-                ).filter(el => el.getClientRects().length);
-
-                const first = controls[0];
-                const last = controls[controls.length - 1];
-
-                if (e.shiftKey && document.activeElement === first) {
-                    e.preventDefault();
-                    last.focus();
-                } else if (!e.shiftKey && document.activeElement === last) {
-                    e.preventDefault();
-                    first.focus();
-                }
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
             }
         });
 
@@ -3617,9 +3905,30 @@
                                 `${(duration - firstDuration) / 1440 * 100}%`;
                             track.appendChild(secondBar);
                         }
+
+                        // Real break time (only when this day has one).
+                        const breakStart = toMinutes(row.querySelector('[name$=".BreakStart"]')?.value);
+                        const breakEnd = toMinutes(row.querySelector('[name$=".BreakEnd"]')?.value);
+                        if (Number.isFinite(breakStart) && Number.isFinite(breakEnd) && breakEnd !== breakStart) {
+                            const breakLength = breakEnd > breakStart ? breakEnd - breakStart : 1440 - breakStart + breakEnd;
+                            const firstPart = Math.min(breakLength, 1440 - breakStart);
+                            [[breakStart, firstPart], [0, breakLength - firstPart]].forEach(([from, length]) => {
+                                if (length <= 0) return;
+                                const stripe = document.createElement('div');
+                                stripe.className = 'yoru-timeline-break';
+                                stripe.style.left = `${from / 1440 * 100}%`;
+                                stripe.style.width = `${length / 1440 * 100}%`;
+                                track.appendChild(stripe);
+                            });
+                        }
                     }
 
                     tooltip.textContent = `${yoruTimeText(open)} – ${yoruTimeText(close)}`;
+                    const tipBreakStart = row.querySelector('[name$=".BreakStart"]')?.value;
+                    const tipBreakEnd = row.querySelector('[name$=".BreakEnd"]')?.value;
+                    if (tipBreakStart && tipBreakEnd) {
+                        tooltip.textContent += `\nBreak ${yoruTimeText(tipBreakStart)} – ${yoruTimeText(tipBreakEnd)}`;
+                    }
                 }
 
                 item.title = `${day}: ${tooltip.textContent}`;
@@ -3648,6 +3957,31 @@
                 ? ` · Break ${yoruTimeText(yoruBreakRow.querySelector('[name$=".BreakStart"]').value)} – ${yoruTimeText(yoruBreakRow.querySelector('[name$=".BreakEnd"]').value)}`
                 : '';
             document.getElementById('yoruHoursSummary').textContent = `${yoruHourRows.length - closed} operating days · ${closed} closed days${yoruBreakText}`;
+
+            // Banner details (same data as the summary above).
+            const dayName = row => row.querySelector('.yoru-hours-day').firstChild.textContent.trim().slice(0, 3);
+            const openIdx = [], closedNames = [];
+            yoruHourRows.forEach((row, index) => {
+                if (row.querySelector('[name$=".IsClosed"]').checked) closedNames.push(dayName(row));
+                else openIdx.push(index);
+            });
+            const runs = [];
+            openIdx.forEach(index => {
+                const last = runs[runs.length - 1];
+                if (last && last[1] === index - 1) last[1] = index; else runs.push([index, index]);
+            });
+            const names = yoruHourRows.map(dayName);
+            const rangeText = runs.map(([a, b]) => a === b ? names[a] : (b === a + 1 ? names[a] + ', ' + names[b] : names[a] + ' – ' + names[b])).join(', ');
+            document.getElementById('yoruHoursOpenCount').textContent = `${openIdx.length} ${openIdx.length === 1 ? 'day' : 'days'}`;
+            document.getElementById('yoruHoursOpenRange').textContent = openIdx.length === yoruHourRows.length ? 'Every day' : rangeText;
+            document.getElementById('yoruHoursClosedCount').textContent = closedNames.length ? `${closedNames.length} ${closedNames.length === 1 ? 'day' : 'days'}` : 'None';
+            document.getElementById('yoruHoursClosedList').textContent = closedNames.join(', ');
+            const breakItem = document.getElementById('yoruHoursBreakItem');
+            breakItem.hidden = !yoruBreakRow;
+            if (yoruBreakRow) {
+                document.getElementById('yoruHoursBreakValue').textContent =
+                    `${yoruTimeText(yoruBreakRow.querySelector('[name$=".BreakStart"]').value)} – ${yoruTimeText(yoruBreakRow.querySelector('[name$=".BreakEnd"]').value)}`;
+            }
             yoruRenderTimeline();
         }
         function yoruToggleEdit(on) {
@@ -4093,7 +4427,6 @@
         const spendField = tableModal.querySelector('[name="TableForm.MinimumSpend"]');
         const activeField = tableModal.querySelector('[name="TableForm.IsActive"]');
         const descriptionField = tableModal.querySelector('[name="TableForm.Description"]');
-        const existingTables = Array.from(document.querySelectorAll('.yoru-table-row') ).map(row => row.dataset.name.toUpperCase());
         let isEditing = false;
         let nameWasEdited = false;
 
@@ -4373,38 +4706,6 @@
             status.addEventListener('change', () => refresh(true));
         });
 
-        const areaSearch = document.getElementById('areaSearch');
-        const areaFilter = document.getElementById('areaFilter');
-        const areaPagination = document.getElementById('areaPagination');
-
-        if (areaSearch && areaFilter && areaPagination) {
-            const areaSection = areaPagination.closest('.card');
-
-            const refreshAreas = setupPagination(
-                areaSection,
-                '.yoru-area-row',
-                row => {
-                    const matchesName = (row.dataset.name || '')
-                        .toLowerCase()
-                        .includes(areaSearch.value.trim().toLowerCase());
-
-                    const count = Number(row.dataset.count);
-
-                    const matchesFilter =
-                        !areaFilter.value ||
-                        (areaFilter.value === 'with' && count > 0) ||
-                        (areaFilter.value === 'empty' && count === 0);
-
-                    return matchesName && matchesFilter;
-                }
-            );
-
-            if (refreshAreas) {
-                areaSearch.addEventListener('input', refreshAreas);
-                areaFilter.addEventListener('change', refreshAreas);
-            }
-        }
-        
         /* Table Types: Search and Filters */     
         document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.getElementById('tableTypeSearch');
@@ -4774,6 +5075,18 @@
     });
     </script>
     <script>
+    // Dining Area cards: show the first 3 table types, "+N more" expands the rest.
+    document.addEventListener('click', function (event) {
+        const more = event.target.closest('.yoru-area-type-more');
+        if (!more) return;
+        const tags = more.closest('.yoru-area-type-tags');
+        const open = tags.classList.toggle('is-open');
+        more.setAttribute('aria-expanded', String(open));
+        more.textContent = open ? 'Show less' : more.dataset.moreLabel;
+        more.title = open ? 'Show fewer table types' : 'Show all table types';
+    });
+    </script>
+    <script>
     // Dining Area drawer (Step 3): mode icon/title, card theme, Automatic / Manual status.
     // Works next to the existing open/close handlers; it only adds on top of them.
     document.addEventListener('DOMContentLoaded', function () {
@@ -4840,6 +5153,7 @@
             openInput.value = '11:00';
             closeInput.value = '23:00';
             document.getElementById('yoruSpecialModalTitle').textContent = 'Add Special Date';
+            document.getElementById('yoruSpecialSaveText').textContent = 'Save Special Date';
             updateTimeFields();
             modal.show();
         });
@@ -4857,6 +5171,7 @@
                 openInput.value = button.dataset.open || '11:00';
                 closeInput.value = button.dataset.close || '23:00';
                 document.getElementById('yoruSpecialModalTitle').textContent = 'Edit Special Date';
+                document.getElementById('yoruSpecialSaveText').textContent = 'Save Changes';
                 updateTimeFields();
                 modal.show();
             });
@@ -4871,6 +5186,152 @@
         });
         closedInput.addEventListener('change', updateTimeFields);
         updateTimeFields();
+    });
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalEl = document.getElementById('yoruSpecialModal');
+        const startEl = document.getElementById('yoruSpecialDate');
+        const endEl = document.getElementById('yoruSpecialEndDate');
+        if (!modalEl || !startEl || !endEl) return;
+
+        const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const pad = n => String(n).padStart(2, '0');
+        const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        const parse = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
+
+        const pop = document.createElement('div');
+        pop.className = 'yoru-dp';
+        pop.hidden = true;
+        pop.setAttribute('role', 'dialog');
+        pop.setAttribute('aria-label', 'Choose date');
+        let active = null;
+        let view = new Date();
+        let menu = null;
+
+        function minDate() {
+            return active === endEl ? parse(startEl.value) : null;
+        }
+
+        function render() {
+            const sel = parse(active.value);
+            const min = minDate();
+            const today = new Date();
+            const y = view.getFullYear();
+            const mo = view.getMonth();
+            const thisYear = today.getFullYear();
+            let years = '';
+            for (let i = thisYear - 2; i <= thisYear + 8; i++) {
+                years += '<button type="button" class="yoru-dp-opt' + (i === y ? ' is-on' : '') + '" data-year="' + i + '">' + i + '</button>';
+            }
+            const months = MONTHS.map((n, i) => '<button type="button" class="yoru-dp-opt' + (i === mo ? ' is-on' : '') + '" data-month="' + i + '">' + n.slice(0, 3) + '</button>').join('');
+            const menuHtml = menu === 'month'
+                ? '<div class="yoru-dp-menu is-months">' + months + '</div>'
+                : menu === 'year' ? '<div class="yoru-dp-menu is-years">' + years + '</div>' : '';
+
+            const first = new Date(y, mo, 1);
+            const lead = (first.getDay() + 6) % 7;
+            let cells = '';
+            for (let i = 0; i < 42; i++) {
+                const d = new Date(y, mo, 1 - lead + i);
+                const cls = ['yoru-dp-day'];
+                if (d.getMonth() !== mo) cls.push('is-out');
+                if (iso(d) === iso(today)) cls.push('is-today');
+                if (sel && iso(d) === iso(sel)) cls.push('is-selected');
+                const off = min && d < min;
+                if (off) cls.push('is-disabled');
+                cells += '<button type="button" class="' + cls.join(' ') + '" data-date="' + iso(d) + '"' + (off ? ' disabled' : '') + '>' + d.getDate() + '</button>';
+            }
+
+            pop.innerHTML =
+                '<div class="yoru-dp-head">' +
+                '<button type="button" class="yoru-dp-nav" data-nav="-1" aria-label="Previous month"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>' +
+                '<div class="yoru-dp-selects"><button type="button" class="yoru-dp-select' + (menu === 'month' ? ' is-open' : '') + '" data-menu="month" aria-haspopup="listbox" aria-label="Month">' + MONTHS[mo] + '</button>' +
+                '<button type="button" class="yoru-dp-select' + (menu === 'year' ? ' is-open' : '') + '" data-menu="year" aria-haspopup="listbox" aria-label="Year">' + y + '</button></div>' +
+                '<button type="button" class="yoru-dp-nav" data-nav="1" aria-label="Next month"><svg viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></svg></button>' +
+                '</div>' +
+                '<div class="yoru-dp-week">' + DAYS.map(d => '<span>' + d + '</span>').join('') + '</div>' +
+                '<div class="yoru-dp-grid">' + cells + '</div>' +
+                '<div class="yoru-dp-foot"><button type="button" class="yoru-dp-link" data-today>Today</button><button type="button" class="yoru-dp-link" data-close>Close</button></div>' + menuHtml;
+        }
+
+        function open(input) {
+            active = input;
+            const base = parse(input.value) || minDate() || new Date();
+            view = new Date(base.getFullYear(), base.getMonth(), 1);
+            menu = null;
+            input.closest('.yoru-dp-field').appendChild(pop);
+            render();
+            pop.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+        }
+
+        function close() {
+            pop.hidden = true;
+            if (active) active.setAttribute('aria-expanded', 'false');
+        }
+
+        function checkRange() {
+            const bad = startEl.value && endEl.value && endEl.value < startEl.value;
+            endEl.setCustomValidity(bad ? 'End date must be on or after the start date.' : '');
+        }
+
+        function choose(value) {
+            const input = active;
+            input.value = value;
+            if (input === startEl && (!endEl.value || endEl.value < value)) {
+                endEl.value = value;
+                endEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            checkRange();
+            close();
+            input.focus();
+        }
+
+        pop.addEventListener('click', function (e) {
+            const day = e.target.closest('.yoru-dp-day');
+            if (day && !day.disabled) { choose(day.dataset.date); return; }
+            const mbtn = e.target.closest('[data-menu]');
+            if (mbtn) { menu = menu === mbtn.dataset.menu ? null : mbtn.dataset.menu; render(); return; }
+            const mo = e.target.closest('[data-month]');
+            if (mo) { view = new Date(view.getFullYear(), Number(mo.dataset.month), 1); menu = null; render(); return; }
+            const yr = e.target.closest('[data-year]');
+            if (yr) { view = new Date(Number(yr.dataset.year), view.getMonth(), 1); menu = null; render(); return; }
+            const nav = e.target.closest('[data-nav]');
+            if (nav) { view = new Date(view.getFullYear(), view.getMonth() + Number(nav.dataset.nav), 1); render(); return; }
+            if (e.target.closest('[data-today]')) {
+                const t = new Date();
+                const min = minDate();
+                choose(iso(min && t < min ? min : t));
+                return;
+            }
+            if (e.target.closest('[data-close]')) close();
+        });
+
+        [startEl, endEl].forEach(function (input) {
+            input.setAttribute('aria-haspopup', 'dialog');
+            input.setAttribute('aria-expanded', 'false');
+            input.addEventListener('click', () => open(input));
+            input.addEventListener('beforeinput', e => e.preventDefault());
+            input.addEventListener('paste', e => e.preventDefault());
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !pop.hidden) { e.stopPropagation(); close(); return; }
+                if (e.key === 'Tab') return;
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); open(input); return; }
+                if (e.key === 'Backspace' || e.key === 'Delete') { e.preventDefault(); input.value = ''; checkRange(); return; }
+                e.preventDefault();
+            });
+            input.addEventListener('input', checkRange);
+        });
+
+        document.addEventListener('mousedown', function (e) {
+            if (!pop.hidden && !e.target.closest('.yoru-dp') && !e.target.closest('.yoru-dp-input')) close();
+        });
+        modalEl.addEventListener('hide.bs.modal', close);
+        modalEl.addEventListener('shown.bs.modal', checkRange);
     });
     </script>
     <script>
@@ -4893,16 +5354,28 @@
         );
 
         function validateGuestRange() {
-            const invalid =
+            const MAX_GUESTS = 100;
+            const tooMany =
+                (capacityInput.value !== '' && Number(capacityInput.value) > MAX_GUESTS) ||
+                (minInput.value !== '' && Number(minInput.value) > MAX_GUESTS);
+
+            const belowMin =
                 minInput.value !== '' &&
                 capacityInput.value !== '' &&
                 Number(minInput.value) > Number(capacityInput.value);
 
-            const message = invalid
-                ? 'Capacity must be at least the minimum guests.'
-                : '';
+            const invalid = tooMany || belowMin;
+
+            const message = tooMany
+                ? 'A table can seat at most ' + MAX_GUESTS + ' guests.'
+                : belowMin
+                    ? 'Capacity must be at least the minimum guests.'
+                    : '';
+
+            error.textContent = message;
 
             capacityInput.setCustomValidity(message);
+            minInput.classList.toggle('is-invalid', tooMany && Number(minInput.value) > MAX_GUESTS);
             capacityInput.classList.toggle('is-invalid', invalid);
             capacityInput.setAttribute('aria-invalid', String(invalid));
 
@@ -5763,6 +6236,11 @@
                         });
                     }
 
+                    const t12 = v => {
+                        const [h, m] = String(v).split(':').map(Number);
+                        return ((h + 11) % 12 + 1) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'PM' : 'AM');
+                    };
+
                     const endDate = data.endDate || data.date;
 
                     document.getElementById(
@@ -5779,9 +6257,13 @@
                         'yoruSpecialDetailsStatus'
                     ).textContent = data.closed === 'true'
                         ? 'Closed for the whole day'
-                        : 'Opening hours: ' + data.open + ' – ' +
-                          data.close +
+                        : 'Open ' + t12(data.open) + ' – ' +
+                          t12(data.close) +
                           (data.close <= data.open ? ' (next day)' : '');
+
+                    document.getElementById(
+                        'yoruSpecialDetailsStatus'
+                    ).classList.toggle('is-closed', data.closed === 'true');
 
                     modal.show();
                 }
@@ -5937,9 +6419,9 @@
 
                         const stats = [
                             ['armchair', button.dataset.count, button.dataset.count === '1' ? 'Table' : 'Tables'],
-                            ['users', guests, 'Guests per table'],
-                            ['wallet', spend, 'Minimum spend'],
-                            ['hash', (data.prefix || '-') + '-' + '0'.repeat(Math.max(0, Number(data.padding) - 1)) + '1', 'Table number format']
+                            ['users', guests, 'Guests / table'],
+                            ['wallet', spend, 'Min. spend'],
+                            ['hash', (data.prefix || '-') + '-' + '0'.repeat(Math.max(0, Number(data.padding) - 1)) + '1', 'Number format']
                         ];
 
                         fields.replaceChildren();
@@ -5978,6 +6460,9 @@
                         document.getElementById(
                             'yoruTypeDetailsDescription'
                         ).textContent = data.desc?.trim() || 'No description.';
+
+                        document.getElementById('yoruTypeDetailsIntro').textContent =
+                            data.desc?.trim() || 'No description.';
 
                         modal.show();
                     });
@@ -6165,13 +6650,17 @@
 
             function render() {
                 const names = dayNames();
+                const kanji = n => ({ Monday: '月', Tuesday: '火', Wednesday: '水', Thursday: '木', Friday: '金', Saturday: '土', Sunday: '日' }[n] || '');
                 const sameCard = `<div class="yoru-sched-card">
-                    <div class="yoru-sched-times"><div><small>Opens</small><br>${tb('open', 'Opening time')}</div><span>→</span><div><small>Closes</small><br>${tb('close', 'Closing time')}</div></div>
-                    <div><div class="yoru-sched-label mb-2">Tap a day to mark it closed.</div>
-                    <div class="yoru-chips">${names.map((n, i) => `<button type="button" class="yoru-chip ${st.days[i].closed ? 'off' : ''}" data-chip="${i}">${n.slice(0, 3)}</button>`).join('')}</div></div></div>`;
+                    <div class="yoru-sched-times"><div><small>Opens</small><br>${tb('open', 'Opening time')}</div><span>→</span><div><small>Closes</small><br>${tb('close', 'Closing time')}</div></div></div>`;
+                const daysSection = `<section class="yoru-sched-q">
+                        <h4>Operating days</h4>
+                        <p>Tap a day to mark it closed. Select the days the restaurant is open.</p>
+                        <div class="yoru-chips">${names.map((n, i) => `<button type="button" class="yoru-chip ${st.days[i].closed ? 'off' : ''}" data-chip="${i}">${n.slice(0, 3)}</button>`).join('')}</div>
+                    </section>`;
 
-                const cards = `<div class="yoru-day-grid">${names.map((n, i) => `<div class="yoru-day-card ${st.days[i].closed ? 'is-closed' : ''}">
-                    <div class="yoru-day-head"><strong>${n}</strong>
+                const cards = `<div class="yoru-day-grid">${names.map((n, i) => `<div class="yoru-day-card ${st.days[i].closed ? 'is-closed' : ''}" >
+                    <div class="yoru-day-head"><strong data-kanji="${kanji(n)}">${n}</strong>
                         <label class="yoru-mini-switch"><input type="checkbox" data-day-open="${i}" ${st.days[i].closed ? '' : 'checked'} /><span>${st.days[i].closed ? 'Closed' : 'Open'}</span></label></div>
                     <div class="yoru-day-times">${tbd(i, 'open', n + ' opens')}<span>→</span>${tbd(i, 'close', n + ' closes')}</div></div>`).join('')}</div>`;
 
@@ -6187,7 +6676,8 @@
                         <p>Choose one opening and closing time for the whole week, or set each day yourself.</p>
                         ${seg('same', st.same)}
                         ${st.same ? sameCard : cards}
-                    </section>`;
+                    </section>
+                    ${st.same ? daysSection : ''}`;
             }
 
             function openWheel(key, dayIndex, button) {
