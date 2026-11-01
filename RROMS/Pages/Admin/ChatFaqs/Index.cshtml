@@ -1,0 +1,299 @@
+@page
+@model RROMS.Pages.Admin.ChatFaqs.IndexModel
+
+@{
+    // US10 Admin → Restaurant → Chatbot FAQs (Owner: Member 1)
+    // Same look as Admin → Users: admin-users.css (shared "uu-" parts) + admin-chatfaqs.css (FAQ parts).
+    // Script: wwwroot/js/admin-chatfaqs.js
+    ViewData["Title"] = "Chatbot FAQs";
+    ViewData["FullWidth"] = true;
+
+    var d = Model.Data;
+    var s = d.Stats;
+    var statusNow = (Model.StatusFilter ?? "").ToLowerInvariant();
+    var searchNow = string.IsNullOrWhiteSpace(Model.Search) ? null : Model.Search.Trim();
+    var anyFilter = searchNow is not null || statusNow != "";
+    var firstNo = d.Matches == 0 ? 0 : (d.Page - 1) * d.PageSize + 1;
+    var lastNo = Math.Min(d.Page * d.PageSize, d.Matches);
+
+    string StatusUrl(string? st) => Url.Page("./Index", new { q = searchNow, status = string.IsNullOrEmpty(st) ? null : st })!;
+
+    var qErr = Model.ErrorFor("Question");
+    var aErr = Model.ErrorFor("Answer");
+    var kErr = Model.ErrorFor("Keywords");
+    var formErr = ViewData.ModelState[string.Empty]?.Errors.FirstOrDefault()?.ErrorMessage;
+    var editing = Model.Faq.Id != 0;
+}
+
+@section Styles {
+    <link rel="preload" as="image" href="~/images/users/users-bg.webp" />
+    <link rel="stylesheet" href="~/css/admin-users.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin-chatfaqs.css" asp-append-version="true" />
+}
+
+<div class="uu-page" id="cfPage">
+    <div class="container-xl container-wide uu-wrap">
+
+        @* ================= HERO ================= *@
+        <section class="uu-hero">
+            <div class="uu-stamp" aria-hidden="true"><span class="jp">問</span></div>
+            <div class="uu-hero-tx">
+                <p class="uu-eyebrow">ADMINISTRATION <span>·</span> <span class="jp" lang="ja">チャットボット</span></p>
+                <h1>Chatbot FAQs</h1>
+                <p class="uu-lede">The questions and answers the YORU Assistant uses on the customer pages.</p>
+            </div>
+            <div class="uu-stats">
+                <div class="uu-stat"><i class="bi bi-chat-square-text-fill" aria-hidden="true"></i><b>@s.All</b><span>FAQs</span></div>
+                <div class="uu-stat"><i class="bi bi-eye-fill" aria-hidden="true"></i><b>@s.Shown</b><span>Shown</span></div>
+                <div class="uu-stat"><i class="bi bi-eye-slash-fill" aria-hidden="true"></i><b>@s.Hidden</b><span>Hidden</span></div>
+                <div class="uu-stat cf-ai @(Model.AiOn ? "is-on" : "is-off")" title="@(Model.AiOn ? "AI answers are on. If the AI can't be reached, FAQ keywords are used." : "AI off on this computer: the chatbot answers from FAQ keywords only.")">
+                    <i class="bi @(Model.AiOn ? "bi-stars" : "bi-plug")" aria-hidden="true"></i>
+                    <b>@(Model.AiOn ? "AI on" : "FAQ only")</b>
+                    <span>@(Model.AiOn ? "Gemini + FAQs" : "AI off")</span>
+                </div>
+            </div>
+            <button type="button" class="uu-add" data-cf-new><i class="bi bi-plus-lg" aria-hidden="true"></i>Add FAQ</button>
+        </section>
+
+        <div class="uu-grid cf-grid">
+
+            @* ================= LIST ================= *@
+            <section class="uu-panel" aria-label="FAQs">
+                <div class="uu-tools">
+                    <form method="get" class="uu-search-form" role="search" data-uu-filters>
+                        <label class="uu-search">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search" name="q" value="@Model.Search" placeholder="Search questions, answers or keywords…" aria-label="Search FAQs" autocomplete="off" maxlength="100" />
+                            @if (searchNow is not null)
+                            {
+                                <a class="uu-search-clear" href="@Url.Page("./Index", new { status = statusNow == "" ? null : statusNow })" aria-label="Clear search"><i class="bi bi-x-lg"></i></a>
+                            }
+                            <button type="submit" class="uu-search-go">Search</button>
+                        </label>
+                        @if (statusNow != "")
+                        {
+                            <input type="hidden" name="status" value="@statusNow" />
+                        }
+                    </form>
+                    <div class="uu-filters">
+                        <div class="uu-fgroup">
+                            <span class="uu-flabel" id="cfShowLbl">Show</span>
+                            <nav class="uu-seg" aria-labelledby="cfShowLbl">
+                                @foreach (var (val, label, count, dot) in new[] { ("", "All", s.All, "is-any"), ("shown", "Shown", s.Shown, "is-on"), ("hidden", "Hidden", s.Hidden, "is-off") })
+                                {
+                                    var on = statusNow == val;
+                                    <a class="@(on ? "is-on" : "")" href="@StatusUrl(val)" aria-current="@(on ? "true" : null)"><span class="dot @dot" aria-hidden="true"></span>@label <span class="cf-n">@count</span></a>
+                                }
+                            </nav>
+                        </div>
+                        @if (anyFilter)
+                        {
+                            <span class="uu-count"><b>@d.Matches</b> found · <a href="@Url.Page("./Index")">Clear all</a></span>
+                        }
+                        else
+                        {
+                            <span class="uu-count">The chatbot lists shown FAQs in this order.</span>
+                        }
+                    </div>
+                </div>
+
+                @if (d.Rows.Count == 0)
+                {
+                    <div class="uu-empty">
+                        <i class="bi bi-chat-square-dots" aria-hidden="true"></i>
+                        <h3>@(anyFilter ? "No FAQs match" : "No FAQs yet")</h3>
+                        <p>@(anyFilter ? "Try another word, or show all FAQs." : "Add the questions guests often ask, so the chatbot can answer them.")</p>
+                    </div>
+                }
+                else
+                {
+                    <ol class="cf-list">
+                        @foreach (var f in d.Rows)
+                        {
+                            <li class="cf-row @(f.IsActive ? "" : "is-off") @(f.Id == Model.HighlightId ? "is-new" : "")" data-cf-new-row="@(f.Id == Model.HighlightId ? "true" : null)">
+                                <span class="cf-num" aria-hidden="true">@f.Number</span>
+                                <div class="cf-body">
+                                    <p class="cf-q">@f.Question</p>
+                                    <p class="cf-a">@f.Answer</p>
+                                    @if (f.Keywords.Count > 0)
+                                    {
+                                        <div class="cf-tags" aria-label="Keywords">
+                                            @foreach (var k in f.Keywords)
+                                            {
+                                                <span>@k</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div class="cf-side">
+                                    <form method="post" asp-page-handler="Toggle" class="cf-switch-form">
+                                        <partial name="_FaqFilters" model="Model" />
+                                        <input type="hidden" name="id" value="@f.Id" />
+                                        <input type="hidden" name="shown" value="@(f.IsActive ? "false" : "true")" />
+                                        <button type="submit" class="cf-switch @(f.IsActive ? "is-on" : "")" role="switch" aria-checked="@(f.IsActive ? "true" : "false")"
+                                                aria-label="Show in the chatbot: @f.Question" title="@(f.IsActive ? "Shown in the chatbot (click to hide)" : "Hidden (click to show)")">
+                                            <span></span>
+                                        </button>
+                                    </form>
+                                    <div class="uu-acts">
+                                        <button type="button" class="uu-ib" data-cf-edit
+                                                data-id="@f.Id" data-question="@f.Question" data-answer="@f.Answer"
+                                                data-keywords="@string.Join(", ", f.Keywords)" data-active="@(f.IsActive ? "true" : "false")">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>Edit
+                                        </button>
+                                        <button type="button" class="uu-ib is-danger is-icon" data-cf-delete data-id="@f.Id" data-question="@f.Question" title="Delete" aria-label="Delete: @f.Question">
+                                            <i class="bi bi-trash3" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    </ol>
+
+                    <div class="uu-foot">
+                        <span>Showing @firstNo–@lastNo of @d.Matches</span>
+                        @if (d.PageCount > 1)
+                        {
+                            <nav class="uu-pager" aria-label="Pages">
+                                @if (d.Page > 1)
+                                {
+                                    <a href="@Url.Page("./Index", Model.Filters(d.Page - 1))" aria-label="Previous page"><i class="bi bi-chevron-left"></i></a>
+                                }
+                                @for (var i = 1; i <= d.PageCount; i++)
+                                {
+                                    if (i == 1 || i == d.PageCount || Math.Abs(i - d.Page) <= 1)
+                                    {
+                                        if (i == d.Page)
+                                        {
+                                            <span class="is-on" aria-current="page">@i</span>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.Page("./Index", Model.Filters(i))">@i</a>
+                                        }
+                                    }
+                                    else if (i == 2 || i == d.PageCount - 1)
+                                    {
+                                        <span class="is-gap" aria-hidden="true">…</span>
+                                    }
+                                }
+                                @if (d.Page < d.PageCount)
+                                {
+                                    <a href="@Url.Page("./Index", Model.Filters(d.Page + 1))" aria-label="Next page"><i class="bi bi-chevron-right"></i></a>
+                                }
+                            </nav>
+                        }
+                    </div>
+                }
+            </section>
+
+            @* ================= TRY THE ASSISTANT ================= *@
+            <aside class="uu-panel cf-try" aria-labelledby="cfTryTitle">
+                <h2 id="cfTryTitle"><i class="bi bi-chat-dots" aria-hidden="true"></i>Try the assistant</h2>
+                <p class="uu-log-sub">Type what a customer would ask. You get the same answer they would.</p>
+                <form class="cf-try-form" data-cf-try data-url="@Url.Page("./Index", "Try")">
+                    @Html.AntiForgeryToken()
+                    <label for="cfTryInput" class="visually-hidden">Question</label>
+                    <input id="cfTryInput" type="text" maxlength="300" placeholder="e.g. is there parking nearby?" autocomplete="off" />
+                    <button type="submit" aria-label="Ask"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
+                </form>
+                <div class="cf-try-out" data-cf-out aria-live="polite" hidden></div>
+                <div class="cf-mode @(Model.AiOn ? "is-on" : "is-off")">
+                    @if (Model.AiOn)
+                    {
+                        <b><i class="bi bi-stars" aria-hidden="true"></i> AI on</b>
+                        <span>The menu, opening hours and the shown FAQs are sent with each question. If the AI can't be reached, FAQ keywords are used.</span>
+                    }
+                    else
+                    {
+                        <b><i class="bi bi-plug" aria-hidden="true"></i> FAQ only</b>
+                        <span>The AI is off on this computer (no "Ai:ApiKey" in User Secrets, or "Ai:Enabled" is false). Answers come from FAQ keywords, so good keywords matter.</span>
+                    }
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+@* ================= ADD / EDIT ================= *@
+<div class="uu-modal" id="cfEditor" hidden data-cf-start-open="@(Model.OpenEditor ? "true" : "false")">
+    <div class="uu-shade" data-uu-close></div>
+    <div class="uu-dialog is-wide" role="dialog" aria-modal="true" aria-labelledby="cfEditorTitle">
+        <img class="uu-d-blossom" src="~/images/users/blossom-corner.webp" alt="" aria-hidden="true" />
+        <img class="uu-d-wave" src="~/images/users/wave-corner.webp" alt="" aria-hidden="true" />
+        <button type="button" class="uu-x" data-uu-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
+
+        <header class="uu-dh">
+            <div class="uu-stamp is-sm" aria-hidden="true"><span class="jp">問</span></div>
+            <div>
+                <h2 id="cfEditorTitle" data-cf-title data-new="Add an FAQ" data-edit="Edit FAQ">@(editing ? "Edit FAQ" : "Add an FAQ")</h2>
+                <p>The chatbot uses it straight away.</p>
+            </div>
+        </header>
+
+        <form method="post" asp-page-handler="Save" class="uu-form" novalidate autocomplete="off" data-uu-busy>
+            <partial name="_FaqFilters" model="Model" />
+            <input type="hidden" asp-for="Faq.Id" data-cf-id />
+            @if (formErr is not null)
+            {
+                <div class="uu-alert" role="alert"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>@formErr</div>
+            }
+
+            <div class="uu-field @(qErr is null ? "" : "bad")">
+                <label for="Faq_Question">Question <span>(as a guest would ask it)</span></label>
+                <input asp-for="Faq.Question" class="uu-in" maxlength="200" placeholder="e.g. Do you have parking?" data-cf-count="200" required />
+                <small class="uu-hint cf-count" aria-live="polite"></small>
+                <span class="uu-err">@qErr</span>
+            </div>
+
+            <div class="uu-field @(aErr is null ? "" : "bad")">
+                <label for="Faq_Answer">Answer</label>
+                <textarea asp-for="Faq.Answer" class="uu-in cf-textarea" rows="4" maxlength="1000" placeholder="A short, friendly answer." data-cf-count="1000" required></textarea>
+                <small class="uu-hint cf-count" aria-live="polite"></small>
+                <span class="uu-err">@aErr</span>
+            </div>
+
+            <div class="uu-field @(kErr is null ? "" : "bad")">
+                <label for="Faq_Keywords">Keywords <span>(comma-separated, optional)</span></label>
+                <input asp-for="Faq.Keywords" class="uu-in" maxlength="200" placeholder="e.g. parking, car park, car" data-cf-keywords />
+                <div class="cf-tags cf-preview" data-cf-preview aria-hidden="true"></div>
+                <small class="uu-hint">Used when the AI is off: a question containing one of these words gets this answer.</small>
+                <span class="uu-err">@kErr</span>
+            </div>
+
+            <label class="cf-check">
+                <input type="checkbox" asp-for="Faq.IsActive" data-cf-active />
+                <span class="cf-switch is-static" aria-hidden="true"><span></span></span>
+                <span><b>Show in the chatbot</b><small>Hidden FAQs are kept but never used.</small></span>
+            </label>
+
+            <div class="uu-btns">
+                <button type="button" class="uu-btn ghost" data-uu-close>Cancel</button>
+                <button type="submit" class="uu-btn main" data-uu-submit><span class="uu-spin" aria-hidden="true"></span><span data-cf-save>@(editing ? "Save changes" : "Add FAQ")</span> <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ================= DELETE ================= *@
+<div class="uu-modal" id="cfDelete" hidden>
+    <div class="uu-shade" data-uu-close></div>
+    <div class="uu-dialog is-narrow" role="alertdialog" aria-modal="true" aria-labelledby="cfDelTitle" aria-describedby="cfDelText">
+        <button type="button" class="uu-x" data-uu-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        <form method="post" asp-page-handler="Delete" class="uu-form uu-confirm" data-uu-busy>
+            <partial name="_FaqFilters" model="Model" />
+            <input type="hidden" name="id" data-cf-del-id />
+            <span class="uu-cf-ic is-danger" aria-hidden="true"><i class="bi bi-trash3"></i></span>
+            <h2 id="cfDelTitle">Delete this FAQ?</h2>
+            <p id="cfDelText">“<b data-cf-del-q></b>” will be deleted for good. To keep it but stop the chatbot using it, hide it instead.</p>
+            <div class="uu-btns is-center">
+                <button type="button" class="uu-btn ghost" data-uu-close>Cancel</button>
+                <button type="submit" class="uu-btn main" data-uu-submit><span class="uu-spin" aria-hidden="true"></span>Delete</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-chatfaqs.js" asp-append-version="true"></script>
+}
