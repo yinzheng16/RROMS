@@ -107,9 +107,11 @@ namespace RROMS.Services
                         Header(col, r, logo);
                         Divider(col, 15);
                         Title(col, r);
+                        Divider(col, 10);   // line above ORDERED ITEMS (same as above PAYMENT)
                         Items(col, r);
                         Totals(col, r);
-                        Divider(col, 10);
+                        // Line under Total: 1.5pt less above it, see Totals().
+                        GoldLine(col.Item().PaddingTop(8.5f).PaddingBottom(10));
                         PaymentDetails(col, r);
                         Divider(col, 10);
                         Footer(col, r);
@@ -154,7 +156,7 @@ namespace RROMS.Services
                 .FontFamily(Display).Bold().FontSize(12).LetterSpacing(0.19f);
             col.Item().AlignCenter().Text("Japanese Dining").FontSize(8).FontColor(Muted);
 
-            col.Item().PaddingTop(16).PaddingBottom(14).Column(info =>
+            col.Item().PaddingTop(16).Column(info =>
             {
                 Row(info, "Receipt No.", r.ReceiptNo);
                 if (r.BillNo != null)
@@ -207,7 +209,9 @@ namespace RROMS.Services
 
             Divider(col, 7.5f);
 
-            col.Item().Row(row =>
+            // 1.5pt lower than plain padding: the bold numbers have no descenders,
+            // so this puts Total in the visual middle between its two lines.
+            col.Item().PaddingTop(1.5f).Row(row =>
             {
                 row.RelativeItem().AlignMiddle().Text("Total").FontSize(11.25f).Bold();
                 row.AutoItem().AlignMiddle().Text(Money(r.TotalAmount)).FontSize(11.25f).Bold().FontColor(Red);
