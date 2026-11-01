@@ -7,9 +7,12 @@ namespace RROMS.Services.Interfaces
     // Member 4 extends the implementation with email (MailKit) and real-time (SignalR).
     public interface INotificationService
     {
-        // Saves the in-app notification. US38: Reservation and Payment notifications are also emailed
-        // automatically (reservation emails show the booking details). Order / Promotion / System
-        // notifications are NOT emailed unless you use the overload below.
+        // Saves the in-app notification. US38 also emails the customer automatically:
+        //   Reservation -> booking details (put the reservation's ReferenceNo in the message)
+        //   Order       -> order details, only for: takeaway order received, takeaway ready for pickup,
+        //                  order cancelled (put the order's OrderNo in the message; call AFTER saving the status)
+        //   Payment     -> simple email from the title/message
+        //   Promotion / System -> no email unless you use the overload below.
         Task SendAsync(string userId, string title, string message, NotificationType type);
 
         // US38: same as above, plus a detailed email built from `email` (any type).

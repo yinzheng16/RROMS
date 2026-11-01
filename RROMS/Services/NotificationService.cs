@@ -15,8 +15,9 @@ namespace RROMS.Services
     //   - Every notification is saved in-app first (unchanged).
     //   - Then an email is sent through the shared IEmailSender (EN07) in the YORU layout (EmailTemplates):
     //       Reservation -> detailed booking email (reference, date, time, guests, table, ...)
+    //       Order       -> detailed order email, only for the important moments (see BuildOrderEmailAsync)
     //       Payment     -> simple email from the title/message (or the detailed overload)
-    //       Order / Promotion / System -> only when the caller passes a NotificationEmail
+    //       Promotion / System -> only when the caller passes a NotificationEmail
     //   - A failed email is logged and never throws, so a booking / payment is never undone because of email.
     public class NotificationService : INotificationService
     {
@@ -24,6 +25,7 @@ namespace RROMS.Services
 
         private readonly IRepository<Notification> _notifications;
         private readonly IRepository<Reservation> _reservations;
+        private readonly IRepository<Order> _orders;
         private readonly UserManager<ApplicationUser> _users;
         private readonly IEmailSender _email;
         private readonly IHomeService _home;
@@ -33,6 +35,7 @@ namespace RROMS.Services
         public NotificationService(
             IRepository<Notification> notifications,
             IRepository<Reservation> reservations,
+            IRepository<Order> orders,
             UserManager<ApplicationUser> users,
             IEmailSender email,
             IHomeService home,
@@ -41,6 +44,7 @@ namespace RROMS.Services
         {
             _notifications = notifications;
             _reservations = reservations;
+            _orders = orders;
             _users = users;
             _email = email;
             _home = home;
@@ -99,8 +103,8 @@ namespace RROMS.Services
         private async Task SendEmailAsync(string userId, string title, string message, NotificationType type,
             NotificationEmail? email)
         {
-            // Order / Promotion / System: only when the caller asks for an email.
-            if (email is null && type is not (NotificationType.Reservation or NotificationType.Payment))
+            // Promotion / System: only when the caller asks for an email.
+            if (email is null && type is not (NotificationType.Reservation or NotificationType.Order or NotificationType.Payment))
                 return;
 
             var user = await _users.FindByIdAsync(userId);
@@ -116,6 +120,15 @@ namespace RROMS.Services
                     await _email.SendEmailAsync(user.Email, reservationEmail.Value.Subject, reservationEmail.Value.Html);
                     return;
                 }
+            }
+
+            // Order: a detailed email for the important moments only; other status changes stay in-app.
+            if (email is null && type == NotificationType.Order)
+            {
+                var orderEmail = await BuildOrderEmailAsync(user, message, footer);
+                if (orderEmail is not null)
+                    await _email.SendEmailAsync(user.Email, orderEmail.Value.Subject, orderEmail.Value.Html);
+                return;
             }
 
             // Detailed email from the caller, or a simple one from the notification text.
@@ -230,6 +243,111 @@ namespace RROMS.Services
 
             return (subject, html);
         }
+
+        // Order emails show the order itself. The caller (Member 3, after saving the new status) puts the
+        // order number in the message; the order's CURRENT status decides the email:
+        //   Pending (takeaway)      -> "We've received your order"
+        //   ReadyToServe (takeaway) -> "Ready for pickup"
+        //   Cancelled (any)         -> "Your order was cancelled"
+        // Anything else (Preparing, Served, Completed, dine-in rounds) -> no email, in-app only.
+        private async Task<(string Subject, string Html)?> BuildOrderEmailAsync(
+            ApplicationUser user, string message, string footer)
+        {
+            var recent = await _orders.Query()
+                .AsNoTracking()
+                .Include(o => o.Items).ThenInclude(i => i.MenuItem)
+                .Include(o => o.Payments)
+                .Include(o => o.Bill)
+                .Where(o => o.UserId == user.Id)
+                .OrderByDescending(o => o.CreatedAt)
+                .Take(30)
+                .ToListAsync();
+
+            // Longest match first, so "YR-12" never matches the message of "YR-123".
+            var order = recent
+                .Where(x => !string.IsNullOrEmpty(x.OrderNo) && message.Contains(x.OrderNo))
+                .OrderByDescending(x => x.OrderNo.Length)
+                .FirstOrDefault();
+            if (order is null) return null;
+
+            bool takeaway = order.OrderType == OrderType.Takeaway;
+            bool paid = order.Bill?.Status == BillStatus.Paid || order.Payments.Any(p => p.Status == PaymentStatus.Paid);
+
+            string subject, kicker, title, intro, small;
+            string? warn = null;
+
+            switch (order.Status)
+            {
+                case OrderStatus.Pending when takeaway:
+                    subject = $"We've received your YORU order {order.OrderNo}";
+                    kicker = "Order received";
+                    title = "Thanks for your order";
+                    intro = "We've received your takeaway order and the kitchen will start on it soon. We'll email you again when it's ready for pickup.";
+                    small = "You can follow your order status on our website.";
+                    break;
+
+                case OrderStatus.ReadyToServe when takeaway:
+                    subject = $"Your YORU order {order.OrderNo} is ready for pickup";
+                    kicker = "Ready for pickup";
+                    title = "Your order is ready!";
+                    intro = "Your takeaway order is ready. Please collect it at the counter.";
+                    small = "Please show your order number at the counter.";
+                    if (!paid)
+                        warn = "<b>Not paid yet?</b> You can pay at the counter when you collect your order.";
+                    break;
+
+                case OrderStatus.Cancelled:
+                    subject = $"Your YORU order {order.OrderNo} was cancelled";
+                    kicker = "Order cancelled";
+                    title = "Your order was cancelled";
+                    intro = "Your order below has been cancelled.";
+                    small = "Questions about this order? Contact us and we'll help.";
+                    if (paid)
+                        warn = "<b>Already paid?</b> Please contact us about your payment.";
+                    break;
+
+                default:
+                    return null;
+            }
+
+            var rows = new List<EmailTemplates.Row>
+            {
+                new("Order", order.OrderNo),
+                new("Type", takeaway ? "Takeaway" : "Dine-in"),
+                new("Placed", order.CreatedAt.ToString("ddd, d MMM yyyy · h:mm tt", En))
+            };
+
+            const int maxItems = 10;
+            var items = order.Items.OrderBy(i => i.Id).ToList();
+            foreach (var item in items.Take(maxItems))
+                rows.Add(new($"{item.Quantity} × {item.MenuItem?.Name ?? "Item"}", Money(item.Quantity * item.UnitPrice)));
+            if (items.Count > maxItems)
+                rows.Add(new($"+ {items.Count - maxItems} more item(s)", ""));
+
+            rows.Add(new("Subtotal", Money(order.Subtotal)));
+            if (order.ServiceCharge > 0) rows.Add(new("Service charge", Money(order.ServiceCharge)));
+            if (order.TaxAmount > 0) rows.Add(new("Tax", Money(order.TaxAmount)));
+            rows.Add(new("Total", Money(order.TotalAmount)));
+            if (order.Status != OrderStatus.Cancelled)
+                rows.Add(new("Payment", paid ? "Paid" : "Not paid yet"));
+
+            var html = EmailTemplates.Build(
+                kicker: kicker,
+                title: title,
+                name: user.FullName,
+                introHtml: EmailTemplates.Encode(intro),
+                rows: rows,
+                warnHtml: warn,
+                buttonText: "View my order",
+                buttonUrl: AbsoluteUrl($"/Customer/OrderConfirmation?id={order.Id}"),
+                smallText: small,
+                footerLine: footer,
+                buttonFullWidth: true);
+
+            return (subject, html);
+        }
+
+        private static string Money(decimal amount) => $"RM {amount.ToString("N2", En)}";
 
         private static string KickerFor(NotificationType type) => type switch
         {
