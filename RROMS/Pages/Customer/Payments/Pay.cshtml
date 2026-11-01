@@ -1,0 +1,172 @@
+@page
+@model RROMS.Pages.Customer.Payments.PayModel
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@using RROMS.Pages.Customer.Payments
+@{
+    // Owner: Member 4 — US33 Online payment (customer pay page).
+    ViewData["Title"] = "Pay online";
+    ViewData["FullWidth"] = true;   // banner goes edge to edge; the page draws its own container
+
+    var en = PayModel.DisplayCulture;
+    string Rm(decimal v) => "RM " + v.ToString("N2", en);
+    string Time(DateTime d) => d.ToString("h:mm tt", en);
+    string DayTime(DateTime d) => d.Date == DateTime.Today
+        ? Time(d)
+        : d.ToString("d MMM, h:mm tt", en);
+
+    string Kitchen(OrderStatus? s) => s switch
+    {
+        OrderStatus.Pending => "waiting for the kitchen",
+        OrderStatus.Preparing => "being prepared",
+        OrderStatus.ReadyToServe => "ready to collect",
+        OrderStatus.Served or OrderStatus.Completed => "collected",
+        _ => ""
+    };
+}
+
+<link rel="stylesheet" href="~/css/customer-pay.css" asp-append-version="true" />
+
+<div class="us33-pay">
+
+    <section class="pay-hero" aria-labelledby="pay-title">
+        <div class="pay-hero-inner container-xl">
+            <div class="pay-hero-copy">
+                <p class="pay-eyebrow">@Brand.FullName · <span lang="ja">お支払い</span></p>
+                <h1 id="pay-title">Pay your <span>bill</span></h1>
+                <p class="pay-intro">Bills confirmed by our staff and takeaway orders you can pay online.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="container-xl pay-body">
+        <div class="pay-cols">
+
+            <div class="pay-list" aria-label="Bills to pay">
+
+                @if (!string.IsNullOrEmpty(Model.PayError))
+                {
+                    <div class="pay-alert" role="alert">@Model.PayError</div>
+                }
+
+                @if (!Model.OnlineAvailable)
+                {
+                    <div class="pay-alert is-info" role="status">
+                        Online payment isn't available right now. Please pay at the counter.
+                    </div>
+                }
+
+                @if (Model.Items.Count == 0)
+                {
+                    <div class="pay-card pay-empty">
+                        <h2>Nothing to pay right now</h2>
+                        <p>Dine-in bills appear here once our staff confirm them. Takeaway orders appear here until they are paid.</p>
+                    </div>
+                }
+
+                @foreach (var i in Model.Items)
+                {
+                    bool dineIn = i.Kind == PayableKind.DineIn;
+                    bool focus = !dineIn && Model.OrderId == i.OrderId;
+                    string kitchen = Kitchen(i.KitchenStatus);
+                    string takeawayLine = kitchen.Length > 0 ? "Takeaway · " + kitchen : "Takeaway";
+                    string orderCount = i.OrderCount == 1 ? "1 order" : $"{i.OrderCount} orders";
+                    string confirmed = i.ConfirmedAt is DateTime c ? $" · confirmed by staff at {DayTime(c)}" : "";
+
+                    <article class="pay-card @(focus ? "is-focus" : "")" id="@(dineIn ? $"bill-{i.BillId}" : $"order-{i.OrderId}")">
+                        <div class="pay-row">
+                            <div class="pay-tag">
+                                @if (dineIn)
+                                {
+                                    <b><span lang="ja">店内</span> · Table @i.Reference</b>
+                                    <small>Dine-in · Bill @i.BillNo</small>
+                                }
+                                else
+                                {
+                                    <b><span lang="ja">持ち帰り</span> · @i.Reference</b>
+                                    <small>@takeawayLine</small>
+                                }
+                            </div>
+
+                            <div class="pay-amount">
+                                <b>@Rm(i.Amount)</b>
+                                <small>total to pay</small>
+                            </div>
+
+                            <div class="pay-action">
+                                @if (i.PayStatus == TakeawayPayStatus.CanPay || i.PayStatus == TakeawayPayStatus.InProgress)
+                                {
+                                    bool again = i.PayStatus == TakeawayPayStatus.InProgress;
+
+                                    if (dineIn)
+                                    {
+                                        <form method="post" asp-page-handler="Bill" asp-route-billId="@i.BillId" data-pay-form>
+                                            <button type="submit" class="pay-btn @(again ? "is-outline" : "")">@(again ? "Continue payment" : "Pay online")</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="Takeaway" asp-route-orderId="@i.OrderId" data-pay-form>
+                                            <button type="submit" class="pay-btn @(again ? "is-outline" : "")">@(again ? "Continue payment" : "Pay online")</button>
+                                        </form>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="pay-counter">Pay at the counter</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="pay-meta">
+                            @if (i.PayStatus == TakeawayPayStatus.InProgress && i.InProgressSince is DateTime since)
+                            {
+                                <span>Payment in progress on Stripe · started @DayTime(since)</span>
+                            }
+                            else if (i.PayStatus == TakeawayPayStatus.PayAtCounter && Model.OnlineAvailable && i.Amount < Model.MinimumAmount)
+                            {
+                                <span>Online payment needs at least @Rm(Model.MinimumAmount).</span>
+                            }
+                            else if (dineIn)
+                            {
+                                <span>@(orderCount + confirmed)</span>
+                            }
+                            else
+                            {
+                                <span>Ordered @DayTime(i.CreatedAt) · or pay at the counter when you collect it.</span>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <aside class="pay-side" aria-label="How online payment works">
+                <h2>How it works</h2>
+                <ol>
+                    <li>Press <b>Pay online</b>.</li>
+                    <li>Pay on Stripe's secure page. Your card details never reach us.</li>
+                    <li>You come back here and the payment shows in My Payments.</li>
+                </ol>
+                @if (Model.OnlineAvailable)
+                {
+                    <p class="pay-test">Test mode: card 4242 4242 4242 4242, any future date, any CVC.</p>
+                }
+            </aside>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // One click is enough: stop double submits while Stripe opens.
+        document.querySelectorAll('[data-pay-form]').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                var btn = form.querySelector('button');
+                if (btn) { btn.disabled = true; btn.textContent = 'Opening Stripe…'; }
+            });
+        });
+        var focus = document.querySelector('.us33-pay .is-focus');
+        if (focus) { focus.scrollIntoView({ block: 'center' }); }
+    </script>
+}
