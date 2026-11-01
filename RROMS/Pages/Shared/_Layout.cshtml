@@ -49,6 +49,9 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RROMS.styles.css" asp-append-version="true" />
+    @* A page's own stylesheet can go here with @section Styles { <link ... /> },
+       so it loads before the page is drawn (no flash of an unstyled page). *@
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="@(isBackOffice ? "back-office" : "front-of-house")">
     <header>

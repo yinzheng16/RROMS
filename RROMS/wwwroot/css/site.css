@@ -913,10 +913,30 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 }
 
 /* Decorations */
-/* Page background: warm glow behind the card + fine washi-paper grain */
+/* Page background: the watercolour washi scene (lantern, sakura, torii, Fuji, gold waves),
+   same picture as Admin → Users. It already has a sakura branch and Fuji, so the old separate
+   branch and Fuji pictures are hidden. The falling petals stay (they drift down from the branch). */
 .auth-page {
-    background-color: var(--yoru-cream);
-    background-image: radial-gradient(ellipse 55% 60% at 55% 45%, rgba(255, 253, 248, .85), rgba(255, 253, 248, 0) 70%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .36  0 0 0 0 .22  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background: #f8e7d3 url("../images/users/users-bg.webp") center / cover no-repeat;
+}
+
+@media (min-width: 992px) {
+    .auth-page { background-attachment: fixed; }
+}
+
+/* fill the whole space between navbar and footer, so there is no plain strip under the picture */
+.site-main:has(> .auth-page) {
+    display: flex;
+    flex-direction: column;
+    background: #f8e7d3;
+}
+
+    .site-main:has(> .auth-page) > .auth-page {
+        flex: 1 0 auto;
+    }
+
+.auth-page .auth-art {
+    display: none;
 }
 /* Loose sakura petals drifting down from the branch */
 .auth-petal {
