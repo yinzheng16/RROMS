@@ -297,15 +297,19 @@
     });
 
     // ---------- Background loading ----------
+    // If the admin changes something while a report is still loading, remember only
+    // the newest request and run it as soon as the current one finishes.
+    var queued = null;
+
     function load(url, push) {
         if (loading) {
+            queued = { url: url, push: push };
             return;
         }
         loading = true;
         var slow = setTimeout(function () { page.classList.add("is-loading"); }, 350);
 
         var searchFocused = document.activeElement && document.activeElement.hasAttribute("data-rp-search");
-        var caret = searchFocused ? document.activeElement.selectionStart : 0;
 
         fetch(url, { credentials: "same-origin" })
             .then(function (response) {
@@ -317,18 +321,28 @@
                 var fresh = doc.querySelector("[data-rp]");
                 if (!fresh) { throw new Error("No report in the response"); }
 
+                // Keep what the admin is typing right now, even if they typed more
+                // while this report was loading.
+                var oldInput = page.querySelector("[data-rp-search]");
+                var typed = oldInput ? oldInput.value : null;
+                var caret = oldInput && searchFocused ? oldInput.selectionStart : 0;
+
                 page.innerHTML = fresh.innerHTML;
                 if (push) {
                     history.pushState({ rp: true }, "", url);
                 }
                 setUp();
 
-                if (searchFocused) {
-                    var input = page.querySelector("[data-rp-search]");
-                    if (input) {
-                        input.focus();
-                        input.setSelectionRange(caret, caret);
+                var input = page.querySelector("[data-rp-search]");
+                if (input && typed !== null && input.value !== typed) {
+                    input.value = typed;
+                    if (!queued) {
+                        queued = { url: formUrl(input.form), push: true };
                     }
+                }
+                if (input && searchFocused) {
+                    input.focus();
+                    input.setSelectionRange(caret, caret);
                 }
             })
             .catch(function () {
@@ -338,6 +352,11 @@
                 clearTimeout(slow);
                 loading = false;
                 page.classList.remove("is-loading");
+                if (queued) {
+                    var next = queued;
+                    queued = null;
+                    load(next.url, next.push);
+                }
             });
     }
 
