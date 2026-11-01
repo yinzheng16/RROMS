@@ -9,6 +9,7 @@ namespace RROMS.Areas.Identity.Pages.Account
 {
     // US52 (Owner: Member 1): opened from "Choose a new password" in the email.
     // Replaces Identity's built-in page. The link carries the user id + one-time code (no email in the URL).
+    // US05: also opened from "Set my password" in the welcome email (welcome=true only changes the wording).
     [AllowAnonymous]
     public class ResetPasswordModel : PageModel
     {
@@ -23,6 +24,7 @@ namespace RROMS.Areas.Identity.Pages.Account
 
         [BindProperty(SupportsGet = true)] public string? UserId { get; set; }
         [BindProperty(SupportsGet = true)] public string? Code { get; set; }
+        [BindProperty(SupportsGet = true)] public bool Welcome { get; set; }
         [BindProperty] public string? NewPassword { get; set; }
         [BindProperty] public string? ConfirmPassword { get; set; }
 
@@ -53,6 +55,7 @@ namespace RROMS.Areas.Identity.Pages.Account
             if (_signIn.IsSignedIn(User)) await _signIn.SignOutAsync();
 
             TempData["ResetDoneFor"] = result.Email;
+            TempData["ResetWelcome"] = Welcome;
             return RedirectToPage("./ResetPasswordConfirmation");
         }
 

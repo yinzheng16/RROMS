@@ -9,6 +9,13 @@ namespace RROMS.Areas.Identity.Pages.Account
     {
         public string? For { get; private set; }
 
-        public void OnGet() => For = TempData["ResetDoneFor"] as string;
+        // US05: first password for an account an Admin created ("Set your password").
+        public bool Welcome { get; private set; }
+
+        public void OnGet()
+        {
+            For = TempData["ResetDoneFor"] as string;
+            Welcome = TempData["ResetWelcome"] as bool? ?? false;
+        }
     }
 }
