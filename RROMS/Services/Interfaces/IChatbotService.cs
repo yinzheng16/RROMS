@@ -19,7 +19,28 @@ namespace RROMS.Services.Interfaces
     // Source: "ai" (answered by the AI), "faq" (an FAQ matched by keywords), "help" (built-in answer),
     //         "limit" (asked too many questions), "error".
     // FaqId: the FAQ the answer came from, when known. Hours: attach the hours card.
-    public record ChatReply(string Text, string Source, int? FaqId = null, ChatHoursCard? Hours = null);
+    // Check: a table availability result (US09). BookingForm: show the small date / time / guests form in the chat.
+    public record ChatReply(string Text, string Source, int? FaqId = null, ChatHoursCard? Hours = null,
+                            ChatAvailability? Check = null, bool BookingForm = false);
+
+    // ---------- US09 (Owner: Member 1): table availability in the chat + booking link ----------
+
+    // A table type that is free at that time (TablesLeft) and its minimum spend (0 = none).
+    public record ChatTableType(string Name, string? JapaneseName, int TablesLeft, decimal MinimumSpend);
+
+    // Another time to try ("7:30 PM", "Sun 9 Nov · 8:00 PM"). Date "yyyy-MM-dd", Time "HH:mm".
+    public record ChatTimeOption(string Date, string Time, string Label);
+
+    // The result of checking one date, time and party size with Member 2's booking rules.
+    // Valid = the time can be booked at all (open, not in the past, not in a break...).
+    // BookUrl = the booking page already filled in with this date, time and guests (only when Available).
+    public record ChatAvailability(
+        bool Valid, bool Available, string Date, string Time, int Guests, string When, string? Message,
+        IReadOnlyList<ChatTableType> Types, IReadOnlyList<ChatTimeOption> Suggestions, string? BookUrl);
+
+    // What the small booking form in the chat offers: bookable dates and the largest party size.
+    public record ChatDateOption(string Value, string Label);
+    public record ChatBookingSetup(IReadOnlyList<ChatDateOption> Dates, int MaxGuests);
 
     public interface IChatbotService
     {
@@ -38,5 +59,17 @@ namespace RROMS.Services.Interfaces
 
         // The opening-hours card (Member 2's opening hours + special dates).
         Task<ChatHoursCard> GetHoursAsync();
+
+        // ---------- US09 ----------
+
+        // Is there a table for this many guests at this time? date "yyyy-MM-dd", time "HH:mm".
+        // Uses Member 2's IReservationService.CheckTimeAsync / GetTypeOptionsAsync (the same rules as the booking page).
+        Task<ChatAvailability> CheckAsync(string? date, string? time, int guests);
+
+        // Bookable dates (same 60 days as the booking page) and the largest party size, for the form in the chat.
+        Task<ChatBookingSetup> GetBookingSetupAsync();
+
+        // The times that can be booked on one date ("HH:mm" + "7:30 PM"), for the form in the chat.
+        Task<IReadOnlyList<ChatTimeOption>> GetTimesAsync(string? date);
     }
 }

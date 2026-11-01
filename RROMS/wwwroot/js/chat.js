@@ -93,6 +93,8 @@
 
         if (msg.hours) { b.appendChild(hoursCard(msg.hours)); }
         if (msg.faqs) { b.appendChild(faqList(msg.faqs)); }
+        if (msg.check) { b.appendChild(availCard(msg.check)); }
+        if (msg.form) { b.appendChild(bookingForm(msg.form)); }
         if (msg.link) {
             var a = document.createElement("a");
             a.className = "yc-go";
@@ -187,6 +189,286 @@
         }
     }
 
+    // ---------------- US09: table availability ----------------
+    var setupPromise = null;   // dates + largest party, loaded once
+    function bookingSetup() {
+        if (!setupPromise) {
+            setupPromise = getJson(root.dataset.booking).catch(function (e) { setupPromise = null; throw e; });
+        }
+        return setupPromise;
+    }
+
+    // The small form inside the chat: date chips, time chips (Lunch / Afternoon / Dinner), guests -> "Check availability".
+    // Chips instead of long dropdowns: everything is one tap, and only bookable days and times are shown.
+    var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    function bookingForm(prefill) {
+        prefill = prefill || {};
+        var box = document.createElement("div");
+        box.className = "yc-book";
+        box.innerHTML =
+            '<div class="yc-bk-row"><span class="yc-bk-lbl">Date</span>' +
+            '<div class="yc-dates-wrap"><button type="button" class="yc-dscroll is-left" data-f="left" aria-label="Earlier dates"><i class="bi bi-chevron-left"></i></button>' +
+            '<div class="yc-dates" data-f="dates" role="radiogroup" aria-label="Date"><span class="yc-bk-wait">Loading dates…</span></div>' +
+            '<button type="button" class="yc-dscroll is-right" data-f="right" aria-label="Later dates"><i class="bi bi-chevron-right"></i></button></div></div>' +
+            '<div class="yc-bk-row"><span class="yc-bk-lbl">Time</span><div class="yc-times" data-f="times" role="radiogroup" aria-label="Time"><span class="yc-bk-wait">Pick a date first</span></div></div>' +
+            '<div class="yc-guests"><span class="yc-bk-lbl">Guests</span><div class="yc-step">' +
+            '<button type="button" data-f="minus" aria-label="Fewer guests">−</button>' +
+            '<output data-f="guests" aria-live="polite">2</output>' +
+            '<button type="button" data-f="plus" aria-label="More guests">+</button></div></div>' +
+            '<button type="button" class="yc-check" data-f="go" disabled><i class="bi bi-search" aria-hidden="true"></i> <span data-f="go-text">Check availability</span></button>';
+
+        var datesEl = box.querySelector('[data-f="dates"]');
+        var timesEl = box.querySelector('[data-f="times"]');
+        var out = box.querySelector('[data-f="guests"]');
+        var go = box.querySelector('[data-f="go"]');
+        var goText = box.querySelector('[data-f="go-text"]');
+        var guests = prefill.guests || 2;
+        var maxGuests = 20;
+        var picked = { date: null, dateLabel: "", time: null, timeLabel: "" };
+
+        function paintGuests() {
+            out.textContent = guests;
+            box.querySelector('[data-f="minus"]').disabled = guests <= 1;
+            box.querySelector('[data-f="plus"]').disabled = guests >= maxGuests;
+            paintGo();
+        }
+        function paintGo() {
+            go.disabled = !(picked.date && picked.time);
+            goText.textContent = picked.date && picked.time
+                ? "Check · " + picked.dateLabel + " · " + picked.timeLabel.replace(":00 ", " ") + " · " + guests + (guests === 1 ? " guest" : " guests")
+                : "Check availability";
+        }
+        function select(container, btn) {
+            container.querySelectorAll(".is-on").forEach(function (b) { b.classList.remove("is-on"); b.setAttribute("aria-checked", "false"); });
+            btn.classList.add("is-on");
+            btn.setAttribute("aria-checked", "true");
+        }
+
+        // "2026-11-07" -> { top: "Sat" / "Today", day: "7", month: "Nov", label: "Sat 7 Nov" }
+        function dateParts(value) {
+            var p = value.split("-");
+            var d = new Date(+p[0], +p[1] - 1, +p[2]);
+            var today = new Date(); today.setHours(0, 0, 0, 0);
+            var diff = Math.round((d - today) / 86400000);
+            var top = diff === 0 ? "Today" : diff === 1 ? "Tmr" : DAYS[d.getDay()];
+            var label = diff === 0 ? "Today" : diff === 1 ? "Tomorrow" : DAYS[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
+            return { top: top, day: String(d.getDate()), month: MONTHS[d.getMonth()], label: label, weekend: d.getDay() === 0 || d.getDay() === 6 };
+        }
+
+        function pickDate(btn) {
+            select(datesEl, btn);
+            picked.date = btn.dataset.value;
+            picked.dateLabel = btn.dataset.label;
+            picked.time = null;
+            btn.scrollIntoView({ block: "nearest", inline: "nearest" });
+            loadTimes();
+        }
+
+        function loadTimes() {
+            paintGo();
+            timesEl.innerHTML = '<span class="yc-bk-wait">Loading times…</span>';
+            getJson(root.dataset.times + "&date=" + encodeURIComponent(picked.date))
+                .then(function (times) {
+                    timesEl.innerHTML = "";
+                    if (!times.length) { timesEl.innerHTML = '<span class="yc-bk-wait">No times left on this day. Try another date.</span>'; return; }
+
+                    // group: Lunch (before 3 PM), Afternoon (3–5 PM), Dinner (5 PM on)
+                    var groups = [["Lunch", []], ["Afternoon", []], ["Dinner", []]];
+                    times.forEach(function (t) {
+                        var h = parseInt(t.time.split(":")[0], 10);
+                        groups[h < 15 ? 0 : h < 17 ? 1 : 2][1].push(t);
+                    });
+                    var want = prefill.time || "19:00", wantBtn = null, firstBtn = null;
+                    groups.forEach(function (g) {
+                        if (!g[1].length) { return; }
+                        var head = document.createElement("div");
+                        head.className = "yc-tgroup";
+                        head.textContent = g[0];
+                        timesEl.appendChild(head);
+                        var row = document.createElement("div");
+                        row.className = "yc-trow";
+                        g[1].forEach(function (t) {
+                            var b = document.createElement("button");
+                            b.type = "button";
+                            b.className = "yc-chip";
+                            b.setAttribute("role", "radio");
+                            b.setAttribute("aria-checked", "false");
+                            b.dataset.value = t.time;
+                            b.textContent = t.label.replace(":00 ", " ").replace(" ", " ");
+                            b.addEventListener("click", function () {
+                                select(timesEl, b);
+                                picked.time = t.time;
+                                picked.timeLabel = t.label;
+                                paintGo();
+                            });
+                            row.appendChild(b);
+                            if (!firstBtn) { firstBtn = b; }
+                            if (t.time === want) { wantBtn = b; }
+                        });
+                        timesEl.appendChild(row);
+                    });
+                    // pre-select 7:00 PM (or the asked time) when offered
+                    var pre = wantBtn || null;
+                    if (pre) {
+                        pre.click();
+                        // show the chosen time with its group heading above it
+                        var head = pre.parentElement.previousElementSibling;
+                        timesEl.scrollTop = Math.max(0, head.offsetTop - 2);
+                    }
+                })
+                .catch(function (e) { failed("times", e); });
+        }
+
+        // Couldn't load: say so, and offer the booking page instead.
+        function failed(what, e) {
+            (what === "dates" ? datesEl : timesEl).innerHTML = '<span class="yc-bk-wait">Couldn\'t load ' + what + "</span>";
+            if (!box.querySelector(".yc-book-err")) {
+                var p = document.createElement("p");
+                p.className = "yc-book-err";
+                p.innerHTML = "Sorry, I couldn't load the " + what + (e && e.message ? " (" + esc(e.message) + ")" : "") +
+                    '. You can still <a href="' + root.dataset.book + '">book on our booking page</a>.';
+                box.appendChild(p);
+            }
+        }
+
+        box.querySelector('[data-f="minus"]').addEventListener("click", function () { if (guests > 1) { guests--; paintGuests(); } });
+        box.querySelector('[data-f="plus"]').addEventListener("click", function () { if (guests < maxGuests) { guests++; paintGuests(); } });
+        box.querySelector('[data-f="left"]').addEventListener("click", function () { datesEl.scrollBy({ left: -datesEl.clientWidth * .8, behavior: "smooth" }); });
+        box.querySelector('[data-f="right"]').addEventListener("click", function () { datesEl.scrollBy({ left: datesEl.clientWidth * .8, behavior: "smooth" }); });
+        go.addEventListener("click", function () {
+            if (!picked.date || !picked.time) { return; }
+            runCheck(picked.date, picked.time, guests, "Table for " + guests + " · " + picked.dateLabel + " · " + picked.timeLabel);
+        });
+
+        bookingSetup()
+            .then(function (s) {
+                maxGuests = s.maxGuests || 20;
+                if (guests > maxGuests) { guests = maxGuests; }
+                datesEl.innerHTML = "";
+                if (!s.dates.length) { datesEl.innerHTML = '<span class="yc-bk-wait">No dates open for booking</span>'; return; }
+                var first = null, wanted = null;
+                s.dates.forEach(function (d) {
+                    var p = dateParts(d.value);
+                    var b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "yc-day" + (p.weekend ? " is-weekend" : "");
+                    b.setAttribute("role", "radio");
+                    b.setAttribute("aria-checked", "false");
+                    b.setAttribute("aria-label", p.label);
+                    b.dataset.value = d.value;
+                    b.dataset.label = p.label;
+                    b.innerHTML = "<small>" + p.top + "</small><b>" + p.day + "</b><small>" + p.month + "</small>";
+                    b.addEventListener("click", function () { pickDate(b); });
+                    datesEl.appendChild(b);
+                    if (!first) { first = b; }
+                    if (prefill.date === d.value) { wanted = b; }
+                });
+                paintGuests();
+                pickDate(wanted || first);
+            })
+            .catch(function (e) { failed("dates", e); });
+
+        paintGuests();
+        return box;
+    }
+
+    function runCheck(date, time, guests, shown) {
+        if (busy) { return; }
+        add({ role: "user", text: shown || ("Table for " + guests + " · " + date + " · " + time) });
+        setBusy(true);
+        getJson(root.dataset.check + "&date=" + encodeURIComponent(date) + "&time=" + encodeURIComponent(time) + "&guests=" + guests)
+            .then(function (c) {
+                setBusy(false);
+                add({
+                    role: "bot",
+                    text: c.available ? "Good news! 🎉" : (c.valid ? "Sorry, that time is fully booked." : "Sorry, we can't take a booking then."),
+                    check: c
+                });
+            })
+            .catch(function () { setBusy(false); add({ role: "bot", text: "Sorry, I couldn't check just now. Please try again." }); });
+    }
+
+    // Result card: available (+ table types + "Book this table") or not (+ other times to try).
+    function availCard(c) {
+        var box = document.createElement("div");
+        box.className = "yc-avail " + (c.available ? "is-ok" : "is-no");
+
+        var head = document.createElement("b");
+        head.innerHTML = c.available
+            ? '<i class="bi bi-check-circle-fill" aria-hidden="true"></i> Table available'
+            : '<i class="bi bi-x-circle-fill" aria-hidden="true"></i> ' + (c.valid ? "Fully booked" : "Not available");
+        box.appendChild(head);
+
+        if (c.when) {
+            var when = document.createElement("p");
+            when.textContent = c.when + " · " + c.guests + (c.guests === 1 ? " guest" : " guests");
+            box.appendChild(when);
+        }
+        if (!c.available && c.message) {
+            var why = document.createElement("p");
+            why.className = "yc-why";
+            why.textContent = c.message;
+            box.appendChild(why);
+        }
+
+        if (c.available && c.types && c.types.length) {
+            var ul = document.createElement("ul");
+            c.types.slice(0, 4).forEach(function (t) {
+                var li = document.createElement("li");
+                li.innerHTML = "<span>" + esc(t.name) + "</span><small>" +
+                    (t.minimumSpend > 0 ? "min. spend RM " + Number(t.minimumSpend).toFixed(0) : (t.tablesLeft === 1 ? "1 left" : t.tablesLeft + " left")) + "</small>";
+                ul.appendChild(li);
+            });
+            box.appendChild(ul);
+        }
+
+        if (c.available && c.bookUrl) {
+            var a = document.createElement("a");
+            a.className = "yc-go";
+            a.href = c.bookUrl;
+            a.innerHTML = 'Book this table <i class="bi bi-arrow-right" aria-hidden="true"></i>';
+            box.appendChild(a);
+            var note = document.createElement("div");
+            note.className = "yc-src";
+            note.textContent = root.dataset.signedIn === "true"
+                ? "You choose the table type and confirm on the booking page."
+                : "You'll log in, then choose the table type and confirm.";
+            box.appendChild(note);
+        }
+
+        if (!c.available && c.suggestions && c.suggestions.length) {
+            var alt = document.createElement("div");
+            alt.className = "yc-alt";
+            var label = document.createElement("span");
+            label.textContent = "Free times nearby:";
+            alt.appendChild(label);
+            c.suggestions.forEach(function (s) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.textContent = s.label;
+                btn.addEventListener("click", function () {
+                    runCheck(s.date, s.time, c.guests, "Table for " + c.guests + " · " + s.label);
+                });
+                alt.appendChild(btn);
+            });
+            box.appendChild(alt);
+        }
+
+        if (!c.available) {
+            var again = document.createElement("button");
+            again.type = "button";
+            again.className = "yc-again";
+            again.textContent = "Pick another date or time";
+            again.addEventListener("click", function () {
+                add({ role: "bot", text: "Pick another date, time or number of guests:", form: { date: c.date, guests: c.guests } });
+            });
+            box.appendChild(again);
+        }
+        return box;
+    }
+
     // ---------------- asking ----------------
     function ask(question, shown, alone) {
         question = (question || "").trim();
@@ -213,6 +495,8 @@
                     role: "bot",
                     text: reply.text,
                     hours: reply.hours || null,
+                    check: reply.check || null,
+                    form: reply.bookingForm ? {} : null,
                     note: reply.source === "faq" ? "From our FAQs" : null
                 });
             })
@@ -231,7 +515,15 @@
 
     function getJson(url) {
         return fetch(url, { headers: { "Accept": "application/json" } })
-            .then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); });
+            .then(function (r) {
+                var type = r.headers.get("content-type") || "";
+                if (!r.ok || type.indexOf("json") === -1) {
+                    // shown in the browser console (F12) to help find the problem
+                    console.warn("YORU chat: " + url + " answered " + r.status + " (" + type + ")");
+                    throw new Error(r.ok ? "not json" : String(r.status));
+                }
+                return r.json();
+            });
     }
 
     // ---------------- quick buttons ----------------
@@ -245,13 +537,7 @@
 
             if (kind === "book") {
                 add({ role: "user", text: "Book a table" });
-                add({
-                    role: "bot",
-                    text: root.dataset.signedIn === "true"
-                        ? "Choose a date, time and number of guests on our booking page."
-                        : "Choose a date, time and number of guests on our booking page. You'll be asked to log in first.",
-                    link: { href: root.dataset.book, text: "Book a table" }
-                });
+                add({ role: "bot", text: "Let's find you a table! Pick a date, time and number of guests:", form: {} });
                 return;
             }
 
