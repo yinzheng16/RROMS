@@ -27,6 +27,8 @@ public sealed record StaffOrderDetails(int Id, string OrderNo, string CustomerNa
     int? DiningSessionId = null, string? TableNumber = null)
 {
     public int Portions => Dishes.Sum(dish => dish.Quantity);
+    public decimal? TaxRatePercent { get; init; }
+    public decimal? ServiceChargePercent { get; init; }
 }
 
 public static class StaffQueueRules

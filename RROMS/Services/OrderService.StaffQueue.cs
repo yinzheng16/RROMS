@@ -30,7 +30,8 @@ public partial class OrderService
             order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount, order.UserId,
             DiningSessionId: order.DiningSessionId,
             TableNumber: order.OrderType == OrderType.DineIn
-                ? order.DiningSession?.Table.TableNumber ?? booking?.TableNumber : null);
+                ? order.DiningSession?.Table.TableNumber ?? booking?.TableNumber : null)
+        { TaxRatePercent = order.TaxRatePercent, ServiceChargePercent = order.ServiceChargePercent };
     }
 
     private static string? StaffQueueImage(string? path)

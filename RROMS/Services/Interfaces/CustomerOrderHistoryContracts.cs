@@ -35,6 +35,8 @@ public sealed record HistoryOrderRow(int Id, string OrderNo, OrderStatus Status,
     public decimal Subtotal { get; init; }
     public decimal ServiceCharge { get; init; }
     public decimal Tax { get; init; }
+    public decimal? TaxRatePercent { get; init; }
+    public decimal? ServiceChargePercent { get; init; }
 }
 public sealed record CustomerOrderHistory(IReadOnlyList<HistoryOrderRow> Orders,
     int MatchingCount, int AllOrdersCount, int PageNumber, HistoryFilter Filter,
@@ -62,6 +64,8 @@ public sealed record HistoryOrderDetails(int Id, string OrderNo, OrderStatus Sta
     decimal Subtotal, decimal ServiceCharge, decimal Tax, decimal Total)
 {
     public decimal Savings => Lines.Sum(line => line.Saving);
+    public decimal? TaxRatePercent { get; init; }
+    public decimal? ServiceChargePercent { get; init; }
 }
 public sealed class HistoryReorderChoice
 {

@@ -248,6 +248,8 @@ public sealed partial class CustomerCartService : ICustomerCartService
                 TaxAmount = view.Totals.Tax,
                 ServiceCharge = view.Totals.ServiceCharge,
                 TotalAmount = view.Totals.Total,
+                TaxRatePercent = view.Totals.TaxRate,
+                ServiceChargePercent = view.Totals.ServiceRate,
                 Notes = view.Notes,
                 CreatedAt = now
             };
@@ -296,7 +298,8 @@ public sealed partial class CustomerCartService : ICustomerCartService
             order.Items.OrderBy(line => line.Id).Select(line => new CartLineView(Guid.Empty,
                 line.MenuItemId, line.MenuItem.Code, line.MenuItem.Name, line.MenuItem.ImageUrl,
                 line.Quantity, line.Notes, line.UnitPrice, true, line.NormalUnitPrice)).ToArray(),
-            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount);
+            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount)
+        { TaxRatePercent = order.TaxRatePercent, ServiceChargePercent = order.ServiceChargePercent };
     }
 
     private IQueryable<Reservation> EligibleReservations(string userId, DateTime now)

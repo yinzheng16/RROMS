@@ -9,6 +9,7 @@
     var history = Model.History;
     var filter = history.Filter;
     string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+    string Rate(decimal? percent) => percent is decimal p ? $" ({p.ToString("0.##", CultureInfo.InvariantCulture)}%)" : "";
     string Link(int page, int? orderId = null, string? status = null, bool? showAll = null) => Url.Page("/Customer/Orders/Index", new
     {
         search = filter.Search,
@@ -138,7 +139,7 @@
                             {
                                 <p class="oh-more">+ @(order.DishCount - 3) more lines · View order for all dishes</p>
                             }
-                            <dl class="oj-charges"><div><dt>Subtotal</dt><dd>@Money(order.Subtotal)</dd></div><div><dt>Service charge</dt><dd>@Money(order.ServiceCharge)</dd></div><div><dt>Tax</dt><dd>@Money(order.Tax)</dd></div></dl>
+                            <dl class="oj-charges"><div><dt>Subtotal</dt><dd>@Money(order.Subtotal)</dd></div><div><dt>Service charge@(Rate(order.ServiceChargePercent))</dt><dd>@Money(order.ServiceCharge)</dd></div><div><dt>Tax@(Rate(order.TaxRatePercent))</dt><dd>@Money(order.Tax)</dd></div></dl>
                             <div class="oj-total"><span>Total</span><strong>@Money(order.Total)</strong></div>
                             <div class="oj-actions"><a href="@Link(history.PageNumber, order.Id)" data-history-details="@order.Id" class="oj-view">View order</a><a asp-page="/Customer/Orders/Reorder" asp-route-id="@order.Id" class="oh-button">Reorder</a></div>
                         </div>

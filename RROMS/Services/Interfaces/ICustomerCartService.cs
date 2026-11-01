@@ -91,4 +91,7 @@ public sealed record OrderReceipt(int Id, string OrderNo, OrderStatus Status,
 {
     // US29: promotion savings saved with the order (0 for orders placed before US29).
     public decimal Savings => Lines.Sum(line => line.Saving);
+    // Charge rates saved with the order (null for orders placed before they were saved).
+    public decimal? TaxRatePercent { get; init; }
+    public decimal? ServiceChargePercent { get; init; }
 }

@@ -4,6 +4,7 @@
 @using RROMS.Services
 @{
     string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+    string Rate(decimal? percent) => percent is decimal p ? $" ({p.ToString("0.##", CultureInfo.InvariantCulture)}%)" : "";
 }
 <div class="oj-detail-receipt oj-detail-horizontal" data-history-detail="@Model.Id">
     <div class="oj-receipt-top" aria-hidden="true"></div>
@@ -43,7 +44,7 @@
     </section>
     <section class="oj-detail-summary" aria-label="Order summary">
     <h3>Order summary</h3>
-    <dl class="oh-amounts"><div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div><div><dt>Service charge</dt><dd>@Money(Model.ServiceCharge)</dd></div><div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div><div class="oh-grand-total"><dt>Order total</dt><dd>@Money(Model.Total)</dd></div></dl>
+    <dl class="oh-amounts"><div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div><div><dt>Service charge@(Rate(Model.ServiceChargePercent))</dt><dd>@Money(Model.ServiceCharge)</dd></div><div><dt>Tax@(Rate(Model.TaxRatePercent))</dt><dd>@Money(Model.Tax)</dd></div><div class="oh-grand-total"><dt>Order total</dt><dd>@Money(Model.Total)</dd></div></dl>
     @if (Model.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You saved <strong>@Money(Model.Savings)</strong> with promotions</p> }
     <div class="oj-payment-note"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7v1" /></svg><p class="oh-fine-print">These are the order's saved amounts. An order total or Completed status is not proof of payment.</p></div>
     <a asp-page="/Customer/Orders/Reorder" asp-route-id="@Model.Id" class="oh-button oh-wide"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 8a9 9 0 1 0 1 8M20 3v6h-6" /></svg><span>Choose dishes to reorder</span><span aria-hidden="true">→</span></a>
