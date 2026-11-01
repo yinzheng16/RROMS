@@ -84,6 +84,14 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();   // Member 1: US03 / US04 My profile
 builder.Services.AddScoped<IAccountSecurityService, AccountSecurityService>();   // Member 1: US03 / US04 change password / email
 builder.Services.AddScoped<IUserAdminService, UserAdminService>();   // Member 1: US05 / US07 Admin → Users
+
+// US08 / US10 (Member 1): AI chatbot. Settings in appsettings.json ("Ai"),
+// the API key ONLY in User Secrets ("Ai:ApiKey"). No key = the chatbot answers from FAQ keywords only.
+builder.Services.Configure<AiSettings>(builder.Configuration.GetSection(AiSettings.Section));
+builder.Services.AddHttpClient(ChatbotService.HttpClientName);
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<IChatbotService, ChatbotService>();
+builder.Services.AddScoped<IChatFaqService, ChatFaqService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<IMyReservationsService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();

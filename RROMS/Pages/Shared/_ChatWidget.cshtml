@@ -1,0 +1,49 @@
+@using RROMS.Models
+@{
+    // US08 (Member 1): "Ask YORU" chat bubble, shown on every customer page by the layout.
+    // Script: wwwroot/js/chat.js · Styles: wwwroot/css/chat.css (loaded in <head> by the layout).
+    // It talks to Pages/Chat.cshtml (/chat?handler=...).
+}
+<div class="yc" id="yoruChat"
+     data-ask="@Url.Page("/Chat", "Ask")"
+     data-faqs="@Url.Page("/Chat", "Faqs")"
+     data-hours="@Url.Page("/Chat", "Hours")"
+     data-book="/Customer/Reservations/Create"
+     data-menu="/Menu"
+     data-signed-in="@(User.Identity?.IsAuthenticated == true ? "true" : "false")">
+    @Html.AntiForgeryToken()
+
+    <section class="yc-panel" id="ycPanel" role="dialog" aria-modal="false" aria-labelledby="ycTitle" hidden>
+        <header class="yc-head">
+            <span class="yc-av" aria-hidden="true"><img src="~/images/chat/yoru-mon.webp" alt="" /></span>
+            <div class="yc-head-tx">
+                <h2 id="ycTitle">YORU Assistant</h2>
+                <p><i aria-hidden="true"></i>Online · <span lang="ja">夜のご案内</span></p>
+            </div>
+            <button type="button" class="yc-hbtn" data-yc-reset title="Start a new chat" aria-label="Start a new chat"><i class="bi bi-arrow-counterclockwise"></i></button>
+            <button type="button" class="yc-hbtn" data-yc-close title="Close" aria-label="Close chat"><i class="bi bi-x-lg"></i></button>
+        </header>
+
+        <div class="yc-msgs" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+        <div class="yc-quick" role="group" aria-label="Quick questions">
+            <button type="button" data-yc-quick="hours"><i class="bi bi-clock" aria-hidden="true"></i>Opening hours</button>
+            <button type="button" data-yc-quick="popular"><i class="bi bi-fire" aria-hidden="true"></i>Popular dishes</button>
+            <button type="button" data-yc-quick="faqs"><i class="bi bi-question-circle" aria-hidden="true"></i>FAQs</button>
+            <button type="button" data-yc-quick="book"><i class="bi bi-calendar2-check" aria-hidden="true"></i>Book a table</button>
+        </div>
+
+        <form class="yc-form" autocomplete="off" data-yc-form>
+            <label for="ycInput" class="visually-hidden">Your question</label>
+            <input id="ycInput" type="text" maxlength="300" placeholder="Ask about our menu, hours or the restaurant…" />
+            <button type="submit" aria-label="Send"><i class="bi bi-send-fill" aria-hidden="true"></i></button>
+        </form>
+        <p class="yc-note">Answers come from @Brand.FullName's own menu and hours. Bookings are confirmed on the booking page.</p>
+    </section>
+
+    <button type="button" class="yc-fab" aria-controls="ycPanel" aria-expanded="false" data-yc-toggle>
+        <span class="yc-tip">Ask YORU</span>
+        <span class="yc-fab-in"><img src="~/images/chat/yoru-mon.webp" alt="" /><i class="bi bi-x-lg" aria-hidden="true"></i></span>
+        <span class="visually-hidden">Open the YORU chat</span>
+    </button>
+</div>
