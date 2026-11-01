@@ -48,6 +48,22 @@ namespace RROMS.Services.Interfaces
         // online payments are checked with Stripe first.
         Task<IReadOnlyList<PayableItem>> GetPayableItemsAsync(string customerId);
 
+        // Staff bill page: is an online payment running for this bill, and
+        // was a takeaway bill confirmed by its customer for online payment?
+        // Database only (call ReconcileBillAsync first for fresh data).
+        Task<OnlineBillInfo> GetOnlineBillInfoAsync(int billId);
+
+        // Staff bill page: the customer will pay at the counter instead.
+        // Stripe is checked first: if the customer already paid, the bill
+        // becomes Paid (returns Paid). Otherwise the Stripe session is closed
+        // and the attempt marked Failed; the bill stays Confirmed so staff
+        // can record the counter payment straight away.
+        Task<OnlinePaymentState> CancelForCounterPaymentAsync(int billId);
+
+        // Staff billing list: check every bill that still has an unfinished
+        // online payment (normally only a few).
+        Task ReconcileAllPendingAsync();
+
         // Check every unfinished online payment of a bill with Stripe
         // (paid / expired / timed out). Safe to call on every page load;
         // this replaces a webhook on localhost.
@@ -69,6 +85,17 @@ namespace RROMS.Services.Interfaces
         InProgress,     // show "Continue payment" (same form)
         Paid,           // show "Paid"
         PayAtCounter    // cancelled, under RM 2.00, or Stripe not set up
+    }
+
+    // Staff bill page. Not a database entity.
+    public sealed record OnlineBillInfo(
+        bool ConfirmedByCustomer,
+        int? PendingPaymentId,
+        DateTime? StartedAt,
+        DateTime? LockedUntil
+    )
+    {
+        public bool InProgress => PendingPaymentId != null;
     }
 
     public enum PayableKind

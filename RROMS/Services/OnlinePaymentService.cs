@@ -290,10 +290,13 @@ namespace RROMS.Services
         }
 
         // Ask Stripe about one payment and record the result.
-        private async Task SettleAsync(Payment payment, bool expireIfOpen)
+        // returnToDraft: a failed takeaway attempt sends the customer-confirmed
+        // bill back to Draft (not when staff cancel it to take the payment).
+        private async Task<OnlinePaymentState> SettleAsync(
+            Payment payment, bool expireIfOpen, bool returnToDraft = true)
         {
             if (payment.BillId is not int billId)
-                return;
+                return OnlinePaymentState.NotFound;
 
             var session = await ReadSessionAsync(payment, expireIfOpen);
 
@@ -301,8 +304,102 @@ namespace RROMS.Services
                 billId,
                 () => ApplySessionAsync(payment.Id, session));
 
-            if (state == OnlinePaymentState.Failed)
+            if (state == OnlinePaymentState.Failed && returnToDraft)
                 await ReturnTakeawayBillToDraftIfUnpaidAsync(billId);
+
+            return state;
+        }
+
+        // ---------------------------------------------------------------
+        // Staff side
+        // ---------------------------------------------------------------
+
+        public async Task<OnlineBillInfo> GetOnlineBillInfoAsync(int billId)
+        {
+            var info = await _bills.Query()
+                .AsNoTracking()
+                .Where(b => b.Id == billId)
+                .Select(b => new
+                {
+                    b.DiningSessionId,
+                    b.ConfirmedByUserId,
+                    OrderUserId = b.Orders.Select(o => o.UserId).FirstOrDefault(),
+                    Pending = b.Payments
+                        .Where(p => p.Status == PaymentStatus.Pending && p.Method == PaymentMethod.Online)
+                        .OrderByDescending(p => p.Id)
+                        .Select(p => new { p.Id, p.CreatedAt })
+                        .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync();
+
+            if (info == null)
+                return new OnlineBillInfo(false, null, null, null);
+
+            bool byCustomer =
+                info.DiningSessionId == null &&
+                info.ConfirmedByUserId != null &&
+                info.ConfirmedByUserId == info.OrderUserId;
+
+            return new OnlineBillInfo(
+                byCustomer,
+                info.Pending?.Id,
+                info.Pending?.CreatedAt,
+                info.Pending?.CreatedAt.Add(CheckoutTime));
+        }
+
+        public async Task<OnlinePaymentState> CancelForCounterPaymentAsync(int billId)
+        {
+            if (billId <= 0)
+                throw new InvalidOperationException("Bill not found.");
+
+            var pending = await _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    p.BillId == billId &&
+                    p.Status == PaymentStatus.Pending &&
+                    p.Method == PaymentMethod.Online)
+                .ToListAsync();
+
+            if (pending.Count == 0)
+                return OnlinePaymentState.NotFound;
+
+            if (!_stripe.IsEnabled)
+                throw new InvalidOperationException(
+                    "Stripe is not set up on this computer, so the online payment cannot be checked or cancelled here.");
+
+            var result = OnlinePaymentState.Failed;
+
+            foreach (var payment in pending)
+            {
+                var state = await SettleAsync(payment, expireIfOpen: true, returnToDraft: false);
+
+                if (state == OnlinePaymentState.Paid)
+                    result = OnlinePaymentState.Paid;
+                else if (state == OnlinePaymentState.StillPending && result != OnlinePaymentState.Paid)
+                    result = OnlinePaymentState.StillPending;
+            }
+
+            return result;
+        }
+
+        public async Task ReconcileAllPendingAsync()
+        {
+            if (!_stripe.IsEnabled)
+                return;
+
+            var billIds = await _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    p.Status == PaymentStatus.Pending &&
+                    p.Method == PaymentMethod.Online &&
+                    p.BillId != null)
+                .Select(p => p.BillId!.Value)
+                .Distinct()
+                .Take(20)
+                .ToListAsync();
+
+            foreach (int billId in billIds)
+                await ReconcileBillAsync(billId);
         }
 
         // Read the session; close it at Stripe when it is too old (or the

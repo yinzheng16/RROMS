@@ -17,9 +17,15 @@ namespace RROMS.Pages.Staff.Billing
     {
         private readonly IBillingService _billingService;
 
-        public IndexModel(IBillingService billingService)
+        // US33: unfinished online payments are checked with Stripe first.
+        private readonly IOnlinePaymentService _onlinePayments;
+
+        public IndexModel(
+            IBillingService billingService,
+            IOnlinePaymentService onlinePayments)
         {
             _billingService = billingService;
+            _onlinePayments = onlinePayments;
         }
 
         // Older links (/Staff/Billing?sessionId=.. or ?orderNo=..) still work:
@@ -50,6 +56,10 @@ namespace RROMS.Pages.Staff.Billing
 
             if (!string.IsNullOrWhiteSpace(OrderNo))
                 return RedirectToPage("/Staff/Billing/Bill", new { orderNo = OrderNo.Trim() });
+
+            // US33: a customer may have paid online and closed the browser;
+            // ask Stripe so the list (and its Refresh button) shows Paid.
+            await _onlinePayments.ReconcileAllPendingAsync();
 
             DineInRows = await _billingService.GetSessionBillingRowsAsync();
             TakeawayRows = await _billingService.GetTakeawayBillingRowsAsync();

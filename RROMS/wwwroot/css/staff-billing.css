@@ -1801,3 +1801,37 @@
     .us32-billing .billing-tabs .nav-item {
         min-width: 0;
     }
+
+/* =====================================================
+   US33: customer paying online (Bill page, step 2)
+   ===================================================== */
+.us32-billing .online-progress strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+/* Same layout as Print Bill / Back to list: two buttons sharing the full width. */
+.us32-billing .online-progress-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+    .us32-billing .online-progress-actions > .btn,
+    .us32-billing .online-progress-actions > form {
+        flex: 1 1 0;
+        min-width: 9rem;
+    }
+
+.us32-billing .online-progress-note {
+    display: block;
+    margin-top: 8px;
+    opacity: .85;
+}
+
+.us32-billing .payment-record-form.is-locked {
+    opacity: .45;
+    pointer-events: none;
+}
