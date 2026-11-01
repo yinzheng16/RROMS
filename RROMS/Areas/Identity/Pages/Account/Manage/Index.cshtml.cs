@@ -14,11 +14,13 @@ namespace RROMS.Areas.Identity.Pages.Account.Manage
     {
         private readonly IProfileService _profiles;
         private readonly IAccountService _accounts;
+        private readonly IAccountSecurityService _security;
 
-        public IndexModel(IProfileService profiles, IAccountService accounts)
+        public IndexModel(IProfileService profiles, IAccountService accounts, IAccountSecurityService security)
         {
             _profiles = profiles;
             _accounts = accounts;
+            _security = security;
         }
 
         public ProfileView Profile { get; private set; } = null!;
@@ -83,6 +85,25 @@ namespace RROMS.Areas.Identity.Pages.Account.Manage
 
             TempData["SuccessMessage"] = "Your profile has been updated.";
             return RedirectToPage();   // reload, so the card shows the saved details
+        }
+
+        // ---------- Security pop-ups (US03 / US04): called with fetch(), answer in JSON ----------
+        // Separate fields (not Input), so the profile form's rules don't apply here.
+
+        public async Task<IActionResult> OnPostChangePasswordAsync(string? currentPassword, string? newPassword, string? confirmPassword)
+        {
+            var resetUrl = Url.Page("/Account/ForgotPassword", pageHandler: null, values: new { area = "Identity" }, protocol: Request.Scheme)
+                           ?? $"{Request.Scheme}://{Request.Host}/Identity/Account/ForgotPassword";
+            var result = await _security.ChangePasswordAsync(User, currentPassword, newPassword, confirmPassword, resetUrl);
+            return new JsonResult(result);
+        }
+
+        public async Task<IActionResult> OnPostChangeEmailAsync(string? newEmail, string? password)
+        {
+            var result = await _security.RequestEmailChangeAsync(User, newEmail, password,
+                (userId, email, code) => Url.Page("/Account/ConfirmEmailChange", pageHandler: null,
+                    values: new { area = "Identity", userId, email, code }, protocol: Request.Scheme)!);
+            return new JsonResult(result);
         }
 
         private async Task<bool> LoadAsync()

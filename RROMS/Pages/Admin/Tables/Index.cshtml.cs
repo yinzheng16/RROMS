@@ -49,6 +49,10 @@ public class IndexModel : PageModel
         [StringLength(50)]
         public string Name { get; set; } = string.Empty;
 
+        // Shown to customers next to the English name, e.g. 二名席 (optional).
+        [StringLength(50)]
+        public string? JapaneseName { get; set; }
+
         // Legacy fields: no longer entered by Admin.
         public string? Prefix { get; set; }
 
@@ -170,6 +174,7 @@ public class IndexModel : PageModel
         {
             Id = TableTypeForm.Id,
             Name = TableTypeForm.Name,
+            JapaneseName = TableTypeForm.JapaneseName,
 
             // Legacy model compatibility.
             // The service generates Code and Prefix on creation.

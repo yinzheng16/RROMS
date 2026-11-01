@@ -7,57 +7,52 @@
 }
 
 <link rel="stylesheet" href="~/css/menu-item-drawer.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/admin-menu-studio-art.css" asp-append-version="true" />
 
 <div data-menu-studio>
-        <section class="section-dark rounded-4 p-4 p-md-5 mb-4 position-relative overflow-hidden" aria-labelledby="categories-title" data-category-hero>
-            <img src="~/images/menu/yoru-night-counter.png" asp-append-version="true"
-                 class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover pe-none"
-                 alt="" aria-hidden="true" decoding="async" fetchpriority="high" data-hero-backdrop />
-            <div class="position-absolute top-0 start-0 w-100 h-100 bg-black opacity-25 pe-none" aria-hidden="true"></div>
-            <div class="row g-3 g-md-4 align-items-center position-relative z-1">
-                <div class="col-8 col-md-9">
-                    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap" data-menu-hero-brandline>
-                        <span class="small fw-semibold text-white text-uppercase" data-menu-brand-label>YORU IZAKAYA</span>
-                        <span class="small text-white opacity-75 text-uppercase border-start border-primary ps-3">Menu studio</span>
-                    </div>
-                    <p class="eyebrow text-white opacity-75 mb-2" data-menu-hero-eyebrow>The art of a well-curated menu</p>
-                    <h1 id="categories-title" class="display-5 fw-semibold text-white text-break mb-3">Menu studio.</h1>
-                    <p class="text-white opacity-75 mb-4" data-menu-hero-description>Every category, every dish. Curate the YORU experience.</p>
+    <section class="section-dark rounded-4 p-4 p-md-5 mb-4 position-relative overflow-hidden" aria-labelledby="categories-title" data-category-hero>
+        <img src="~/images/menu/yoru-night-counter.png" asp-append-version="true"
+             class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover pe-none"
+             alt="" aria-hidden="true" decoding="async" fetchpriority="high" data-hero-backdrop />
+        <div class="position-absolute top-0 start-0 w-100 h-100 bg-black opacity-25 pe-none" aria-hidden="true"></div>
+        <div class="row g-3 g-md-4 align-items-center position-relative z-1">
+            <div class="col-8 col-md-9">
+                <div class="d-flex align-items-center gap-3 mb-4 flex-wrap" data-menu-hero-brandline>
+                    <span class="small fw-semibold text-white text-uppercase" data-menu-brand-label>YORU IZAKAYA</span>
+                    <span class="small text-white opacity-75 text-uppercase border-start border-primary ps-3">Menu studio</span>
                 </div>
-                <div class="col-4 col-md-3">
-                    <div class="text-center">
-                        <svg viewBox="0 0 200 220" width="11em" height="12.1em"
-                             class="d-block mw-100 h-auto mx-auto mb-2" role="img" aria-labelledby="yoru-emblem-title">
-                            <title id="yoru-emblem-title">Yoru — night</title>
-                            <rect x="17" y="17" width="166" height="186" rx="30" class="text-black"
-                                  fill="currentColor" opacity="0.3" />
-                            <text x="104" y="49" text-anchor="middle" font-size="12" letter-spacing="7"
-                                  class="text-white" fill="currentColor" opacity="0.8" aria-hidden="true">YORU</text>
-                            <text x="100" y="151" text-anchor="middle" font-size="100" lang="ja"
-                                  class="text-white" fill="currentColor" aria-hidden="true">夜</text>
-                            <path d="M82 177h36" class="text-primary" stroke="currentColor"
-                                  stroke-width="3" stroke-linecap="round" aria-hidden="true" />
-                        </svg>
-                        <span class="small text-white opacity-75 text-uppercase text-break d-block" data-menu-hero-caption>Crafted for the night</span>
-                    </div>
+                <p class="eyebrow text-white opacity-75 mb-2" data-menu-hero-eyebrow>The art of a well-curated menu</p>
+                <h1 id="categories-title" class="display-5 fw-semibold text-white text-break mb-3">Menu studio.</h1>
+                <p class="text-white opacity-75 mb-4" data-menu-hero-description>Every category, every dish. Curate the YORU experience.</p>
+            </div>
+            <div class="col-4 col-md-3">
+                <div class="text-center">
+                    <svg viewBox="0 0 160 145" class="yoru-studio-night-mark" role="img" aria-labelledby="yoru-emblem-title">
+                        <title id="yoru-emblem-title">Yoru — night</title>
+                        <path d="M68 8q7-7 15-2m-4-1q5-3 10-1" stroke="#d52b1d" stroke-width="1.5" fill="none" aria-hidden="true" />
+                        <text x="80" y="91" text-anchor="middle" font-size="82" lang="ja" fill="#fffaf0" font-family="KaiTi,STKaiti,serif" aria-hidden="true">夜</text>
+                        <text x="80" y="124" text-anchor="middle" font-size="9" letter-spacing="4" fill="#e1d9ca" aria-hidden="true">YORU</text>
+                    </svg>
+                    <span class="small text-white opacity-75 text-uppercase text-break d-block" data-menu-hero-caption>Crafted for the night</span>
                 </div>
             </div>
-            <partial name="_MenuHeroControls" model="Model" />
-        </section>
-
-        <div data-category-workspace data-menu-view="@Model.MenuView" role="region" aria-label="Menu management">
-            <span class="visually-hidden" role="status" aria-live="polite" data-category-live-status></span>
-
-            @if (Model.MenuView == "items")
-            {
-                <partial name="_MenuItems" model="Model" />
-            }
-            else
-            {
-                <partial name="_MenuCategories" model="Model" />
-
-            }
         </div>
+        <partial name="_MenuHeroControls" model="Model" />
+    </section>
+
+    <div data-category-workspace data-menu-view="@Model.MenuView" role="region" aria-label="Menu management">
+        <span class="visually-hidden" role="status" aria-live="polite" data-category-live-status></span>
+
+        @if (Model.MenuView == "items")
+        {
+            <partial name="_MenuItems" model="Model" />
+        }
+        else
+        {
+            <partial name="_MenuCategories" model="Model" />
+
+        }
+    </div>
 
     <!-- Persistent host shares only the lower collection row, outside the replaceable workspace. -->
     <div data-menu-editor-host></div>

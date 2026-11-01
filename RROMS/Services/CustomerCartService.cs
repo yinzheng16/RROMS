@@ -19,14 +19,23 @@ public sealed class CustomerCartService : ICustomerCartService
     private readonly IDataProtector _protector;
     private readonly TimeProvider _clock;
     private readonly ILogger<CustomerCartService> _logger;
+    private readonly IProfileService _profiles;
+    private readonly IReservationService _reservations;
+    private readonly IDiningSessionService _sessions;
+    private readonly IReportService _reportService;
     private const int MaxLines = 100;
 
     public CustomerCartService(ApplicationDbContext db, IDataProtectionProvider protection,
-        ILogger<CustomerCartService> logger, TimeProvider? clock = null)
+        ILogger<CustomerCartService> logger, IProfileService profiles, IReportService reportService,
+        IReservationService reservations, IDiningSessionService sessions, TimeProvider? clock = null)
     {
         _db = db;
         _protector = protection.CreateProtector("RROMS.US24.Checkout.v1");
         _logger = logger;
+        _profiles = profiles;
+        _reservations = reservations;
+        _sessions = sessions;
+        _reportService = reportService;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -105,12 +114,12 @@ public sealed class CustomerCartService : ICustomerCartService
             if (removeLineId.HasValue && !cart.Lines.Any(line => line.Id == removeLineId))
                 return Invalid("That cart row no longer exists.");
 
-            // Walk-ins have no reservation. Validate any selected booking against
-            // the current customer's eligible bookings before changing the cart.
+            // Drafts may be saved before a booking is selected. Both review and
+            // final placement require an owned, eligible reservation for dine-in.
             int? reservation = input.OrderType == OrderType.DineIn ? input.ReservationId : null;
             if (reservation.HasValue && !await EligibleReservations(userId, now)
                 .AnyAsync(row => row.Id == reservation.Value, ct))
-                return Invalid("That reservation is no longer available. Choose another or select No reservation · Walk-in.");
+                return Invalid("That reservation is no longer available. Choose another reservation or switch to Takeaway.");
 
             string? removalMessage = null;
             if (removeLineId.HasValue)
@@ -143,8 +152,12 @@ public sealed class CustomerCartService : ICustomerCartService
                 { cart.Lines.Remove(extra); changed = true; }
                 keep.Quantity = sum;
             }
-            string? remarks = OrderPricingRules.NormalizeNote(input.Notes);
-            changed |= cart.Notes != remarks || cart.OrderType != input.OrderType || cart.ReservationId != reservation;
+            // Empty string means this draft's remarks were explicitly submitted
+            // empty. Keep it distinct from null (not filled in yet), so clearing
+            // the suggested profile text survives refreshes and later cart edits.
+            string remarks = OrderPricingRules.NormalizeNote(input.Notes) ?? string.Empty;
+            changed |= cart.Notes != remarks || cart.OrderType != input.OrderType ||
+                cart.ReservationId != reservation;
             cart.Notes = remarks;
             cart.OrderType = input.OrderType;
             cart.ReservationId = reservation;
@@ -162,6 +175,8 @@ public sealed class CustomerCartService : ICustomerCartService
         var validation = ValidateForCheckout(view);
         if (view.Revision != revision) validation = Changed();
         if (!validation.Succeeded) return new(validation.Status, validation.Message, view);
+        string? orderingError = await GetOrderingHoursError(cancellationToken);
+        if (orderingError is not null) return new(CartResult.Invalid, orderingError, view);
         // 20-character order number, independently protected from client editing.
         string orderNo = "YR" + Now.ToString("yyMMdd", CultureInfo.InvariantCulture) +
             Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
@@ -203,12 +218,31 @@ public sealed class CustomerCartService : ICustomerCartService
             if (Stamp(view) != quote.Stamp)
                 return new(CartResult.Changed, "Prices, charges or reservation details changed. Review the updated cart and confirm again.");
 
+            // A quote prepared before last orders does not bypass the cutoff.
+            // Check fresh restaurant hours and the current clock inside the save transaction.
+            string? orderingError = await GetOrderingHoursError(ct);
+            if (orderingError is not null) return Invalid(orderingError);
+
+            if (view.DiningSessionId.HasValue)
+            {
+                // The shared scoped DbContext puts this immediate UPDATE inside
+                // WriteAsync's transaction. A later failure rolls the claim back too.
+                ct.ThrowIfCancellationRequested();
+                var claim = await _sessions.ClaimOrValidateSessionAsync(view.DiningSessionId.Value, userId);
+                if (!claim.Success) return Invalid(claim.Message);
+                bool stillValid = await _db.DiningSessions.AsNoTracking().AnyAsync(session =>
+                    session.Id == view.DiningSessionId.Value && session.Status == DiningSessionStatus.Open &&
+                    session.CustomerId == userId && session.ReservationId == view.ReservationId, ct);
+                if (!stillValid) return Invalid("Your reservation or dining session changed. Please review your reservation again.");
+            }
+
             var order = new Order
             {
                 OrderNo = quote.OrderNo,
                 UserId = userId,
                 OrderType = view.OrderType,
                 ReservationId = view.OrderType == OrderType.DineIn ? view.ReservationId : null,
+                DiningSessionId = view.OrderType == OrderType.DineIn ? view.DiningSessionId : null,
                 Status = OrderStatus.Pending,
                 Subtotal = view.Totals.Subtotal,
                 TaxAmount = view.Totals.Tax,
@@ -290,10 +324,80 @@ public sealed class CustomerCartService : ICustomerCartService
                     item is null ? 0 : OrderPricingRules.DiscountedPrice(item.Price, discounts.GetValueOrDefault(line.MenuItemId)),
                     item?.IsAvailable == true && item.Price > 0);
             }).ToArray() ?? Array.Empty<CartLineView>();
-        var totals = OrderPricingRules.Calculate(lines.Sum(line => line.LineTotal),
-            settings?.TaxRatePercent ?? 0, settings?.ServiceChargePercent ?? 0);
-        return new(cart?.Revision ?? Guid.Empty, lines, cart?.OrderType ?? OrderType.DineIn,
-            cart?.ReservationId, cart?.Notes, totals, reservations);
+        var orderType = cart?.OrderType ?? OrderType.DineIn;
+        // US49 owns the charge formula. Use its loaded-settings overload so this
+        // fresh, untracked read also stays inside PlaceAsync's save transaction.
+        // If settings are absent, preserve the existing zero-charge fallback.
+        var charges = _reportService.CalculateCharges(settings ?? new RestaurantSetting
+        {
+            TaxRatePercent = 0m,
+            ServiceChargePercent = 0m,
+            ServiceChargeOnTakeaway = false
+        }, lines.Sum(line => line.LineTotal), orderType == OrderType.Takeaway);
+        var totals = new CartTotals(
+            Subtotal: charges.Subtotal,
+            TaxRate: charges.TaxRatePercent,
+            Tax: charges.Tax,
+            ServiceRate: charges.ServiceChargePercent,
+            ServiceCharge: charges.ServiceCharge,
+            Total: charges.Total);
+
+        string? remarks = cart?.Notes;
+        bool fromProfile = false;
+        string? separatePreferences = null;
+        if (lines.Length > 0)
+        {
+            // userId has already been validated as the current customer. Never
+            // use a client-supplied profile ID or overwrite an existing draft.
+            string? summary = await _profiles.GetDiningSummaryAsync(userId);
+            string? suggested = OrderDiningPreferencesRules.RemarksDefault(summary);
+            if (remarks is null && suggested is not null)
+            {
+                remarks = suggested;
+            }
+            fromProfile = OrderDiningPreferencesRules.IsProfileCopy(remarks, summary);
+            if (!string.IsNullOrWhiteSpace(summary) && suggested is null)
+                separatePreferences = summary;
+        }
+        var selectedBooking = reservations.FirstOrDefault(row => row.Id == cart?.ReservationId);
+        var selection = orderType == OrderType.DineIn
+            ? await ResolveDiningSessionAsync(userId, selectedBooking, ct)
+            : new DiningSelection(null, null);
+        return new(cart?.Revision ?? Guid.Empty, lines, orderType,
+            cart?.ReservationId, remarks, totals, reservations, fromProfile, separatePreferences,
+            selection.Session?.Id, Array.Empty<CartDiningSession>(), selection.Session, selection.Error);
+    }
+
+    private sealed record DiningSelection(CartDiningSession? Session, string? Error);
+
+    private async Task<DiningSelection> ResolveDiningSessionAsync(string userId, CartReservation? booking,
+        CancellationToken ct)
+    {
+        if (booking is null) return new(null, null); // Incomplete draft; checkout rejects it.
+        // Query all statuses: a closed visit must never become a preorder again.
+        var session = await _db.DiningSessions.AsNoTracking().Include(row => row.Table)
+            .SingleOrDefaultAsync(row => row.ReservationId == booking.Id, ct);
+        if (session is null)
+            return booking.Status == ReservationStatus.Seated
+                ? new(null, "Your table session is not ready. Please ask staff for help.")
+                : new(null, null); // Pending/Confirmed reservation, before seating.
+        if (session.Status != DiningSessionStatus.Open)
+            return new(null, "This table session has ended. Please ask staff for help.");
+        if (session.CustomerId is not null && session.CustomerId != userId)
+            return new(null, "This reservation's dining session is unavailable. Please ask staff for help.");
+        return new(new CartDiningSession(session.Id, session.TableId, session.Table.TableNumber, session.ReservationId), null);
+    }
+
+    private async Task<string?> GetOrderingHoursError(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        // The shared schedule expects restaurant-local wall time. Keep the existing
+        // Malaysian time conversion independent of the server's local time zone.
+        DateTime restaurantNow = _clock.GetUtcNow().ToOffset(TimeSpan.FromHours(8)).DateTime;
+        bool canOrder = await _reservations.CanOrderAtAsync(restaurantNow);
+        ct.ThrowIfCancellationRequested();
+        return canOrder ? null
+            : "Online ordering is currently closed. You can still browse the menu and keep items in your cart. Please try again during ordering hours.";
     }
 
     private Task<Dictionary<int, decimal>> ActiveDiscounts(int[] ids, DateTime now, CancellationToken ct)
@@ -364,7 +468,11 @@ public sealed class CustomerCartService : ICustomerCartService
     {
         if (view.Lines.Count == 0) return Invalid("Add a dish before placing your order.");
         if (view.HasUnavailable) return new(CartResult.Unavailable, "Remove unavailable dishes before placing your order.");
-        if (!view.ReservationValid) return Invalid("The selected reservation is no longer eligible. Choose another or select No reservation · Walk-in.");
+        if (view.OrderType == OrderType.DineIn && !view.ReservationId.HasValue)
+            return Invalid("Dine-in needs a reservation. Book a table or choose Takeaway.");
+        if (!view.ReservationValid) return Invalid("The selected reservation is no longer eligible. Choose another reservation or switch to Takeaway.");
+        if (!view.SessionValid) return Invalid(view.SessionError ??
+            "Your reservation's dining session is not ready. Please ask staff for help.");
         if (view.Totals.Total > 99999999.99m) return Invalid("This order exceeds the supported total. Please reduce the quantities.");
         return new(CartResult.Success, "Ready to confirm.");
     }
@@ -378,6 +486,8 @@ public sealed class CustomerCartService : ICustomerCartService
             view.Revision,
             view.OrderType,
             view.ReservationId,
+            view.DiningSessionId,
+            Session = view.SelectedSession,
             view.Notes,
             view.Totals,
             Reservation = reservation,

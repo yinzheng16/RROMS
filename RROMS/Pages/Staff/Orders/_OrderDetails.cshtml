@@ -1,5 +1,6 @@
 @using System.Globalization
 @using RROMS.Models
+@using RROMS.Services
 @using RROMS.Services.Interfaces
 @model StaffOrderDetails
 @{
@@ -12,19 +13,33 @@
         <a asp-page="/Staff/Orders/Index" asp-route-search="@ViewData["QueueSearch"]"
            asp-route-dining="@ViewData["QueueDining"]" asp-route-sort="@ViewData["QueueSort"]"
            asp-route-pageNumber="@ViewData["QueuePage"]" asp-route-showAll="@(ViewData["QueueShowAll"] is true ? "true" : "false")" class="sq-close" data-sq-close aria-label="Close order details"><i class="bi bi-x-lg" aria-hidden="true"></i></a>
-        <h2 id="sq-detail-title" tabindex="-1">@Model.OrderNo</h2>
-        <div class="sq-detail__badges">
-            <span class="status-badge status-@Model.Status">@(Model.Status == OrderStatus.ReadyToServe ? "Ready to Serve" : Model.Status.ToString())</span>
-            <span class="sq-dining sq-dining--@(Model.Dining == OrderType.Takeaway ? "takeaway" : "dinein")"><i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : "bi-people")" aria-hidden="true"></i>@StaffQueueRules.DiningLabel(Model.Dining)</span>
+        <div class="sq-detail__heading-row d-flex align-items-center justify-content-between gap-2">
+            <h2 id="sq-detail-title" class="mb-0" tabindex="-1">@Model.OrderNo</h2>
+            <span class="status-badge status-@Model.Status flex-shrink-0">@(Model.Status == OrderStatus.ReadyToServe ? "Ready to Serve" : Model.Status.ToString())</span>
         </div>
-        <p class="sq-detail__meta">@Model.CustomerName <span>·</span> @Model.CreatedAt.ToString("dd MMM yyyy · HH:mm", CultureInfo.InvariantCulture)</p>
+        <div class="sq-detail__meta sq-detail__context">
+            <span class="sq-dining sq-dining--@(Model.Dining == OrderType.Takeaway ? "takeaway" : "dinein")"><i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : "bi-people")" aria-hidden="true"></i>@StaffQueueRules.DiningLabel(Model.Dining)</span>
+            <span class="sq-detail__customer-meta">@Model.CustomerName · @Model.CreatedAt.ToString("dd MMM yyyy · h:mm tt", CultureInfo.InvariantCulture)</span>
+        </div>
         @if (Model.Status == OrderStatus.Pending)
         {
-            <span class="sq-wait sq-wait--@StaffQueueRules.WaitClass(seconds)" data-sq-wait="@seconds"><span><i class="bi bi-clock" aria-hidden="true"></i><span data-sq-wait-label>@StaffQueueRules.WaitLabel(seconds)</span></span><small data-sq-long hidden="@(seconds < 1200)">Long wait</small></span>
+            <div class="sq-detail__waiting">
+                <span class="sq-wait sq-wait--@StaffQueueRules.WaitClass(seconds)" data-sq-wait="@seconds">
+                    <span><i class="bi bi-clock" aria-hidden="true"></i><span data-sq-wait-label>@StaffQueueRules.WaitLabel(seconds)</span></span>
+                    <small data-sq-long hidden="@(seconds < 1200)">Long wait</small>
+                </span>
+            </div>
         }
     </header>
+    @if (!string.IsNullOrWhiteSpace(Model.DiningPreferences))
+    {
+        <section class="sq-overall-note" aria-label="Customer allergies and preferences" data-order-profile-preferences>
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+            <div><strong>Allergies &amp; preferences</strong><small class="d-block">From the customer's profile</small><p class="text-break">@Model.DiningPreferences</p></div>
+        </section>
+    }
     <div class="sq-booking">
-        <i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : Model.Booking is null ? "bi-person-walking" : "bi-calendar-check")" aria-hidden="true"></i>
+        <i class="bi @(Model.Dining == OrderType.Takeaway ? "bi-bag" : Model.Booking is null ? "bi-clock-history" : "bi-calendar-check")" aria-hidden="true"></i>
         <div>
             @if (Model.Dining == OrderType.Takeaway)
             {
@@ -32,13 +47,13 @@
             }
             else if (Model.Booking is null)
             {
-                <strong>Walk-in</strong><p>No reservation linked</p>
+                <strong>No reservation (older order)</strong><p>@(Model.TableNumber is not null ? "Table " + Model.TableNumber : "No table linked")</p>
             }
             else
             {
                 <strong>Reservation @Model.Booking.Reference</strong>
-                <p>@Model.Booking.ReservedAt.ToString("dd MMM yyyy · HH:mm", CultureInfo.InvariantCulture) · @Model.Booking.Guests guests</p>
-                <p>@(Model.Booking.TableNumber is not null ? "Table " + Model.Booking.TableNumber : "Table not assigned") · @Model.Booking.Status</p>
+                <p>@Model.Booking.ReservedAt.ToString("dd MMM yyyy · h:mm tt", CultureInfo.InvariantCulture) · @Model.Booking.Guests guests</p>
+                <p>@((Model.TableNumber ?? Model.Booking.TableNumber) is string tableNumber ? "Table " + tableNumber : "Table not assigned") · @Model.Booking.Status</p>
             }
         </div>
     </div>
@@ -65,14 +80,14 @@
             </li>
         }
     </ol>
-    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+    @if (!string.IsNullOrWhiteSpace(Model.Notes) && !OrderDiningPreferencesRules.IsProfileCopy(Model.Notes, Model.DiningPreferences))
     {
         <div class="sq-overall-note"><i class="bi bi-journal-text" aria-hidden="true"></i><div><strong>Overall remarks</strong><p>@Model.Notes</p></div></div>
     }
     <dl class="sq-total">
         <div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div>
-        <div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div>
         <div><dt>Service charge</dt><dd>@Money(Model.ServiceCharge)</dd></div>
+        <div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div>
         <div class="sq-total__grand"><dt>Order total</dt><dd>@Money(Model.Total)</dd></div>
     </dl>
     <footer class="sq-detail__footer">

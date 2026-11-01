@@ -19,7 +19,11 @@ public partial class OrderService
                 order.Items.Sum(item => (int?)item.Quantity) ?? 0,
                 order.TotalAmount, order.UpdatedAt, null,
                 (order.Notes != null && order.Notes != "") || order.Items.Any(item => item.Notes != null && item.Notes != ""),
-                order.Items.Count))
+                order.Items.Count, order.DiningSessionId,
+                order.OrderType == OrderType.DineIn
+                    ? (order.DiningSession != null ? order.DiningSession.Table.TableNumber
+                        : order.Reservation != null && order.Reservation.Table != null ? order.Reservation.Table.TableNumber : null)
+                    : null))
             .ToListAsync(ct);
 
     private static StaffQueueSignal StaffSignal(IReadOnlyList<StaffOrderRow> rows)
@@ -27,7 +31,7 @@ public partial class OrderService
         // One materialized pending snapshot produces the rows, counts and stamp.
         // A replacement order with the same total count must still trigger notice.
         string text = string.Join("\n", rows.Select(row => FormattableString.Invariant(
-            $"{row.Id}|{row.CreatedAt.Ticks}|{row.UpdatedAt?.Ticks}|{(int)row.Dining}|{row.Portions}|{row.Total}|{row.CustomerName}|{row.HasNotes}|{row.DishLineCount}")));
+            $"{row.Id}|{row.CreatedAt.Ticks}|{row.UpdatedAt?.Ticks}|{(int)row.Dining}|{row.Portions}|{row.Total}|{row.CustomerName}|{row.HasNotes}|{row.DishLineCount}|{row.DiningSessionId}|{row.TableNumber}")));
         string stamp = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
         return new(stamp, rows.Count, rows.Count(row => row.Dining == OrderType.DineIn),
             rows.Count(row => row.Dining == OrderType.Takeaway), rows.Count == 0 ? 0 : rows.Max(row => row.Id));
@@ -77,6 +81,7 @@ public partial class OrderService
         // No prices are recalculated: show the saved order/item amounts.
         var order = await _context.Orders.AsNoTracking().Where(row => row.Id == id)
             .Include(row => row.User).Include(row => row.Reservation).ThenInclude(booking => booking!.Table)
+            .Include(row => row.DiningSession).ThenInclude(session => session!.Table)
             .Include(row => row.Items).ThenInclude(item => item.MenuItem)
             .AsSplitQuery().SingleOrDefaultAsync(cancellationToken);
         if (order is null) return null;
@@ -88,7 +93,10 @@ public partial class OrderService
             order.Items.OrderBy(item => item.Id).Select(item => new StaffOrderDish(item.Id, item.MenuItemId,
                 item.MenuItem?.Code ?? "", item.MenuItem?.Name ?? "Dish no longer listed", StaffQueueImage(item.MenuItem?.ImageUrl),
                 item.Quantity, item.UnitPrice, item.Notes)).ToArray(), order.Notes, booking,
-            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount);
+            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount, order.UserId,
+            DiningSessionId: order.DiningSessionId,
+            TableNumber: order.OrderType == OrderType.DineIn
+                ? order.DiningSession?.Table.TableNumber ?? booking?.TableNumber : null);
     }
 
     private static string? StaffQueueImage(string? path)

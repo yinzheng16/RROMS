@@ -68,9 +68,11 @@
             <div class="sq-filters" role="group" aria-label="Filter by dining option">
                 @foreach (var option in new[] { ("All", "All"), ("DineIn", "Dine-in"), ("Takeaway", "Takeaway") })
                 {
+                    var pendingCount = option.Item1 == "All" ? Model.Signal.Pending
+                        : option.Item1 == "DineIn" ? Model.Signal.DineIn : Model.Signal.Takeaway;
                     <a asp-page="/Staff/Orders/Index" asp-route-search="@Model.Search" asp-route-dining="@option.Item1" asp-route-sort="@Model.Sort" asp-route-showAll="@Model.ShowAll"
                        class="sq-filter @(Model.Dining == option.Item1 ? "is-active" : "")"
-                       aria-current="@(Model.Dining == option.Item1 ? "true" : null)" data-sq-filter>@option.Item2</a>
+                       aria-current="@(Model.Dining == option.Item1 ? "true" : null)" data-sq-filter>@option.Item2 (@pendingCount)</a>
                 }
             </div>
             <p class="sq-match-count">
@@ -106,11 +108,15 @@
                             </div>
                             <p class="sq-ticket__customer">
                                 <strong>@order.CustomerName</strong><span aria-hidden="true">·</span>
-                                <time datetime="@order.CreatedAt.ToString("s", CultureInfo.InvariantCulture)">@order.CreatedAt.ToString("dd MMM · HH:mm", CultureInfo.InvariantCulture)</time>
+                                <time datetime="@order.CreatedAt.ToString("s", CultureInfo.InvariantCulture)">@order.CreatedAt.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture)</time>
                             </p>
                         </header>
                         <div class="sq-ticket__meta">
                             <span class="sq-dining sq-dining--@(order.Dining == OrderType.Takeaway ? "takeaway" : "dinein")"><i class="bi @(order.Dining == OrderType.Takeaway ? "bi-bag" : "bi-people")" aria-hidden="true"></i>@StaffQueueRules.DiningLabel(order.Dining)</span>
+                            @if (order.Dining == OrderType.DineIn && !string.IsNullOrWhiteSpace(order.TableNumber))
+                            {
+                                <span class="sq-dining sq-dining--dinein"><i class="bi bi-grid" aria-hidden="true"></i>Table @order.TableNumber</span>
+                            }
                             <span class="sq-wait sq-wait--@StaffQueueRules.WaitClass(seconds)" data-sq-wait="@seconds">
                                 <span><i class="bi bi-clock" aria-hidden="true"></i><span data-sq-wait-label>@StaffQueueRules.WaitLabel(seconds)</span></span>
                                 <small data-sq-long hidden="@(seconds < 1200)">Long wait</small>

@@ -15,7 +15,8 @@ public partial interface IOrderService
 
 public sealed record StaffOrderRow(int Id, string OrderNo, string CustomerName,
     OrderType Dining, DateTime CreatedAt, int Portions, decimal Total, DateTime? UpdatedAt,
-    IReadOnlyList<StaffOrderPreview>? DishPreview = null, bool HasNotes = false, int DishLineCount = 0);
+    IReadOnlyList<StaffOrderPreview>? DishPreview = null, bool HasNotes = false, int DishLineCount = 0,
+    int? DiningSessionId = null, string? TableNumber = null);
 
 public sealed record StaffOrderPreview(string Name, int Quantity);
 
@@ -37,7 +38,9 @@ public sealed record StaffOrderBooking(string Reference, DateTime ReservedAt, in
 public sealed record StaffOrderDetails(int Id, string OrderNo, string CustomerName,
     OrderType Dining, OrderStatus Status, DateTime CreatedAt, DateTime ServerNow,
     IReadOnlyList<StaffOrderDish> Dishes, string? Notes, StaffOrderBooking? Booking,
-    decimal Subtotal, decimal Tax, decimal ServiceCharge, decimal Total)
+    decimal Subtotal, decimal Tax, decimal ServiceCharge, decimal Total,
+    string? CustomerId = null, string? DiningPreferences = null,
+    int? DiningSessionId = null, string? TableNumber = null)
 {
     public int Portions => Dishes.Sum(dish => dish.Quantity);
 }

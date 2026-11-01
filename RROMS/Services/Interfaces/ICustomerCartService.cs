@@ -29,16 +29,22 @@ public sealed record CartLineView(Guid Id, int MenuItemId, string Code, string N
 
 public sealed record CartReservation(int Id, string ReferenceNo, DateTime ReservedAt,
     int Guests, ReservationStatus Status);
+public sealed record CartDiningSession(int Id, int TableId, string TableNumber, int? ReservationId);
 public sealed record CartTotals(decimal Subtotal, decimal TaxRate, decimal Tax,
     decimal ServiceRate, decimal ServiceCharge, decimal Total);
 public sealed record CartView(Guid Revision, IReadOnlyList<CartLineView> Lines,
     OrderType OrderType, int? ReservationId, string? Notes, CartTotals Totals,
-    IReadOnlyList<CartReservation> Reservations)
+    IReadOnlyList<CartReservation> Reservations, bool RemarksFromProfile = false,
+    string? SeparateProfilePreferences = null, int? DiningSessionId = null,
+    IReadOnlyList<CartDiningSession>? Sessions = null, CartDiningSession? SelectedSession = null,
+    string? SessionError = null)
 {
     public int Quantity => Lines.Sum(line => line.Quantity);
     public bool HasUnavailable => Lines.Any(line => !line.IsAvailable);
-    public bool ReservationValid => OrderType == OrderType.Takeaway || !ReservationId.HasValue ||
-        Reservations.Any(reservation => reservation.Id == ReservationId);
+    public bool ReservationValid => OrderType == OrderType.Takeaway ||
+        (ReservationId.HasValue && Reservations.Any(reservation => reservation.Id == ReservationId));
+    public bool SessionValid => OrderType == OrderType.Takeaway ||
+        (ReservationValid && SessionError is null);
     public static CartView Empty { get; } = new(Guid.Empty, Array.Empty<CartLineView>(),
         OrderType.DineIn, null, null, new(0, 0, 0, 0, 0, 0), Array.Empty<CartReservation>());
 }
@@ -50,6 +56,8 @@ public sealed class CartUpdate
     public List<CartLineInput> Lines { get; set; } = new();
     public OrderType OrderType { get; set; } = OrderType.DineIn;
     public int? ReservationId { get; set; }
+    // Retained for compatibility with older drafts/forms; never used to select a session.
+    public int? DiningSessionId { get; set; }
     public string? Notes { get; set; }
 }
 public sealed class CartLineInput

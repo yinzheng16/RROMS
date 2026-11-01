@@ -6,7 +6,7 @@ using RROMS.Services.Interfaces;
 
 namespace RROMS.Services;
 
-public class ReservationService : IReservationService
+public partial class ReservationService : IReservationService
 {
     private static readonly string[] AllowedPhotoExt = { ".jpg", ".jpeg", ".png", ".webp" };
     private const long MaxPhotoBytes = 3 * 1024 * 1024;
