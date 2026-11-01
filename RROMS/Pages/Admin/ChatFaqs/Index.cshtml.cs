@@ -101,6 +101,10 @@ namespace RROMS.Pages.Admin.ChatFaqs
                 reply.Source,
                 Faq = used is null ? null : new { used.Id, used.Question },
                 Hours = reply.Hours is not null,
+                // US09: a table check, e.g. "✓ Sat 8 Nov · 8:00 PM, 4 guests"
+                Check = reply.Check is null ? null : (reply.Check.Available ? "✓ Table free · " : "✗ No table · ")
+                        + $"{reply.Check.When}, {reply.Check.Guests} guest{(reply.Check.Guests == 1 ? "" : "s")}",
+                Form = reply.BookingForm,
                 Ms = watch.ElapsedMilliseconds   // how long the answer took (shown as "1.8 s")
             });
         }

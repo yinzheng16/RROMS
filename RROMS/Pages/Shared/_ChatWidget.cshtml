@@ -1,13 +1,19 @@
 @using RROMS.Models
+@inject RROMS.Services.Interfaces.IChatbotService ChatBot
 @{
+    // AI off (no key, or "Ai:Enabled": false) -> the header says so, and answers come from the FAQs.
+    var aiOn = ChatBot.AiConfigured;
     // US08 (Member 1): "Ask YORU" chat bubble, shown on every customer page by the layout.
     // Script: wwwroot/js/chat.js · Styles: wwwroot/css/chat.css (loaded in <head> by the layout).
     // It talks to Pages/Chat.cshtml (/chat?handler=...).
 }
 <div class="yc" id="yoruChat"
-     data-ask="@Url.Page("/Chat", "Ask")"
-     data-faqs="@Url.Page("/Chat", "Faqs")"
-     data-hours="@Url.Page("/Chat", "Hours")"
+     data-ask="@Url.Page("/Chat", "Ask", new { area = "" })"
+     data-faqs="@Url.Page("/Chat", "Faqs", new { area = "" })"
+     data-hours="@Url.Page("/Chat", "Hours", new { area = "" })"
+     data-booking="@Url.Page("/Chat", "Booking", new { area = "" })"
+     data-times="@Url.Page("/Chat", "Times", new { area = "" })"
+     data-check="@Url.Page("/Chat", "Check", new { area = "" })"
      data-book="/Customer/Reservations/Create"
      data-menu="/Menu"
      data-signed-in="@(User.Identity?.IsAuthenticated == true ? "true" : "false")">
@@ -18,7 +24,14 @@
             <span class="yc-av" aria-hidden="true"><img src="~/images/chat/yoru-mon.webp" alt="" /></span>
             <div class="yc-head-tx">
                 <h2 id="ycTitle">YORU Assistant</h2>
-                <p><i aria-hidden="true"></i>Online · <span lang="ja">夜のご案内</span></p>
+                @if (aiOn)
+                {
+                    <p><i aria-hidden="true"></i>Online · <span lang="ja">夜のご案内</span></p>
+                }
+                else
+                {
+                    <p class="is-faq"><i aria-hidden="true"></i>Quick answers · FAQs, hours & tables</p>
+                }
             </div>
             <button type="button" class="yc-hbtn" data-yc-reset title="Start a new chat" aria-label="Start a new chat"><i class="bi bi-arrow-counterclockwise"></i></button>
             <button type="button" class="yc-hbtn" data-yc-close title="Close" aria-label="Close chat"><i class="bi bi-x-lg"></i></button>
