@@ -80,10 +80,34 @@ public class Index : PageModel
         ("menu", "品目", "Menu items")
     };
 
-    public static readonly (int Days, string Name)[] Presets =
+    // Quick date ranges (US45). Kept in the address as ?range=week, so a bookmark of
+    // "This week" still means this week next time. Custom ranges use ?from=…&to=….
+    public static readonly (string Key, string Name)[] Presets =
     {
-        (1, "Today"), (7, "Last 7 days"), (30, "Last 30 days"), (90, "Last 90 days")
+        ("today", "Today"), ("week", "This week"), ("month", "This month"),
+        ("7d", "Last 7 days"), ("30d", "Last 30 days"), ("90d", "Last 90 days")
     };
+
+    private const string DefaultRange = "7d";
+
+    [BindProperty(SupportsGet = true, Name = "range")]
+    public string? RangeKey { get; set; }
+
+    // The quick range in use (US45), or null for a custom range.
+    public string? ActiveRange { get; private set; }
+
+    // Start and end of a quick range. Weeks start on Monday.
+    public static (DateTime From, DateTime To) RangeOf(string key, DateTime today) => key switch
+    {
+        "today" => (today, today),
+        "week" => (today.AddDays(-(((int)today.DayOfWeek + 6) % 7)), today),
+        "month" => (new DateTime(today.Year, today.Month, 1), today),
+        "30d" => (today.AddDays(-29), today),
+        "90d" => (today.AddDays(-89), today),
+        _ => (today.AddDays(-6), today)
+    };
+
+    public string PeriodName => ActiveRange == null ? "Custom range" : Presets.First(p => p.Key == ActiveRange).Name;
 
     public bool HasFilters => Query.Groups.Count > 0 || !string.IsNullOrWhiteSpace(Query.Customer)
                               || !string.IsNullOrEmpty(Query.Kind) || Query.Day.HasValue;
@@ -142,19 +166,33 @@ public class Index : PageModel
         q.Type = index >= 0 ? (ReportType)index : ReportType.Orders;
 
         var today = DateTime.Today;
-        var from = ParseDate(FromText) ?? today.AddDays(-6);
-        var to = ParseDate(ToText) ?? today;
-        if (to < from)
+        DateTime from, to;
+        var customFrom = ParseDate(FromText);
+        var customTo = ParseDate(ToText);
+        if (Presets.Any(p => p.Key == RangeKey) || (customFrom == null && customTo == null))
         {
-            (from, to) = (to, from);
+            // Quick range (or nothing chosen yet: last 7 days).
+            ActiveRange = Presets.Any(p => p.Key == RangeKey) ? RangeKey : DefaultRange;
+            (from, to) = RangeOf(ActiveRange!, today);
         }
-        if ((to - from).Days + 1 > MaxDays)
+        else
         {
-            from = to.AddDays(-(MaxDays - 1));
-            Notice = $"Reports can cover up to {MaxDays} days, so the start date was moved to {from:d MMM yyyy}.";
+            ActiveRange = null;
+            from = customFrom ?? customTo!.Value;
+            to = customTo ?? customFrom!.Value;
+            if (to < from)
+            {
+                (from, to) = (to, from);
+            }
+            if ((to - from).Days + 1 > MaxDays)
+            {
+                from = to.AddDays(-(MaxDays - 1));
+                Notice = $"Reports can cover up to {MaxDays} days, so the start date was moved to {from:d MMM yyyy}.";
+            }
         }
         q.From = from;
         q.To = to;
+        SetComparison(q);
 
         q.Groups = Groups.Where(g => !string.IsNullOrWhiteSpace(g)).Select(g => g.Trim()).Distinct().Take(20).ToList();
         q.Customer = string.IsNullOrWhiteSpace(Customer) ? null : Customer.Trim()[..Math.Min(Customer.Trim().Length, 100)];
@@ -165,9 +203,41 @@ public class Index : PageModel
 
         q.SortColumn = SortColumn;
         q.SortDescending = SortDir == "desc";
-        // Compare is on by default for short periods (up to 14 days) and off for longer ones.
-        q.Compare = CompareText == "on" || (CompareText != "off" && (to - from).Days + 1 <= 14);
+        // Comparing with an earlier period is on unless the address says cmp=off.
+        q.Compare = CompareText != "off";
         return q;
+    }
+
+    // What each range is compared with (US45: "compare performance over time").
+    private void SetComparison(ReportQuery q)
+    {
+        switch (ActiveRange)
+        {
+            case "today":
+                q.CompareLabel = "yesterday";
+                q.CompareSpan = "yesterday";
+                break;
+            case "week":
+                // Monday to today vs Monday to the same weekday last week.
+                q.CompareFrom = q.From.AddDays(-7);
+                q.CompareTo = q.To.AddDays(-7);
+                q.CompareLabel = "same days last week";
+                q.CompareSpan = "the same days last week";
+                break;
+            case "month":
+                // 1st to today vs 1st to the same date last month (or its last day).
+                var lastMonth = q.From.AddMonths(-1);
+                var lastDay = Math.Min(q.To.Day, DateTime.DaysInMonth(lastMonth.Year, lastMonth.Month));
+                q.CompareFrom = lastMonth;
+                q.CompareTo = new DateTime(lastMonth.Year, lastMonth.Month, lastDay);
+                q.CompareLabel = "same days last month";
+                q.CompareSpan = "the same days last month";
+                break;
+            default:
+                q.CompareLabel = q.Days == 1 ? "the day before" : $"previous {q.Days} days";
+                q.CompareSpan = q.Days == 1 ? "the day before" : $"the {q.Days} days before";
+                break;
+        }
     }
 
     private static DateTime? ParseDate(string? text) =>
@@ -197,8 +267,15 @@ public class Index : PageModel
         }
 
         Set("type", Types[(int)Query.Type].Key);
-        Set("from", Query.From.ToString("yyyy-MM-dd"));
-        Set("to", Query.To.ToString("yyyy-MM-dd"));
+        if (ActiveRange != null)
+        {
+            if (ActiveRange != DefaultRange) Set("range", ActiveRange);
+        }
+        else
+        {
+            Set("from", Query.From.ToString("yyyy-MM-dd"));
+            Set("to", Query.To.ToString("yyyy-MM-dd"));
+        }
         if (Query.Groups.Count > 0) d["st"] = Query.Groups.ToList();
         Set("q", Query.Customer);
         Set("kind", Query.Kind);
@@ -208,8 +285,7 @@ public class Index : PageModel
         if (PageNo > 1) Set("p", PageNo.ToString());
         if (ShowAll) Set("all", "true");
         if (Per != 25) Set("per", Per.ToString());
-        var defaultCompare = Query.Days <= 14;
-        if (Query.Compare != defaultCompare) Set("cmp", Query.Compare ? "on" : "off");
+        if (!Query.Compare) Set("cmp", "off");
         return d;
     }
 
@@ -239,15 +315,15 @@ public class Index : PageModel
         foreach (var k in new[] { "st", "kind", "sort", "dir", "day" }) d.Remove(k);
     });
 
-    public string PresetLink(int days) => Link(d =>
+    public string PresetLink(string key) => Link(d =>
     {
-        d["from"] = new() { DateTime.Today.AddDays(-(days - 1)).ToString("yyyy-MM-dd") };
-        d["to"] = new() { DateTime.Today.ToString("yyyy-MM-dd") };
+        d.Remove("from");
+        d.Remove("to");
         d.Remove("day");
-        d.Remove("cmp");
+        if (key == DefaultRange) d.Remove("range"); else d["range"] = new() { key };
     });
 
-    public bool IsPreset(int days) => Query.To == DateTime.Today && Query.Days == days;
+    public bool IsPreset(string key) => ActiveRange == key;
 
     public string GroupLink(string name) => Link(d =>
     {
@@ -303,8 +379,7 @@ public class Index : PageModel
 
     public string CompareLink() => Link(d =>
     {
-        var turnOn = !Query.Compare;
-        if (turnOn == (Query.Days <= 14)) d.Remove("cmp"); else d["cmp"] = new() { turnOn ? "on" : "off" };
+        if (Query.Compare) d["cmp"] = new() { "off" }; else d.Remove("cmp");
     }, keepPage: true);
 
     public string CsvLink() => Build(State(), "Csv");
@@ -316,7 +391,8 @@ public class Index : PageModel
     {
         foreach (var (key, values) in State())
         {
-            if (except.Contains(key) || key == "p" || (key == "cmp" && except.Contains("from"))) continue;
+            // The custom-range form replaces the quick range, so it drops ?range too.
+            if (except.Contains(key) || key == "p" || (key == "range" && except.Contains("from"))) continue;
             foreach (var v in values) yield return new(key, v);
         }
     }
@@ -327,5 +403,5 @@ public class Index : PageModel
             ? $"{Query.From:d MMM} – {Query.To:d MMM yyyy}"
             : $"{Query.From:d MMM yyyy} – {Query.To:d MMM yyyy}";
 
-    public string CompareSpan => Query.Days == 1 ? "the day before" : $"the {Query.Days} days before";
+    public string CompareSpan => Query.CompareSpan;
 }

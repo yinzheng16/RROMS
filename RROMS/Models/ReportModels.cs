@@ -32,10 +32,24 @@ namespace RROMS.Models
         public int? SortColumn { get; set; }
         public bool SortDescending { get; set; }
 
-        // Compare with the period of the same length just before.
+        // Compare with an earlier period (US45).
         public bool Compare { get; set; } = true;
 
         public int Days => (To.Date - From.Date).Days + 1;
+
+        // The period to compare with. When not set: the same number of days just before.
+        // "This week" compares with the same days last week, "This month" with the same
+        // days last month (set by the page, US45).
+        public DateTime? CompareFrom { get; set; }
+        public DateTime? CompareTo { get; set; }
+        public DateTime PreviousFrom => (CompareFrom ?? From.Date.AddDays(-Days)).Date;
+        public DateTime PreviousTo => (CompareTo ?? From.Date.AddDays(-1)).Date;
+
+        // Short text after a % change, e.g. "previous 7 days" or "same days last week".
+        public string CompareLabel { get; set; } = string.Empty;
+
+        // Longer text for sentences, e.g. "the 7 days before" or "the same days last week".
+        public string CompareSpan { get; set; } = string.Empty;
     }
 
     public class ReportColumn

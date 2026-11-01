@@ -17,7 +17,7 @@
 
     string DeltaClass(ReportKpi k) => (k.GoodWhenDown ? k.Change < 0 : k.Change > 0) ? "rp-up" : "rp-down";
     string DeltaText(ReportKpi k) => (k.Change > 0 ? "▲ " : k.Change < 0 ? "▼ " : "") + Math.Abs(k.Change ?? 0) + "%";
-    var compareText = Q.Days == 1 ? "vs the day before" : $"vs previous {Q.Days} days";
+    var compareText = "vs " + Q.CompareLabel;
 
     // ---- The three summary cards ----
     // Card 1: the main number with a small bar for each of the last 7 days.
@@ -99,7 +99,7 @@
     var hiddenGroups = Enumerable.Range(0, R.Groups.Count).Count(IsExtra);
 
     // ---- Date range drop-down ----
-    var isCustom = !RROMS.Pages.Admin.Reports.Index.Presets.Any(p => Model.IsPreset(p.Days));
+    var isCustom = Model.ActiveRange == null;
 
     // ---- Table helpers ----
     var codeColumns = new[] { "Reference", "Order", "Payment" };
@@ -153,7 +153,7 @@
                     </div>
                 </div>
                 <div class="rp-sheet-meta">
-                    <b>@Model.PeriodText</b><br />
+                    <b>@Model.PeriodName · @Model.PeriodText</b><br />
                     @(string.Join(" · ", filterParts))<br />
                     Exported @DateTime.Now.ToString("d MMM yyyy, HH:mm") by @(User.Identity?.Name ?? "Admin")
                 </div>
@@ -325,7 +325,7 @@ else
                     <select aria-label="Date range" data-rp-period data-rp-kanji="期間">
                         @foreach (var p in RROMS.Pages.Admin.Reports.Index.Presets)
                         {
-                            <option value="@Model.PresetLink(p.Days)" selected="@Model.IsPreset(p.Days)">@p.Name</option>
+                            <option value="@Model.PresetLink(p.Key)" selected="@Model.IsPreset(p.Key)">@p.Name</option>
                         }
                         <option value="custom" selected="@isCustom">Custom range…</option>
                     </select>
@@ -343,7 +343,7 @@ else
             <div class="rp-sec-ic rp-sec-red" aria-hidden="true">数</div>
             <div>
                 <h2>Overview <small lang="ja">概要</small></h2>
-                <p>@Model.PeriodText · Updated @DateTime.Now.ToString("HH:mm")</p>
+                <p>@Model.PeriodName · @Model.PeriodText · Updated @DateTime.Now.ToString("HH:mm")</p>
             </div>
             <div class="rp-rule"></div>
         </div>
