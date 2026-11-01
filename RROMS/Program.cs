@@ -82,6 +82,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IReceiptService, ReceiptService>(); // Member 4 / US35 PDF receipt
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 
 //Member 5

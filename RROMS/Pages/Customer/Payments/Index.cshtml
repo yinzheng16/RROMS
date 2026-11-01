@@ -137,6 +137,13 @@
                                         <div class="pay-line-info">
                                             <h3>@IndexModel.WhatLabel(p)</h3>
                                             <p>@string.Join(" · ", meta)</p>
+                                            @* US35: PDF receipt, Paid payments only *@
+                                            @if (p.Status == PaymentStatus.Paid)
+                                            {
+                                                <a class="pay-receipt" asp-page-handler="Receipt" asp-route-id="@p.PaymentId">
+                                                    <i class="bi bi-download" aria-hidden="true"></i> Receipt (PDF)
+                                                </a>
+                                            }
                                         </div>
                                         <span class="pay-status pay-status-@IndexModel.StatusKey(p.Status)">@p.Status</span>
                                         <span class="pay-amount">@IndexModel.Money(p.Amount)</span>

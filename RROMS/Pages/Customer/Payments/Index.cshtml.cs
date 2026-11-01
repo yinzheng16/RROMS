@@ -13,9 +13,12 @@ namespace RROMS.Pages.Customer.Payments;
 // the attribute repeats it so the page stays protected if moved.
 [Authorize(Policy = "CustomerOnly")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class IndexModel(IPaymentService payments) : PageModel
+public class IndexModel(IPaymentService payments, IReceiptService receipts) : PageModel
 {
     private readonly IPaymentService _payments = payments;
+
+    // US35: PDF receipt for a Paid payment.
+    private readonly IReceiptService _receipts = receipts;
 
     public static readonly CultureInfo DisplayCulture = CultureInfo.GetCultureInfo("en-MY");
 
@@ -58,6 +61,21 @@ public class IndexModel(IPaymentService payments) : PageModel
 
         History = await _payments.GetCustomerPaymentsAsync(userId, From, To);
         return Page();
+    }
+
+    // US35: Download the PDF receipt of one of the customer's own Paid payments.
+    // /Customer/Payments?handler=Receipt&id=12
+    // Not found, not Paid or someone else's payment: all give 404.
+    public async Task<IActionResult> OnGetReceiptAsync(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        var receipt = await _receipts.GetCustomerReceiptAsync(userId, id);
+        if (receipt is null) return NotFound();
+
+        var pdf = _receipts.CreatePdf(receipt);
+        return File(pdf, "application/pdf", $"YORU-receipt-{receipt.ReceiptNo}.pdf");
     }
 
     // ---- Display helpers ----
