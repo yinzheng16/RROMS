@@ -92,6 +92,7 @@ builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Memb
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>(); // Member 4 / US35 PDF receipt
+builder.Services.AddScoped<IAdminPaymentService, AdminPaymentService>(); // Member 4 / US40 Admin payments
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 
 //Member 5

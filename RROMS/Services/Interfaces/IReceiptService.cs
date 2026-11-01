@@ -15,7 +15,7 @@ namespace RROMS.Services.Interfaces
         Task<PaymentReceipt?> GetCustomerReceiptAsync(string customerId, int paymentId);
 
         // Staff (Bill page, after payment): the same receipt for any Paid payment.
-        // Only the /Staff folder (StaffOrAdmin) calls this.
+        // Only the /Staff folder (StaffOrAdmin) and Admin -> Payments (US40) call this.
         Task<PaymentReceipt?> GetReceiptAsync(int paymentId);
 
         // The receipt as a PDF file (QuestPDF).
