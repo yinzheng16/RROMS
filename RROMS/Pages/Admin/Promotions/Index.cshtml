@@ -1,0 +1,505 @@
+@page
+@model RROMS.Pages.Admin.Promotions.IndexModel
+@using System.Globalization
+@using RROMS.Services.Interfaces
+@{
+    ViewData["Title"] = "Promotions";
+    ViewData["FullWidth"] = true;   // the watercolour banner runs edge to edge; content sits in .promo-body
+    var inv = CultureInfo.InvariantCulture;
+    string Money(decimal value) => value.ToString("F2", inv);
+    string Percent(decimal value) => value.ToString("0.#", inv);
+    string Dates(DateTime start, DateTime end) => start.Date == end.Date
+        ? start.ToString("d MMM yyyy", inv)
+        : start.Year == end.Year && start.Month == end.Month
+            ? $"{start.ToString("%d", inv)} – {end.ToString("d MMM yyyy", inv)}"
+            : start.Year == end.Year
+                ? $"{start.ToString("d MMM", inv)} – {end.ToString("d MMM yyyy", inv)}"
+                : $"{start.ToString("d MMM yyyy", inv)} – {end.ToString("d MMM yyyy", inv)}";
+    string StateLabel(PromotionState state) => state switch
+    {
+        PromotionState.Running => "Running", PromotionState.Scheduled => "Scheduled",
+        PromotionState.Stopped => "Stopped", _ => "Ended"
+    };
+    var tabs = new (string? Value, string Label, int Count)[]
+    {
+        (null, "All", Model.Board.TotalCount),
+        ("Running", "Running", Model.Board.RunningCount),
+        ("Scheduled", "Scheduled", Model.Board.ScheduledCount),
+        ("Stopped", "Stopped", Model.Board.StoppedCount),
+        ("Ended", "Ended", Model.Board.EndedCount)
+    };
+    var sorts = new (string Value, string Label)[]
+    {
+        (PromotionSorts.Newest, "Newest first"), (PromotionSorts.Ending, "Ending soonest"),
+        (PromotionSorts.Discount, "Biggest discount"), (PromotionSorts.Sold, "Most sold")
+    };
+    bool editing = Model.Input.Id != 0;
+    var input = Model.Input;
+    var listUrl = Model.ListUrl();
+    string dayValue = Model.Day?.ToString("yyyy-MM-dd", inv) ?? "";
+}
+
+<link rel="stylesheet" href="~/css/admin-promotions.css" asp-append-version="true" />
+
+<script>
+    // A browser refresh clears the search, like the customer menu. Runs before the page draws.
+    (() => {
+        const nav = performance.getEntriesByType?.('navigation')?.[0];
+        if (nav?.type !== 'reload') return;
+        const url = new URL(location.href);
+        if (!url.searchParams.has('Search')) return;
+        url.searchParams.delete('Search');
+        location.replace(url.href);
+    })();
+</script>
+<div class="promo-page" data-promo-studio>
+    @* ---------- Header ---------- *@
+    <section class="promo-hero" aria-labelledby="promotions-title">
+        <img class="promo-hero__sakura" src="~/images/promotions/yoru-promo-sakura.webp" alt="" aria-hidden="true" width="369" height="266" />
+        <div class="promo-hero__content">
+            <p class="promo-eyebrow">Seasonal offers <span aria-hidden="true">·</span> <span lang="ja">季節の特価</span></p>
+            <h1 id="promotions-title">A little occasion.<br />A special price.</h1>
+            <p class="promo-hero__lead">Create, schedule and manage your menu offers.</p>
+            <a href="@Model.PageUrl(new { New = true })" class="promo-btn-primary" data-promo-new data-promo-open>
+                <i class="bi bi-plus-lg" aria-hidden="true"></i><span>New promotion</span>
+            </a>
+        </div>
+    </section>
+
+    <div class="promo-body">
+        <div class="container-xl container-wide">
+        <div class="promo-layout">
+            @* ---------- Your specials ---------- *@
+            <section class="promo-panel promo-specials" aria-labelledby="promo-list-title">
+                <header class="promo-specials__head">
+                    <div class="promo-heading">
+                        <h2 id="promo-list-title">Your specials</h2>
+                    </div>
+                    <form method="get" class="promo-tools" role="search" data-promo-tools>
+                        <input type="hidden" name="Status" value="@Model.Status" />
+                        <input type="hidden" name="Day" value="@dayValue" />
+                        <input type="hidden" name="Month" value="@Model.Month" /><input type="hidden" name="PageNo" value="@Model.PageNumber" />
+                        <div class="promo-search">
+                            <label for="promo-search" class="visually-hidden">Search promotions</label>
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input id="promo-search" name="Search" value="@Model.Search" maxlength="100" type="search"
+                                   placeholder="Search by title, dish or code…" autocomplete="off" data-promo-search />
+                            <a class="promo-search__clear" href="@Model.PageUrl(new { Search = (string?)null })" aria-label="Clear search"
+                               hidden="@string.IsNullOrWhiteSpace(Model.Search)" data-promo-search-clear><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+                        </div>
+                        @* Sort picker: a styled list of links (works without JavaScript; no browser-blue menu). *@
+                        <details class="promo-sort" data-promo-swap="sort" data-promo-sort>
+                            <summary aria-label="Sort promotions">
+                                <span class="promo-sort__text"><small>Sort by</small><strong>@(sorts.First(x => x.Value == Model.Board.Sort).Label)</strong></span>
+                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                            </summary>
+                            <ul class="promo-sort__menu" role="list">
+                                @foreach (var sort in sorts)
+                                {
+                                    bool chosen = Model.Board.Sort == sort.Value;
+                                    <li><a href="@Model.PageUrl(new { Sort = sort.Value == PromotionSorts.Newest ? null : sort.Value, PageNo = (int?)null })" class="@(chosen ? "is-current" : "")"
+                                           aria-current="@(chosen ? "true" : null)" data-promo-nav>@sort.Label @if (chosen) { <i class="bi bi-check2" aria-hidden="true"></i> }</a></li>
+                                }
+                            </ul>
+                        </details>
+                        <input type="hidden" name="Sort" value="@Model.Sort" />
+                        @{ bool filtered = !string.IsNullOrWhiteSpace(Model.Status) || !string.IsNullOrWhiteSpace(Model.Search)
+                               || Model.Board.Sort != PromotionSorts.Newest || Model.Day.HasValue; }
+                        <a href="@Url.Page("./Index")" class="promo-reset" hidden="@(!filtered)" data-promo-swap="reset" data-promo-nav data-promo-reset>
+                            <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i><span>Reset</span>
+                        </a>
+                        <button type="submit" class="visually-hidden">Apply</button>
+                    </form>
+                </header>
+
+                <div class="promo-list" data-promo-swap="list">
+                <nav class="promo-tabs" aria-label="Filter by status">
+                    @foreach (var tab in tabs)
+                    {
+                        bool current = string.Equals(tab.Value, Model.Status, StringComparison.OrdinalIgnoreCase)
+                            || (tab.Value is null && string.IsNullOrEmpty(Model.Status));
+                        <a href="@Model.PageUrl(new { Status = tab.Value, PageNo = (int?)null })"
+                           class="promo-tab @(current ? "is-current" : "") @(tab.Value is null ? "" : "state-" + tab.Value)"
+                           aria-current="@(current ? "page" : null)" data-promo-nav>
+                            @if (tab.Value is not null) { <span class="promo-tab__dot" aria-hidden="true"></span> }
+                            <span>@tab.Label</span><span class="promo-tab__count">@tab.Count</span>
+                        </a>
+                    }
+                </nav>
+
+                @if (Model.Day is DateTime pickedDay)
+                {
+                    <p class="promo-dayfilter">
+                        <i class="bi bi-calendar-check" aria-hidden="true"></i>
+                        <span>Showing specials on <strong>@pickedDay.ToString("ddd d MMM yyyy", inv)</strong></span>
+                        <a href="@Model.PageUrl(new { Day = (string?)null, PageNo = (int?)null })" data-promo-nav>Clear</a>
+                    </p>
+                }
+
+                @if (Model.Board.Rows.Count == 0)
+                {
+                    <div class="promo-empty">
+                        <img src="~/images/promotions/yoru-promo-sakura.webp" alt="" aria-hidden="true" width="220" height="159" />
+                        <h3>@(Model.Board.TotalCount == 0 ? "No specials yet" : "No promotions match")</h3>
+                        <p>@(Model.Board.TotalCount == 0 ? "Create a promotion to show a special price on the menu." : "Try another status, day or search.")</p>
+                        @if (Model.Board.TotalCount == 0)
+                        {
+                            <a href="@Model.PageUrl(new { New = true })" class="promo-btn-primary" data-promo-new data-promo-open><i class="bi bi-plus-lg" aria-hidden="true"></i><span>New promotion</span></a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <ul class="promo-grid" role="list">
+                        @foreach (var row in Model.PageRows)
+                        {
+                            string state = row.State.ToString();
+                            bool live = row.State is PromotionState.Running or PromotionState.Scheduled;
+                            <li class="promo-card state-@state @(!row.DishAvailable && live ? "is-unavailable" : "")">
+                                <article aria-labelledby="promo-@row.Id-title">
+                                    <div class="promo-card__photo">
+                                        @if (!string.IsNullOrWhiteSpace(row.ImageUrl))
+                                        {
+                                            <img src="@Url.Content(row.ImageUrl)" alt="" width="480" height="260" decoding="async" />
+                                        }
+                                        else
+                                        {
+                                            <span class="promo-card__placeholder" lang="ja" aria-hidden="true">夜</span>
+                                        }
+                                        <span class="promo-state state-@state">@StateLabel(row.State)</span>
+                                        <span class="promo-card__timing"><i class="bi bi-clock" aria-hidden="true"></i>@row.Timing</span>
+                                        @if (!row.DishAvailable && live)
+                                        {
+                                            <span class="promo-card__stamp" role="img" aria-label="Dish unavailable"><span lang="ja" aria-hidden="true">品切れ</span>Unavailable</span>
+                                        }
+                                        <span class="promo-card__tags">
+                                        <span class="promo-card__off">@Percent(row.PercentOff)% OFF</span>
+                                    </span>
+                                    </div>
+                                    <div class="promo-card__body">
+                                        <h3 id="promo-@row.Id-title" title="@row.Title">@row.Title</h3>
+                                        <p class="promo-card__dish">@row.DishName <span class="promo-card__code">@row.DishCode</span></p>
+                                        <p class="promo-card__meta">@row.CategoryName</p>
+                                        <p class="promo-card__price">
+                                            <strong><span class="visually-hidden">Promotional price </span>RM @Money(row.PromoPrice)</strong>
+                                            <s><span class="visually-hidden">Normal price </span>RM @Money(row.BasePrice)</s>
+                                        </p>
+                                        <p class="promo-card__dates"><i class="bi bi-calendar3" aria-hidden="true"></i>@Dates(row.StartDate, row.EndDate)</p>
+
+                                        @if (!row.DishAvailable && live)
+                                        {
+                                            <p class="promo-card__unavailable"><i class="bi bi-slash-circle" aria-hidden="true"></i>Customers can't order this dish right now.</p>
+                                        }
+                                        @if (row.NoEffect && live)
+                                        {
+                                            <p class="promo-warning is-danger"><i class="bi bi-exclamation-octagon" aria-hidden="true"></i>The normal price (RM @Money(row.BasePrice)) is now at or below this price, so it has no effect.</p>
+                                        }
+
+                                        <dl class="promo-stats" aria-label="Results during this promotion">
+                                            <div><dt>Sold</dt><dd>@row.Results.Sold</dd></div>
+                                            <div><dt>Revenue</dt><dd>RM @Money(row.Results.Revenue)</dd></div>
+                                            <div><dt>Discount given</dt><dd>RM @Money(row.Results.CustomersSaved)</dd></div>
+                                        </dl>
+                                    </div>
+                                    <div class="promo-card__actions">
+                                        <a class="promo-btn promo-btn--gold" href="@Model.PageUrl(new { Edit = row.Id })" data-promo-open aria-label="Edit @row.Title">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i><span>Edit</span>
+                                        </a>
+                                        @if (row.State == PromotionState.Stopped)
+                                        {
+                                            <form method="post" asp-page-handler="Resume" asp-route-id="@row.Id">
+                                                <input type="hidden" name="Status" value="@Model.Status" /><input type="hidden" name="Search" value="@Model.Search" />
+                                                <input type="hidden" name="Sort" value="@Model.Sort" /><input type="hidden" name="Day" value="@dayValue" /><input type="hidden" name="Month" value="@Model.Month" /><input type="hidden" name="PageNo" value="@Model.PageNumber" />
+                                                <button type="submit" class="promo-btn" aria-label="Resume @row.Title"><i class="bi bi-play-circle" aria-hidden="true"></i><span>Resume</span></button>
+                                            </form>
+                                        }
+                                        else if (row.CanRunAgain)
+                                        {
+                                            <a class="promo-btn" href="@Model.PageUrl(new { Copy = row.Id })" data-promo-open aria-label="Run @row.Title again">
+                                                <i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>Run again</span>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <form method="post" asp-page-handler="Stop" asp-route-id="@row.Id"
+                                                  data-promo-confirm="Stop &quot;@row.Title&quot;? Customers will see the normal price straight away." data-promo-confirm-title="Stop promotion" data-promo-confirm-action="Confirm stop">
+                                                <input type="hidden" name="Status" value="@Model.Status" /><input type="hidden" name="Search" value="@Model.Search" />
+                                                <input type="hidden" name="Sort" value="@Model.Sort" />
+<input type="hidden" name="Day" value="@dayValue" /><input type="hidden" name="Month" value="@Model.Month" /><input type="hidden" name="PageNo" value="@Model.PageNumber" />
+                                                <button type="submit" class="promo-btn" aria-label="Stop @row.Title"><i class="bi bi-stop-circle" aria-hidden="true"></i><span>Stop</span></button>
+                                            </form>
+                                        }
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@row.Id" class="promo-card__delete"
+                                              data-promo-confirm="Delete &quot;@row.Title&quot;? This cannot be undone. Past orders keep their prices." data-promo-confirm-title="Delete promotion" data-promo-confirm-action="Delete promotion">
+                                            <input type="hidden" name="Status" value="@Model.Status" /><input type="hidden" name="Search" value="@Model.Search" />
+                                            <input type="hidden" name="Sort" value="@Model.Sort" />
+<input type="hidden" name="Day" value="@dayValue" /><input type="hidden" name="Month" value="@Model.Month" /><input type="hidden" name="PageNo" value="@Model.PageNumber" />
+                                            <button type="submit" class="promo-btn promo-btn--icon promo-btn--danger" aria-label="Delete @row.Title" title="Delete"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                                        </form>
+                                    </div>
+                                </article>
+                            </li>
+                        }
+                    </ul>
+                    @if (Model.MatchingCount > RROMS.Pages.Admin.Promotions.IndexModel.PageSize)
+                    {
+                        int first = Model.ShowAll ? 1 : (Model.CurrentPage - 1) * RROMS.Pages.Admin.Promotions.IndexModel.PageSize + 1;
+                        int last = Model.ShowAll ? Model.MatchingCount : Math.Min(Model.CurrentPage * RROMS.Pages.Admin.Promotions.IndexModel.PageSize, Model.MatchingCount);
+                        <nav class="promo-pager" aria-label="Promotion pages">
+                            <p>Showing @first–@last of @Model.MatchingCount</p>
+                            <div class="promo-pager__links">
+                                @if (!Model.ShowAll && Model.CurrentPage > 1)
+                                {
+                                    <a href="@Model.PageUrl(new { PageNo = Model.CurrentPage - 1 })" data-promo-nav data-promo-top><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
+                                }
+                                else
+                                {
+                                    <span class="is-disabled" aria-disabled="true"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</span>
+                                }
+                                @for (int n = 1; n <= Model.TotalPages; n++)
+                                {
+                                    bool here = !Model.ShowAll && n == Model.CurrentPage;
+                                    <a href="@Model.PageUrl(new { PageNo = n == 1 ? (int?)null : n })" class="promo-pager__num @(here ? "is-current" : "")" aria-current="@(here ? "page" : null)" data-promo-nav data-promo-top>@n</a>
+                                }
+                                @if (!Model.ShowAll && Model.CurrentPage < Model.TotalPages)
+                                {
+                                    <a href="@Model.PageUrl(new { PageNo = Model.CurrentPage + 1 })" data-promo-nav data-promo-top>Next<i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                                }
+                                else
+                                {
+                                    <span class="is-disabled" aria-disabled="true">Next<i class="bi bi-chevron-right" aria-hidden="true"></i></span>
+                                }
+                                <a href="@Model.PageUrl(new { PageNo = Model.ShowAll ? (int?)null : 0 })" class="promo-pager__all @(Model.ShowAll ? "is-current" : "")" data-promo-nav data-promo-top>@(Model.ShowAll ? "Show 9 per page" : "All")</a>
+                            </div>
+                        </nav>
+                    }
+                    <p class="promo-footnote"><i class="bi bi-info-circle" aria-hidden="true"></i>Results count dishes sold at the promotional price during each promotion's dates. Cancelled orders, and orders placed before results were added, are not counted.</p>
+                }
+                </div>
+            </section>
+
+            @* ---------- Calendar ---------- *@
+            <aside class="promo-panel promo-calendar" aria-labelledby="promo-calendar-title" data-promo-swap="calendar">
+                <div class="promo-heading"><h2 id="promo-calendar-title">Promotion calendar</h2></div>
+                <div class="promo-cal__month">
+                    <a href="@Model.PageUrl(new { Month = Model.CalendarMonth.AddMonths(-1).ToString("yyyy-MM", inv) })" aria-label="Previous month" data-promo-nav><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+                    <strong>@Model.CalendarMonth.ToString("MMMM yyyy", inv)</strong>
+                    <a href="@Model.PageUrl(new { Month = Model.CalendarMonth.AddMonths(1).ToString("yyyy-MM", inv) })" aria-label="Next month" data-promo-nav><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                </div>
+                <div class="promo-cal" role="grid" aria-label="@Model.CalendarMonth.ToString("MMMM yyyy", inv)">
+                    @foreach (var name in new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" })
+                    {
+                        <span class="promo-cal__name" role="columnheader">@name</span>
+                    }
+                    @foreach (var day in Model.CalendarDays)
+                    {
+                        string label = day.Date.ToString("dddd d MMMM", inv) + (day.Count == 0 ? ", no promotions" : $", {day.Count} {(day.Count == 1 ? "promotion" : "promotions")}");
+                        <a href="@Model.PageUrl(new { Day = day.IsSelected ? null : day.Date.ToString("yyyy-MM-dd", inv), PageNo = (int?)null, Month = Model.CalendarMonth.ToString("yyyy-MM", inv) })"
+                           class="promo-cal__day @(day.InMonth ? "" : "is-outside") @(day.IsToday ? "is-today" : "") @(day.IsSelected ? "is-selected" : "")"
+                           role="gridcell" aria-label="@label" aria-current="@(day.IsToday ? "date" : null)" aria-pressed="@(day.IsSelected ? "true" : "false")" data-promo-nav>
+                            <span>@day.Date.Day</span>
+                            @if (day.Dot is not null) { <i class="promo-cal__dot state-@day.Dot" aria-hidden="true"></i> }
+                        </a>
+                    }
+                </div>
+                <ul class="promo-cal__legend" role="list">
+                    <li><i class="promo-cal__dot state-Running" aria-hidden="true"></i>Running</li>
+                    <li><i class="promo-cal__dot state-Scheduled" aria-hidden="true"></i>Scheduled</li>
+                    <li><i class="promo-cal__dot state-Ended" aria-hidden="true"></i>Ended</li>
+                </ul>
+                <p class="promo-cal__hint">Select a day to see the specials running on it.</p>
+
+                <div class="promo-next">
+                    <h3>Coming next</h3>
+                    @if (Model.ComingNext.Count == 0)
+                    {
+                        <p class="promo-next__empty">Nothing scheduled. <a href="@Model.PageUrl(new { New = true })" data-promo-new data-promo-open>Plan a promotion</a></p>
+                    }
+                    @foreach (var next in Model.ComingNext)
+                    {
+                        <a class="promo-next__item" href="@Model.PageUrl(new { Edit = next.Id })" data-promo-open>
+                            @if (!string.IsNullOrWhiteSpace(next.ImageUrl))
+                            {
+                                <img src="@Url.Content(next.ImageUrl)" alt="" width="84" height="84" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span class="promo-next__ph" lang="ja" aria-hidden="true">夜</span>
+                            }
+                            <span class="promo-next__text">
+                                <span class="promo-next__top"><span class="promo-state state-Scheduled">Scheduled</span><small>@next.StartDate.ToString("d MMM yyyy", inv)</small></span>
+                                <strong>@next.Title</strong>
+                                <span>@next.DishName</span>
+                                <small>@next.DishCode · @next.CategoryName</small>
+                            </span>
+                        </a>
+                    }
+                    @if (Model.ScheduledTotal > Model.ComingNext.Count)
+                    {
+                        <a class="promo-next__more" href="@Model.PageUrl(new { Status = "Scheduled", PageNo = (int?)null })" data-promo-nav>
+                            View all @Model.ScheduledTotal scheduled <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                        </a>
+                    }
+                </div>
+                <p class="promo-footnote"><i class="bi bi-info-circle" aria-hidden="true"></i>Offers start and end automatically.</p>
+                <img class="promo-calendar__sakura" src="~/images/promotions/yoru-promo-sakura.webp" alt="" aria-hidden="true" width="369" height="266" loading="lazy" />
+            </aside>
+        </div>
+        </div>
+    </div>
+
+    @* ---------- Create / edit pop-up (shows in place without JavaScript) ---------- *@
+    <dialog class="promo-dialog" aria-labelledby="promo-form-title" data-promo-dialog data-mode="@Model.FormMode" data-open="@(Model.OpenForm ? "true" : "false")" open="@(Model.OpenForm)">
+        <form method="post" asp-page-handler="Save" class="promo-form" novalidate data-promo-form>
+            <input type="hidden" asp-for="Input.Id" />
+            <input type="hidden" name="Status" value="@Model.Status" /><input type="hidden" name="Search" value="@Model.Search" />
+            <input type="hidden" name="Sort" value="@Model.Sort" /><input type="hidden" name="Day" value="@dayValue" /><input type="hidden" name="Month" value="@Model.Month" /><input type="hidden" name="PageNo" value="@Model.PageNumber" />
+            <header class="promo-dialog__head">
+                <div>
+                    <p class="promo-eyebrow">YORU IZAKAYA · Seasonal offers</p>
+                    <h2 id="promo-form-title">@(Model.FormMode switch { "edit" => "Edit promotion", "copy" => "Run it again", _ => "New promotion" })</h2>
+                    <p>@(Model.FormMode switch { "edit" => "Fine-tune your offer before it reaches the menu.", "copy" => "Same offer, new dates. Check them and save.", _ => "Choose a dish, set the price and pick the dates." })</p>
+                </div>
+                <a href="@listUrl" class="promo-dialog__close" aria-label="Close" data-promo-close><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+            </header>
+
+            <div class="promo-dialog__body">
+                <div class="promo-dialog__fields">
+                    @if (Model.FormError is not null && Model.FormErrorField is null)
+                    {
+                        <p class="promo-form__error" role="alert">@Model.FormError</p>
+                    }
+                    <h3 class="promo-section-title">Promotion details</h3>
+                    <div class="promo-field">
+                        <label for="promo-title">Promotion title</label>
+                        <input id="promo-title" name="Input.Title" value="@input.Title" class="form-control" maxlength="100" required
+                               placeholder="E.g. Happy hour special" aria-invalid="@(Model.FieldError("Title") is null ? null : "true")" data-promo-title />
+                        <p class="promo-form__error promo-form__error--field" role="alert" data-hint-title hidden="@(Model.FieldError("Title") is null)">@(Model.FieldError("Title") ?? "Enter a promotion title.")</p>
+                    </div>
+                    <div class="promo-field">
+                        <label for="promo-dish">Dish</label>
+                        <select id="promo-dish" name="Input.MenuItemId" class="form-select" required data-promo-dish
+                                aria-invalid="@(Model.FieldError("MenuItemId") is null ? null : "true")">
+                            <option value="">Choose a dish</option>
+                            @foreach (var group in Model.Dishes.GroupBy(d => d.CategoryName))
+                            {
+                                <optgroup label="@group.Key">
+                                    @foreach (var dish in group)
+                                    {
+                                        <option value="@dish.Id" selected="@(dish.Id == input.MenuItemId)" data-price="@Money(dish.Price)"
+                                                data-name="@dish.Name" data-code="@dish.Code" data-category="@dish.CategoryName"
+                                                data-image="@(string.IsNullOrWhiteSpace(dish.ImageUrl) ? "" : Url.Content(dish.ImageUrl))">
+                                            @dish.Name · @dish.Code · RM @Money(dish.Price)@(dish.IsAvailable ? "" : " (unavailable)")
+                                        </option>
+                                    }
+                                </optgroup>
+                            }
+                        </select>
+                        <p class="promo-form__error promo-form__error--field" role="alert" data-hint-dish hidden="@(Model.FieldError("MenuItemId") is null)">@(Model.FieldError("MenuItemId") ?? "Choose a dish from the menu.")</p>
+                    </div>
+                    @* Discount type (compact switch) and its value on one row. *@
+                    <div class="promo-price-row">
+                        <fieldset class="promo-field">
+                            <legend>Discount type</legend>
+                            <div class="promo-kind">
+                                <label class="promo-kind__option">
+                                    <input type="radio" name="Input.Kind" value="Percent" checked="@(input.Kind == PromotionKind.Percent)" data-promo-kind />
+                                    <span><i aria-hidden="true">%</i>Percent</span>
+                                </label>
+                                <label class="promo-kind__option">
+                                    <input type="radio" name="Input.Kind" value="FixedPrice" checked="@(input.Kind == PromotionKind.FixedPrice)" data-promo-kind />
+                                    <span><i aria-hidden="true">RM</i>Fixed price</span>
+                                </label>
+                            </div>
+                        </fieldset>
+                        <div class="promo-field" data-promo-percent-field hidden="@(input.Kind != PromotionKind.Percent)">
+                            <label for="promo-percent">Discount</label>
+                            <div class="promo-affix">
+                                <input id="promo-percent" name="Input.DiscountPercent" type="number" min="1" max="99" step="0.5"
+                                       value="@input.DiscountPercent?.ToString("0.##", inv)" class="form-control" placeholder="E.g. 20"
+                                       aria-describedby="promo-percent-help" aria-invalid="@(Model.FieldError("DiscountPercent") is null ? null : "true")" data-promo-percent />
+                                <span aria-hidden="true">%</span>
+                            </div>
+                        </div>
+                        <div class="promo-field" data-promo-price-field hidden="@(input.Kind != PromotionKind.FixedPrice)">
+                            <label for="promo-price">Promotional price</label>
+                            <div class="promo-affix promo-affix--before">
+                                <span aria-hidden="true">RM</span>
+                                <input id="promo-price" name="Input.PromoPrice" type="number" min="0.01" step="0.01"
+                                       value="@input.PromoPrice?.ToString("0.00", inv)" class="form-control" placeholder="0.00"
+                                       aria-describedby="promo-price-help" aria-invalid="@(Model.FieldError("PromoPrice") is null ? null : "true")" data-promo-price />
+                            </div>
+                        </div>
+                    </div>
+                    @* Hints appear only when the value is wrong (checked as you type, and by the server). *@
+                    <p class="promo-form__error" id="promo-percent-help" role="alert" data-hint-percent hidden="@(Model.FieldError("DiscountPercent") is null)">@(Model.FieldError("DiscountPercent") ?? "Enter a discount from 1% to 99%.")</p>
+                    <p class="promo-form__error" id="promo-price-help" role="alert" data-hint-price hidden="@(Model.FieldError("PromoPrice") is null)">@(Model.FieldError("PromoPrice") ?? "The promotional price must be lower than the dish's normal price.")</p>
+
+                    <h3 class="promo-section-title">Schedule</h3>
+                    <div class="promo-field-row">
+                        <div class="promo-field">
+                            <label for="promo-start">First day</label>
+                            <input id="promo-start" name="Input.StartDate" type="date" class="form-control" required
+                                   value="@input.StartDate.ToString("yyyy-MM-dd", inv)"
+                                   aria-invalid="@(Model.FieldError("StartDate") is null ? null : "true")" data-promo-start />
+                        </div>
+                        <div class="promo-field">
+                            <label for="promo-end">Last day</label>
+                            <input id="promo-end" name="Input.EndDate" type="date" class="form-control" required
+                                   value="@input.EndDate.ToString("yyyy-MM-dd", inv)"
+                                   aria-invalid="@(Model.FieldError("EndDate") is null ? null : "true")" data-promo-end />
+                        </div>
+                    </div>
+                    @{ var dateError = Model.FieldError("StartDate") ?? Model.FieldError("EndDate"); }
+                    <p class="promo-form__error" role="alert" data-hint-dates hidden="@(dateError is null)">@(dateError ?? "The last day must be on or after the first day.")</p>
+                    @* New promotions start switched on; editing keeps the current state (use Stop / Resume on the card). *@
+                    <input type="hidden" name="Input.IsActive" value="@(input.IsActive ? "true" : "false")" />
+                </div>
+
+                @* Live preview: how the dish will look on the customer menu. *@
+                <aside class="promo-preview" aria-labelledby="promo-preview-title">
+                    <h3 class="promo-section-title" id="promo-preview-title">Live preview</h3>
+                    <p class="promo-preview__sub">Customer menu appearance</p>
+                    <div class="promo-preview__card" data-promo-preview>
+                        <div class="promo-preview__photo">
+                            <img src="" alt="" hidden data-preview-image />
+                            <span class="promo-preview__ph" data-preview-placeholder>
+                                <i class="bi bi-image" aria-hidden="true"></i>
+                                <span>Choose a dish to see it here</span>
+                            </span>
+                            <span class="promo-card__off" data-preview-off hidden></span>
+                        </div>
+                        <div class="promo-preview__body">
+                            <strong class="promo-preview__title" data-preview-title>Your promotion</strong>
+                            <span class="promo-preview__dish" data-preview-dish>Choose a dish</span>
+                            <small data-preview-meta></small>
+                            <p class="promo-card__price"><strong data-preview-now>RM –</strong> <s data-preview-was hidden></s></p>
+                            <p class="promo-preview__save" data-preview-save></p>
+                            <p class="promo-card__dates"><i class="bi bi-calendar3" aria-hidden="true"></i><span data-preview-dates></span></p>
+                        </div>
+                    </div>
+                    <p class="promo-footnote"><i class="bi bi-info-circle" aria-hidden="true"></i>Preview updates as you edit.</p>
+                </aside>
+            </div>
+
+            <footer class="promo-dialog__foot">
+                <p class="promo-footnote"><i class="bi bi-info-circle" aria-hidden="true"></i>Changes apply to future orders.</p>
+                <a href="@listUrl" class="promo-btn promo-btn--outline" data-promo-close>Cancel</a>
+                <button type="submit" class="promo-btn-primary">@(editing ? "Save changes" : "Create promotion")</button>
+            </footer>
+        </form>
+    </dialog>
+
+    <dialog class="promo-confirm" aria-labelledby="promo-confirm-title" data-promo-confirm-dialog>
+        <p class="promo-confirm__eyebrow">Promotion action</p>
+        <button type="button" class="promo-confirm__close" aria-label="Close" data-promo-confirm-cancel><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        <h2 id="promo-confirm-title" data-promo-confirm-heading>Are you sure?</h2>
+        <p data-promo-confirm-text></p>
+        <div class="promo-confirm__actions">
+            <button type="button" class="promo-confirm__back" data-promo-confirm-cancel>Go back</button>
+            <button type="button" class="promo-confirm__ok" data-promo-confirm-ok>Confirm</button>
+        </div>
+    </dialog>
+</div>
+
+<script src="~/js/admin-promotions.js" asp-append-version="true" defer></script>

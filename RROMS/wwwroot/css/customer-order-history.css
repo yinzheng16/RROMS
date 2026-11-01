@@ -4303,3 +4303,22 @@ html.oj-history-js .oh-journal .oh-workspace > #history-drawer {
     opacity: .55;
     transition: opacity .15s;
 }
+
+
+/* US29 (1 Nov): "You saved RM x with promotions" under the totals. */
+.promo-savings {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: .75rem 0 0;
+    padding: .55rem .8rem;
+    border-radius: .6rem;
+    background: color-mix(in srgb, #c83e2d 10%, transparent);
+    color: #a83224;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+    .promo-savings strong {
+        font-weight: 800;
+    }

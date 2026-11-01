@@ -63,6 +63,13 @@
                     <a href="@MenuUrl(null, Model.Search, Model.Sort)" class="menu-book__category @(Model.CategoryId is null ? "is-active" : "")" aria-current="@(Model.CategoryId is null ? "true" : null)" data-menu-link>
                         <span class="menu-book__label">All dishes</span><span class="menu-book__count" data-menu-catalogue-count>@Model.Menu.CatalogueCount</span>
                     </a>
+                    @if (Model.Menu.SpecialsCount > 0 || Model.ShowingSpecials)
+                    {
+                        <a href="@MenuUrl(RROMS.Services.CustomerMenuBrowseRules.SpecialsCategoryId, Model.Search, Model.Sort)" class="menu-book__category menu-book__category--specials @(Model.ShowingSpecials ? "is-active" : "")" aria-current="@(Model.ShowingSpecials ? "true" : null)" data-menu-link>
+                            <span class="menu-book__label"><i class="bi bi-tag" aria-hidden="true"></i>Specials<small lang="ja">特価</small></span>
+                            <span class="menu-book__count">@Model.Menu.SpecialsCount</span>
+                        </a>
+                    }
                     @foreach (var category in Model.Menu.Categories)
                     {
                         var label = RROMS.Pages.Menu.IndexModel.CategoryLabel(category.Name);
@@ -98,11 +105,15 @@
                     <label for="menu-category" class="form-label">Category</label>
                     <select class="form-select" name="CategoryId" id="menu-category">
                         <option value="" data-menu-category-option="All dishes">All dishes (@Model.Menu.CatalogueCount)</option>
+                        @if (Model.Menu.SpecialsCount > 0 || Model.ShowingSpecials)
+                        {
+                            <option value="@RROMS.Services.CustomerMenuBrowseRules.SpecialsCategoryId" data-menu-category-option="Specials" selected="@Model.ShowingSpecials">Specials (@Model.Menu.SpecialsCount)</option>
+                        }
                         @foreach (var category in Model.Menu.Categories)
                         {
                             <option value="@category.Id" data-menu-category-option="@category.Name" selected="@(Model.CategoryId == category.Id)">@category.Name (@category.ItemCount)</option>
                         }
-                        @if (Model.CategoryId.HasValue && !Model.Menu.Categories.Any(c => c.Id == Model.CategoryId))
+                        @if (Model.CategoryId.HasValue && !Model.ShowingSpecials && !Model.Menu.Categories.Any(c => c.Id == Model.CategoryId))
                         {
                             <option value="@Model.CategoryId" selected>Selected category (0)</option>
                         }
@@ -197,7 +208,7 @@
             <div class="menu-results__heading">
                 <div class="menu-results__main">
                     <div class="menu-results__intro">
-                        <span class="menu-results__eyebrow">@(Model.CategoryId.HasValue ? "CATEGORY COLLECTION" : "THE COLLECTION")</span>
+                        @(Model.ShowingSpecials ? "TODAY’S SPECIALS" : Model.CategoryId.HasValue ? "CATEGORY COLLECTION" : "THE COLLECTION")
                         <h3 id="menu-results-title" tabindex="-1">@(Model.Search is not null ? "Search results" : Model.CurrentCategory)</h3>
                     </div>
                     <p class="menu-results__count" data-menu-matching-count>@Model.Menu.TotalCount @(Model.Menu.TotalCount == 1 ? "dish" : "dishes")@(Model.Search is not null || Model.CategoryId.HasValue ? " found" : " to explore")</p>

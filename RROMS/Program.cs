@@ -81,6 +81,7 @@ builder.Services.AddScoped<IMyReservationsService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
+builder.Services.AddScoped<IPromotionService, PromotionService>(); // Member 3 / US29
 // SignalR (shared, set up by Member 3 for US27; Member 4 adds NotificationHub for US37)
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IOrderStatusNotifier, OrderStatusNotifier>(); // Member 3 / US27

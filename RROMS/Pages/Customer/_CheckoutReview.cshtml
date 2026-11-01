@@ -77,6 +77,7 @@
                 <div><dt>Tax (@Rate(Model.Cart.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Cart.Totals.Tax)</dd></div>
                 <div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Cart.Totals.Total)</dd></div>
             </dl>
+            @if (Model.Cart.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You save <strong>RM @Money(Model.Cart.Savings)</strong> with promotions</p> }
             <p class="checkout-review__pending">Your order will be sent to the restaurant with <strong>Pending</strong> status.</p>
         </section>
     </div>

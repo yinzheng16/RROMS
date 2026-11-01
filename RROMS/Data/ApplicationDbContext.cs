@@ -168,6 +168,7 @@ namespace RROMS.Data
             builder.Entity<Promotion>(e =>
             {
                 e.Property(p => p.DiscountPercent).HasPrecision(5, 2);
+                e.Property(p => p.PromoPrice).HasPrecision(10, 2);   // US29 fixed promotional price
                 e.HasOne(p => p.MenuItem)
                  .WithMany(m => m.Promotions)
                  .HasForeignKey(p => p.MenuItemId)
@@ -207,6 +208,7 @@ namespace RROMS.Data
             builder.Entity<OrderItem>(e =>
             {
                 e.Property(i => i.UnitPrice).HasPrecision(10, 2);
+                e.Property(i => i.NormalUnitPrice).HasPrecision(10, 2);   // US29
                 e.HasOne(i => i.Order)
                  .WithMany(o => o.Items)
                  .HasForeignKey(i => i.OrderId)

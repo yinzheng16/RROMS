@@ -257,6 +257,7 @@ public sealed partial class CustomerCartService : ICustomerCartService
                     MenuItemId = line.MenuItemId,
                     Quantity = line.Quantity,
                     UnitPrice = line.UnitPrice,
+                    NormalUnitPrice = line.NormalUnitPrice ?? line.UnitPrice,   // US29
                     Notes = line.Notes
                 });
             _db.Orders.Add(order);
@@ -294,7 +295,7 @@ public sealed partial class CustomerCartService : ICustomerCartService
             order.Reservation?.ReferenceNo, order.Reservation?.ReservedAt, order.Reservation?.Guests,
             order.Items.OrderBy(line => line.Id).Select(line => new CartLineView(Guid.Empty,
                 line.MenuItemId, line.MenuItem.Code, line.MenuItem.Name, line.MenuItem.ImageUrl,
-                line.Quantity, line.Notes, line.UnitPrice, true)).ToArray(),
+                line.Quantity, line.Notes, line.UnitPrice, true, line.NormalUnitPrice)).ToArray(),
             order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount);
     }
 
@@ -322,7 +323,7 @@ public sealed partial class CustomerCartService : ICustomerCartService
                 return new CartLineView(line.Id, line.MenuItemId, item?.Code ?? "—",
                     item?.Name ?? "Dish no longer on the menu", item?.ImageUrl, line.Quantity, line.Notes,
                     item is null ? 0 : OrderPricingRules.DiscountedPrice(item.Price, discounts.GetValueOrDefault(line.MenuItemId)),
-                    item?.IsAvailable == true && item.Price > 0);
+                    item?.IsAvailable == true && item.Price > 0, item?.Price);
             }).ToArray() ?? Array.Empty<CartLineView>();
         var orderType = cart?.OrderType ?? OrderType.DineIn;
         // US49 owns the charge formula. Use its loaded-settings overload so this
@@ -400,11 +401,12 @@ public sealed partial class CustomerCartService : ICustomerCartService
             : "Online ordering is currently closed. You can still browse the menu and keep items in your cart. Please try again during ordering hours.";
     }
 
-    private Task<Dictionary<int, decimal>> ActiveDiscounts(int[] ids, DateTime now, CancellationToken ct)
-        => _db.Promotions.AsNoTracking().Where(p => ids.Contains(p.MenuItemId) && p.IsActive &&
-            p.StartDate <= now && p.EndDate >= now.Date)
-            .GroupBy(p => p.MenuItemId).Select(group => new { Id = group.Key, Percent = group.Max(p => p.DiscountPercent) })
-            .ToDictionaryAsync(row => row.Id, row => row.Percent, ct);
+        // US29: same rule as the menu and Home; works for percentage and fixed-price promotions.
+    private async Task<Dictionary<int, decimal>> ActiveDiscounts(int[] ids, DateTime now, CancellationToken ct)
+        => PromotionRules.BestPercents(await PromotionRules.Running(_db.Promotions.AsNoTracking(), now)
+            .Where(p => ids.Contains(p.MenuItemId))
+            .Select(p => new PromotionPriceRow(p.MenuItemId, p.MenuItem.Price, p.DiscountPercent, p.PromoPrice))
+            .ToListAsync(ct));
 
     private Task<CustomerCart?> LoadCart(string userId, bool tracking, CancellationToken ct)
     {

@@ -31,10 +31,12 @@ namespace RROMS.Services.Interfaces
 
     public sealed record MenuItemWrite(int CategoryId, string Name,
         string? Description, decimal Price, bool IsAvailable);
+    // US29: OriginalPrice is set on customer prices only while a promotion lowers Price.
     public sealed record MenuItemSummary(int Id, int CategoryId, string CategoryName,
         string Name, string? Description, decimal Price, string? ImageUrl,
         bool IsAvailable, DateTime CreatedAt, bool HasOrders,
-        string Code = "", string CategoryCode = "");
+        string Code = "", string CategoryCode = "", decimal? OriginalPrice = null,
+        DateTime? PromoEndsOn = null);
     public sealed record MenuItemPage(IReadOnlyList<MenuItemSummary> Items,
         int TotalCount, int AvailableCount, int UnavailableCount, int PageNumber, int PageSize)
     {

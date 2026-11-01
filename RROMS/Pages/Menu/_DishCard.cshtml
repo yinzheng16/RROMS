@@ -7,6 +7,13 @@
 }
 <article class="tasting-card @(Model.IsAvailable ? "" : "is-unavailable")" data-dish-id="@Model.Id" data-menu-unavailable="@(!Model.IsAvailable ? "true" : "false")">
     <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="tasting-card__photo" data-dish-open="@Model.Id" aria-label="View @Model.Name details">
+        @if (Model.OriginalPrice is decimal normalPrice && normalPrice > 0)
+        {
+            <span class="menu-promo-badge"><span>Promo · @(((normalPrice - Model.Price) / normalPrice * 100m).ToString("0.#", CultureInfo.InvariantCulture))% off</span>@if (Model.PromoEndsOn is DateTime endsOn) {
+                <small>@RROMS.Services.PromotionRules.EndsLabel(endsOn, DateTime.Now)</small>
+            }
+        </span>
+        }
         @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
         {
             <img src="@Url.Content(Model.ImageUrl)" alt="@Model.Name" loading="lazy" decoding="async" width="640" height="400" data-dish-photo />
@@ -28,7 +35,13 @@
             <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="tasting-card__details-link" data-dish-open="@Model.Id" aria-label="View @Model.Name details">View details <span aria-hidden="true">→</span></a>
         </div>
         <div class="tasting-card__footer">
-            <span class="tasting-card__price">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+            <span class="tasting-card__price menu-price @(Model.OriginalPrice is null ? "" : "is-promo")">
+                @if (Model.OriginalPrice is decimal wasPrice)
+                {
+                    <s class="menu-price__was"><span class="visually-hidden">Normal price </span>RM @wasPrice.ToString("F2", CultureInfo.InvariantCulture)</s>
+                }
+                <span class="menu-price__now">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+            </span>
             <div class="tasting-card__actions" data-menu-actions>
                 <form method="get" asp-page="/Menu/Index" data-cart-customize>
                     <input type="hidden" name="ItemId" value="@Model.Id" />

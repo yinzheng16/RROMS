@@ -16,6 +16,10 @@
         <p class="eyebrow">@Model.CategoryName</p>
         <p class="dish-detail__code">@Model.Code</p>
         <h2 id="dish-detail-title">@Model.Name</h2>
+        @if (Model.OriginalPrice is decimal normalPrice && normalPrice > 0)
+        {
+            <p class="dish-detail__promo"><i class="bi bi-tag" aria-hidden="true"></i><span>Promotion · @(((normalPrice - Model.Price) / normalPrice * 100m).ToString("0.#", CultureInfo.InvariantCulture))% off</span>@if (Model.PromoEndsOn is DateTime endsOn) {<small>· @RROMS.Services.PromotionRules.EndsLabel(endsOn, DateTime.Now)</small>}</p>
+        }
         <p class="dish-detail__description">@(string.IsNullOrWhiteSpace(Model.Description) ? "A little taste of YORU. Ask our team for more details about this dish." : Model.Description)</p>
         <p class="menu-availability dish-detail__availability"><span class="bg-success" aria-hidden="true"></span>Available</p>
         <form method="post" asp-page="/Menu/Index" asp-page-handler="Add" class="dish-detail__cart" data-cart-add data-cart-detail-form>
@@ -27,7 +31,13 @@
                 <small id="detail-note-help-@Model.Id">Requests depend on what our kitchen can accommodate.</small>
             </div>
             <div class="dish-detail__footer">
-                <strong>RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</strong>
+                <strong class="menu-price @(Model.OriginalPrice is null ? "" : "is-promo")">
+                    @if (Model.OriginalPrice is decimal wasPrice)
+                    {
+                        <s class="menu-price__was"><span class="visually-hidden">Normal price </span>RM @wasPrice.ToString("F2", CultureInfo.InvariantCulture)</s>
+                    }
+                    <span class="menu-price__now">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+                </strong>
                 <div class="cart-detail-actions" data-menu-detail-actions>
                     <label class="visually-hidden" for="detail-quantity-@Model.Id">Quantity</label>
                     <div class="cart-quantity"><button type="button" data-cart-step="-1" aria-label="Decrease quantity" disabled>−</button><input id="detail-quantity-@Model.Id" type="number" name="quantity" min="1" max="100" value="1" required data-cart-quantity-input /><button type="button" data-cart-step="1" aria-label="Increase quantity">+</button></div>

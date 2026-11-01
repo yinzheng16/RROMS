@@ -30,9 +30,11 @@ namespace RROMS.Pages.Menu
         public CustomerMenuPage Menu { get; private set; } = CustomerMenuPage.Empty;
         public MenuItemSummary? SelectedItem { get; private set; }
         public string? DetailNotice { get; private set; }
-        public string CurrentCategory => CategoryId.HasValue
-            ? Menu.Categories.FirstOrDefault(c => c.Id == CategoryId)?.Name ?? "Selected category"
-            : "All dishes";
+        public bool ShowingSpecials => CategoryId == RROMS.Services.CustomerMenuBrowseRules.SpecialsCategoryId;
+        public string CurrentCategory => ShowingSpecials ? "Specials"
+            : CategoryId.HasValue
+                ? Menu.Categories.FirstOrDefault(c => c.Id == CategoryId)?.Name ?? "Selected category"
+                : "All dishes";
         public bool HasFilters => Search is not null || CategoryId.HasValue || Sort != "menu";
 
         public async Task OnGetAsync(CancellationToken cancellationToken)

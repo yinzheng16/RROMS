@@ -750,6 +750,10 @@ namespace RROMS.Migrations
                     b.Property<int>("MenuItemId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("NormalUnitPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -894,6 +898,10 @@ namespace RROMS.Migrations
 
                     b.Property<int>("MenuItemId")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("PromoPrice")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");

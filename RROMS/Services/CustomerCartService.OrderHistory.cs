@@ -89,7 +89,7 @@ public sealed partial class CustomerCartService
                 CustomerOrderHistoryRules.SafeImage(line.MenuItem?.ImageUrl), line.Quantity, line.UnitPrice, line.Notes,
                 line.MenuItem is not null && line.MenuItem.IsAvailable && line.MenuItem.Price > 0,
                 line.MenuItem is null ? null : OrderPricingRules.DiscountedPrice(line.MenuItem.Price,
-                    discounts.GetValueOrDefault(line.MenuItemId)))).ToArray(),
+                    discounts.GetValueOrDefault(line.MenuItemId)), line.NormalUnitPrice)).ToArray(),
             order.Subtotal, order.ServiceCharge, order.TaxAmount, order.TotalAmount);
     }
 

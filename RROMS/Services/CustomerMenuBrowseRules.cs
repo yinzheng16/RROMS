@@ -11,6 +11,9 @@ namespace RROMS.Services
     // Owner: Member 3. Pure rules; source order comes from current category DisplayOrder.
     public static class CustomerMenuBrowseRules
     {
+        // US29: CategoryId=-1 shows only dishes with a running promotion ("Specials").
+        public const int SpecialsCategoryId = -1;
+
         public static IReadOnlyList<MenuItemSummary> SelectRecent(
             IReadOnlyList<MenuItemSummary> source, DateTime now,
             IEnumerable<string> demoNames)
@@ -62,6 +65,7 @@ namespace RROMS.Services
                     item.Code,
                     item.Description,
                     item.Price,
+                    item.OriginalPrice,
                     item.IsAvailable,
                     item.ImageUrl,
                     item.CategoryId,
@@ -86,7 +90,9 @@ namespace RROMS.Services
                 { ItemCount = group.Count() }).ToArray();
             string term = (search ?? "").Trim();
             if (term.Length > 100) term = term[..100];
-            var matching = all.Where(item => (!categoryId.HasValue || item.CategoryId == categoryId.Value)
+            bool specials = categoryId == SpecialsCategoryId;
+            var matching = all.Where(item => (!categoryId.HasValue
+                    || (specials ? item.OriginalPrice.HasValue : item.CategoryId == categoryId.Value))
                 && (term.Length == 0 || item.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || item.Code.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || item.CategoryName.Contains(term, StringComparison.OrdinalIgnoreCase)
@@ -110,7 +116,8 @@ namespace RROMS.Services
             return new CustomerMenuPage(categories, ordered.Take(limit).ToArray(),
                 matching.Length, all.Length, limit, sort)
             {
-                LiveState = CreateLiveState(all, matching)
+                LiveState = CreateLiveState(all, matching),
+                SpecialsCount = all.Count(item => item.OriginalPrice.HasValue)
             };
         }
     }

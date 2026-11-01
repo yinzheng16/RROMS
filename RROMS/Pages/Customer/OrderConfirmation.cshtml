@@ -115,6 +115,7 @@
                 <div><dt>Tax</dt><dd>RM @Money(receipt.Tax)</dd></div>
                 <div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(receipt.Total)</dd></div>
             </dl>
+            @if (receipt.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You saved <strong>RM @Money(receipt.Savings)</strong> with promotions</p> }
         </section>
     </div>
     <p class="cart-confirmation__hint">Your order is saved. This confirmation is not a payment receipt.</p>
