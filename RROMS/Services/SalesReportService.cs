@@ -241,19 +241,27 @@ namespace RROMS.Services
 
                 case ReportType.Sales:
                     var payments = await _payments.Query().AsNoTracking()
-                        .Include(p => p.Order).ThenInclude(o => o.User)
-                        .Include(p => p.Order).ThenInclude(o => o.Items).ThenInclude(i => i.MenuItem)
+                        // Older payments point to one Order; newer ones (US32 combined billing) point to a Bill.
+                        .Include(p => p.Order).ThenInclude(o => o!.User)
+                        .Include(p => p.Order).ThenInclude(o => o!.Items).ThenInclude(i => i.MenuItem)
+                        .Include(p => p.Bill).ThenInclude(b => b!.Orders).ThenInclude(o => o.User)
+                        .Include(p => p.Bill).ThenInclude(b => b!.Orders).ThenInclude(o => o.Items).ThenInclude(i => i.MenuItem)
                         .Where(p => (p.PaidAt ?? p.CreatedAt) >= start && (p.PaidAt ?? p.CreatedAt) < endExclusive)
+                        .AsSplitQuery()
                         .ToListAsync();
-                    return payments.Select(p => new Fact
+                    return payments.Select(p =>
                     {
-                        Date = p.PaidAt ?? p.CreatedAt,
-                        Customer = NameOf(p.Order.User),
-                        UserId = p.Order.UserId,
-                        Group = Label(p.Status),
-                        Kind = Label(p.Method),
-                        Amount = p.Amount,
-                        Source = p
+                        var first = OrdersOf(p).FirstOrDefault();
+                        return new Fact
+                        {
+                            Date = p.PaidAt ?? p.CreatedAt,
+                            Customer = NameOf(first?.User),
+                            UserId = first?.UserId ?? string.Empty,
+                            Group = Label(p.Status),
+                            Kind = Label(p.Method),
+                            Amount = p.Amount,
+                            Source = p
+                        };
                     }).ToList();
 
                 default:
@@ -474,7 +482,8 @@ namespace RROMS.Services
                         var no = "PAY-" + p.Id.ToString("D5");
                         row.Cells.Add(new ReportCell { Text = no, Sort = p.Id });
                         row.Cells.Add(new ReportCell { Text = f.Date.ToString("d MMM yyyy"), Sort = f.Date });
-                        row.Cells.Add(new ReportCell { Text = p.Order.OrderNo, Sort = p.Order.OrderNo });
+                        var orderNo = OrderNoOf(p);
+                        row.Cells.Add(new ReportCell { Text = orderNo, Sort = orderNo });
                         row.Cells.Add(new ReportCell { Text = f.Customer, Sort = f.Customer });
                         row.Cells.Add(new ReportCell { Text = f.Kind ?? "", Sort = f.Kind ?? "" });
                         row.Cells.Add(new ReportCell { Text = f.Group, Badge = BadgeOf(f.Group), Sort = f.Group });
@@ -484,7 +493,11 @@ namespace RROMS.Services
                         {
                             row.Details.Add(Pair("Transaction ref", p.TransactionRef));
                         }
-                        AddLines(row, p.Order.Items);
+                        if (p.Order == null && p.Bill != null && p.Bill.Orders.Count > 0)
+                        {
+                            row.Details.Add(Pair("Orders on this bill", string.Join(", ", p.Bill.Orders.Select(o => o.OrderNo))));
+                        }
+                        AddLines(row, OrdersOf(p).SelectMany(o => o.Items));
                         result.Rows.Add(row);
                     }
                     result.Total = TotalRow("Total", "", "", $"{fs.Count} payments", "", "",
@@ -621,6 +634,16 @@ namespace RROMS.Services
         private static KeyValuePair<string, string> Pair(string k, string v) => new(k, v);
 
         private static string Rm(decimal v) => "RM " + v.ToString("N2", My);
+
+        // The orders a payment covers: its own Order (older payments) or every order on its Bill (US32).
+        private static IEnumerable<Order> OrdersOf(Payment p) =>
+            p.Order != null ? new[] { p.Order } : p.Bill?.Orders ?? Enumerable.Empty<Order>();
+
+        // What the "Order" column shows: the order number, the bill number, or a dash if neither is linked.
+        private static string OrderNoOf(Payment p) =>
+            p.Order != null ? p.Order.OrderNo
+            : p.BillId.HasValue ? "BILL-" + p.BillId.Value.ToString("D5")
+            : "—";
 
         private static string NameOf(ApplicationUser? u) =>
             string.IsNullOrWhiteSpace(u?.FullName) ? "Customer" : u!.FullName!;
