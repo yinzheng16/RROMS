@@ -1,0 +1,154 @@
+@page
+@model RROMS.Pages.Admin.Users.ActivityModel
+@using RROMS.Models
+@using System.Globalization
+
+@{
+    // US07 Admin → Users → Activity (Owner: Member 1). Styles: admin-users.css ("Activity page" part).
+    ViewData["Title"] = "User activity";
+    ViewData["FullWidth"] = true;
+    var d = Model.Data;
+    var inv = CultureInfo.InvariantCulture;
+    var actionNow = Model.ActionFilter ?? "";
+    var anyFilter = !string.IsNullOrWhiteSpace(Model.Search) || actionNow != "";
+    int Count(UserAdminAction a) => d.Counts.TryGetValue(a, out var n) ? n : 0;
+    string TypeUrl(string type) => Url.Page("./Activity", Model.Filters(type: type, keepType: false))!;
+}
+
+@section Styles {
+    <link rel="preload" as="image" href="~/images/users/users-bg.webp" />
+    <link rel="stylesheet" href="~/css/admin-users.css" asp-append-version="true" />
+}
+
+@* The flower-shaped badge used for every icon on this page *@
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="uuMon" viewBox="0 0 48 48">
+        <path d="M24.00 4.50 A7.11 7.11 0 0 1 35.46 8.22 A7.11 7.11 0 0 1 42.55 17.97 A7.11 7.11 0 0 1 42.55 30.03 A7.11 7.11 0 0 1 35.46 39.78 A7.11 7.11 0 0 1 24.00 43.50 A7.11 7.11 0 0 1 12.54 39.78 A7.11 7.11 0 0 1 5.45 30.03 A7.11 7.11 0 0 1 5.45 17.97 A7.11 7.11 0 0 1 12.54 8.22 A7.11 7.11 0 0 1 24.00 4.50Z" />
+    </symbol>
+</svg>
+
+<div class="uu-page" id="uuPage">
+    <div class="container-xl container-wide uu-wrap uu-narrow">
+        <a class="uu-back" href="@Url.Page("./Index")"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to Users</a>
+
+        <section class="uu-history" aria-labelledby="uuHistTitle">
+            <img class="uu-h-blossom" src="~/images/users/blossom-corner.webp" alt="" aria-hidden="true" />
+            <img class="uu-h-wave" src="~/images/users/wave-corner.webp" alt="" aria-hidden="true" />
+
+            <header class="uu-hist-head">
+                <img class="uu-hist-mon" src="~/images/users/plum-mon.webp" alt="" aria-hidden="true" />
+                <div>
+                    <h1 id="uuHistTitle">Activity log <span class="uu-hist-jp jp" lang="ja">操作履歴</span></h1>
+                    <p>Every change to a user account: who did it, and when. Entries are never edited or deleted.</p>
+                </div>
+            </header>
+
+            @* ---------- summary bar: click a number to show only those ---------- *@
+            <nav class="uu-sumbar" aria-label="Totals">
+                <a class="uu-sum-total @(actionNow == "" ? "is-sel" : "")" href="@TypeUrl("")">
+                    <i class="bi bi-journal-text" aria-hidden="true"></i>
+                    <span><b>@d.Total</b><small>Total events</small></span>
+                </a>
+                @foreach (var (value, label, icon, tone) in RROMS.Pages.Admin.Users.ActivityModel.Types)
+                {
+                    var on = string.Equals(actionNow, value, StringComparison.OrdinalIgnoreCase);
+                    var action = Enum.Parse<UserAdminAction>(value);
+                    <a class="uu-sum-item @tone @(on ? "is-sel" : "")" href="@TypeUrl(value)" aria-current="@(on ? "true" : null)">
+                        <i class="bi @icon" aria-hidden="true"></i>
+                        <span><b>@Count(action)</b><small>@label</small></span>
+                    </a>
+                }
+            </nav>
+
+            <div class="uu-hist-tools">
+                <form method="get" class="uu-search-form" role="search" data-uu-filters>
+                    <label class="uu-search">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <input type="search" name="q" value="@Model.Search" placeholder="Search by user or by the Admin who did it…" aria-label="Search by name" autocomplete="off" maxlength="100" />
+                        @if (!string.IsNullOrWhiteSpace(Model.Search))
+                        {
+                            <a class="uu-search-clear" href="@Url.Page("./Activity", new { type = actionNow == "" ? null : actionNow })" aria-label="Clear search"><i class="bi bi-x-lg"></i></a>
+                        }
+                        <button type="submit" class="uu-search-go is-red">Search</button>
+                    </label>
+                    @if (actionNow != "")
+                    {
+                        <input type="hidden" name="type" value="@actionNow" />
+                    }
+                </form>
+
+                <div class="uu-filters">
+                    <div class="uu-fgroup">
+                        <span class="uu-flabel" id="uuActLbl">Show</span>
+                        <nav class="uu-chips" aria-labelledby="uuActLbl">
+                            <a class="uu-chip is-red @(actionNow == "" ? "is-on" : "")" href="@TypeUrl("")" aria-current="@(actionNow == "" ? "true" : null)">All</a>
+                            @foreach (var (value, label, icon, _) in RROMS.Pages.Admin.Users.ActivityModel.Types)
+                            {
+                                var on = string.Equals(actionNow, value, StringComparison.OrdinalIgnoreCase);
+                                <a class="uu-chip is-red @(on ? "is-on" : "")" href="@TypeUrl(value)" aria-current="@(on ? "true" : null)"><i class="bi @icon" aria-hidden="true"></i>@label</a>
+                            }
+                        </nav>
+                    </div>
+                    <span class="uu-count"><b>@d.Matches</b> @(d.Matches == 1 ? "entry" : "entries")@(anyFilter ? " found" : "")</span>
+                </div>
+            </div>
+
+            @if (d.Rows.Count == 0)
+            {
+                <div class="uu-empty">
+                    <i class="bi bi-journal-x" aria-hidden="true"></i>
+                    <h3>@(anyFilter ? "Nothing matches" : "No activity yet")</h3>
+                    <p>@(anyFilter ? "Try another name or show all actions." : "Changes made on the Users page show up here.")</p>
+                </div>
+            }
+            else
+            {
+                <ol class="uu-timeline">
+                    @foreach (var e in d.Rows)
+                    {
+                        <partial name="_ActivityRow" model="e" />
+                    }
+                </ol>
+
+                <div class="uu-foot">
+                    <span>Showing @((d.Page - 1) * d.PageSize + 1)–@(Math.Min(d.Page * d.PageSize, d.Matches)) of @d.Matches</span>
+                    @if (d.PageCount > 1)
+                    {
+                        <nav class="uu-pager" aria-label="Pages">
+                            @if (d.Page > 1)
+                            {
+                                <a href="@Url.Page("./Activity", Model.Filters(d.Page - 1))" aria-label="Previous page"><i class="bi bi-chevron-left"></i></a>
+                            }
+                            @for (var i = 1; i <= d.PageCount; i++)
+                            {
+                                if (i == 1 || i == d.PageCount || Math.Abs(i - d.Page) <= 1)
+                                {
+                                    if (i == d.Page)
+                                    {
+                                        <span class="is-on" aria-current="page">@i</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="@Url.Page("./Activity", Model.Filters(i))">@i</a>
+                                    }
+                                }
+                                else if (i == 2 || i == d.PageCount - 1)
+                                {
+                                    <span class="is-gap" aria-hidden="true">…</span>
+                                }
+                            }
+                            @if (d.Page < d.PageCount)
+                            {
+                                <a href="@Url.Page("./Activity", Model.Filters(d.Page + 1))" aria-label="Next page"><i class="bi bi-chevron-right"></i></a>
+                            }
+                        </nav>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-users.js" asp-append-version="true"></script>
+}

@@ -47,6 +47,9 @@ namespace RROMS.Data
         // Member 1: Chatbot
         public DbSet<ChatFaq> ChatFaqs => Set<ChatFaq>();
 
+        // Member 1: US05 / US07 user management history
+        public DbSet<UserAdminLog> UserAdminLogs => Set<UserAdminLog>();
+
         // Save every enum as its name (e.g. "Paid") instead of a number,
         // so tables are readable in SSMS. Add a line here for each new enum.
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
@@ -62,6 +65,7 @@ namespace RROMS.Data
             builder.Properties<TableType>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<TableStatus>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<DiningSessionStatus>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<UserAdminAction>().HaveConversion<string>().HaveMaxLength(20);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -312,6 +316,18 @@ namespace RROMS.Data
             {
                 e.Property(s => s.TaxRatePercent).HasPrecision(5, 2);
                 e.Property(s => s.ServiceChargePercent).HasPrecision(5, 2);
+            });
+
+            // ---------- Member 1: US05 / US07 user management history ----------
+            builder.Entity<UserAdminLog>(e =>
+            {
+                e.HasIndex(x => x.DoneAt);
+                e.HasIndex(x => new { x.TargetUserId, x.Action });
+                // History must never disappear with an account, so no cascade delete.
+                e.HasOne<ApplicationUser>()
+                 .WithMany()
+                 .HasForeignKey(x => x.TargetUserId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
