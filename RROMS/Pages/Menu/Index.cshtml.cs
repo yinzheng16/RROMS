@@ -31,7 +31,9 @@ namespace RROMS.Pages.Menu
         public MenuItemSummary? SelectedItem { get; private set; }
         public string? DetailNotice { get; private set; }
         public bool ShowingSpecials => CategoryId == RROMS.Services.CustomerMenuBrowseRules.SpecialsCategoryId;
+        public bool ShowingNew => CategoryId == RROMS.Services.CustomerMenuBrowseRules.NewCategoryId;
         public string CurrentCategory => ShowingSpecials ? "Specials"
+            : ShowingNew ? "New dishes"
             : CategoryId.HasValue
                 ? Menu.Categories.FirstOrDefault(c => c.Id == CategoryId)?.Name ?? "Selected category"
                 : "All dishes";

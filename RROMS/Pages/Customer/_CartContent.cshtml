@@ -123,7 +123,18 @@
                                     }
                                     <div class="cart-line__description">
                                         <p class="cart-line__code">@line.Code</p><h3>@line.Name</h3>
-                                        <p class="cart-line__unit">RM @Money(line.UnitPrice) each</p>
+                                        <p class="cart-line__unit">
+                                            @if (line.Saving > 0 && line.NormalUnitPrice is decimal normalPrice)
+                                            {
+                                                <s class="cart-line__was"><span class="visually-hidden">Was </span>RM @Money(normalPrice)</s>
+                                                <span class="cart-line__now">RM @Money(line.UnitPrice)</span><text> each</text>
+                                                <span class="cart-line__deal">-@Math.Round((normalPrice - line.UnitPrice) / normalPrice * 100, 1)%</span>
+                                            }
+                                            else
+                                            {
+                                                <text>RM @Money(line.UnitPrice) each</text>
+                                            }
+                                        </p>
                                         @if (!line.IsAvailable)
                                         {
                                             <p class="cart-line__warning"><i class="bi bi-info-circle" aria-hidden="true"></i> Unavailable — remove to continue</p>

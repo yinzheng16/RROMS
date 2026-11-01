@@ -601,7 +601,7 @@
     }
 
 
-    async function navigate(url, { more = false, pop = false, control = null, refresh = false } = {}) {
+    async function navigate(url, { more = false, pop = false, control = null, refresh = false, keepSearch = false } = {}) {
         const target = new URL(url, location.href);
         if (target.origin !== location.origin || target.pathname !== location.pathname) {
             location.assign(target.href);
@@ -613,13 +613,15 @@
         const savedHorizontal = window.scrollX;
         const savedFormTop = browser()?.querySelector('[data-menu-form]')?.getBoundingClientRect().top;
         const savedDraft = browser()?.querySelector('#menu-search')?.value;
+        // Live search keeps the very same input box, so typing, focus and the caret are never interrupted.
+        const liveField = keepSearch ? browser()?.querySelector('#menu-search') : null;
         live?.pause();
         request?.abort();
         const currentRequest = new AbortController();
         request = currentRequest;
         const previousIds = new Set(Array.from(browser().querySelectorAll('[data-dish-grid] [data-dish-id]'), card => card.dataset.dishId));
         browser().setAttribute('aria-busy', 'true');
-        announce('Updating the menu.');
+        if (!keepSearch) announce('Updating the menu.');
         try {
             const response = await fetch(target.href, {
                 signal: currentRequest.signal, headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -630,10 +632,12 @@
             const next = doc.querySelector('[data-menu-browser]');
             if (!next) throw new Error('Menu response missing');
             if (currentRequest.signal.aborted) return;
-            if (!pop && !refresh) history.pushState({ menu: true }, '', target.href);
+            if (!pop && !refresh) history[keepSearch ? 'replaceState' : 'pushState']({ menu: true }, '', target.href);
             const anchorBeforeSwap = browser()?.querySelector('[data-menu-form]')?.getBoundingClientRect().top;
             const replacement = document.importNode(next, true);
             if (refresh) preserveRefreshCards(browser(), replacement);
+            const caret = liveField ? [liveField.selectionStart, liveField.selectionEnd] : null;
+            if (liveField) replacement.querySelector('#menu-search')?.replaceWith(liveField);
             browser().replaceWith(replacement);
             upgradePhotos(browser());
             syncCategoryNavigation();
@@ -660,7 +664,10 @@
                 const focusTarget = control && control !== 'menu-search'
                     ? browser().querySelector(`#${CSS.escape(control)}`)
                     : browser().querySelector('#menu-results-title');
-                focusTarget?.focus({ preventScroll: true });
+                if (liveField) {
+                    liveField.focus({ preventScroll: true });
+                    try { liveField.setSelectionRange(caret[0], caret[1]); } catch { /* search inputs may not support it */ }
+                } else focusTarget?.focus({ preventScroll: true });
                 if (control) {
                     // Keep search/sort in the same viewport position after replacing results.
                     // Do not start another smooth page scroll after submitting the form.
@@ -935,14 +942,34 @@
         event.preventDefault();
         navigate(link.href, { more: link.hasAttribute('data-menu-more'), control: link.matches('.menu-reset, .menu-filter-chip') ? 'menu-search' : null });
     });
+    // Live search: results update a moment after the customer stops typing (no Search button).
+    let liveSearchTimer = null;
+    function liveSearch(form) {
+        window.clearTimeout(liveSearchTimer);
+        if (!form) return;
+        const url = new URL(form.action, location.href);
+        url.search = '';
+        new FormData(form).forEach((value, key) => {
+            const text = String(value).trim();
+            if (text && !(key === 'Sort' && text === 'menu')) url.searchParams.set(key, text);
+        });
+        const current = new URL(location.href);
+        if ((url.searchParams.get('Search') || '') === (current.searchParams.get('Search') || '')
+            && (url.searchParams.get('CategoryId') || '') === (current.searchParams.get('CategoryId') || '')
+            && (url.searchParams.get('Sort') || '') === (current.searchParams.get('Sort') || '')) return;
+        navigate(url, { control: 'menu-search', keepSearch: true });
+    }
     root.addEventListener('submit', event => {
         if (!event.target.matches('[data-menu-form]')) return;
         event.preventDefault();
-        const field = event.target.querySelector('#menu-search');
-        if (field && !field.value.trim()) { remindSearch(event.target); return; }
-        submitMenu(event.target, 'menu-search');
+        liveSearch(event.target);
     });
     root.addEventListener('input', event => {
+        if (event.target.id === 'menu-search') {
+            const form = event.target.form;
+            window.clearTimeout(liveSearchTimer);
+            liveSearchTimer = window.setTimeout(() => liveSearch(form), 350);
+        }
         if (event.target.id === 'menu-search') reloadSearchEdited = true;
         if (event.target.id !== 'menu-search' || !event.target.value.trim()) return;
         const hint = event.target.form?.querySelector('[data-menu-search-hint]');

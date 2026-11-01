@@ -90,7 +90,7 @@
                         @* Sort picker: a styled list of links (works without JavaScript; no browser-blue menu). *@
                         <details class="promo-sort" data-promo-swap="sort" data-promo-sort>
                             <summary aria-label="Sort promotions">
-                                <span class="promo-sort__text"><small>Sort by</small><strong>@(sorts.First(x => x.Value == Model.Board.Sort).Label)</strong></span>
+                                <i class="bi bi-sort-down promo-sort__icon" aria-hidden="true"></i><span class="promo-sort__text"><strong>@(sorts.First(x => x.Value == Model.Board.Sort).Label)</strong></span>
                                 <i class="bi bi-chevron-down" aria-hidden="true"></i>
                             </summary>
                             <ul class="promo-sort__menu" role="list">

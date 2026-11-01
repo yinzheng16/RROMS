@@ -105,7 +105,13 @@
                                 <p class="cart-receipt__note">@line.Notes</p>
                             }
                         </div>
-                        <strong class="cart-receipt__price">RM @Money(line.LineTotal)</strong>
+                        <strong class="cart-receipt__price">
+                            @if (line.Saving > 0 && line.NormalUnitPrice is decimal normalPrice)
+                            {
+                                <s class="cart-receipt__was"><span class="visually-hidden">Was </span>RM @Money(normalPrice * line.Quantity)</s>
+                            }
+                            RM @Money(line.LineTotal)
+                        </strong>
                     </li>
                 }
             </ol>

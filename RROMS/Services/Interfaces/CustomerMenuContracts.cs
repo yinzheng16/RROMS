@@ -36,6 +36,7 @@ namespace RROMS.Services.Interfaces
         public CustomerMenuLiveState LiveState { get; init; } = CustomerMenuLiveState.Empty;
         // US29: number of dishes with a running promotion (Specials filter).
         public int SpecialsCount { get; init; }
+        public int NewCount { get; init; }
         public bool HasMore => Items.Count < TotalCount;
         public int NextLimit => Limit > int.MaxValue - CustomerMenuBrowsing.PageSize
             ? int.MaxValue : Limit + CustomerMenuBrowsing.PageSize;

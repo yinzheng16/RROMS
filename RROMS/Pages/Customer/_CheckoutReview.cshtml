@@ -54,13 +54,20 @@
                             <span class="checkout-review__photo checkout-review__photo--placeholder" aria-hidden="true">夜</span>
                         }
                         <div class="checkout-review__line-details">
+                            <span class="cart-line__code checkout-review__code">@line.Code</span>
                             <div class="checkout-review__dish-name"><strong>@line.Name</strong><span class="checkout-review__quantity"><span class="visually-hidden">Quantity </span>× @line.Quantity</span></div>
                             @if (line.Notes is not null)
                             {
                                 <p class="checkout-review__note"><span>Note · </span>@line.Notes</p>
                             }
                         </div>
-                        <span class="checkout-review__price">RM @Money(line.LineTotal)</span>
+                        <span class="checkout-review__price">
+                            @if (line.Saving > 0 && line.NormalUnitPrice is decimal normalPrice)
+                            {
+                                <s class="checkout-review__was"><span class="visually-hidden">Was </span>RM @Money(normalPrice * line.Quantity)</s>
+                            }
+                            RM @Money(line.LineTotal)
+                        </span>
                     </li>
                 }
             </ol>

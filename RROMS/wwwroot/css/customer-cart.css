@@ -2563,3 +2563,243 @@ html.cart-modal-open {
     .promo-savings strong {
         font-weight: 800;
     }
+
+/* 1 Nov: cart page only (not the confirmation page) uses the petal washi paper. */
+body:has([data-customer-cart]),
+.site-main:has([data-customer-cart]),
+[data-customer-cart] {
+    background: #f8ebd8 url('../images/menu/yoru-menu-petal-paper.webp') center top / min(100vw, 60rem) auto repeat !important;
+}
+
+    .site-main:has([data-customer-cart]) [data-customer-cart] {
+        background: transparent !important;
+    }
+
+@media (max-width: 47.99rem) {
+    body:has([data-customer-cart]),
+    .site-main:has([data-customer-cart]) {
+        background-size: 36rem auto !important;
+    }
+}
+
+/* Dish list: normal price crossed out before the promotional price. */
+.cart-line__unit .cart-line__was {
+    margin-inline-end: .35rem;
+    color: #9a9b93;
+    text-decoration-thickness: 1px;
+}
+
+.cart-line__unit .cart-line__now {
+    color: #c83e2d;
+    font-weight: 600;
+}
+
+.cart-line__deal {
+    display: inline-flex;
+    align-items: center;
+    margin-inline-start: .45rem;
+    padding: .05rem .45rem;
+    border-radius: 999px;
+    background: #c83e2d;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    vertical-align: .1em;
+}
+
+/* "You save" as a small gold-edged ticket with a red tag stamp (cart, checkout, confirmation, My Orders). */
+.promo-savings {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin: 1rem 0 .25rem;
+    padding: .7rem 1rem .7rem .7rem;
+    border: 1px dashed rgba(183, 155, 114, .8);
+    border-radius: .75rem;
+    background: linear-gradient(90deg, #fff6e9 0%, #fdf1e2 100%);
+    color: #5a4a3a;
+    font-size: .9rem;
+    font-weight: 500;
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .6);
+}
+
+    /* Ticket notches on both sides. */
+    .promo-savings::before,
+    .promo-savings::after {
+        content: "";
+        position: absolute;
+        inset-block-start: 50%;
+        inline-size: .9rem;
+        block-size: .9rem;
+        border: 1px dashed rgba(183, 155, 114, .8);
+        border-radius: 50%;
+        background: #fffaf0;
+        transform: translateY(-50%);
+    }
+
+    .promo-savings::before {
+        inset-inline-start: -.5rem;
+        clip-path: inset(0 0 0 50%);
+    }
+
+    .promo-savings::after {
+        inset-inline-end: -.5rem;
+        clip-path: inset(0 50% 0 0);
+    }
+
+    .promo-savings > i,
+    .promo-savings > .bi {
+        flex: none;
+        display: grid;
+        place-items: center;
+        inline-size: 2.1rem;
+        block-size: 2.1rem;
+        border-radius: 50%;
+        background: #c83e2d;
+        color: #fff;
+        font-size: .95rem;
+        box-shadow: 0 0 0 3px rgba(200, 62, 45, .15);
+    }
+
+    .promo-savings strong {
+        color: #c83e2d;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+/* 1 Nov (b): -20.0% tag text centred; ticket icon moved right; saving amount in the normal font. */
+.cart-line__deal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 1.3rem;
+    padding: 0 .5rem;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.promo-savings {
+    padding-inline-start: 1.15rem;
+}
+
+    .promo-savings strong {
+        font-family: inherit;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+/* 1 Nov (c): item code capsule in the cart (same style as the menu). */
+.cart-line__code {
+    display: inline-flex;
+    align-items: center;
+    inline-size: fit-content;
+    margin-block-end: .25rem;
+    padding: .1rem .55rem;
+    border: 1px solid rgba(183, 155, 114, .45);
+    border-radius: 999px;
+    background: rgba(183, 155, 114, .18);
+    color: #6a4b1d;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    line-height: 1.4;
+}
+
+/* Review pop-up: crossed-out normal price above the line price. */
+.checkout-review__price {
+    display: inline-grid;
+    justify-items: end;
+    line-height: 1.2;
+}
+
+.checkout-review__was {
+    color: #9a9b93;
+    font-size: .8rem;
+    text-decoration-thickness: 1px;
+}
+
+/* "You save" ticket: the sentence flows as normal text, so it never breaks into pieces. */
+.promo-savings {
+    display: block;
+    position: relative;
+    min-block-size: 3.2rem;
+    padding: .8rem 1rem .8rem 3.75rem !important;
+    line-height: 1.5;
+    text-wrap: balance;
+}
+
+    .promo-savings > i,
+    .promo-savings > .bi {
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline-start: 1.1rem;
+        transform: translateY(-50%);
+    }
+
+    .promo-savings strong {
+        margin-inline: .2rem;
+    }
+
+/* Dark "Order total" panel in the review pop-up: gold ticket that suits the black card. */
+.checkout-review__totals .promo-savings {
+    border-color: rgba(216, 180, 122, .6);
+    background: rgba(183, 155, 114, .12);
+    box-shadow: none;
+    color: #f5f0e7;
+}
+
+    .checkout-review__totals .promo-savings::before,
+    .checkout-review__totals .promo-savings::after {
+        border-color: rgba(216, 180, 122, .6);
+        background: #1d1a17;
+    }
+
+    .checkout-review__totals .promo-savings strong {
+        color: #e8c58a;
+    }
+
+/* 1 Nov (d): review pop-up ticket fits "You save RM 18.12 with promotions" on one line. */
+.checkout-review__totals .promo-savings {
+    padding: .7rem .9rem .7rem 3.2rem !important;
+    min-block-size: 2.9rem;
+    font-size: .84rem;
+    white-space: nowrap;
+    text-wrap: nowrap;
+}
+
+    .checkout-review__totals .promo-savings > i,
+    .checkout-review__totals .promo-savings > .bi {
+        inset-inline-start: .95rem;
+        inline-size: 1.75rem;
+        block-size: 1.75rem;
+        font-size: .8rem;
+    }
+
+    .checkout-review__totals .promo-savings strong {
+        margin-inline: .15rem;
+        font-size: .92rem;
+    }
+
+/* 1 Nov (e): confirmation receipt shows the crossed-out normal price above the line price. */
+.cart-receipt__price {
+    display: inline-grid;
+    justify-items: end;
+    line-height: 1.25;
+}
+
+.cart-receipt__was {
+    color: #9a9b93;
+    font-size: .8rem;
+    font-weight: 500;
+    text-decoration-thickness: 1px;
+}
+
+/* 1 Nov (f): code capsule in the review pop-up, a little smaller to suit the compact rows. */
+.checkout-review__code {
+    margin-block-end: .2rem;
+    font-size: .68rem;
+}

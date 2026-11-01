@@ -4322,3 +4322,39 @@ html.oj-history-js .oh-journal .oh-workspace > #history-drawer {
     .promo-savings strong {
         font-weight: 800;
     }
+
+/* 1 Nov: My Orders details show the crossed-out normal price for promotional dishes. */
+.oh-line-price {
+    display: inline-grid;
+    justify-items: end;
+    line-height: 1.25;
+}
+
+.oh-price-was {
+    color: #9a9b93;
+    font-size: .8rem;
+    font-weight: 500;
+    text-decoration-thickness: 1px;
+}
+
+/* 1 Nov (b): code capsule and unit price on one tidy row. */
+.oh-dish-meta {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem .5rem;
+}
+
+.oh-code {
+    display: inline-flex;
+    align-items: center;
+    padding: .1rem .55rem;
+    border: 1px solid rgba(183, 155, 114, .45);
+    border-radius: 999px;
+    background: rgba(183, 155, 114, .18);
+    color: #6a4b1d;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    line-height: 1.4;
+}

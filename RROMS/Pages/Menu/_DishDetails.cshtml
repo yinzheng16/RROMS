@@ -2,6 +2,10 @@
 @using System.Globalization
 <div class="dish-detail">
     <div class="dish-detail__photo">
+        @if (Model.OriginalPrice is decimal normalPrice && normalPrice > 0)
+        {
+            <span class="menu-promo-seal" aria-hidden="true"><strong>@(((normalPrice - Model.Price) / normalPrice * 100m).ToString("0.#", CultureInfo.InvariantCulture))%</strong><small>OFF</small></span>
+        }
         @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
         {
             <img src="@Url.Content(Model.ImageUrl)" alt="@Model.Name" width="800" height="800" data-dish-photo />
@@ -16,10 +20,7 @@
         <p class="eyebrow">@Model.CategoryName</p>
         <p class="dish-detail__code">@Model.Code</p>
         <h2 id="dish-detail-title">@Model.Name</h2>
-        @if (Model.OriginalPrice is decimal normalPrice && normalPrice > 0)
-        {
-            <p class="dish-detail__promo"><i class="bi bi-tag" aria-hidden="true"></i><span>Promotion · @(((normalPrice - Model.Price) / normalPrice * 100m).ToString("0.#", CultureInfo.InvariantCulture))% off</span>@if (Model.PromoEndsOn is DateTime endsOn) {<small>· @RROMS.Services.PromotionRules.EndsLabel(endsOn, DateTime.Now)</small>}</p>
-        }
+       
         <p class="dish-detail__description">@(string.IsNullOrWhiteSpace(Model.Description) ? "A little taste of YORU. Ask our team for more details about this dish." : Model.Description)</p>
         <p class="menu-availability dish-detail__availability"><span class="bg-success" aria-hidden="true"></span>Available</p>
         <form method="post" asp-page="/Menu/Index" asp-page-handler="Add" class="dish-detail__cart" data-cart-add data-cart-detail-form>
@@ -34,7 +35,13 @@
                 <strong class="menu-price @(Model.OriginalPrice is null ? "" : "is-promo")">
                     @if (Model.OriginalPrice is decimal wasPrice)
                     {
-                        <s class="menu-price__was"><span class="visually-hidden">Normal price </span>RM @wasPrice.ToString("F2", CultureInfo.InvariantCulture)</s>
+                        <span class="menu-price__line">
+                            <s class="menu-price__was"><span class="visually-hidden">Normal price </span>RM @wasPrice.ToString("F2", CultureInfo.InvariantCulture)</s>
+                            @if (Model.PromoEndsOn is DateTime endsOn)
+                            {
+                                <span class="menu-price__ends">· @RROMS.Services.PromotionRules.EndsLabel(endsOn, DateTime.Now)</span>
+                            }
+                        </span>
                     }
                     <span class="menu-price__now">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
                 </strong>

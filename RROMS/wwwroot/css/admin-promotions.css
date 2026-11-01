@@ -753,3 +753,57 @@
     font-size: .82rem;
     font-weight: 600;
 }
+
+/* Sort picker: filter icon instead of the words "Sort by", clean sans text. */
+.promo-sort > summary {
+    gap: .6rem;
+}
+
+.promo-sort__icon {
+    flex: none;
+    color: var(--p-gold-dark);
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+    .promo-sort__icon::before {
+        display: block;
+    }
+
+.promo-sort__text strong {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: .95rem;
+    font-weight: 500;
+    color: #2b241c;
+}
+
+.promo-reset {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+    .promo-reset i {
+        display: block;
+        line-height: 1;
+    }
+
+        .promo-reset i::before {
+            display: block;
+        }
+
+
+/* Sort picker wide enough for every option ("Biggest discount" no longer cut off). */
+.promo-sort {
+    inline-size: 12.25rem;
+}
+
+.promo-sort__text strong {
+    overflow: visible;
+    text-overflow: clip;
+}
+
+@media (max-width: 47.99rem) {
+    .promo-sort {
+        inline-size: auto;
+        flex: 1;
+    }
+}
