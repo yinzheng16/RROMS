@@ -8,7 +8,8 @@ namespace RROMS.Models
         Reservations,
         Orders,
         Sales,
-        Menu
+        Menu,
+        Customers   // US48 Customer activity
     }
 
     // What the admin asked for (built from the query string).

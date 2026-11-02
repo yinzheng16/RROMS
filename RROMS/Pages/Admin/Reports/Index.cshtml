@@ -12,8 +12,18 @@
     var inv = CultureInfo.InvariantCulture;
     var typeIndex = (int)Q.Type;
     var currentType = RROMS.Pages.Admin.Reports.Index.Types[typeIndex];
-    var tabNames = new[] { "Reservations", "Customer orders", "Sales transactions", "Menu items" };
+    var tabNames = new[] { "Reservations", "Customer orders", "Sales transactions", "Menu items", "Customer activity" };
     var isMenu = Q.Type == ReportType.Menu;
+    var isCustomers = Q.Type == ReportType.Customers;   // US48
+    // The search box looks in the columns that have no drop-down of their own.
+    var searchHint = Q.Type switch
+    {
+        ReportType.Reservations => "Search reference, date, time, customer, guests, table…",
+        ReportType.Orders => "Search order no., date, customer, items, total…",
+        ReportType.Sales => "Search payment, date, order, customer, amount…",
+        ReportType.Menu => "Search dish or customer…",
+        _ => "Search customer, visits, spent, last visit…"
+    };
 
     string DeltaClass(ReportKpi k) => (k.GoodWhenDown ? k.Change < 0 : k.Change > 0) ? "rp-up" : "rp-down";
     string DeltaText(ReportKpi k) => (k.Change > 0 ? "▲ " : k.Change < 0 ? "▼ " : "") + Math.Abs(k.Change ?? 0) + "%";
@@ -30,6 +40,7 @@
     {
         ReportType.Sales => 3,
         ReportType.Menu => 1,
+        ReportType.Customers => 1,
         _ => 0
     };
     var second = R.Kpis[secondIndex];
@@ -42,6 +53,13 @@
         var best = R.Rows.FirstOrDefault(r => r.Cells[0].Text == R.Kpis[3].Display);
         ringPct = (decimal)(best?.Cells[5].Share ?? 0);
         ringCaption = best == null ? "no sales yet" : "top: " + best.Cells[0].Text;
+    }
+    else if (isCustomers)
+    {
+        // US48: how many of these customers had been here before.
+        var groupTotal = R.Groups.Sum(g => g.Value);
+        ringPct = groupTotal == 0 ? 0 : R.Groups.Where(g => g.Name != "New").Sum(g => g.Value) * 100 / groupTotal;
+        ringCaption = "came back";
     }
     else
     {
@@ -65,7 +83,7 @@
     // Show the 6 biggest (plus any that are chosen); the rest open with "+N more".
     bool IsExtra(int index) => index >= 4 && !R.Groups[index].Selected;
     string GroupCount(ReportGroup g) => isMenu ? "RM " + g.Value.ToString("N2", inv)
-        : g.Value.ToString("0") + (g.Value == 1 ? " record" : " records");
+        : g.Value.ToString("0") + (isCustomers ? (g.Value == 1 ? " customer" : " customers") : (g.Value == 1 ? " record" : " records"));
 
     // Small Japanese labels in the card corners.
     var cardJp = Q.Type switch
@@ -73,6 +91,7 @@
         ReportType.Reservations => new[] { "来店人数", "予約数", "状態別" },
         ReportType.Sales => new[] { "純売上", "支払件数", "状態別" },
         ReportType.Menu => new[] { "販売数", "品目売上", "分類別" },
+        ReportType.Customers => new[] { "利用総額", "顧客数", "種別" },
         _ => new[] { "売上金額", "注文数", "状態別" }
     };
 
@@ -89,6 +108,11 @@
         case ReportType.Menu:
             var avgPrice = K[0].Value == 0 ? 0 : K[1].Value / K[0].Value;
             bandBoxes = new[] { (K[0].Label, K[0].Display), ("Average price", "RM " + avgPrice.ToString("N2", inv)), (K[1].Label, K[1].Display) };
+            bandOp = "×";
+            break;
+        case ReportType.Customers:
+            var avgSpend = K[1].Value == 0 ? 0 : K[0].Value / K[1].Value;
+            bandBoxes = new[] { (K[1].Label, K[1].Display), ("Average spend", "RM " + avgSpend.ToString("N2", inv)), (K[0].Label, K[0].Display) };
             bandOp = "×";
             break;
         default:
@@ -114,7 +138,7 @@
 
     var filterParts = new List<string> { R.GroupLabel + ": " + (Q.Groups.Count > 0 ? string.Join(", ", Q.Groups) : "all") };
     if (R.KindOptions.Count > 0) { filterParts.Add(R.KindLabel + ": " + (Q.Kind ?? "all")); }
-    filterParts.Add("Customer: " + (Q.Customer ?? "all"));
+    if (Q.Customer != null) { filterParts.Add("Search: " + Q.Customer); }
     if (Q.Day.HasValue) { filterParts.Add("Day: " + Q.Day.Value.ToString("d MMM yyyy")); }
 
     if (Model.IsPrint)
@@ -426,7 +450,7 @@ else
             </div>
 
             <div class="rp-kpi">
-                <div class="rp-kpi-top"><span class="rp-kpi-l">@(isMenu ? "Sales by category" : "By status")</span><span class="rp-kpi-jp" lang="ja">@cardJp[2]</span></div>
+                <div class="rp-kpi-top"><span class="rp-kpi-l">@(isMenu ? "Sales by category" : isCustomers ? "By customer type" : "By status")</span><span class="rp-kpi-jp" lang="ja">@cardJp[2]</span></div>
                 @if (stackTotal == 0)
                 {
                     <p class="rp-kpi-hint">Nothing in this period yet.</p>
@@ -497,8 +521,8 @@ else
                 }
                 <label class="rp-search">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-                    <input type="search" name="q" value="@Q.Customer" maxlength="100" placeholder="Search customer name…"
-                           aria-label="Search customer" list="rpCustomers" autocomplete="off" data-rp-search />
+                    <input type="search" name="q" value="@Q.Customer" maxlength="100" placeholder="@searchHint"
+                           aria-label="Search this report" list="rpCustomers" autocomplete="off" data-rp-search />
                 </label>
                 <datalist id="rpCustomers">
                     @foreach (var n in R.CustomerNames)
@@ -508,8 +532,8 @@ else
                 </datalist>
 
                 <div class="rp-dd">
-                    <select name="st" aria-label="@R.GroupLabel" data-rp-auto data-rp-kanji="@(isMenu ? "分類" : "状態")" class="@(Q.Groups.Count > 0 ? "is-set" : "")">
-                        <option value="">@(isMenu ? "All categories" : "All statuses")</option>
+                    <select name="st" aria-label="@R.GroupLabel" data-rp-auto data-rp-kanji="@(isMenu ? "分類" : isCustomers ? "種別" : "状態")" class="@(Q.Groups.Count > 0 ? "is-set" : "")">
+                        <option value="">@(isMenu ? "All categories" : isCustomers ? "All customers" : "All statuses")</option>
                         @foreach (var g in R.Groups)
                         {
                             <option value="@g.Name" data-color="@g.Color" selected="@(Q.Groups.Contains(g.Name))">@g.Name</option>
@@ -525,6 +549,31 @@ else
                             @foreach (var k in R.KindOptions)
                             {
                                 <option value="@k" selected="@(Q.Kind == k)">@k</option>
+                            }
+                        </select>
+                    </div>
+                }
+
+                @if (isCustomers)
+                {
+                    // US48: sort by total spend, visit count or last visit (biggest / latest first).
+                    <div class="rp-dd">
+                        <select aria-label="Sort by" data-rp-period data-rp-kanji="並替">
+                            <option value="@Model.SortByLink(3)" selected="@Model.IsSortedBy(3, isDefault: true)">Top spenders</option>
+                            <option value="@Model.SortByLink(1)" selected="@Model.IsSortedBy(1)">Most visits</option>
+                            <option value="@Model.SortByLink(5)" selected="@Model.IsSortedBy(5)">Latest visit</option>
+                            @if (Q.SortColumn.HasValue && !(Q.SortDescending && Q.SortColumn is 1 or 3 or 5))
+                            {
+                                // Sorted by clicking a column title: say which one and which way.
+                                var col = Q.SortColumn.Value;
+                                var colName = col < R.Columns.Count ? R.Columns[col].Title.Replace(" (RM)", "") : "Column";
+                                var way = col switch
+                                {
+                                    0 or 6 => Q.SortDescending ? "Z to A" : "A to Z",
+                                    5 => Q.SortDescending ? "latest first" : "oldest first",
+                                    _ => Q.SortDescending ? "high to low" : "low to high"
+                                };
+                                <option value="@Model.BackLink()" selected>@colName: @way</option>
                             }
                         </select>
                     </div>

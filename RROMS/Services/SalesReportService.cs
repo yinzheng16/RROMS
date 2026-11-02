@@ -8,8 +8,8 @@ using RROMS.Services.Interfaces;
 
 namespace RROMS.Services
 {
-    // Owner: Member 5 (US44 Filtered reports).
-    // Builds the reservations, orders, sales and menu-item reports for Pages/Admin/Reports.
+    // Owner: Member 5 (US44 Filtered reports, US48 Customer activity).
+    // Builds the reservations, orders, sales, menu-item and customer reports for Pages/Admin/Reports.
     // Read-only: this service never changes any data.
     public class SalesReportService : ISalesReportService
     {
@@ -50,10 +50,18 @@ namespace RROMS.Services
             public decimal Amount { get; init; }                 // guests, RM or line value
             public int Count { get; init; }                      // items or portions
             public object Source { get; init; } = null!;
+
+            // Everything the search box looks in for this record (what the table row shows).
+            public string Search { get; init; } = string.Empty;
         }
 
         public async Task<ReportResult> BuildAsync(ReportQuery q)
         {
+            if (q.Type == ReportType.Customers)
+            {
+                return await BuildCustomersAsync(q);   // US48: one row per customer, built differently
+            }
+
             var from = q.From.Date;
             var to = q.To.Date;
             var prevFrom = q.PreviousFrom;
@@ -217,7 +225,9 @@ namespace RROMS.Services
                         UserId = r.UserId,
                         Group = Label(r.Status),
                         Amount = r.Guests,
-                        Source = r
+                        Source = r,
+                        Search = Text(r.ReferenceNo, Day(r.ReservedAt), r.ReservedAt.ToString("HH:mm"), NameOf(r.User),
+                            r.Guests.ToString(), r.Table?.TableNumber)
                     }).ToList();
 
                 case ReportType.Orders:
@@ -236,7 +246,9 @@ namespace RROMS.Services
                         Kind = Label(o.OrderType),
                         Amount = o.TotalAmount,
                         Count = o.Items.Sum(i => i.Quantity),
-                        Source = o
+                        Source = o,
+                        Search = Text(o.OrderNo, Day(o.CreatedAt), NameOf(o.User), o.Items.Sum(i => i.Quantity).ToString(),
+                            o.TotalAmount.ToString("N2", My))
                     }).ToList();
 
                 case ReportType.Sales:
@@ -260,7 +272,9 @@ namespace RROMS.Services
                             Group = Label(p.Status),
                             Kind = Label(p.Method),
                             Amount = p.Amount,
-                            Source = p
+                            Source = p,
+                            Search = Text("PAY-" + p.Id.ToString("D5"), Day(p.PaidAt ?? p.CreatedAt), OrderNoOf(p), NameOf(first?.User),
+                                p.Amount.ToString("N2", My))
                         };
                     }).ToList();
 
@@ -280,7 +294,8 @@ namespace RROMS.Services
                         Group = i.MenuItem.Category?.Name ?? "Other",
                         Amount = i.Quantity * i.UnitPrice,
                         Count = i.Quantity,
-                        Source = i
+                        Source = i,
+                        Search = Text(i.MenuItem.Name, NameOf(i.Order.User))
                     }).ToList();
             }
         }
@@ -297,8 +312,7 @@ namespace RROMS.Services
             }
             if (useCustomer && !string.IsNullOrWhiteSpace(q.Customer))
             {
-                var term = q.Customer.Trim();
-                rs = rs.Where(f => f.Customer.Contains(term, StringComparison.OrdinalIgnoreCase));
+                rs = rs.Where(f => Matches(f.Search, q.Customer));
             }
             if (!string.IsNullOrEmpty(q.Kind))
             {
@@ -406,6 +420,7 @@ namespace RROMS.Services
                 ReportType.Reservations => $"{k[0].Display} reservations for {k[1].Display} guests{compare}.",
                 ReportType.Orders => $"{k[0].Display} orders worth {k[1].Display}{compare}.",
                 ReportType.Sales => $"{k[0].Display} in net sales from {k[3].Display} payments{compare}.",
+                ReportType.Customers => $"{k[1].Display} customers spent {k[0].Display}{compare}.",
                 _ => k[0].Value == 0
                     ? "No dishes sold in this period yet."
                     : $"{k[0].Display} portions sold, led by {k[3].Display}{compare}."
@@ -530,7 +545,8 @@ namespace RROMS.Services
                 .OrderBy(m => m.Category?.DisplayOrder ?? 999).ThenBy(m => m.Name))
             {
                 sold.TryGetValue(m.Id, out var s);
-                if (s == null && !showUnsold)
+                // While searching, a dish nobody ordered still shows when its name matches.
+                if (s == null && !showUnsold && !(q.Day == null && !string.IsNullOrWhiteSpace(q.Customer) && Matches(m.Name, q.Customer)))
                 {
                     continue;
                 }
@@ -567,6 +583,11 @@ namespace RROMS.Services
                     ? rows.OrderByDescending(r => r.Cells[col.Value].Sort)
                     : rows.OrderBy(r => r.Cells[col.Value].Sort);
             }
+            else if (q.Type == ReportType.Customers)
+            {
+                // Top spenders first (US48).
+                rows = rows.OrderByDescending(r => r.Cells[3].Sort).ThenByDescending(r => r.Cells[1].Sort);
+            }
             else if (q.Type == ReportType.Menu)
             {
                 // Best sellers first.
@@ -599,6 +620,273 @@ namespace RROMS.Services
                 }
                 row.Warning = note;
             }
+        }
+
+
+        // =====================================================================
+        // US48 Customer activity: visits, spending and last visit per customer
+        // =====================================================================
+        //  - Visit: a day with an order that was not cancelled, or a reservation the guest came to
+        //    (Seated or Completed). Two orders on the same day are one visit.
+        //  - Spent: Paid minus Refunded payments, the same rule as the Sales report (bill payments included).
+        //  - Type: New (first visit ever is in this period), Regular (4 or more visits in this period),
+        //    otherwise Returning.
+
+        private const int RegularVisits = 4;
+
+        private sealed class Activity
+        {
+            public string UserId { get; init; } = string.Empty;
+            public string Name { get; init; } = "Customer";
+            public DateTime Date { get; init; }
+            public bool IsOrder { get; init; }
+            public decimal Amount { get; init; }   // payments only
+        }
+
+        private sealed class CustomerLine
+        {
+            public string UserId { get; init; } = string.Empty;
+            public string Name { get; init; } = "Customer";
+            public int Visits { get; set; }
+            public int Orders { get; set; }
+            public decimal Spent { get; set; }
+            public DateTime? Last { get; set; }
+            public DateTime? First { get; set; }
+            public string Type { get; set; } = "Returning";
+        }
+
+        private async Task<ReportResult> BuildCustomersAsync(ReportQuery q)
+        {
+            var from = q.From.Date;
+            var to = q.To.Date;
+            var prevFrom = q.PreviousFrom;
+            var prevTo = q.PreviousTo;
+            var start = prevFrom < from ? prevFrom : from;
+            var end = to.AddDays(1);
+            var shift = (from - prevFrom).Days;
+
+            // ---------- Load (one trip each, covering this period and the one before) ----------
+            var orders = await _orders.Query().AsNoTracking()
+                .Include(o => o.User)
+                .Where(o => o.CreatedAt >= start && o.CreatedAt < end && o.Status != OrderStatus.Cancelled)
+                .ToListAsync();
+            var reservations = await _reservations.Query().AsNoTracking()
+                .Include(r => r.User)
+                .Where(r => r.ReservedAt >= start && r.ReservedAt < end
+                            && (r.Status == ReservationStatus.Seated || r.Status == ReservationStatus.Completed))
+                .ToListAsync();
+            var payments = await _payments.Query().AsNoTracking()
+                .Include(p => p.Order).ThenInclude(o => o!.User)
+                .Include(p => p.Bill).ThenInclude(b => b!.Orders).ThenInclude(o => o.User)
+                .Where(p => (p.PaidAt ?? p.CreatedAt) >= start && (p.PaidAt ?? p.CreatedAt) < end
+                            && (p.Status == PaymentStatus.Paid || p.Status == PaymentStatus.Refunded))
+                .AsSplitQuery()
+                .ToListAsync();
+
+            var visits = orders.Select(o => new Activity { UserId = o.UserId, Name = NameOf(o.User), Date = o.CreatedAt, IsOrder = true })
+                .Concat(reservations.Select(r => new Activity { UserId = r.UserId, Name = NameOf(r.User), Date = r.ReservedAt }))
+                .ToList();
+            var spends = new List<Activity>();
+            foreach (var p in payments)
+            {
+                var owner = OrdersOf(p).FirstOrDefault();
+                if (owner == null) continue;   // not linked to any order: no customer to give it to
+                spends.Add(new Activity
+                {
+                    UserId = owner.UserId,
+                    Name = NameOf(owner.User),
+                    Date = p.PaidAt ?? p.CreatedAt,
+                    Amount = p.Status == PaymentStatus.Paid ? p.Amount : -p.Amount
+                });
+            }
+
+            // First visit ever (any date), to tell New customers from returning ones.
+            var firstOrders = await _orders.Query().AsNoTracking()
+                .Where(o => o.Status != OrderStatus.Cancelled)
+                .GroupBy(o => o.UserId)
+                .Select(g => new { UserId = g.Key, First = g.Min(o => o.CreatedAt) })
+                .ToListAsync();
+            var firstReservations = await _reservations.Query().AsNoTracking()
+                .Where(r => r.Status == ReservationStatus.Seated || r.Status == ReservationStatus.Completed)
+                .GroupBy(r => r.UserId)
+                .Select(g => new { UserId = g.Key, First = g.Min(r => r.ReservedAt) })
+                .ToListAsync();
+            var firstVisit = new Dictionary<string, DateTime>();
+            foreach (var f in firstOrders.Concat(firstReservations))
+            {
+                if (!firstVisit.TryGetValue(f.UserId, out var d) || f.First < d) firstVisit[f.UserId] = f.First;
+            }
+
+            // One line per customer for a date range.
+            List<CustomerLine> Summarise(DateTime f, DateTime t)
+            {
+                var e = t.Date.AddDays(1);
+                var map = new Dictionary<string, CustomerLine>();
+                CustomerLine Get(string id, string name)
+                {
+                    if (!map.TryGetValue(id, out var line))
+                    {
+                        line = new CustomerLine { UserId = id, Name = name };
+                        map[id] = line;
+                    }
+                    return line;
+                }
+
+                foreach (var g in visits.Where(v => v.Date >= f && v.Date < e).GroupBy(v => v.UserId))
+                {
+                    var line = Get(g.Key, g.First().Name);
+                    line.Visits = g.Select(v => v.Date.Date).Distinct().Count();
+                    line.Orders = g.Count(v => v.IsOrder);
+                    line.Last = g.Max(v => v.Date);
+                }
+                foreach (var s in spends.Where(s => s.Date >= f && s.Date < e))
+                {
+                    Get(s.UserId, s.Name).Spent += s.Amount;
+                }
+                foreach (var line in map.Values)
+                {
+                    line.First = firstVisit.TryGetValue(line.UserId, out var d) ? d : null;
+                    line.Type = line.First == null || line.First.Value >= f ? "New"
+                        : line.Visits >= RegularVisits ? "Regular"
+                        : "Returning";
+                }
+                return map.Values.ToList();
+            }
+
+            List<CustomerLine> Pick(List<CustomerLine> lines, bool useGroups, bool useCustomer)
+            {
+                IEnumerable<CustomerLine> rs = lines;
+                if (useCustomer && !string.IsNullOrWhiteSpace(q.Customer))
+                {
+                    rs = rs.Where(c => Matches(Text(c.Name, c.Visits.ToString(), c.Orders.ToString(), c.Spent.ToString("N2", My),
+                        c.Last.HasValue ? Day(c.Last.Value) : null), q.Customer));
+                }
+                if (useGroups && q.Groups.Count > 0)
+                {
+                    rs = rs.Where(c => q.Groups.Contains(c.Type));
+                }
+                return rs.ToList();
+            }
+
+            List<ReportKpi> Numbers(List<CustomerLine> cs)
+            {
+                var spent = cs.Sum(c => c.Spent);
+                var n = cs.Count;
+                var v = cs.Sum(c => c.Visits);
+                var avg = v == 0 ? 0 : spent / v;
+                return new List<ReportKpi>
+                {
+                    new() { Label = "Total spent", Value = spent, Display = Rm(spent) },
+                    new() { Label = "Customers", Value = n, Display = n.ToString() },
+                    new() { Label = "Visits", Value = v, Display = v.ToString() },
+                    new() { Label = "Avg per visit", Value = avg, Display = Rm(avg) }
+                };
+            }
+
+            var period = q.Day.HasValue ? Summarise(q.Day.Value, q.Day.Value) : Summarise(from, to);
+            var current = Pick(period, useGroups: true, useCustomer: true);
+            var previous = Pick(Summarise(prevFrom, prevTo), useGroups: true, useCustomer: true);
+
+            var result = new ReportResult
+            {
+                Query = q,
+                Title = TitleOf(q.Type),
+                MainKpi = 0,
+                ChartLabel = "Spent per day",
+                GroupLabel = "Customer type",
+                TopLabel = "Top customers (RM)",
+                RowNoun = "customers"
+            };
+
+            // ---------- Numbers at the top ----------
+            var now = Numbers(current);
+            var before = Numbers(previous);
+            for (var i = 0; i < now.Count; i++)
+            {
+                if (q.Compare && q.Day == null && before[i].Value != 0)
+                {
+                    now[i].Change = (int)Math.Round((now[i].Value - before[i].Value) * 100 / before[i].Value);
+                }
+                result.Kpis.Add(now[i]);
+            }
+            result.Lead = Lead(q, result);
+
+            // ---------- Chart: money spent each day by the customers shown ----------
+            var chartPeople = Pick(Summarise(from, to), useGroups: true, useCustomer: true).Select(c => c.UserId).ToHashSet();
+            var prevPeople = previous.Select(c => c.UserId).ToHashSet();
+            for (var day = from; day <= to; day = day.AddDays(1))
+            {
+                var d = day;
+                var value = spends.Where(s => s.Date.Date == d && chartPeople.Contains(s.UserId)).Sum(s => s.Amount);
+                decimal? prev = null;
+                if (q.Compare)
+                {
+                    var pd = d.AddDays(-shift);
+                    prev = spends.Where(s => s.Date.Date == pd && prevPeople.Contains(s.UserId)).Sum(s => s.Amount);
+                }
+                result.Chart.Add(new ReportChartPoint
+                {
+                    Day = d,
+                    Value = value,
+                    Previous = prev,
+                    Display = Rm(value),
+                    PreviousDisplay = prev.HasValue ? Rm(prev.Value) : null
+                });
+            }
+
+            // ---------- Customer type buttons (counted without that filter) ----------
+            var groups = Pick(period, useGroups: false, useCustomer: true)
+                .GroupBy(c => c.Type)
+                .Select(g => new { Name = g.Key, Value = (decimal)g.Count() })
+                .OrderByDescending(g => g.Value)
+                .ToList();
+            foreach (var chosen in q.Groups.Where(c => groups.All(g => g.Name != c)))
+            {
+                groups.Add(new { Name = chosen, Value = 0m });
+            }
+            foreach (var g in groups)
+            {
+                result.Groups.Add(new ReportGroup
+                {
+                    Name = g.Name,
+                    Value = g.Value,
+                    Display = g.Value.ToString("0"),
+                    Color = ColorOf(g.Name),
+                    Selected = q.Groups.Contains(g.Name)
+                });
+            }
+
+            foreach (var c in Pick(period, useGroups: true, useCustomer: false).OrderByDescending(c => c.Spent).Take(5))
+            {
+                result.TopCustomers.Add(new KeyValuePair<string, string>(c.Name, c.Spent.ToString("N2", My)));
+            }
+            result.CustomerNames.AddRange(period.Select(c => c.Name).Distinct().OrderBy(n => n));
+
+            // ---------- Table ----------
+            AddColumns(result, ("Customer", false), ("Visits", true), ("Orders", true), ("Spent (RM)", true),
+                ("Per visit (RM)", true), ("Last visit", false), ("Type", false));
+            foreach (var c in current)
+            {
+                var avg = c.Visits == 0 ? 0 : c.Spent / c.Visits;
+                var row = new ReportRow { Key = "c" + c.UserId, UserId = c.UserId };
+                row.Cells.Add(new ReportCell { Text = c.Name, Sort = c.Name });
+                row.Cells.Add(new ReportCell { Text = c.Visits.ToString(), Sort = c.Visits });
+                row.Cells.Add(new ReportCell { Text = c.Orders.ToString(), Sort = c.Orders });
+                row.Cells.Add(new ReportCell { Text = c.Spent.ToString("N2", My), Sort = c.Spent });
+                row.Cells.Add(new ReportCell { Text = avg.ToString("N2", My), Sort = avg });
+                row.Cells.Add(new ReportCell { Text = c.Last?.ToString("d MMM yyyy") ?? "—", Sort = c.Last ?? DateTime.MinValue });
+                row.Cells.Add(new ReportCell { Text = c.Type, Badge = BadgeOf(c.Type), Sort = c.Type });
+                row.Details.Add(Pair("First visit", c.First?.ToString("d MMM yyyy") ?? "—"));
+                result.Rows.Add(row);
+            }
+            var totalVisits = current.Sum(c => c.Visits);
+            var totalSpent = current.Sum(c => c.Spent);
+            result.Total = TotalRow($"{current.Count} customers", totalVisits.ToString(), current.Sum(c => c.Orders).ToString(),
+                totalSpent.ToString("N2", My), (totalVisits == 0 ? 0 : totalSpent / totalVisits).ToString("N2", My), "", "");
+
+            Sort(result, q);
+            await AddDiningNotesAsync(result);
+            return result;
         }
 
         // =====================================================================
@@ -645,6 +933,24 @@ namespace RROMS.Services
             : p.BillId.HasValue ? "BILL-" + p.BillId.Value.ToString("D5")
             : "—";
 
+        // ---------- Search (one box for the columns that have no filter of their own) ----------
+        // Status, order type, payment method, category and customer type already have drop-downs,
+        // so the search box does not look in them.
+
+        // All the words typed must appear somewhere in the record, in any order and any case:
+        // "aiko 4 nov" finds Aiko's reservation on 4 Nov.
+        private static bool Matches(string text, string? query)
+        {
+            if (string.IsNullOrWhiteSpace(query)) return true;
+            return query.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .All(word => text.Contains(word, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string Text(params string?[] parts) =>
+            string.Join(" ", parts.Where(p => !string.IsNullOrWhiteSpace(p)));
+
+        private static string Day(DateTime d) => d.ToString("d MMM yyyy");
+
         private static string NameOf(ApplicationUser? u) =>
             string.IsNullOrWhiteSpace(u?.FullName) ? "Customer" : u!.FullName!;
 
@@ -653,6 +959,7 @@ namespace RROMS.Services
             ReportType.Reservations => "Reservations",
             ReportType.Orders => "Customer orders",
             ReportType.Sales => "Sales transactions",
+            ReportType.Customers => "Customer activity",
             _ => "Menu items"
         };
 
@@ -663,16 +970,17 @@ namespace RROMS.Services
 
         private static string BadgeOf(string status) => status switch
         {
-            "Completed" or "Paid" => "rp-b-ok",
-            "Pending" or "Preparing" or "Ready to Serve" => "rp-b-wait",
+            "Completed" or "Paid" or "Regular" => "rp-b-ok",
+            "Pending" or "Preparing" or "Ready to Serve" or "New" => "rp-b-wait",
             "Cancelled" or "Refunded" or "Failed" or "No-show" => "rp-b-bad",
             _ => "rp-b-info"
         };
 
         private static string ColorOf(string name) => name switch
         {
-            "Completed" or "Paid" => "#3F7A4C",
-            "Confirmed" or "Seated" or "Served" => "#3D5A80",
+            "Completed" or "Paid" or "Regular" => "#3F7A4C",
+            "Confirmed" or "Seated" or "Served" or "Returning" => "#3D5A80",
+            "New" => "#A8741A",
             "Pending" or "Preparing" => "#A8741A",
             "Ready to Serve" => "#8C6A2E",
             "Cancelled" or "Refunded" or "Failed" => "#C9392B",
