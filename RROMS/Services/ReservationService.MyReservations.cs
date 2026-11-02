@@ -31,11 +31,11 @@ public partial class ReservationService : IMyReservationsService
             .ThenBy(r => r.Id)
             .ToListAsync(cancellationToken);
 
-        // Area names are read once (the table only stores the area id).
+        // Area names and icons are read once (the table only stores the area id).
         var areaIds = rows.Where(r => r.Table != null).Select(r => r.Table!.DiningAreaId).Distinct().ToList();
         var areaNames = await _db.DiningAreas.AsNoTracking()
             .Where(a => areaIds.Contains(a.Id))
-            .ToDictionaryAsync(a => a.Id, a => a.Name, cancellationToken);
+            .ToDictionaryAsync(a => a.Id, a => (a.Name, Icon: AreaIconRules.Resolve(a.IconName, a.Name)), cancellationToken);
 
         return rows.Select(r => new MyReservationItem(
             r.Id,
@@ -49,10 +49,11 @@ public partial class ReservationService : IMyReservationsService
             r.MinimumSpendAcceptedAt.HasValue,
             r.Status.ToString(),
             r.ReservedAt > now && r.Status != ReservationStatus.Seated,   // a party that is already seated cannot be modified or cancelled
-            r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var area) ? area : null,
+            r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var area) ? area.Name : null,
             // The customer only sees the table number once staff have confirmed the booking.
             r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Seated
-                ? r.Table?.TableNumber : null)).ToArray();
+                ? r.Table?.TableNumber : null,
+            r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var areaForIcon) ? areaForIcon.Icon : null)).ToArray();
     }
 
     // ================= US18: reservation history and live status =================
@@ -138,7 +139,7 @@ public partial class ReservationService : IMyReservationsService
         var areaIds = rows.Where(r => r.Table != null).Select(r => r.Table!.DiningAreaId).Distinct().ToList();
         var areaNames = await _db.DiningAreas.AsNoTracking()
             .Where(a => areaIds.Contains(a.Id))
-            .ToDictionaryAsync(a => a.Id, a => a.Name, cancellationToken);
+            .ToDictionaryAsync(a => a.Id, a => (a.Name, Icon: AreaIconRules.Resolve(a.IconName, a.Name)), cancellationToken);
 
         return rows.Select(r =>
         {
@@ -171,14 +172,15 @@ public partial class ReservationService : IMyReservationsService
                 r.Guests,
                 r.Table?.TableTypeDefinition?.Name ?? "Table",
                 r.Table?.TableTypeDefinition?.JapaneseName,
-                r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var area) ? area : null,
+                r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var area) ? area.Name : null,
                 // The table number is only worth showing for a booking that really took place.
                 r.Status == ReservationStatus.Completed ? r.Table?.TableNumber : null,
                 r.Status.ToString(),
                 r.MinimumSpendAccepted ?? 0m,
                 r.SpecialRequest,
                 r.CreatedAt,
-                steps);
+                steps,
+                r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var areaForIcon) ? areaForIcon.Icon : null);
         }).ToArray();
     }
 

@@ -101,6 +101,13 @@
         details.querySelectorAll('[data-fill]').forEach(el => {
             el.textContent = String(values[el.dataset.fill] ?? '');
         });
+        // The dining area line (icon and name) is hidden when the table type has no area.
+        const areaLine = details.querySelector('[data-area-line]');
+        if (areaLine) {
+            areaLine.hidden = !item.area;
+            const use = areaLine.querySelector('use');
+            if (use) use.setAttribute('href', '#area-' + (/^[a-z-]+$/.test(item.areaIcon || '') ? item.areaIcon : 'map-pin'));
+        }
         // The arrival time shows AM/PM smaller than the clock.
         const arrival = details.querySelector('[data-fill="time"]');
         const clock = /^(.+?)\s*(AM|PM)$/i.exec(item.time || '');

@@ -245,6 +245,10 @@ public class IndexModel(
     public static string? Area(MyReservationItem r) =>
         string.IsNullOrWhiteSpace(r.AreaName) ? null : r.AreaName.Trim();
 
+    // The symbol of the dining area icon (see _AreaIcons.cshtml). An unknown name falls back to the map pin.
+    public static string AreaIconHref(string? icon) =>
+        "#area-" + (!string.IsNullOrEmpty(icon) && icon.All(c => (c >= 'a' && c <= 'z') || c == '-') ? icon : "map-pin");
+
     // The table number is shown only after staff confirm the booking. It can still change on the day.
     public static string? TableNumber(MyReservationItem r) =>
         (r.Status == "Confirmed" || r.Status == "Seated") && !string.IsNullOrWhiteSpace(r.TableNumber) ? r.TableNumber.Trim() : null;
