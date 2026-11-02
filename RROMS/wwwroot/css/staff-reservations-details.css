@@ -1,0 +1,666 @@
+/* Owner: Member 2 - US16 reservation details pop-up (dark "YORU" card).
+   Every rule is scoped to .dv, so nothing here touches another page or the shared layout. */
+
+.dv {
+    --g: #e0b56a;            /* gold */
+    --g-soft: rgba(224,181,106,.42);
+    --g-line: rgba(224,181,106,.28);
+    --cream: #f6e9d6;
+    --mute: rgba(246,233,214,.62);
+    --panel: rgba(255,255,255,.035);
+    position: relative;
+    color: var(--cream);
+    font-family: var(--sr-serif, Georgia, "Times New Roman", serif);
+    background:
+        radial-gradient(120% 70% at 85% 0%, rgba(120,84,40,.22), transparent 60%),
+        linear-gradient(180deg, #211813, #16100d);
+    border-radius: 16px;
+    box-shadow: 0 40px 80px rgba(8,4,2,.7);
+    overflow: hidden;
+    padding: 28px 34px 26px;
+    isolation: isolate;
+}
+
+    .dv *, .dv *::before, .dv *::after { box-sizing: border-box }
+
+    .dv svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; vertical-align: middle }
+
+    /* gold frame + corner brackets */
+    .dv::before { content: ""; position: absolute; inset: 6px; border: 1px solid var(--g-line); border-radius: 10px; pointer-events: none; z-index: 0 }
+
+.dv-corner { position: absolute; width: 48px; height: 48px; background: url('../images/staff/yoru-details-corner.webp') 0 0 / 100% 100% no-repeat; pointer-events: none; z-index: 5 }
+
+    .dv-corner.c1 { top: 0; left: 0 }
+    .dv-corner.c2 { top: 0; right: 0; transform: scaleX(-1) }
+    .dv-corner.c3 { bottom: 0; left: 0; transform: scaleY(-1) }
+    .dv-corner.c4 { bottom: 0; right: 0; transform: scale(-1,-1) }
+
+.dv > *:not(.dv-corner) { position: relative; z-index: 2 }
+
+/* ------------------------------------------------------------ header */
+.dv-head { display: flex; align-items: flex-start; gap: 18px; padding: 8px 4px 18px; min-height: 120px }
+
+    .dv-head::before { content: ""; position: absolute; z-index: -1; top: -28px; right: -34px; width: 440px; height: 210px; background: url('../images/staff/yoru-details-bamboo.webp') right top / 100% 100% no-repeat; opacity: .75; pointer-events: none }
+
+.dv-hanko {
+    width: 68px;
+    height: 68px;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 900 40px/1 var(--sr-serif, Georgia, serif);
+    color: #fff3df;
+    background: linear-gradient(145deg,#cf2f22,#9f1b12);
+    border-radius: 9px;
+    box-shadow: inset 0 0 0 2px #d63a2c, inset 0 0 0 4px rgba(255,236,200,.7), 0 0 0 2px #1d1511, 0 0 0 3px var(--g), 0 8px 18px rgba(0,0,0,.45);
+    margin-top: 6px;
+}
+
+.dv-who { min-width: 0; flex: 1 }
+
+.dv-eyebrow { margin: 4px 0 0; font: 700 11px var(--sr-sans, system-ui, sans-serif); letter-spacing: .2em; color: var(--g) }
+
+.dv-who h2 { margin: 2px 0 10px; font: 900 40px/1.05 var(--sr-serif, Georgia, serif); color: #fff3df; overflow-wrap: anywhere; text-shadow: 0 2px 10px rgba(0,0,0,.35) }
+
+.dv-chips { display: flex; gap: 8px; flex-wrap: wrap }
+
+.dv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 999px;
+    background: rgba(255,255,255,.06);
+    color: var(--cream);
+    font: 600 14px var(--sr-serif, Georgia, serif);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background .18s, border-color .18s, transform .18s;
+}
+
+    .dv-chip svg { width: 17px; height: 17px; color: var(--g) }
+
+    .dv-chip.is-ref { cursor: default; font-weight: 700; letter-spacing: .06em; background: rgba(0,0,0,.28) }
+
+    .dv-chip:hover:not(.is-ref) { background: rgba(255,255,255,.13); border-color: var(--g-soft); transform: translateY(-1px) }
+
+.dv-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    margin-top: 10px;
+    padding: 0 20px;
+    border-radius: 999px;
+    font: 700 16px var(--sr-serif, Georgia, serif);
+    white-space: nowrap;
+    background: #fbe9ae;
+    color: #6e3c06;
+    box-shadow: 0 6px 16px rgba(0,0,0,.35);
+}
+
+    .dv-status svg { width: 18px; height: 18px; stroke-width: 2.4 }
+
+    .dv-status.s-confirmed { background: #e3efff; color: #1b4a85; box-shadow: 0 0 0 1px #9dc0ec, 0 6px 16px rgba(0,0,0,.35) }
+    .dv-status.s-seated { background: #d3ecd4; color: #1e5a2a }
+    .dv-status.s-late { background: #fbd5cf; color: #9a1d13 }
+    .dv-status.s-completed { background: #ece4f4; color: #55407c }
+    .dv-status.s-cancelled { background: #e8e1da; color: #6e655d }
+
+.dv-close {
+    width: 46px;
+    height: 46px;
+    flex: none;
+    margin-top: 7px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 50%;
+    background: #3a2d26;
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .18s, transform .18s;
+}
+
+    .dv-close:hover { background: rgba(255,255,255,.2); transform: rotate(90deg) }
+
+    .dv-close svg { width: 18px; height: 18px; stroke-width: 2.2 }
+
+.dv-rule { display: flex; align-items: center; gap: 12px; margin: 0 0 16px }
+
+    .dv-rule::before, .dv-rule::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--g-soft) 12%, var(--g-soft) 88%, transparent) }
+
+    .dv-rule i { width: 9px; height: 9px; background: var(--g); transform: rotate(45deg); flex: none }
+
+/* ------------------------------------------------------------ cards */
+.dv-grid { display: grid; grid-template-columns: 1.22fr 1fr; gap: 16px; align-items: stretch }
+
+.dv-col { display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+
+.dv-card { border: 1px solid var(--g-line); border-radius: 14px; background: var(--panel); padding: 16px 20px 18px; min-width: 0 }
+
+.dv-h {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--g-line);
+    font: 700 12.5px var(--sr-sans, system-ui, sans-serif);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--g);
+    white-space: nowrap;
+}
+
+    .dv-h svg { width: 24px; height: 24px; color: var(--g) }
+
+    .dv-h em { margin-left: auto; font: italic 400 13px var(--sr-serif, Georgia, serif); letter-spacing: 0; text-transform: none; color: var(--mute); white-space: nowrap }
+
+.dv-overview { flex: 1; display: flex; flex-direction: column }
+
+.dv-trio { display: grid; grid-template-columns: auto auto auto; justify-content: space-between; gap: 0; margin-bottom: 16px }
+
+    .dv-trio > div { padding: 0 12px; border-left: 1px solid var(--g-line); min-width: max-content }
+
+        .dv-trio > div:first-child { padding-left: 0; border-left: 0 }
+
+        .dv-trio > div:last-child { padding-right: 0 }
+
+    .dv-trio small, .dv-spend small { display: flex; align-items: center; gap: 7px; font: 700 10.5px var(--sr-sans, system-ui, sans-serif); letter-spacing: .14em; text-transform: uppercase; color: var(--g) }
+
+        .dv-trio small svg, .dv-spend small svg { width: 15px; height: 15px }
+
+    .dv-trio b { display: block; margin-top: 6px; font: 600 21px/1.15 var(--sr-serif, Georgia, serif); color: #fff3df; white-space: nowrap }
+
+/* assigned table, with the wax seal */
+.dv-table {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 124px;
+    padding: 14px 22px 14px 20px;
+    border: 1px solid var(--g-soft);
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(255,255,255,.04), rgba(0,0,0,.18));
+    overflow: hidden;
+}
+
+    .dv-table::before { content: ""; position: absolute; inset: 0; background: url('../images/staff/yoru-details-seigaiha.webp') 0 0 / 120px 60px repeat; opacity: .55; -webkit-mask-image: linear-gradient(90deg, transparent 15%, #000 85%); mask-image: linear-gradient(90deg, transparent 15%, #000 85%); pointer-events: none }
+
+    .dv-table > * { position: relative }
+
+    .dv-table small { display: flex; align-items: center; gap: 8px; font: 700 11px var(--sr-sans, system-ui, sans-serif); letter-spacing: .2em; text-transform: uppercase; color: var(--g) }
+
+        .dv-table small svg { width: 20px; height: 20px }
+
+    .dv-table b { display: block; margin: 4px 0 2px; font: 900 44px/1.05 var(--sr-serif, Georgia, serif); color: #fff3df; white-space: nowrap }
+
+    .dv-table b.l6 { font-size: 38px }
+    .dv-table b.l8 { font-size: 32px }
+
+    .dv-table p { margin: 0; font: 400 17px var(--sr-serif, Georgia, serif); color: var(--cream) }
+
+        .dv-table p i { font-style: normal; margin: 0 8px; opacity: .7 }
+
+.dv-seal { position: relative; width: 128px; height: 128px; flex: none; margin-right: 6px; filter: drop-shadow(0 8px 10px rgba(0,0,0,.5)) }
+
+    .dv-seal img { position: absolute; inset: 0; width: 100%; height: 100% }
+
+    .dv-seal span { position: absolute; left: 14%; right: 14%; top: 21%; height: 44%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #f2cf8d; text-shadow: 0 1px 1px rgba(60,0,0,.6) }
+
+    .dv-seal small { display: block; font: 800 8.5px var(--sr-sans, system-ui, sans-serif); letter-spacing: .24em; color: #f2cf8d }
+
+    .dv-seal b { display: block; margin-top: 2px; font: 900 19px/1 var(--sr-serif, Georgia, serif); letter-spacing: .02em; color: #f7d99a }
+
+    .dv-seal.s6 b { font-size: 15px }
+    .dv-seal.s8 b { font-size: 12px; letter-spacing: 0 }
+
+    .dv-seal.is-mini { width: 62px; height: 62px; margin: 0; transform: rotate(-8deg) }
+
+        .dv-seal.is-mini span { top: 20%; height: 42% }
+
+        .dv-seal.is-mini b { font-size: 9px; letter-spacing: .12em }
+
+/* minimum spend */
+.dv-spend { display: flex; align-items: center; gap: 18px; margin-top: 16px }
+
+    .dv-spend > svg { width: 30px; height: 30px; color: var(--g) }
+
+    .dv-spend small { margin-bottom: 2px }
+
+    .dv-spend b { display: block; font: 800 26px/1.1 var(--sr-serif, Georgia, serif); color: #fff3df }
+
+    .dv-spend .dv-vr { align-self: stretch; width: 1px; background: var(--g-line) }
+
+    .dv-spend p { margin: 0; font: 400 16px var(--sr-serif, Georgia, serif); color: var(--mute) }
+
+    .dv-spend .ok { display: inline-flex; align-items: center; gap: 10px; font: 600 18px var(--sr-serif, Georgia, serif); color: #8fe0a0 }
+
+        .dv-spend .ok i { width: 30px; height: 30px; border-radius: 50%; background: #2f9a48; color: #fff; display: inline-flex; align-items: center; justify-content: center }
+
+            .dv-spend .ok i svg { width: 17px; height: 17px; stroke-width: 2.6 }
+
+/* ------------------------------------------------------------ status card (right) */
+.dv-state {
+    --sc: #7fb2ee;
+    position: relative;
+    border: 1px solid color-mix(in srgb, var(--sc) 55%, transparent);
+    border-radius: 14px;
+    padding: 16px 22px 18px;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--sc) 22%, #101820), color-mix(in srgb, var(--sc) 7%, #0d0b0a));
+    overflow: hidden;
+}
+
+    .dv-state::after { content: ""; position: absolute; z-index: 0; top: -10px; right: -26px; width: 230px; height: 176px; background: url('../images/staff/yoru-details-moon.webp') right top / 100% 100% no-repeat; opacity: .3; pointer-events: none }
+
+    .dv-state > * { position: relative; z-index: 1 }
+
+    .dv-state.is-confirmed { --sc: #6fa8ee }
+    .dv-state.is-pending { --sc: #e0b56a }
+    .dv-state.is-late { --sc: #ef7a68 }
+    .dv-state.is-seated { --sc: #6cc27c }
+    .dv-state.is-completed { --sc: #a78bd0 }
+    .dv-state.is-cancelled { --sc: #a39a92 }
+
+.dv-state-h { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; font: 700 12.5px var(--sr-sans, system-ui, sans-serif); letter-spacing: .16em; white-space: nowrap; text-transform: uppercase; color: var(--sc) }
+
+    .dv-state-h i { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--sc); display: inline-flex; align-items: center; justify-content: center; flex: none }
+
+        .dv-state-h i svg { width: 18px; height: 18px; stroke-width: 2.2 }
+
+.dv-state h3 { margin: 0 0 4px; font: 900 44px/1.05 var(--sr-serif, Georgia, serif); color: #fff3df }
+
+.dv-state .lead { margin: 0 0 12px; font: 400 21px var(--sr-serif, Georgia, serif); color: var(--cream) }
+
+.dv-hold { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid color-mix(in srgb, var(--sc) 35%, transparent); font: 400 21px var(--sr-serif, Georgia, serif); color: #fff3df }
+
+    .dv-hold svg { width: 28px; height: 28px; color: var(--cream) }
+
+.dv-state .note { margin: 12px 0 0; font: 400 16px/1.45 var(--sr-serif, Georgia, serif); color: var(--cream); opacity: .9 }
+
+/* pending: the countdown box */
+.dv-count { margin: 4px 0 12px; padding: 12px 18px 14px; border: 1px solid color-mix(in srgb, var(--sc) 30%, transparent); border-radius: 10px; background: rgba(0,0,0,.28) }
+
+    .dv-count small { display: block; font: 700 12px var(--sr-sans, system-ui, sans-serif); letter-spacing: .2em; color: var(--sc) }
+
+.dv-num { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 6px; white-space: nowrap; color: #fff3df }
+
+    .dv-num b { font: 800 58px/1 var(--sr-serif, Georgia, serif) }
+
+    .dv-num small { display: inline; font: 700 30px var(--sr-serif, Georgia, serif); letter-spacing: 0; color: var(--sc); margin-right: 8px }
+
+.dv-count p { margin: 0; font: 600 22px var(--sr-serif, Georgia, serif); color: #fff3df }
+
+.dv-pref { position: relative; padding: 14px 20px 16px; border: 1px solid var(--g-line); border-radius: 14px; background: var(--panel); flex: 1; overflow: hidden }
+
+    .dv-pref::before { content: ""; position: absolute; inset: 0; background: url('../images/staff/yoru-details-seigaiha.webp') 0 0 / 120px 60px repeat; opacity: .5; -webkit-mask-image: linear-gradient(135deg, transparent 35%, #000 100%); mask-image: linear-gradient(135deg, transparent 35%, #000 100%); pointer-events: none }
+
+    .dv-pref > * { position: relative }
+
+    .dv-pref .dv-h { margin-bottom: 10px; padding-bottom: 0; border: 0; gap: 10px; font-size: 11.5px; letter-spacing: .14em }
+
+        .dv-pref .dv-h svg { width: 20px; height: 20px }
+
+    .dv-pref p { margin: 0; font: 400 19px var(--sr-serif, Georgia, serif); color: var(--cream) }
+
+        .dv-pref p.is-none { font-style: italic; color: var(--mute) }
+
+/* ------------------------------------------------------------ special request (washi banner) */
+.dv-request {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-top: 16px;
+    min-height: 92px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    color: #3a220d;
+    background: url('../images/staff/yoru-details-washi.webp') 0 0 / 256px 256px repeat;
+    box-shadow: inset 0 0 0 1px rgba(150,100,40,.35), inset 0 0 22px rgba(150,100,40,.28), 0 6px 18px rgba(0,0,0,.35);
+    overflow: hidden;
+}
+
+    .dv-request::after { content: ""; position: absolute; right: -4px; top: 0; bottom: 0; width: 300px; background: url('../images/staff/yoru-details-sakura.webp') right center / contain no-repeat; opacity: .95; pointer-events: none }
+
+    .dv-request > * { position: relative; z-index: 1 }
+
+    .dv-request > svg { width: 44px; height: 44px; color: #8a4a1d; stroke-width: 1.5 }
+
+    .dv-request small { display: flex; align-items: baseline; gap: 12px; font: 800 13px var(--sr-sans, system-ui, sans-serif); letter-spacing: .2em; color: #5a3410 }
+
+        .dv-request small em { padding-left: 12px; border-left: 1px solid rgba(90,52,16,.4); font: 400 15px var(--sr-serif, Georgia, serif); letter-spacing: 0; font-style: normal; color: #7a5a38 }
+
+    .dv-request p { margin: 3px 0 0; max-width: 520px; font: 800 24px/1.2 var(--sr-serif, Georgia, serif); color: #2e1a08 }
+
+    .dv-request .dv-allergy { display: inline-flex; align-items: center; gap: 6px; margin-right: 10px; padding: 2px 10px; border-radius: 6px; background: #b3261b; color: #fff; font: 800 12px var(--sr-sans, system-ui, sans-serif); letter-spacing: .12em; vertical-align: middle }
+
+        .dv-request .dv-allergy svg { width: 14px; height: 14px; stroke-width: 2.2 }
+
+/* ------------------------------------------------------------ progress */
+.dv-progress { margin-top: 16px; padding: 14px 22px 16px; border: 1px solid var(--g-line); border-radius: 14px; background: var(--panel) }
+
+    .dv-progress .dv-h { margin-bottom: 12px }
+
+.dv-steps { display: grid; grid-template-columns: repeat(4,1fr); list-style: none; margin: 0; padding: 0 }
+
+    .dv-steps li { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 6px; color: var(--mute) }
+
+        .dv-steps li::before { content: ""; position: absolute; top: 19px; left: -50%; right: 50%; height: 3px; border-radius: 3px; background: rgba(255,255,255,.14) }
+
+        .dv-steps li:first-child::before { display: none }
+
+    .dv-steps i { position: relative; z-index: 1; width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255,255,255,.25); background: #241a15; display: flex; align-items: center; justify-content: center; color: transparent; transition: transform .2s }
+
+        .dv-steps i svg { width: 20px; height: 20px; stroke-width: 2.8 }
+
+    .dv-steps b { margin-top: 8px; font: 700 18px var(--sr-serif, Georgia, serif); color: var(--mute) }
+
+    .dv-steps small { margin-top: 2px; font: 400 15px var(--sr-serif, Georgia, serif); color: var(--mute) }
+
+    .dv-steps li.done i { background: #2f9a48; border-color: #62c777; color: #fff }
+
+    .dv-steps li.done b, .dv-steps li.done small { color: #8fe0a0 }
+
+    .dv-steps li.done::before { background: #4cbf63 }
+
+    .dv-steps li.cur i { border-color: var(--g); color: var(--g); box-shadow: 0 0 0 4px rgba(224,181,106,.18) }
+
+        .dv-steps li.cur i svg { display: none }
+
+        .dv-steps li.cur i::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--g) }
+
+    .dv-steps li.cur b { color: #fff3df }
+
+    .dv-steps li.cur small { color: var(--cream) }
+
+    .dv-steps li.cur::before { background: linear-gradient(90deg, #4cbf63, var(--g)) }
+
+    .dv-steps li.bad i { background: #8a3a30; border-color: #d97c6d; color: #fff }
+
+    .dv-steps li.bad b, .dv-steps li.bad small { color: #f0a79b }
+
+    .dv-steps li.bad::before { background: linear-gradient(90deg, #4cbf63, #d9604f) }
+
+/* ------------------------------------------------------------ footer */
+.dv-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 16px; padding: 12px 18px; border: 1px solid var(--g-line); border-radius: 14px; background: rgba(0,0,0,.28) }
+
+.dv-note { display: flex; align-items: center; gap: 14px; flex: 1 1 0; min-width: 0; font: 400 14px/1.4 var(--sr-serif, Georgia, serif); color: var(--cream) }
+
+    .dv-note > svg { width: 30px; height: 30px; color: var(--g) }
+
+    .dv-note .dv-vr { align-self: stretch; width: 1px; background: var(--g-line) }
+
+    .dv-note p { margin: 0 }
+
+.dv-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; flex: none }
+
+.dv-link { border: 0; background: transparent; color: var(--cream); font: 700 16px var(--sr-serif, Georgia, serif); padding: 10px 12px; cursor: pointer }
+
+    .dv-link:hover { color: var(--g) }
+
+.dv-ghost { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; border: 1px solid rgba(224,181,106,.35); border-radius: 10px; background: transparent; color: #e7b9a8; font: 600 15px var(--sr-serif, Georgia, serif) }
+
+    .dv-ghost em { padding: 1px 8px; border: 1px solid rgba(224,181,106,.4); border-radius: 6px; font: normal 12.5px var(--sr-serif, Georgia, serif); color: #d6a98f }
+
+    .dv-ghost:disabled { cursor: not-allowed; opacity: .8 }
+
+.dv-confirm { display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 22px; border: 0; border-radius: 10px; background: linear-gradient(#df3b2b, #b3261b); color: #fff; font: 700 16.5px var(--sr-serif, Georgia, serif); box-shadow: 0 3px 0 #7d150e, 0 10px 22px rgba(179,38,27,.4); cursor: pointer; transition: transform .15s, filter .15s }
+
+    .dv-confirm svg { width: 18px; height: 18px; stroke-width: 2.6 }
+
+    .dv-confirm:hover { filter: brightness(1.08); transform: translateY(-1px) }
+
+    .dv-confirm:disabled { opacity: .6; cursor: progress }
+
+/* ------------------------------------------------------------ small screens */
+@media (max-width: 760px) {
+    .dv { padding: 22px 18px 20px }
+    .dv-head::before { width: 300px; opacity: .5 }
+    .dv-head { flex-wrap: wrap }
+    .dv-grid { grid-template-columns: 1fr }
+    .dv-trio { grid-template-columns: 1fr 1fr; row-gap: 12px }
+    .dv-trio > div:nth-child(3) { padding-left: 0; border-left: 0 }
+    .dv-table b { font-size: 36px }
+    .dv-seal { width: 104px; height: 104px }
+    .dv-request::after { opacity: .5 }
+    .dv-steps b { font-size: 15px }
+    .dv-steps small { font-size: 12.5px }
+    .dv-actions { width: 100%; flex-wrap: wrap; justify-content: flex-end }
+}
+
+/* a little movement when it opens */
+@keyframes dv-rise { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+@keyframes dv-seal-in { from { opacity: 0; transform: scale(1.35) rotate(-14deg) } to { opacity: 1; transform: none } }
+.dv-grid > *, .dv-request, .dv-progress, .dv-foot { animation: dv-rise .4s ease-out both }
+.dv-col:nth-child(2) { animation-delay: .06s }
+.dv-request { animation-delay: .1s }
+.dv-progress { animation-delay: .14s }
+.dv-foot { animation-delay: .18s }
+.dv-seal:not(.is-mini) img { animation: dv-seal-in .5s .25s cubic-bezier(.3,1.3,.5,1) both }
+
+@media (prefers-reduced-motion: reduce) {
+    .dv *, .dv *::before, .dv *::after { animation: none !important; transition: none !important }
+}
+
+/* ---------------------------------------------------------------- US17: status actions */
+.dv-ghost:not(:disabled) { cursor: pointer }
+.dv-ghost:hover:not(:disabled) { background: rgba(224,138,128,.14) }
+.dv-ghost.is-light { display: inline-flex; align-items: center; gap: 8px; border-color: rgba(251,238,222,.45); color: #fbeede }
+    .dv-ghost.is-light svg { width: 17px; height: 17px }
+    .dv-ghost.is-light:hover:not(:disabled) { background: rgba(251,238,222,.12) }
+.dv-confirm.is-seat { background: linear-gradient(#3f9a4c,#2f7a3c); box-shadow: 0 3px 0 #1f5a2b }
+
+/* ---------------------------------------------------------------- fit the card on shorter screens */
+.sr-modal:has(.dv) { padding-top: 2vh; padding-bottom: 2vh }
+.sr-modal-box:has(.dv) { width: min(900px, 100%); zoom: .86 }
+@media (max-height: 980px) { .sr-modal-box:has(.dv) { zoom: .78 } }
+@media (max-height: 880px) { .sr-modal-box:has(.dv) { zoom: .7 } }
+@media (max-height: 780px) { .sr-modal-box:has(.dv) { zoom: .62 } }
+@media (max-width: 760px) { .sr-modal-box:has(.dv) { zoom: 1 } }
+.dv-spend small, .dv-spend b { white-space: nowrap }
+.sr-modal-box:has(.dv) { margin: auto }
+
+/* ---------------------------------------------------------------- footer: note on top, actions below */
+.dv-foot {
+    display: block;
+    padding: 14px 18px 16px
+}
+
+    .dv-foot .dv-note {
+        flex: none;
+        padding-bottom: 13px;
+        margin-bottom: 13px;
+        border-bottom: 1px solid var(--g-line)
+    }
+
+    .dv-foot .dv-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        width: 100%;
+        margin: 0
+    }
+
+.dv-act-l, .dv-act-r {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px
+}
+
+.dv-act-r {
+    margin-left: auto
+}
+
+.dv-ghost svg {
+    width: 16px;
+    height: 16px
+}
+
+/* Cancel booking: clearly a warning button */
+.dv-ghost.is-danger {
+    border-color: rgba(240,120,104,.75);
+    background: rgba(179,38,27,.2);
+    color: #ffb8aa;
+    font-weight: 700
+}
+
+    .dv-ghost.is-danger:hover:not(:disabled) {
+        background: rgba(179,38,27,.42);
+        border-color: #f08a7a;
+        color: #fff
+    }
+
+/* No-show: amber, so it reads differently from Cancel */
+.dv-ghost.is-amber {
+    border-color: rgba(224,181,106,.7);
+    background: rgba(224,181,106,.1);
+    color: #f2cf8d;
+    font-weight: 700
+}
+
+    .dv-ghost.is-amber:hover:not(:disabled) {
+        background: rgba(224,181,106,.24);
+        color: #fff3df
+    }
+
+@media (max-width: 760px) {
+    .dv-foot .dv-actions {
+        flex-direction: column;
+        align-items: stretch
+    }
+
+    .dv-act-l, .dv-act-r {
+        justify-content: flex-end
+    }
+}
+
+/* ---------------------------------------------------------------- arrival choice + slightly smaller buttons */
+.dv-choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--g-soft);
+    border-radius: 12px;
+    background: rgba(0,0,0,.28)
+}
+
+.dv-choice-l {
+    padding: 0 8px 0 10px;
+    font: 700 10px var(--sr-sans, system-ui, sans-serif);
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--g)
+}
+
+.dv-choice-or {
+    font: italic 400 13px var(--sr-serif, Georgia, serif);
+    color: var(--mute)
+}
+
+.dv-choice button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 9px;
+    font: 700 14px var(--sr-serif, Georgia, serif);
+    cursor: pointer;
+    transition: filter .15s, background .15s
+}
+
+    .dv-choice button svg {
+        width: 16px;
+        height: 16px
+    }
+
+    .dv-choice button.is-seat {
+        background: linear-gradient(#3f9a4c,#2f7a3c);
+        color: #fff;
+        box-shadow: 0 2px 0 #1f5a2b
+    }
+
+    .dv-choice button.is-noshow {
+        background: rgba(224,181,106,.16);
+        color: #f2cf8d;
+        box-shadow: inset 0 0 0 1px rgba(224,181,106,.55)
+    }
+
+    .dv-choice button:hover {
+        filter: brightness(1.12)
+    }
+
+.dv-confirm {
+    height: 40px;
+    padding: 0 18px;
+    gap: 8px;
+    font-size: 15px;
+    border-radius: 9px
+}
+
+    .dv-confirm svg {
+        width: 16px;
+        height: 16px
+    }
+
+.dv-ghost {
+    height: 38px;
+    padding: 0 14px;
+    gap: 7px;
+    font-size: 14px;
+    border-radius: 9px
+}
+
+.dv-link {
+    font-size: 15px;
+    padding: 8px 10px
+}
+
+/* ---------------------------------------------------------------- footer buttons stay on one line */
+.dv-choice.is-single {
+    padding: 0;
+    border: 0;
+    background: none
+}
+
+    .dv-choice.is-single button {
+        height: 38px;
+        padding: 0 16px
+    }
+
+.dv-foot .dv-actions button {
+    white-space: nowrap
+}
+
+@media (min-width: 932px) {
+    .dv-foot .dv-actions, .dv-act-l, .dv-act-r {
+        flex-wrap: nowrap
+    }
+
+    .dv-foot .dv-actions {
+        gap: 8px
+    }
+
+    .dv-act-l, .dv-act-r {
+        gap: 8px
+    }
+}
+
+/* two-step progress (booked -> cancelled / no-show): spread the steps apart */
+.dv-steps.is-two { grid-template-columns: 1fr 1fr; padding: 0 12% }
+
+/* Close button in the footer (every details view has one) */
+.dv-close-btn { padding: 0 14px }
