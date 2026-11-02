@@ -15,6 +15,9 @@
     var badge = bell.querySelector('[data-ntf-badge]');
     var list = bell.querySelector('[data-ntf-list]');
     var markAll = bell.querySelector('[data-ntf-markall]');
+    var markBtn = markAll ? markAll.querySelector('button') : null;
+    var undoIds = [];   // set right after "Mark all as read": the button then offers "Mark all as unread"
+    var allLink = bell.querySelector('.ntf-menu-all');
     var POLL_MS = 30000;
     var SEEN_KEY = 'rroms.ntf.lastSeenId';
     var busy = false;
@@ -27,19 +30,9 @@
         try { sessionStorage.setItem(SEEN_KEY, String(id)); } catch (e) { /* private mode: no toasts history */ }
     }
 
-    function iconFor(n) {
-        var cancelled = /cancel/i.test(n.title);
-        switch (n.type) {
-            case 'Order': return cancelled ? 'bi-bag-x' : 'bi-bag';
-            case 'Reservation': return cancelled ? 'bi-calendar-x' : 'bi-calendar-check';
-            case 'Payment': return 'bi-receipt';
-            case 'Promotion': return 'bi-megaphone';
-            default: return 'bi-info-circle';
-        }
-    }
-    function toneFor(n) {
-        return n.type === 'Order' ? 'is-order' : n.type === 'Payment' ? 'is-payment' : 'is-plain';
-    }
+    // Icon (status) and tone (type colour) come from the server, same as the Notifications page.
+    function iconFor(n) { return n.icon || 'bi-bell'; }
+    function toneFor(n) { return n.tone || 'is-plain'; }
 
     // "Just now", "8 min", "2 h", "Yesterday", "30 Oct"
     function when(iso) {
@@ -75,7 +68,7 @@
         }
         var link = bell.querySelector('.nav-link');
         if (link) link.setAttribute('aria-label', 'Notifications, ' + unread + ' unread');
-        if (markAll) markAll.hidden = unread <= 0;
+        if (markAll) markAll.hidden = unread <= 0 && undoIds.length === 0;
     }
 
     function renderList(items) {
@@ -190,16 +183,40 @@
             .then(function () { busy = false; });
     }
 
-    // Mark all as read without leaving the page.
+    function setMarkMode() {
+        if (markBtn) markBtn.textContent = undoIds.length ? 'Mark all as unread' : 'Mark all as read';
+        // "View all notices" carries the ids, so the page still offers "Mark all as unread".
+        if (allLink) allLink.href = '/Customer/Notifications' + (undoIds.length ? '?undo=' + undoIds.join(',') : '');
+    }
+
+    // "Mark all as read" without leaving the page; pressing again ("Mark all as unread")
+    // puts back exactly the notices it just marked. Closing the dropdown ends the undo.
     if (markAll) {
         markAll.addEventListener('submit', function (e) {
             e.preventDefault();
-            fetch(markAll.action, { method: 'POST', body: new FormData(markAll), credentials: 'same-origin' })
-                .then(refresh, refresh);
+            var undoing = undoIds.length > 0;
+            var body = new FormData(markAll);   // includes the anti-forgery token
+            if (undoing) body.append('ids', undoIds.join(','));
+            fetch('/Customer/Notifications?handler=' + (undoing ? 'MarkUnread' : 'MarkAll'), {
+                method: 'POST', body: body, credentials: 'same-origin', headers: { 'Accept': 'application/json' }
+            })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    undoIds = !undoing && data && data.ids ? data.ids : [];
+                    setMarkMode();
+                    refresh();
+                })
+                .catch(refresh);
         });
     }
 
     bell.addEventListener('show.bs.dropdown', refresh);
+    bell.addEventListener('hidden.bs.dropdown', function () {
+        if (!undoIds.length) return;
+        undoIds = [];
+        setMarkMode();
+        refresh();
+    });
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible') refresh();
     });

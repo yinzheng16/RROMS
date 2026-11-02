@@ -166,14 +166,29 @@ namespace RROMS.Services
             return list.Select(n => ToItem(n, refs)).ToList();
         }
 
-        public async Task MarkAllAsReadAsync(string userId)
+        public async Task<List<int>> MarkAllAsReadAsync(string userId)
         {
             var unread = await _notifications.Query()
                 .Where(n => n.UserId == userId && !n.IsRead)
                 .ToListAsync();
-            if (unread.Count == 0) return;
+            if (unread.Count == 0) return new List<int>();
 
             foreach (var n in unread) n.IsRead = true;
+            await _notifications.SaveChangesAsync();
+            return unread.Select(n => n.Id).ToList();
+        }
+
+        public async Task MarkAsUnreadAsync(string userId, IEnumerable<int> notificationIds)
+        {
+            var ids = notificationIds.Where(id => id > 0).Distinct().Take(500).ToList();
+            if (ids.Count == 0) return;
+
+            var rows = await _notifications.Query()
+                .Where(n => n.UserId == userId && n.IsRead && ids.Contains(n.Id))
+                .ToListAsync();
+            if (rows.Count == 0) return;
+
+            foreach (var n in rows) n.IsRead = false;
             await _notifications.SaveChangesAsync();
         }
 
@@ -249,7 +264,7 @@ namespace RROMS.Services
                         refValue = order.Value.OrderNo;
                         target = $"/Customer/OrderConfirmation?id={order.Value.Id}";
                     }
-                    else target = "/Customer/Orders";
+                    else target = NotificationsPage;   // order not found (e.g. very old): stay on the history page
                     break;
 
                 case NotificationType.Reservation:

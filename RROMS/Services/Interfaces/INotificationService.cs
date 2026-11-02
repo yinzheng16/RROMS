@@ -37,7 +37,12 @@ namespace RROMS.Services.Interfaces
         Task<List<NotificationItem>> GetItemsAsync(string userId, int? take = null,
             bool unreadOnly = false, NotificationType? type = null);
 
-        Task MarkAllAsReadAsync(string userId);
+        // Returns the ids that were unread, so the customer can put them back (MarkAsUnreadAsync).
+        Task<List<int>> MarkAllAsReadAsync(string userId);
+
+        // "Mark all as unread": puts back the notices that "Mark all as read" just marked.
+        // Only the owner's own notifications are changed.
+        Task MarkAsUnreadAsync(string userId, IEnumerable<int> notificationIds);
 
         // Marks the notification read and returns the page it leads to
         // (the order, My Reservations, My Payments ...). Only the owner's own notifications.

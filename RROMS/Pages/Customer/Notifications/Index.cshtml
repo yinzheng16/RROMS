@@ -43,7 +43,14 @@
                     </a>
                 }
             </nav>
-            @if (Model.UnreadCount > 0)
+            @if (Model.UndoIds.Count > 0)
+            {
+                <form method="post" asp-page-handler="MarkUnread" asp-route-show="@(show == "all" ? null : show)">
+                    <input type="hidden" name="ids" value="@string.Join(",", Model.UndoIds)" />
+                    <button type="submit" class="ntf-markall" title="Puts back the notices you just marked as read"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Mark all as unread</button>
+                </form>
+            }
+            else if (Model.UnreadCount > 0)
             {
                 <form method="post" asp-page-handler="MarkAll" asp-route-show="@(show == "all" ? null : show)">
                     <button type="submit" class="ntf-markall"><i class="bi bi-check2-all" aria-hidden="true"></i>Mark all as read</button>
@@ -87,7 +94,6 @@
                     }
                 </ul>
             }
-            <p class="ntf-note"><i class="bi bi-info-circle" aria-hidden="true"></i>Opening a notice marks it as read. The newest 200 are shown.</p>
         }
     </div>
 </section>
