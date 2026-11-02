@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RROMS.Models;
@@ -143,6 +144,162 @@ public class Index : PageModel
         var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
         var name = $"yoru-{Types[(int)Query.Type].Key}-{Query.From:yyyy-MM-dd}-to-{Query.To:yyyy-MM-dd}.csv";
         return File(bytes, "text/csv", name);
+    }
+
+    // Export → Excel (US47): a real .xlsx file. Title, period and filters at the top, the summary
+    // numbers, then the table with numbers, dates and percentages as real Excel values (so they can
+    // be summed and sorted), a filter button on every column title and the total row in bold.
+    public async Task<IActionResult> OnGetXlsxAsync()
+    {
+        await LoadAsync();
+
+        using var book = new XLWorkbook();
+        var sheet = book.Worksheets.Add(SheetName(Report.Title));
+        var cols = Report.Columns.Count;
+        var muted = XLColor.FromHtml("#6B5B4E");
+
+        // ---------- Title block ----------
+        sheet.Cell(1, 1).Value = $"{Brand.FullName} · {Report.Title} report";
+        sheet.Cell(1, 1).Style.Font.SetBold().Font.SetFontSize(14);
+        sheet.Cell(2, 1).Value = $"{PeriodName} · {PeriodText}";
+        sheet.Cell(3, 1).Value = FilterText;
+        sheet.Cell(4, 1).Value = $"Exported {DateTime.Now:d MMM yyyy, HH:mm} by {User.Identity?.Name ?? "Admin"}";
+        sheet.Range(2, 1, 4, 1).Style.Font.SetFontColor(muted);
+
+        // ---------- Summary numbers (the cards at the top of the page) ----------
+        const int kpiRow = 6;
+        for (var i = 0; i < Report.Kpis.Count; i++)
+        {
+            sheet.Cell(kpiRow, i + 1).Value = Report.Kpis[i].Label;
+            sheet.Cell(kpiRow + 1, i + 1).Value = Report.Kpis[i].Display;
+        }
+        if (Report.Kpis.Count > 0)
+        {
+            sheet.Range(kpiRow, 1, kpiRow, Report.Kpis.Count).Style.Font.SetFontColor(muted).Font.SetFontSize(9);
+            sheet.Range(kpiRow + 1, 1, kpiRow + 1, Report.Kpis.Count).Style.Font.SetBold();
+        }
+
+        // ---------- Table ----------
+        const int head = 9;
+        for (var c = 0; c < cols; c++)
+        {
+            sheet.Cell(head, c + 1).Value = Report.Columns[c].Title;
+        }
+        sheet.Range(head, 1, head, cols).Style
+            .Font.SetBold()
+            .Fill.SetBackgroundColor(XLColor.FromHtml("#EAD7BF"))
+            .Border.SetBottomBorder(XLBorderStyleValues.Thin);
+
+        var r = head + 1;
+        foreach (var data in Report.Rows)
+        {
+            for (var c = 0; c < cols && c < data.Cells.Count; c++)
+            {
+                PutCell(sheet.Cell(r, c + 1), data.Cells[c], Report.Columns[c]);
+            }
+            r++;
+        }
+
+        if (Report.Rows.Count == 0)
+        {
+            sheet.Cell(r, 1).Value = $"No {Report.RowNoun} match these filters.";
+            r++;
+        }
+        else
+        {
+            sheet.Range(head, 1, r - 1, cols).SetAutoFilter();
+        }
+
+        // Total row
+        for (var c = 0; c < cols && c < Report.Total.Cells.Count; c++)
+        {
+            var text = Report.Total.Cells[c].Text;
+            var cell = sheet.Cell(r, c + 1);
+            if (Report.Columns[c].Right && TryNumber(text, out var n))
+            {
+                cell.Value = n;
+                cell.Style.NumberFormat.Format = text.Contains('.') ? "#,##0.00" : "#,##0";
+            }
+            else
+            {
+                cell.Value = text;
+            }
+        }
+        sheet.Range(r, 1, r, cols).Style.Font.SetBold().Border.SetTopBorder(XLBorderStyleValues.Thin);
+
+        // Column titles stay visible while scrolling; widths fit the longest value.
+        sheet.SheetView.FreezeRows(head);
+        for (var c = 0; c < cols; c++)
+        {
+            var longest = Report.Rows.Select(row => c < row.Cells.Count ? row.Cells[c].Text.Length : 0)
+                .Append(Report.Columns[c].Title.Length)
+                .Append(c < Report.Total.Cells.Count ? Report.Total.Cells[c].Text.Length : 0)
+                .Max();
+            sheet.Column(c + 1).Width = Math.Clamp(longest + 4, 12, 45);
+        }
+
+        using var stream = new MemoryStream();
+        book.SaveAs(stream);
+        var name = $"yoru-{Types[(int)Query.Type].Key}-{Query.From:yyyy-MM-dd}-to-{Query.To:yyyy-MM-dd}.xlsx";
+        return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name);
+    }
+
+    // One table cell as a real Excel value: dates as dates, money and counts as numbers,
+    // "share of sales" as a percentage, everything else as text (never as a formula).
+    private static void PutCell(IXLCell cell, ReportCell value, ReportColumn column)
+    {
+        if (value.Sort is DateTime date && date > DateTime.MinValue)
+        {
+            cell.Value = date.Date;
+            cell.Style.DateFormat.Format = "d mmm yyyy";
+            return;
+        }
+        if (value.Share.HasValue)
+        {
+            cell.Value = value.Share.Value / 100;
+            cell.Style.NumberFormat.Format = "0%";
+            return;
+        }
+        if (column.Right && TryNumber(value.Text, out var n))
+        {
+            cell.Value = n;
+            cell.Style.NumberFormat.Format = value.Text.Contains('.') ? "#,##0.00" : "#,##0";
+            return;
+        }
+        cell.Value = value.Text;
+    }
+
+    private static readonly CultureInfo My = CultureInfo.GetCultureInfo("en-MY");
+
+    private static bool TryNumber(string text, out double number)
+    {
+        var ok = decimal.TryParse(text, NumberStyles.Number, My, out var d);
+        number = (double)d;
+        return ok;
+    }
+
+    // Excel sheet names: at most 31 characters and none of : \ / ? * [ ]
+    private static string SheetName(string title)
+    {
+        var clean = new string(title.Where(ch => !":\\/?*[]".Contains(ch)).ToArray()).Trim();
+        if (clean.Length == 0) clean = "Report";
+        return clean.Length > 31 ? clean[..31] : clean;
+    }
+
+    // The filters in one line, for the top of the Excel file.
+    public string FilterText
+    {
+        get
+        {
+            var parts = new List<string>
+            {
+                Report.GroupLabel + ": " + (Query.Groups.Count > 0 ? string.Join(", ", Query.Groups) : "all")
+            };
+            if (Report.KindOptions.Count > 0) parts.Add(Report.KindLabel + ": " + (Query.Kind ?? "all"));
+            if (Query.Customer != null) parts.Add("Search: " + Query.Customer);
+            if (Query.Day.HasValue) parts.Add("Day: " + Query.Day.Value.ToString("d MMM yyyy"));
+            return string.Join(" · ", parts);
+        }
     }
 
     private async Task LoadAsync()
@@ -395,6 +552,7 @@ public class Index : PageModel
     }, keepPage: true);
 
     public string CsvLink() => Build(State(), "Csv");
+    public string XlsxLink() => Build(State(), "Xlsx");   // US47
     public string PrintLink() => Build(State(), "Print");
     public string BackLink() => Build(State());
 
