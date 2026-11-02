@@ -1,0 +1,59 @@
+@model List<RROMS.Services.Interfaces.AnnouncementBannerItem>
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@{
+    // US39 (Owner: Member 4): one-line announcement banner for the home page.
+    // Styles: wwwroot/css/announcement-banner.css, script: wwwroot/js/announcement-banner.js (every class starts with ab-).
+    // Centred line. 2 or more live: they take turns (slide left every AnnouncementBanner.SlideSeconds,
+    // pause on hover), with plain ‹ › at the far left and far right. Always shown (no close button).
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var many = Model.Count > 1;
+}
+
+<link rel="stylesheet" href="~/css/announcement-banner.css" asp-append-version="true" />
+
+<aside class="ab-bar @(many ? "is-many" : "")" aria-label="Announcements" aria-roledescription="@(many ? "carousel" : null)"
+       data-ab data-seconds="@AnnouncementBanner.SlideSeconds">
+    <div class="container-xl ab-in">
+        @if (many)
+        {
+            <button type="button" class="ab-arrow" data-ab-prev aria-label="Previous announcement"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+        }
+
+        <div class="ab-view">
+            <div class="ab-track" data-ab-track aria-live="off">
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    var item = Model[i];
+                    // "Join YORU" is for visitors only: a signed-in guest gets no button.
+                    var link = item.Link == AnnouncementLink.SignUp && signedIn ? AnnouncementLink.None : item.Link;
+                    var buttonText = AnnouncementLinks.Text(link);
+                    var buttonPath = AnnouncementLinks.Path(link);
+                    <div class="ab-slide" aria-hidden="@(i == 0 ? "false" : "true")" data-ab-slide>
+                        @* one line: every word sits on the same baseline (ab-line) *@
+                        <div class="ab-line">
+                        <span class="ab-tag">News <span class="ab-jp" lang="ja">お知らせ</span></span>
+                        <p class="ab-tx" title="@item.Message"><b>@item.Title</b><span>@item.Message</span></p>
+                        <span class="ab-until">Until @AnnouncementTimes.Until(item.EndDate)</span>
+                        @if (buttonText is not null && buttonPath is not null)
+                        {
+                            <a class="ab-go" href="@buttonPath" tabindex="@(i == 0 ? null : "-1")">@buttonText <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                        }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (many)
+        {
+            <button type="button" class="ab-arrow" data-ab-next aria-label="Next announcement"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+        }
+    </div>
+</aside>
+
+@if (many)
+{
+    <script src="~/js/announcement-banner.js" asp-append-version="true" defer></script>
+}

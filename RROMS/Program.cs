@@ -104,6 +104,7 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IOrderStatusNotifier, OrderStatusNotifier>(); // Member 3 / US27
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();   // Member 4 / US39
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 
 //Member 5

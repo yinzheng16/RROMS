@@ -67,6 +67,9 @@
 
 <div class="hm">
 
+@* US39 (Member 4): one-line announcement banner; shows nothing when there is no live announcement. *@
+@await Component.InvokeAsync("AnnouncementBanner")
+
 @* ---------- 1. Hero (the mood follows today's opening hours) ---------- *@
 <section class="hm-hero" data-mood="@Model.Info.Mood">
     <div class="hm-photo" aria-hidden="true"><span class="hm-lamp"></span></div>
