@@ -1095,3 +1095,7 @@ button.ap-flag.is-reason > span {
 /* "Refund this one": same red family as "Paid 2 times", not bold, so it reads as part of that warning */
 .ap-flags .ap-flag-link { font-weight: 500; color: var(--ap-fail); }
     .ap-flags .ap-flag-link:hover { color: #6E1B17; }
+
+/* the box cuts at its edge (needed for "…"); 3px room below so the underline is never cut,
+   the negative margin keeps the line spacing the same */
+button.ap-flag.is-reason > span { padding-bottom: 3px; margin-bottom: -3px; }
