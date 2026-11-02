@@ -109,13 +109,20 @@ namespace RROMS.Services
         {
             var now = DateTime.Now;
 
-            var promotions = await ActivePromotions(now)
+            var running = await ActivePromotions(now)
                 .AsNoTracking()
                 .Include(p => p.MenuItem).ThenInclude(m => m.Category)
-                .OrderBy(p => p.EndDate)                // ending soonest first
-                .ThenByDescending(p => p.StartDate)     // then the newest
-                .Take(count)
                 .ToListAsync();
+
+            // One card per dish (its best deal), ending soonest first, then the biggest saving, then the newest.
+            var promotions = running
+                .GroupBy(p => p.MenuItemId)
+                .Select(g => g.OrderByDescending(p => PromotionRules.EffectivePercent(p.MenuItem.Price, p.DiscountPercent, p.PromoPrice)).First())
+                .OrderBy(p => p.EndDate.Date)
+                .ThenByDescending(p => PromotionRules.EffectivePercent(p.MenuItem.Price, p.DiscountPercent, p.PromoPrice))
+                .ThenByDescending(p => p.StartDate)
+                .Take(count)
+                .ToList();
 
             // US39 (Member 4): when announcements exist, add the active ones here with the same rule,
             // then sort the combined list by EndDate and take `count` again.
@@ -128,9 +135,13 @@ namespace RROMS.Services
                     p.MenuItem.ImageUrl,
                     p.MenuItem.Category?.Name ?? "",
                     p.EndDate,
-                    p.MenuItem.Id))
+                    p.MenuItem.Id,
+                    PromotionRules.PriceUnder(p.MenuItem.Price, p.DiscountPercent, p.PromoPrice)))   // exact promo price (US29)
                 .ToList();
         }
+
+        public Task<int> CountOfferDishesAsync() =>
+            ActivePromotions(DateTime.Now).Select(p => p.MenuItemId).Distinct().CountAsync();
 
         // ---------- Omikuji box ----------
 
@@ -149,7 +160,7 @@ namespace RROMS.Services
             return items.Select(m => new OmikujiDish(
                     m.Name,
                     m.Category.Name,
-                    discounts.TryGetValue(m.Id, out var pct) ? m.Price * (100 - pct) / 100 : m.Price,
+                    discounts.TryGetValue(m.Id, out var pct) ? OrderPricingRules.DiscountedPrice(m.Price, pct) : m.Price,
                     m.Id))
                 .ToList();
         }
