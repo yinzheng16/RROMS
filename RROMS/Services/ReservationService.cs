@@ -1123,6 +1123,11 @@ public partial class ReservationService : IReservationService
                 $"({dateText}). Please choose different dates.");
         }
 
+        // Do not close a day (or cut its hours) that already has bookings.
+        var clash = await FindBookingClashAsync(startDate, endDate, input);
+        if (clash is not null)
+            return ReservationResult.Fail(clash);
+
         SpecialDate row;
 
         if (input.Id == 0)
@@ -1158,6 +1163,53 @@ public partial class ReservationService : IReservationService
                 "Could not save the special date. " +
                 "Please check for database conflicts.");
         }
+    }
+
+    // Pending and Confirmed bookings inside the date range that the special date would
+    // close, or that fall outside its new opening hours. Returns the error text, or null.
+    private async Task<string?> FindBookingClashAsync(DateTime startDate, DateTime endDate, SpecialDate input)
+    {
+        var booked = await _db.Reservations
+            .AsNoTracking()
+            .Where(r =>
+                r.ReservedAt >= startDate &&
+                r.ReservedAt < endDate.AddDays(1) &&
+                (r.Status == ReservationStatus.Pending ||
+                 r.Status == ReservationStatus.Confirmed))
+            .Select(r => r.ReservedAt)
+            .ToListAsync();
+
+        var clashes = booked;
+
+        if (!input.IsClosed)
+        {
+            var open = input.OpenTime!.Value;
+            var close = input.CloseTime!.Value;
+
+            // A closing time earlier than the opening time means the day runs past midnight.
+            clashes = booked.Where(t =>
+            {
+                var time = t.TimeOfDay;
+                var inside = close > open
+                    ? time >= open && time < close
+                    : time >= open || time < close;
+                return !inside;
+            }).ToList();
+        }
+
+        if (clashes.Count == 0) return null;
+
+        var first = clashes.Min();
+        var count = clashes.Count;
+        var when = first.ToString("d MMM yyyy, h:mm tt",
+            System.Globalization.CultureInfo.InvariantCulture);
+        var noun = count == 1 ? "reservation is" : "reservations are";
+
+        return input.IsClosed
+            ? $"{count} {noun} already booked on these dates (first: {when}). " +
+              "Please cancel or move them in Today's reservations before closing."
+            : $"{count} {noun} already booked outside these opening hours (first: {when}). " +
+              "Please cancel or move them in Today's reservations, or choose hours that cover them.";
     }
 
     // Delete a special date.
