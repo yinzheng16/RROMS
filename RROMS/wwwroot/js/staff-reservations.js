@@ -753,6 +753,50 @@
         if (!t.closest('.sr-menu')) closeMenu();
     });
 
+    // US19: this guest's earlier bookings (read-only). One booking is always selected and shown on the right.
+    // Pages are 5 bookings each; a new page selects its first booking.
+    modalBox.addEventListener('click', e => {
+        const band = e.target.closest('[data-past]');
+        if (!band) return;
+        const select = card => {
+            band.querySelectorAll('[data-past-card]').forEach(c => {
+                const on = c === card;
+                c.setAttribute('aria-expanded', String(on));
+                const box = document.getElementById(c.getAttribute('aria-controls'));
+                if (box) box.hidden = !on;
+            });
+        };
+
+        const card = e.target.closest('[data-past-card]');
+        if (card) { select(card); return; }
+
+        const go = e.target.closest('[data-past-go]');
+        if (!go || go.disabled) return;
+        const items = [...band.querySelectorAll('[data-past-list] > li')];
+        const pages = Math.max(1, ...items.map(li => Number(li.dataset.page) || 1));
+        const now = Number(band.querySelector('.dv-pager [aria-current="page"]')?.dataset.pastGo) || 1;
+        const target = go.dataset.pastGo === 'prev' ? now - 1 : go.dataset.pastGo === 'next' ? now + 1 : Number(go.dataset.pastGo);
+        if (!(target >= 1 && target <= pages)) return;
+
+        items.forEach(li => { li.hidden = Number(li.dataset.page) !== target; });
+        select(items.find(li => !li.hidden)?.querySelector('[data-past-card]'));
+        band.querySelectorAll('.dv-pager [data-past-go]').forEach(b => {
+            const k = b.dataset.pastGo;
+            if (k === 'prev') b.disabled = target === 1;
+            else if (k === 'next') b.disabled = target === pages;
+            else {
+                const on = Number(k) === target;
+                b.classList.toggle('is-on', on);
+                if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+            }
+        });
+        const from = (target - 1) * 5 + 1;
+        const to = Math.min(items.length, target * 5);
+        const info = band.querySelector('[data-past-info]');
+        if (info) info.textContent = `Showing ${from}\u2013${to} of ${items.length}`;
+        band.querySelector(`.dv-pager [data-past-go="${target}"]`)?.focus({ preventScroll: true });
+    });
+
     modal.addEventListener('click', e => { if (e.target === modal) closeDetails(); });
     dlg.addEventListener('click', e => { if (e.target === dlg) (dlg._cancel || closeDialog)(); });
     dlg.addEventListener('keydown', e => {

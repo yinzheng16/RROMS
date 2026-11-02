@@ -27,6 +27,8 @@
     var word = isRoom ? "room" : "table";
     var typeLine = string.Join(" · ", new[] { r.TableTypeName, r.AreaName }.Where(x => !string.IsNullOrWhiteSpace(x)));
     var visual = r.IsLate ? "late" : Bucket(r);
+    // US19: a guest with earlier bookings gets the wide two-sided layout; a first visit keeps the compact one.
+    var hasPast = Model.GuestHistory is { Total: > 0 };
     var reqIcon = RequestKind(r.SpecialRequest) switch { "warn" => "warn", "cake" => "gift", _ => "note" };
 
     var bookedText = r.CreatedAt.Date == r.ReservedAt.Date
@@ -56,6 +58,8 @@
 
     <div class="dv-rule" aria-hidden="true"><i></i></div>
 
+    <div class="dv-split@(hasPast ? " has-past" : "")">
+    <div class="dv-left">
     <div class="dv-grid">
         <div class="dv-col">
             <section class="dv-card dv-overview">
@@ -154,7 +158,7 @@
 
     @if (r.SpecialRequest != null)
     {
-        <section class="dv-request" aria-label="Special request">
+        <section class="dv-request@(r.SpecialRequest.Length > 90 ? " is-long" : "")" aria-label="Special request">
             @Icon(reqIcon)
             <div>
                 <small>SPECIAL REQUEST <em>From this booking</em></small>
@@ -162,6 +166,117 @@
             </div>
         </section>
     }
+
+    </div>
+
+    @if (Model.GuestHistory is { } gh)
+    {
+        const int PageSize = 5;
+        var pastPages = Math.Max(1, (int)Math.Ceiling(gh.Recent.Count / (double)PageSize));
+        if (gh.Total == 0)
+        {
+            <section class="dv-past is-first" data-past aria-label="Past reservations">
+                <div class="dv-past-side">
+                    <span class="dv-past-tag is-new">FIRST VISIT</span>
+                    <p class="dv-past-usual">No earlier bookings. This is the guest's first reservation with us.</p>
+                </div>
+            </section>
+        }
+        else
+        {
+            <section class="dv-past" data-past aria-label="Past reservations">
+                <div class="dv-past-side">
+                    <h3 class="dv-h">@Icon("list")Past reservations<em>This guest's earlier bookings</em></h3>
+                    <div class="dv-past-sum">
+                        <span class="dv-past-tag is-ok">RETURNING GUEST</span>
+                        <span class="dv-past-tag">@Plural(gh.Completed, "visit", "visits").ToUpperInvariant()</span>
+                        @if (gh.Cancelled > 0)
+                        {
+                            <span class="dv-past-tag is-mute">@gh.Cancelled CANCELLED</span>
+                        }
+                        @if (gh.NoShow > 0)
+                        {
+                            <span class="dv-past-tag is-bad">@gh.NoShow NO-SHOW</span>
+                        }
+                    </div>
+                    @if (gh.UsualTable != null)
+                    {
+                        <p class="dv-past-usual">Usually books <b>@gh.UsualTable</b></p>
+                    }
+                </div>
+
+                <div class="dv-past-main">
+                    <ul class="dv-past-list" data-past-list>
+                        @for (var i = 0; i < gh.Recent.Count; i++)
+                        {
+                            var v = gh.Recent[i];
+                            var vs = v.Status.ToString().ToLowerInvariant();
+                            var vLabel = v.Status == ReservationStatus.NoShow ? "No-show" : v.Status.ToString();
+                            var vType = string.Join(" · ", new[] { v.TableTypeName, v.AreaName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                            <li data-page="@(i / PageSize + 1)" hidden="@(i >= PageSize ? "hidden" : null)">
+                                <button type="button" class="dv-past-card is-@vs" data-past-card aria-expanded="@(i == 0 ? "true" : "false")" aria-controls="dvPast@(v.Id)">
+                                    <time datetime="@v.ReservedAt.ToString("yyyy-MM-ddTHH:mm", ci)">@v.ReservedAt.ToString("d MMM yyyy", ci)<em>@Clock(v.ReservedAt)</em></time>
+                                    <span class="p-meta">@Plural(v.Guests, "guest", "guests")@(vType.Length > 0 ? " · " + vType : "")</span>
+                                    @if (v.SpecialRequest != null)
+                                    {
+                                        <span class="p-ask" title="@v.SpecialRequest">“@v.SpecialRequest”</span>
+                                    }
+                                    <span class="p-st is-@vs">@vLabel.ToUpperInvariant()</span>
+                                </button>
+                            </li>
+                        }
+                    </ul>
+
+                    @if (gh.Recent.Count > PageSize)
+                    {
+                        <nav class="dv-pager" aria-label="Past reservation pages">
+                            <span data-past-info aria-live="polite">Showing 1–@PageSize of @gh.Recent.Count</span>
+                            <div>
+                                <button type="button" data-past-go="prev" aria-label="Previous page" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+                                @for (var n = 1; n <= pastPages; n++)
+                                {
+                                    <button type="button" data-past-go="@n" class="@(n == 1 ? "is-on" : null)" aria-label="Page @n" aria-current="@(n == 1 ? "page" : null)">@n</button>
+                                }
+                                <button type="button" data-past-go="next" aria-label="Next page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+                            </div>
+                        </nav>
+                    }
+                    @if (gh.Total > gh.Recent.Count)
+                    {
+                        <p class="dv-past-cap">Showing the latest @gh.Recent.Count of @gh.Total earlier bookings.</p>
+                    }
+
+                    @foreach (var v in gh.Recent)
+                    {
+                        var vLabel = v.Status == ReservationStatus.NoShow ? "No-show" : v.Status.ToString();
+                        var vs = v.Status.ToString().ToLowerInvariant();
+                        var vTable = string.Join(" · ", new[] { v.TableNumber, v.AreaName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+                        <div class="dv-past-detail" id="dvPast@(v.Id)" hidden="@(v.Id == gh.Recent[0].Id ? null : "hidden")">
+                            <div class="dv-past-detail-head">
+                                <b>@v.ReservedAt.ToString("ddd, d MMM yyyy", ci) · @Clock(v.ReservedAt)</b>
+                                <span class="p-st is-@vs">@vLabel.ToUpperInvariant()</span>
+                            </div>
+                            <dl class="dv-past-facts">
+                                <div><dt>Reference</dt><dd>@v.ReferenceNo</dd></div>
+                                <div><dt>Party</dt><dd>@Plural(v.Guests, "guest", "guests")</dd></div>
+                                <div><dt>Table</dt><dd>@(vTable.Length > 0 ? vTable : "Not assigned")</dd></div>
+                                <div><dt>Minimum spend</dt><dd>@(v.MinimumSpend > 0 ? "RM " + v.MinimumSpend.ToString("#,##0.##", ci) : "None")</dd></div>
+                                <div class="is-wide is-ask"><dt>Special request</dt><dd>@(v.SpecialRequest ?? "None")</dd></div>
+                            </dl>
+                            <ol class="dv-past-steps">
+                                @foreach (var st in v.Steps)
+                                {
+                                    <li><b>@(st.Status == "NoShow" ? "No-show" : st.Status)</b> @st.At.ToString("d MMM", ci), @Clock(st.At) · @st.By</li>
+                                }
+                            </ol>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    }
+
+    </div>
 
     <section class="dv-progress" aria-label="Reservation progress">
         <h3 class="dv-h">@Icon("list")Reservation progress</h3>
