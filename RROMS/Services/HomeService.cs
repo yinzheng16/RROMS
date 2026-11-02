@@ -124,7 +124,7 @@ namespace RROMS.Services
                     p.Title,
                     p.MenuItem.Name,
                     p.MenuItem.Price,
-                    p.DiscountPercent,
+                    PromotionRules.EffectivePercent(p.MenuItem.Price, p.DiscountPercent, p.PromoPrice),
                     p.MenuItem.ImageUrl,
                     p.MenuItem.Category?.Name ?? "",
                     p.EndDate,
@@ -157,17 +157,14 @@ namespace RROMS.Services
         // Active = ticked active, already started, and the end DATE is today or later
         // (so a promotion saved as "ends 25 Oct" still shows for the whole of 25 Oct).
         private IQueryable<Promotion> ActivePromotions(DateTime now)
-        {
-            var today = now.Date;
-            return _promotions.Query().Where(p => p.IsActive && p.StartDate <= now && p.EndDate >= today);
-        }
+            => PromotionRules.Running(_promotions.Query(), now);   // Member 3 / US29: one shared rule
 
         // Biggest active discount for each dish.
-        private Task<Dictionary<int, decimal>> DiscountsAsync() =>
-            ActivePromotions(DateTime.Now)
-                .GroupBy(p => p.MenuItemId)
-                .Select(g => new { MenuItemId = g.Key, Percent = g.Max(p => p.DiscountPercent) })
-                .ToDictionaryAsync(x => x.MenuItemId, x => x.Percent);
+        // US29: fixed-price promotions count too (as the matching % of today's price).
+        private async Task<Dictionary<int, decimal>> DiscountsAsync() =>
+            PromotionRules.BestPercents(await ActivePromotions(DateTime.Now)
+                .Select(p => new PromotionPriceRow(p.MenuItemId, p.MenuItem.Price, p.DiscountPercent, p.PromoPrice))
+                .ToListAsync());
 
         // ---------- Opening hours (Member 2) ----------
 
