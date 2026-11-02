@@ -611,7 +611,7 @@ else
                                 {
                                     var sorted = Q.SortColumn == i;
                                     <th aria-sort="@(sorted ? (Q.SortDescending ? "descending" : "ascending") : null)"
-                                        class="@((R.Columns[i].Title == "Customer" || R.Columns[i].Title == "Item") ? "rp-wide" : "")">
+                                        class="@((R.Columns[i].Title == "Customer" || R.Columns[i].Title == "Item") ? "rp-wide" : R.Columns[i].Title is "Status" or "Type" ? "rp-badgecol" : "")">
                                         <a href="@Model.SortLink(i)">@R.Columns[i].Title<span class="rp-sort">@(sorted ? (Q.SortDescending ? "▼" : "▲") : "")</span></a>
                                     </th>
                                 }
