@@ -1793,6 +1793,11 @@
     color: var(--yoru-ink);
 }
 
+/* Takeaway order no.: same grey on every row (paid or not), 2 Nov */
+.us32-billing .billing-list tbody td.billing-order-no {
+    color: var(--yoru-olive-text);
+}
+
 /* Dine-in / Takeaway toggle: a small gap so the hover colour never touches the black tab */
 .us32-billing .billing-tabs {
     gap: 4px;
@@ -1926,4 +1931,57 @@
         .us32-billing .billing-sort .form-select {
             width: 100%;
         }
+}
+
+/* =====================================================
+   2 Nov: make unconfirmed / unpaid rows easier to spot (option A)
+   Left colour bar + small dot; status text not bold.
+   ===================================================== */
+
+/* Bar drawn with an inset shadow (no border), so the columns don't move.
+   The second shadow keeps Bootstrap's row / hover background. */
+.us32-billing .billing-list tbody tr[data-state="nobill"] > td:first-child {
+    box-shadow: inset 4px 0 0 var(--yoru-red),
+                inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
+}
+
+.us32-billing .billing-list tbody tr[data-state="awaiting"] > td:first-child {
+    box-shadow: inset 4px 0 0 #D99A1E,
+                inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
+}
+
+.us32-billing .billing-list .bill-state {
+    font-weight: 500;
+}
+
+    .us32-billing .billing-list .bill-state::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: .12em;
+        background: #9A9A90;
+    }
+
+.us32-billing .billing-list .bill-state-nobill {
+    color: var(--yoru-red-text);
+}
+
+    .us32-billing .billing-list .bill-state-nobill::before {
+        background: var(--yoru-red);
+        vertical-align: .04em; /* a little lower: optical centre of "No bill" */
+    }
+
+.us32-billing .billing-list .bill-state-awaiting {
+    color: #845400;
+}
+
+    .us32-billing .billing-list .bill-state-awaiting::before {
+        background: #D99A1E;
+    }
+
+.us32-billing .billing-list .bill-state-paid {
+    color: var(--yoru-olive-text);
 }
