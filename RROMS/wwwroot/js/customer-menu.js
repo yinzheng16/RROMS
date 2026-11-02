@@ -205,21 +205,50 @@
     }
 
     let recentCleanup = null;
+    // US30: the "Picked for you" section has one carousel per tab; only the visible one is active.
+    let activePick = null;
+    const activeRecentTrack = () => browser()?.querySelector('[data-menu-pick-panel]:not([hidden]) [data-menu-recent-grid]')
+        || browser()?.querySelector('[data-menu-recent-grid]');
 
     function recentPosition() {
-        const track = browser()?.querySelector('[data-menu-recent-grid]');
+        const track = activeRecentTrack();
         if (!track) return null;
         const edge = track.getBoundingClientRect().left;
         const first = Array.from(track.children).find(card => card.getBoundingClientRect().right > edge + 2);
-        return { id: first?.dataset.dishId, left: track.scrollLeft };
+        return { id: first?.dataset.dishId, left: track.scrollLeft, pick: activePick };
+    }
+
+    function showPick(key, { focus = false } = {}) {
+        const section = browser()?.querySelector('[data-menu-new-arrivals]');
+        const tabs = Array.from(section?.querySelectorAll('[data-menu-pick-tab]') || []);
+        const tab = tabs.find(item => item.dataset.menuPickTab === key);
+        if (!section || !tab) return false;
+        activePick = key;
+        tabs.forEach(item => {
+            const selected = item === tab;
+            item.setAttribute('aria-selected', String(selected));
+            item.tabIndex = selected ? 0 : -1;
+        });
+        section.querySelectorAll('[data-menu-pick-panel]').forEach(panel => { panel.hidden = panel.dataset.menuPickPanel !== key; });
+        const eyebrow = section.querySelector('[data-menu-pick-eyebrow]');
+        const intro = section.querySelector('[data-menu-pick-intro]');
+        if (eyebrow) eyebrow.textContent = tab.dataset.eyebrow || '';
+        if (intro) intro.textContent = tab.dataset.intro || '';
+        section.querySelectorAll('[data-menu-recent-previous], [data-menu-recent-next]')
+            .forEach(button => button.setAttribute('aria-controls', 'menu-pick-' + key));
+        if (focus) tab.focus({ preventScroll: true });
+        return true;
     }
 
     function prepareRecentCarousel(position = null) {
         recentCleanup?.();
         recentCleanup = null;
         const section = browser()?.querySelector('[data-menu-new-arrivals]');
-        const track = section?.querySelector('[data-menu-recent-grid]');
-        if (!track) return;
+        // Keep the customer's chosen tab after Load more, live updates and Back/Forward.
+        const wanted = position?.pick ?? activePick;
+        if (!wanted || !showPick(wanted)) activePick = section?.querySelector('[data-menu-pick-tab][aria-selected="true"]')?.dataset.menuPickTab ?? null;
+        const track = activeRecentTrack();
+        if (!section || !track) return;
         const cards = Array.from(track.children).filter(card => card.matches('[data-dish-id]'));
         const controls = section.querySelector('[data-menu-recent-controls]');
         const previous = section.querySelector('[data-menu-recent-previous]');
@@ -343,7 +372,7 @@
             window.removeEventListener('resize', onResize);
             if (frame !== null) cancelAnimationFrame(frame);
         };
-        if (position) {
+        if (position && (!position.pick || position.pick === activePick)) {
             const card = cards.find(item => item.dataset.dishId === position.id);
             const left = card ? card.getBoundingClientRect().left - track.getBoundingClientRect().left + track.scrollLeft : position.left;
             track.scrollTo({ left, behavior: 'instant' });
@@ -563,8 +592,10 @@
             return copy;
         }
 
-        // A dish can occur in both sections. Match it within its own section.
-        for (const selector of ['[data-menu-recent-grid]', '[data-dish-grid]']) {
+        // A dish can occur in several sections. Match it within its own section.
+        const selectors = Array.from(previous.querySelectorAll('[data-menu-pick-panel]'),
+            panel => `[data-menu-pick-panel="${CSS.escape(panel.dataset.menuPickPanel)}"] [data-menu-recent-grid]`);
+        for (const selector of [...selectors, '[data-dish-grid]']) {
             const oldSection = previous.querySelector(selector);
             const nextSection = replacement.querySelector(selector);
             if (!oldSection || !nextSection) continue;
@@ -601,7 +632,7 @@
     }
 
 
-    async function navigate(url, { more = false, pop = false, control = null, refresh = false } = {}) {
+    async function navigate(url, { more = false, pop = false, control = null, refresh = false, keepSearch = false } = {}) {
         const target = new URL(url, location.href);
         if (target.origin !== location.origin || target.pathname !== location.pathname) {
             location.assign(target.href);
@@ -613,13 +644,15 @@
         const savedHorizontal = window.scrollX;
         const savedFormTop = browser()?.querySelector('[data-menu-form]')?.getBoundingClientRect().top;
         const savedDraft = browser()?.querySelector('#menu-search')?.value;
+        // Live search keeps the very same input box, so typing, focus and the caret are never interrupted.
+        const liveField = keepSearch ? browser()?.querySelector('#menu-search') : null;
         live?.pause();
         request?.abort();
         const currentRequest = new AbortController();
         request = currentRequest;
         const previousIds = new Set(Array.from(browser().querySelectorAll('[data-dish-grid] [data-dish-id]'), card => card.dataset.dishId));
         browser().setAttribute('aria-busy', 'true');
-        announce('Updating the menu.');
+        if (!keepSearch) announce('Updating the menu.');
         try {
             const response = await fetch(target.href, {
                 signal: currentRequest.signal, headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -630,10 +663,12 @@
             const next = doc.querySelector('[data-menu-browser]');
             if (!next) throw new Error('Menu response missing');
             if (currentRequest.signal.aborted) return;
-            if (!pop && !refresh) history.pushState({ menu: true }, '', target.href);
+            if (!pop && !refresh) history[keepSearch ? 'replaceState' : 'pushState']({ menu: true }, '', target.href);
             const anchorBeforeSwap = browser()?.querySelector('[data-menu-form]')?.getBoundingClientRect().top;
             const replacement = document.importNode(next, true);
             if (refresh) preserveRefreshCards(browser(), replacement);
+            const caret = liveField ? [liveField.selectionStart, liveField.selectionEnd] : null;
+            if (liveField) replacement.querySelector('#menu-search')?.replaceWith(liveField);
             browser().replaceWith(replacement);
             upgradePhotos(browser());
             syncCategoryNavigation();
@@ -660,7 +695,10 @@
                 const focusTarget = control && control !== 'menu-search'
                     ? browser().querySelector(`#${CSS.escape(control)}`)
                     : browser().querySelector('#menu-results-title');
-                focusTarget?.focus({ preventScroll: true });
+                if (liveField) {
+                    liveField.focus({ preventScroll: true });
+                    try { liveField.setSelectionRange(caret[0], caret[1]); } catch { /* search inputs may not support it */ }
+                } else focusTarget?.focus({ preventScroll: true });
                 if (control) {
                     // Keep search/sort in the same viewport position after replacing results.
                     // Do not start another smooth page scroll after submitting the form.
@@ -905,6 +943,16 @@
             collapseCategoryPanel();
             return;
         }
+        const pickTab = event.target.closest('[data-menu-pick-tab]');
+        if (pickTab) {
+            event.preventDefault();
+            if (pickTab.getAttribute('aria-selected') !== 'true') {
+                showPick(pickTab.dataset.menuPickTab);
+                prepareRecentCarousel();
+                activeRecentTrack()?.scrollTo({ left: 0, behavior: 'instant' });
+            }
+            return;
+        }
         const sortTrigger = event.target.closest('[data-menu-sort-trigger]');
         if (sortTrigger) {
             event.preventDefault();
@@ -935,14 +983,34 @@
         event.preventDefault();
         navigate(link.href, { more: link.hasAttribute('data-menu-more'), control: link.matches('.menu-reset, .menu-filter-chip') ? 'menu-search' : null });
     });
+    // Live search: results update a moment after the customer stops typing (no Search button).
+    let liveSearchTimer = null;
+    function liveSearch(form) {
+        window.clearTimeout(liveSearchTimer);
+        if (!form) return;
+        const url = new URL(form.action, location.href);
+        url.search = '';
+        new FormData(form).forEach((value, key) => {
+            const text = String(value).trim();
+            if (text && !(key === 'Sort' && text === 'menu')) url.searchParams.set(key, text);
+        });
+        const current = new URL(location.href);
+        if ((url.searchParams.get('Search') || '') === (current.searchParams.get('Search') || '')
+            && (url.searchParams.get('CategoryId') || '') === (current.searchParams.get('CategoryId') || '')
+            && (url.searchParams.get('Sort') || '') === (current.searchParams.get('Sort') || '')) return;
+        navigate(url, { control: 'menu-search', keepSearch: true });
+    }
     root.addEventListener('submit', event => {
         if (!event.target.matches('[data-menu-form]')) return;
         event.preventDefault();
-        const field = event.target.querySelector('#menu-search');
-        if (field && !field.value.trim()) { remindSearch(event.target); return; }
-        submitMenu(event.target, 'menu-search');
+        liveSearch(event.target);
     });
     root.addEventListener('input', event => {
+        if (event.target.id === 'menu-search') {
+            const form = event.target.form;
+            window.clearTimeout(liveSearchTimer);
+            liveSearchTimer = window.setTimeout(() => liveSearch(form), 350);
+        }
         if (event.target.id === 'menu-search') reloadSearchEdited = true;
         if (event.target.id !== 'menu-search' || !event.target.value.trim()) return;
         const hint = event.target.form?.querySelector('[data-menu-search-hint]');
@@ -966,6 +1034,18 @@
         submitMenu(event.target.form, event.target.id === 'menu-sort' ? 'menu-sort-trigger' : event.target.id);
     });
     root.addEventListener('keydown', event => {
+        // Tabs: Left/Right/Home/End move between "For you", "Popular this week" and "New".
+        const tab = event.target.closest?.('[data-menu-pick-tab]');
+        if (tab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+            event.preventDefault();
+            const tabs = Array.from(tab.parentElement.querySelectorAll('[data-menu-pick-tab]'));
+            const index = tabs.indexOf(tab);
+            const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1
+                : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+            showPick(tabs[next].dataset.menuPickTab, { focus: true });
+            prepareRecentCarousel();
+            return;
+        }
         const trigger = event.target.closest?.('[data-menu-sort-trigger]');
         if (trigger && ['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
             event.preventDefault();

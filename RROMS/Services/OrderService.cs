@@ -17,12 +17,18 @@ namespace RROMS.Services
     public partial class OrderService : IOrderService
     {
         private readonly ApplicationDbContext _context;
+        private readonly RROMS.Repositories.IBillingTransactionRepository _orderTransactions;
+        private readonly IOrderStatusNotifier _statusNotifier;   // US27
 
         public OrderService(ApplicationDbContext context,
             Microsoft.AspNetCore.Hosting.IWebHostEnvironment environment,
-            Microsoft.Extensions.Logging.ILogger<OrderService> logger)
+            Microsoft.Extensions.Logging.ILogger<OrderService> logger,
+            RROMS.Repositories.IBillingTransactionRepository orderTransactions,
+            IOrderStatusNotifier statusNotifier)
         {
             _context = context;
+            _orderTransactions = orderTransactions;
+            _statusNotifier = statusNotifier;
             _imageDirectory = System.IO.Path.Combine(environment.ContentRootPath, "App_Data", "MenuImages");
             _logger = logger;
         }
