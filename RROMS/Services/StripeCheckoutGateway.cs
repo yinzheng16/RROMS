@@ -10,6 +10,9 @@ namespace RROMS.Services
     {
         private readonly Stripe.Checkout.SessionService? _sessions;
 
+        // US55: refunds of paid Checkout payments.
+        private readonly Stripe.RefundService? _refunds;
+
         public StripeCheckoutGateway(IOptions<StripeSettings> options)
         {
             var settings = options.Value;
@@ -19,6 +22,7 @@ namespace RROMS.Services
             {
                 var client = new Stripe.StripeClient(settings.SecretKey);
                 _sessions = new Stripe.Checkout.SessionService(client);
+                _refunds = new Stripe.RefundService(client);
             }
         }
 
@@ -94,6 +98,32 @@ namespace RROMS.Services
                 var session = await sessions.GetAsync(sessionId);
                 return Map(session);
             }
+        }
+
+        public async Task<StripeRefundResult> RefundAsync(StripeRefundRequest request)
+        {
+            RequireEnabled();
+
+            var options = new Stripe.RefundCreateOptions
+            {
+                PaymentIntent = request.PaymentIntentId,
+                Amount = request.AmountInSen,
+                Reason = request.Duplicate ? "duplicate" : "requested_by_customer",
+                Metadata = new Dictionary<string, string>
+                {
+                    ["rroms_payment_id"] = request.PaymentId.ToString()
+                }
+            };
+
+            // Clicking Refund again for the same payment returns the first
+            // refund instead of refunding a second time.
+            var requestOptions = new Stripe.RequestOptions
+            {
+                IdempotencyKey = $"rroms-refund-{request.PaymentId}"
+            };
+
+            var refund = await _refunds!.CreateAsync(options, requestOptions);
+            return new StripeRefundResult(refund.Id, refund.Status ?? "", refund.Amount);
         }
 
         private Stripe.Checkout.SessionService RequireEnabled()

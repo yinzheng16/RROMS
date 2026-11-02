@@ -2,6 +2,7 @@
 @model RROMS.Pages.Admin.PaymentsModel
 @using RROMS.Models
 @using System.Globalization
+@using RROMS.Services.Interfaces
 
 @{
     // US40 Admin → Payments (Owner: Member 4)
@@ -63,8 +64,37 @@
         return "all dates";
     }
 
+    // US55: the "Refund payment…" button and the "Refund this one" link open the same pop-up.
+    Dictionary<string, object?> RefundData(AdminPaymentRecord p, string? reason = null) => new()
+    {
+        ["data-ap-refund"] = p.PaymentId,
+        ["data-no"] = p.PaymentNo,
+        ["data-bill"] = $"{p.BillNo ?? p.OrderNo ?? "—"} · {(p.OrderType == OrderType.DineIn ? "Dine-in" : "Takeaway")}",
+        ["data-cust"] = p.CustomerName ?? "—",
+        ["data-method"] = p.Method == PaymentMethod.Online ? "Online (Stripe)" : p.Method.ToString(),
+        ["data-amount"] = Money(p.Amount),
+        ["data-online"] = p.Method == PaymentMethod.Online ? "1" : "0",
+        ["data-reason"] = reason
+    };
+
     string? Sub(string? a, string? b) =>
         string.Join(" · ", new[] { a, b }.Where(x => !string.IsNullOrWhiteSpace(x))) is { Length: > 0 } s ? s : null;
+}
+
+@functions {
+    // Writes data-* attributes from a dictionary (null values are left out).
+    private static Microsoft.AspNetCore.Html.IHtmlContent RefundAttrs(Dictionary<string, object?> data)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var (key, value) in data)
+        {
+            if (value is null) continue;
+            sb.Append(' ').Append(key).Append("=\"")
+              .Append(System.Net.WebUtility.HtmlEncode(Convert.ToString(value, CultureInfo.InvariantCulture)))
+              .Append('"');
+        }
+        return new Microsoft.AspNetCore.Html.HtmlString(sb.ToString());
+    }
 }
 
 @section Styles {
@@ -186,6 +216,21 @@
         </div>
     }
 
+    @if (TempData["ApRefundOk"] is string refundOk)
+    {
+        <div class="ap-toast is-ok" role="status" data-ap-toast="auto">
+            <i class="bi bi-check2-circle" aria-hidden="true"></i><span>@refundOk</span>
+            <button type="button" class="ap-toast-x" data-ap-toast-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </div>
+    }
+    @if (TempData["ApRefundError"] is string refundError)
+    {
+        <div class="ap-toast" role="alert">
+            <i class="bi bi-exclamation-circle" aria-hidden="true"></i><span>@refundError</span>
+            <button type="button" class="ap-toast-x" data-ap-toast-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </div>
+    }
+
     <div class="ap-subrow">
         <nav class="ap-chips" aria-label="Payment status">
             @foreach (var (value, label) in statusChips)
@@ -290,7 +335,7 @@
                                 <td>
                                     <div class="ap-stcell">
                                         <span class="ap-st @StatusClass(p.Status)">@p.Status</span>
-                                        @if (p.FailedButPaidLater.HasValue || p.NeedsCheck)
+                                        @if (p.FailedButPaidLater.HasValue || p.NeedsCheck || p.RefundedAt.HasValue)
                                         {
                                             <div class="ap-flags">
                                             @if (p.FailedButPaidLater == true)
@@ -304,10 +349,40 @@
                                             @if (p.IsDuplicatePaid)
                                             {
                                                 <span class="ap-flag is-bad" title="This bill has @p.PaidOnSameBill Paid payments. Please check."><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Paid @p.PaidOnSameBill times</span>
+                                                @if (p.IsLaterDuplicate)
+                                                {
+                                                    @* US55: shortcut on the later (extra) payment only, reason already picked *@
+                                                    <button type="button" class="ap-flag-link" @RefundAttrs(RefundData(p, RefundReasons.ChargedTwice))>Refund this one</button>
+                                                }
                                             }
                                             @if (p.IsAmountMismatch)
                                             {
                                                 <span class="ap-flag is-bad" title="The bill total is RM @Money(p.BillTotal ?? 0m). Please check."><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Bill is RM @Money(p.BillTotal ?? 0m)</span>
+                                            }
+                                            @if (p.RefundedAt is DateTime refundedAt)
+                                            {
+                                                @* US55: when, who and why, next to the Refunded status *@
+                                                var sameDay = refundedAt.Date == p.ShownAt.Date;
+                                                var refundedWhen = refundedAt.ToString(sameDay ? "HH:mm" : "d MMM, HH:mm", en);
+                                                var refundedBy = p.RefundedByName ?? "Admin";
+                                                <span class="ap-flag is-ref" title="Refunded @refundedAt.ToString("d MMM yyyy, HH:mm", en) by @refundedBy"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>@refundedWhen</span>
+                                                <span class="ap-flag is-ref is-by" title="Refunded by @refundedBy">by @refundedBy</span>
+                                                @if (!string.IsNullOrWhiteSpace(p.RefundReason))
+                                                {
+                                                    @* Saved as "Reason · note": the row shows the reason only,
+                                                       a click opens the full details (the note can be long). *@
+                                                    var parts = p.RefundReason.Split(" · ", 2);
+                                                    var refundNote = parts.Length > 1 ? parts[1] : null;
+                                                    <button type="button" class="ap-flag is-ref is-reason" title="Show refund details"
+                                                            data-ap-refund-info
+                                                            data-no="@p.PaymentNo"
+                                                            data-when="@refundedAt.ToString("d MMM yyyy, HH:mm", en)"
+                                                            data-by="@refundedBy"
+                                                            data-reason="@parts[0]"
+                                                            data-note="@refundNote">
+                                                        <span>@parts[0]</span>
+                                                    </button>
+                                                }
                                             }
                                             </div>
                                         }
@@ -327,7 +402,7 @@
                                         {
                                             <span class="ap-ab ap-ab-bill is-ghost" aria-hidden="true"><i class="bi bi-receipt"></i>Bill</span>
                                         }
-                                        @if (isPaid)
+                                        @if (isPaid || p.Status == PaymentStatus.Refunded)
                                         {
                                             @* Opens the receipt in a pop-up on this page (admin-payments.js);
                                                without JavaScript the link opens the PDF in a new tab. *@
@@ -340,6 +415,21 @@
                                         else
                                         {
                                             <span class="ap-ab ap-ab-dl is-ghost" aria-hidden="true"><i class="bi bi-file-earmark-pdf"></i>Receipt</span>
+                                        }
+                                        @if (p.CanRefund)
+                                        {
+                                            @* US55: refund sits behind "⋯" so it is never clicked by accident *@
+                                            <div class="ap-more">
+                                                <button type="button" class="ap-ab ap-ab-more" aria-haspopup="menu" aria-expanded="false"
+                                                        aria-label="More actions for @p.PaymentNo" title="More actions"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
+                                                <div class="ap-menu" role="menu" hidden>
+                                                    <button type="button" role="menuitem" class="ap-menu-item" @RefundAttrs(RefundData(p))><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Refund payment…</button>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="ap-ab ap-ab-more is-ghost" aria-hidden="true"><i class="bi bi-three-dots"></i></span>
                                         }
                                     </div>
                                 </td>
@@ -381,5 +471,79 @@
             </header>
             <iframe class="ap-pdf-frame" id="apPdfFrame" title="Receipt PDF"></iframe>
         </div>
+    </dialog>
+
+    @* ================= REFUND DETAILS (US55): full reason and note ================= *@
+    <dialog class="ap-rf ap-rfi" id="apRefundInfo" aria-labelledby="apRfiTitle">
+        <header class="ap-pdf-head">
+            <div>
+                <p class="ap-pdf-eyebrow">REFUND DETAILS</p>
+                <h2 id="apRfiTitle">Refund</h2>
+            </div>
+            <button type="button" class="ap-pdf-close" data-ap-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        </header>
+        <div class="ap-rf-body">
+            <dl class="ap-rf-sum">
+                <dt>Refunded</dt><dd id="apRfiWhen"></dd>
+                <dt>By</dt><dd id="apRfiBy"></dd>
+                <dt>Reason</dt><dd id="apRfiReason"></dd>
+            </dl>
+            <p class="ap-rf-label">NOTE</p>
+            <p class="ap-rfi-note" id="apRfiNote"></p>
+        </div>
+    </dialog>
+
+    @* ================= REFUND POP-UP (US55) ================= *@
+    <dialog class="ap-rf" id="apRefund" aria-labelledby="apRfTitle">
+        <form method="post" asp-page-handler="Refund" class="ap-rf-box" id="apRfForm" novalidate>
+            <header class="ap-pdf-head">
+                <div>
+                    <p class="ap-pdf-eyebrow">REFUND PAYMENT</p>
+                    <h2 id="apRfTitle">Refund</h2>
+                </div>
+                <button type="button" class="ap-pdf-close" data-ap-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </header>
+
+            <div class="ap-rf-body">
+                <dl class="ap-rf-sum">
+                    <dt>Bill</dt><dd id="apRfBill"></dd>
+                    <dt>Customer</dt><dd id="apRfCust"></dd>
+                    <dt>Method</dt><dd id="apRfMethod"></dd>
+                    <dt>Amount</dt><dd class="ap-rf-amt">RM <span id="apRfAmount"></span></dd>
+                </dl>
+
+                <p class="ap-rf-how" id="apRfHow"></p>
+
+                @* Cash / Card / Bank only; hidden for online payments *@
+                <label class="ap-rf-check" id="apRfCheckRow">
+                    <input type="checkbox" name="returned" value="true" id="apRfReturned" />
+                    <span>I have returned RM <span data-ap-amount></span> to the customer</span>
+                </label>
+
+                <label for="apRfReason" class="ap-rf-label">REASON</label>
+                <select id="apRfReason" name="reason" class="ap-input">
+                    <option value="" disabled selected hidden>Choose a reason</option>
+                    @foreach (var r in RefundReasons.All)
+                    {
+                        <option value="@r">@r</option>
+                    }
+                </select>
+
+                <label for="apRfNote" class="ap-rf-label">NOTE <span id="apRfNoteHint">optional</span></label>
+                <textarea id="apRfNote" name="note" rows="3" maxlength="@RefundReasons.NoteMaxLength" class="ap-input"
+                          placeholder="What happened, e.g. card charged at the counter after paying online"></textarea>
+
+                <p class="ap-rf-err" id="apRfErr" role="alert" hidden></p>
+
+                <p class="ap-rf-warn"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>A refund can't be undone. Only this payment changes; the bill stays Paid.</p>
+            </div>
+
+            <footer class="ap-rf-foot">
+                <input type="hidden" name="id" id="apRfId" />
+                <input type="hidden" name="returnUrl" value="@(HttpContext.Request.Path + HttpContext.Request.QueryString)" />
+                <button type="button" class="ap-rf-cancel" data-ap-close>Cancel</button>
+                <button type="submit" class="ap-btn" id="apRfGo"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Refund RM <span data-ap-amount></span></button>
+            </footer>
+        </form>
     </dialog>
 </div>

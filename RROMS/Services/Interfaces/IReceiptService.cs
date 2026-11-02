@@ -68,6 +68,10 @@ namespace RROMS.Services.Interfaces
         // Counter payments only: the staff member's name (never the email).
         public string? CashierName { get; init; }
 
+        // US55: set when the payment was refunded (printed on the receipt).
+        public DateTime? RefundedAt { get; init; }
+        public string? RefundReason { get; init; }
+
         // Restaurant details (US49 Restaurant Settings).
         public string? Address { get; init; }
         public string? Phone { get; init; }

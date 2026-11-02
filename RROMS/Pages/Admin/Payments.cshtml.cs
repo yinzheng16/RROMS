@@ -1,5 +1,6 @@
 // Owner: Member 4 — US40 Administrative payment transaction monitoring.
 using System.Globalization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,10 +13,14 @@ namespace RROMS.Pages.Admin;
 // the attribute repeats it so the page stays protected if moved.
 [Authorize(Policy = "AdminOnly")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class PaymentsModel(IAdminPaymentService adminPayments, IReceiptService receipts) : PageModel
+public class PaymentsModel(
+    IAdminPaymentService adminPayments,
+    IReceiptService receipts,
+    IPaymentRefundService refunds) : PageModel
 {
     private readonly IAdminPaymentService _adminPayments = adminPayments;
     private readonly IReceiptService _receipts = receipts;
+    private readonly IPaymentRefundService _refunds = refunds;   // US55
 
     // ---------- Query string (GET form, so the URL can be bookmarked) ----------
 
@@ -107,6 +112,29 @@ public class PaymentsModel(IAdminPaymentService adminPayments, IReceiptService r
         // No download name -> the browser shows it instead of saving it.
         Response.Headers.ContentDisposition = $"inline; filename=\"{fileName}\"";
         return File(pdf, "application/pdf");
+    }
+
+    // US55: Refund pop-up (POST). Back to the same list (filters kept)
+    // with a message on top; the scroll position is kept by admin-payments.js.
+    public async Task<IActionResult> OnPostRefundAsync(
+        int id, string? reason, string? note, bool returned = false, string? returnUrl = null)
+    {
+        string? adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(adminId)) return Challenge();
+
+        try
+        {
+            var done = await _refunds.RefundAsync(id, adminId, reason ?? "", note, returned);
+            TempData["ApRefundOk"] = done.Method == PaymentMethod.Online
+                ? $"{done.PaymentNo} refunded. RM {done.Amount.ToString("N2", CultureInfo.InvariantCulture)} goes back to the customer's card through Stripe."
+                : $"{done.PaymentNo} refunded. RM {done.Amount.ToString("N2", CultureInfo.InvariantCulture)} recorded as returned to the customer.";
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        {
+            TempData["ApRefundError"] = $"{PaymentReceipt.FormatReceiptNo(id)} was not refunded. {ex.Message}";
+        }
+
+        return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Page("/Admin/Payments")!);
     }
 
     // Quick buttons set the dates; typed dates mean "custom".

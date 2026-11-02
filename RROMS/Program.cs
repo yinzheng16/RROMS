@@ -109,6 +109,7 @@ builder.Services.AddScoped<IAdminPaymentService, AdminPaymentService>(); // Memb
 builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection(StripeSettings.Section)); // Member 4 / US33
 builder.Services.AddSingleton<IStripeCheckoutGateway, StripeCheckoutGateway>();   // Member 4 / US33
 builder.Services.AddScoped<IOnlinePaymentService, OnlinePaymentService>();   // Member 4 / US33
+builder.Services.AddScoped<IPaymentRefundService, PaymentRefundService>();   // Member 4 / US55 refunds
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 
 //Member 5
