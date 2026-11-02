@@ -1,0 +1,190 @@
+@page
+@model RROMS.Pages.Customer.Orders.IndexModel
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services
+@{
+    ViewData["Title"] = "My orders";
+    ViewData["FullWidth"] = true;
+    var history = Model.History;
+    var filter = history.Filter;
+    string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+    string Rate(decimal? percent) => percent is decimal p ? $" ({p.ToString("0.##", CultureInfo.InvariantCulture)}%)" : "";
+    string Link(int page, int? orderId = null, string? status = null, bool? showAll = null) => Url.Page("/Customer/Orders/Index", new
+    {
+        search = filter.Search,
+        status = status ?? filter.Status,
+        dining = filter.Dining,
+        from = filter.From?.ToString("yyyy-MM-dd"),
+        to = filter.To?.ToString("yyyy-MM-dd"),
+        sort = filter.Sort,
+        pageNumber = page,
+        orderId,
+        showAll = showAll ?? filter.ShowAll
+    })!;
+    ViewData["HistoryCloseUrl"] = Link(history.PageNumber);
+    var tabs = new[] { ("All", "All orders"), ("InProgress", "In progress"), ("Finished", "Finished"), ("Cancelled", "Cancelled") };
+    bool dateSort = filter.Sort is "newest" or "oldest";
+    string? previousMonth = null;
+
+}
+<link rel="stylesheet" href="~/css/customer-order-history.css" asp-append-version="true" />
+<script>
+    document.documentElement.classList.add('oj-history-js');
+    window.setTimeout(function () {
+        if (!document.querySelector('.oj-controls-ready')) document.documentElement.classList.remove('oj-history-js');
+    }, 2500);
+</script>
+<section class="oh-page oh-journal" data-history-page data-history-url="@Url.Page("/Customer/Orders/Index")">
+
+    <svg class="oj-icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <symbol id="oj-icon-All" viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" /></symbol>
+        <symbol id="oj-icon-InProgress" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" /><path d="M12 9v5l3 2M9 2h6M12 2v3" /></symbol>
+        <symbol id="oj-icon-Finished" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="m7 12 3 3 7-7" /></symbol>
+        <symbol id="oj-icon-Cancelled" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="m8 8 8 8m0-8-8 8" /></symbol>
+        <symbol id="oj-icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></symbol>
+        <symbol id="oj-icon-dining" viewBox="0 0 24 24"><path d="M5 3v7m3-7v7M2 3v7q3 5 6 0M5 13v8M17 3q-5 7 0 10V3Zm0 10v8" /></symbol>
+        <symbol id="oj-icon-bowl" viewBox="0 0 24 24"><path d="M3 12h18c-1 5-4 8-9 8s-8-3-9-8ZM8 22h8M8 9c-3-3 3-3 0-6M12 9c-3-3 3-3 0-6M16 9c-3-3 3-3 0-6" /></symbol>
+        <symbol id="oj-icon-bag" viewBox="0 0 24 24"><path d="M5 7h14l2 14H3L5 7ZM8 8V6a4 4 0 0 1 8 0v2" /></symbol>
+        <symbol id="oj-icon-status" viewBox="0 0 24 24"><path d="M8 5H5v16h14V5h-3M8 3h8v5H8zM8 12h8M8 16h6" /></symbol>
+        <symbol id="oj-icon-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 2v6M17 2v6M3 11h18" /></symbol>
+        <symbol id="oj-icon-reset" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6" /></symbol>
+        <symbol id="oj-icon-sort" viewBox="0 0 24 24"><path d="M7 3v18M3 7l4-4 4 4M17 21V3M13 17l4 4 4-4" /></symbol>
+        <symbol id="oj-icon-filter" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v9l-4-3v-6z" /></symbol>
+    </svg>
+    <header class="oj-hero">
+        <div class="oj-hero-inner">
+            <p class="oh-eyebrow">MY ORDERS</p>
+            <h1>Good meals,<br class="oj-mobile-break" /> kept here.</h1>
+            <p>Revisit a favourite, or find your next one.</p>
+            <a asp-page="/Menu/Index" class="oh-button oj-menu-button">Browse the menu <span aria-hidden="true">↗</span></a>
+        </div>
+    </header>
+    <div class="oj-content">
+        <form method="get" class="oj-controls" aria-label="Filter order history">
+            @if (filter.Status is "InProgress" or "Finished")
+            {
+                <input type="hidden" name="statusGroup" value="@filter.Status" />
+            }
+            @if (filter.ShowAll)
+            {
+                <input type="hidden" name="showAll" value="true" />
+            }
+            <nav class="oj-tabs" aria-label="Order groups">
+                @foreach (var tab in tabs)
+                {
+                    <a href="@Link(1, status: tab.Item1)" class="@(filter.Status == tab.Item1 ? "is-active" : "")" aria-current="@(filter.Status == tab.Item1 ? "page" : null)">
+                        <svg class="oj-icon" aria-hidden="true"><use href="@("#oj-icon-" + tab.Item1)"></use></svg>
+                        @tab.Item2 <span>@history.StatusCounts.GetValueOrDefault(tab.Item1)</span>
+                    </a>
+                }
+            </nav>
+            <div class="oj-toolbar">
+                <label class="oj-search"><span class="oj-sr-only">Search orders</span><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-search"></use></svg><input type="search" name="search" value="@filter.Search" maxlength="80" placeholder="Order reference or dish name…" aria-describedby="oj-search-hint" /></label>
+                <label class="oj-tool-field" data-filter-label="@(filter.Dining == "All" ? "All dining types" : filter.Dining == "Takeaway" ? "Takeaway" : "Dine-in")"><span class="oj-sr-only">Dining type</span><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-dining"></use></svg><select name="dining"><option value="All" selected="@(filter.Dining == "All")">All dining types</option><option value="DineIn" selected="@(filter.Dining == "DineIn")">Dine-in</option><option value="Takeaway" selected="@(filter.Dining == "Takeaway")">Takeaway</option></select></label>
+                <label class="oj-tool-field" data-filter-label="@(filter.Status is "All" or "InProgress" or "Finished" ? "All statuses" : filter.Status == "ReadyToServe" ? "Ready to Serve" : filter.Status)"><span class="oj-sr-only">Status</span><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-status"></use></svg><select name="status"><option value="All" selected="@(filter.Status is "All" or "InProgress" or "Finished")">All statuses</option>@foreach (var status in Enum.GetValues<OrderStatus>()) {
+                    <option value="@status" selected="@(filter.Status == status.ToString())">@CustomerOrderHistoryRules.StatusLabel(status)</option>
+                }
+            </select></label>
+            <div class="oj-date-range" role="group" aria-label="Order date range"><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-calendar"></use></svg><label data-date-label="@(filter.From?.ToString("dd MMM yyyy", CultureInfo.InvariantCulture) ?? "Start date")"><span class="oj-sr-only">From date</span><input type="date" name="from" value="@filter.From?.ToString("yyyy-MM-dd")" aria-label="From date" /></label><span aria-hidden="true">→</span><label data-date-label="@(filter.To?.ToString("dd MMM yyyy", CultureInfo.InvariantCulture) ?? "End date")"><span class="oj-sr-only">To date</span><input type="date" name="to" value="@filter.To?.ToString("yyyy-MM-dd")" aria-label="To date" /></label></div>
+            <label class="oj-tool-field oj-sort-field" data-filter-label="@(filter.Sort == "oldest" ? "Oldest first" : filter.Sort == "total-high" ? "Highest total" : filter.Sort == "total-low" ? "Lowest total" : "Newest first")"><span class="oj-sr-only">Sort</span><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-sort"></use></svg><select name="sort"><option value="newest" selected="@(filter.Sort == "newest")">Newest first</option><option value="oldest" selected="@(filter.Sort == "oldest")">Oldest first</option><option value="total-high" selected="@(filter.Sort == "total-high")">Highest total</option><option value="total-low" selected="@(filter.Sort == "total-low")">Lowest total</option></select></label>
+            <button type="submit" class="oj-apply" aria-label="Apply search and filters"><span>Apply</span></button>
+            <a asp-page="/Customer/Orders/Index" class="oh-clear oj-reset"><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-reset"></use></svg><span>Reset</span></a>
+        </div>
+        <p id="oj-search-hint" class="oj-search-hint" data-search-hint role="status" hidden>Enter an order reference or dish name, or choose a filter before applying.</p>
+    </form>
+    <div asp-validation-summary="All" class="oh-error" role="alert"></div>
+    @if (history.Error is not null)
+    {
+        <p class="oh-error" role="alert">@history.Error</p>
+    }
+    <div class="oj-result-note"><span>@history.MatchingCount matching @(history.MatchingCount == 1 ? "order" : "orders") · @history.AllOrdersCount saved in your journal</span><span>Kitchen progress and payment are separate.</span></div>
+    <div class="oh-workspace">
+        @if (history.Orders.Count == 0)
+        {
+            <div class="oh-empty oj-empty-state">
+                <img class="oj-empty-art" src="~/images/orders/yoru-order-empty-scene.webp" alt="" width="2048" height="683" />
+                <h2>@(history.AllOrdersCount == 0 ? "Your first favourite is waiting." : "No orders match these filters.")</h2>
+                <p>@(history.AllOrdersCount == 0 ? "Orders you place will appear here, ready to revisit." : "Try another date, status or dish name. Good meals are always just around the corner.")</p>
+                <div class="oj-empty-divider" aria-hidden="true"><i></i><svg viewBox="0 0 40 26"><path d="M3 20Q20-13 37 20L20 25Z M20 25L8 13 M20 25L14 6 M20 25V3 M20 25L26 6 M20 25L32 13" /></svg><i></i></div>
+                <a asp-page="@(history.AllOrdersCount == 0 ? "/Menu/Index" : "/Customer/Orders/Index")" class="oh-button"><svg class="oj-icon" aria-hidden="true"><use href="@(history.AllOrdersCount == 0 ? "#oj-icon-dining" : "#oj-icon-filter")"></use></svg>@(history.AllOrdersCount == 0 ? "Explore the menu" : "Clear filters") <span aria-hidden="true">→</span></a>
+            </div>
+        }
+        else
+        {
+            <div class="oj-receipt-grid">
+                @foreach (var order in history.Orders)
+                {
+                    string month = dateSort ? order.CreatedAt.ToString("MMMM yyyy", CultureInfo.InvariantCulture) : "Ordered by saved total";
+                    @if (month != previousMonth)
+                    {
+                        <h2 class="oj-month"><span>@month</span><img class="oj-gold-mark" src="@Url.Content("~/images/orders/yoru-gold-yoru-mark.webp")" alt="" width="40" height="40" aria-hidden="true" /><i aria-hidden="true"></i></h2>
+                        previousMonth = month;
+                    }
+                    <article class="oj-receipt @(Model.Details?.Id == order.Id ? "is-selected" : "")" data-history-card="@order.Id">
+                        <div class="oj-receipt-top" aria-hidden="true"></div>
+                        <div class="oj-receipt-body">
+                            <div class="oj-brand" aria-label="Yoru Izakaya"><span class="oj-brand-wordmark"><span>Y O R U</span><small>I Z A K A Y A</small></span><img class="oj-gold-mark" src="@Url.Content("~/images/orders/yoru-gold-yoru-mark.webp")" alt="" width="40" height="40" aria-hidden="true" /></div>
+                            <h3><time datetime="@order.CreatedAt.ToString("s")">@order.CreatedAt.ToString("dddd, d MMM", CultureInfo.InvariantCulture)</time></h3>
+                            <p class="oj-reference">@order.OrderNo</p>
+                            <p class="oj-order-time">@order.CreatedAt.ToString("h:mm tt", CultureInfo.InvariantCulture)</p>
+                            <div class="oj-receipt-badges"><span class="oh-status is-@order.Status">@Html.Raw(OrderStatusRules.IconSvg(order.Status, "oj-status-icon yoru-status-icon", 14, 3.4))@CustomerOrderHistoryRules.StatusLabel(order.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(order.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(order.Dining)</span></div>
+                            <ul class="oj-dishes">
+                                @foreach (var dish in order.Dishes)
+                                {
+                                    <li><span><b>@dish.Quantity ×</b> @dish.Name</span><strong>@Money(dish.SavedLineTotal)</strong></li>
+                                }
+                            </ul>
+                            @if (order.DishCount > 3)
+                            {
+                                <p class="oh-more">+ @(order.DishCount - 3) more lines · View order for all dishes</p>
+                            }
+                            <dl class="oj-charges"><div><dt>Subtotal</dt><dd>@Money(order.Subtotal)</dd></div><div><dt>Service charge@(Rate(order.ServiceChargePercent))</dt><dd>@Money(order.ServiceCharge)</dd></div><div><dt>Tax@(Rate(order.TaxRatePercent))</dt><dd>@Money(order.Tax)</dd></div></dl>
+                            <div class="oj-total"><span>Total</span><strong>@Money(order.Total)</strong></div>
+                            <div class="oj-actions"><a href="@Link(history.PageNumber, order.Id)" data-history-details="@order.Id" class="oj-view">View order</a><a asp-page="/Customer/Orders/Reorder" asp-route-id="@order.Id" class="oh-button">Reorder</a></div>
+                        </div>
+                    </article>
+                }
+            </div>
+            <p class="oj-summary-note">ⓘ Order summaries · Payment recorded separately</p>
+            <nav class="oh-pagination" aria-label="Order history pagination">
+                <span>Showing @history.First–@history.Last of @history.MatchingCount</span>
+                <div>
+                    @if (!filter.ShowAll)
+                    {
+                        @if (history.PageNumber > 1)
+                        {
+                            <a href="@Link(history.PageNumber - 1)" class="oh-page-button">← Previous</a>
+                        }
+                        else
+                        {
+
+                            <span class="oh-page-button is-disabled" aria-disabled="true">← Previous</span>
+                        }
+                        <span>Page @history.PageNumber of @history.TotalPages</span>
+                        @if (history.PageNumber < history.TotalPages)
+                        {
+                            <a href="@Link(history.PageNumber + 1)" class="oh-page-button">Next →</a>
+                        }
+                        else
+                        {
+
+                            <span class="oh-page-button is-disabled" aria-disabled="true">Next →</span>
+                        }
+                    }
+                    <a href="@Link(1, showAll: !filter.ShowAll)" class="oh-page-button oj-show-all">@(filter.ShowAll ? "Show 6 per page" : "Show all")</a>
+                </div>
+            </nav>
+        }
+        <aside id="history-drawer" class="oh-drawer oj-details" aria-label="Order details" aria-busy="false" hidden="@(Model.Details is null)">@if (Model.Details is not null) {
+            <partial name="_OrderHistoryDetails" model="Model.Details" />
+        }
+    </aside>
+</div>
+<dialog class="oj-dialog" aria-label="Order details" data-history-dialog><div data-history-modal-host></div></dialog>
+<p class="oh-live-message" role="status" aria-live="polite" data-history-message></p>
+</div>
+</section>
+@section Scripts {
+    <script src="~/js/customer-order-history.js" asp-append-version="true"></script>
+}

@@ -46,6 +46,7 @@
 
 @* Small SVG country flags for the phone picker (same as Register) *@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" />
+<link rel="stylesheet" href="~/css/profile-security.css" asp-append-version="true" />
 
 <main class="pf">
     @* Rough edge for the stamp icons *@
@@ -102,7 +103,7 @@
                         {
                             <li>@Html.Raw(Icon("badge"))<span>Role</span>@p.Role</li>
                             <li>@Html.Raw(Icon("clock"))<span>Joined</span>@p.MemberSince.ToString("MMM yyyy")</li>
-                            <li>@Html.Raw(Icon("shield"))<span>Status</span>@(p.IsActive ? "● Active" : "Inactive")</li>
+                            <li>@Html.Raw(Icon("shield"))<span>Status</span><b class="pf-status @(p.IsActive ? "is-on" : "is-off")">@(p.IsActive ? "Active" : "Inactive")</b></li>
                         }
                     </ul>
 
@@ -234,8 +235,8 @@
                             <div><h2>Security</h2><p>Keep your account safe.</p></div>
                         </div>
                         <div class="pf-links">
-                            <a class="pf-link" href="/Identity/Account/Manage/ChangePassword"><i>@Html.Raw(Icon("lock"))</i><div><b>Change password</b><small>Choose a new password</small></div>@Html.Raw(Icon("chev"))</a>
-                            <a class="pf-link" href="/Identity/Account/Manage/Email"><i>@Html.Raw(Icon("mail"))</i><div><b>Change email</b><small>We'll send a confirmation link</small></div>@Html.Raw(Icon("chev"))</a>
+                            <button type="button" class="pf-link" data-sx-open="sxPwd"><i>@Html.Raw(Icon("lock"))</i><div><b>Change password</b><small>Choose a new password</small></div>@Html.Raw(Icon("chev"))</button>
+                            <button type="button" class="pf-link" data-sx-open="sxEmail"><i>@Html.Raw(Icon("mail"))</i><div><b>Change email</b><small>We'll send a confirmation link</small></div>@Html.Raw(Icon("chev"))</button>
                         </div>
                         @if (!isCustomer)
                         {
@@ -269,10 +270,14 @@
             </div>
         </div>
     </div>
+
+    @* US03 / US04: Change password + Change email pop-ups (outside the profile form) *@
+    <partial name="_SecurityPopups" model="Model.Profile" />
 </main>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/profile-security.js" asp-append-version="true"></script>
     <script>
         // US03: save bar, "No allergies" chip, notes counter, warning before leaving with unsaved changes.
         (function () {

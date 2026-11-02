@@ -1,0 +1,21 @@
+@model RROMS.Services.Interfaces.StaffWorkflowBoard
+@using RROMS.Models
+@using RROMS.Services
+@{
+    string Link(OrderStatus stage) => Url.Page("/Staff/Orders/Index", new { status = stage.ToString(), search = Model.Search, dining = Model.Dining, sort = Model.Sort })!;
+    var subtitles = new[] { "Receive & review", "In the kitchen", "At the pass", "With the guest", "Kitchen complete", "Closed without service" };
+}
+<nav id="tabs" aria-label="Order status views">
+    @for (int i = 0; i < OrderStatusRules.Stages.Count; i++)
+    {
+        var stage = OrderStatusRules.Stages[i];
+        <a href="@Link(stage)" data-view="@stage" class="journey-step @(stage == OrderStatus.Cancelled ? "journey-cancelled" : "") @(stage == Model.Status ? "active" : "")" aria-current="@(stage == Model.Status ? "page" : null)">
+            <span class="journey-node" aria-hidden="true">
+                @Html.Raw(OrderStatusRules.IconSvg(stage, "wf-journey-icon", 48, 1.65))
+            </span>
+            <span class="wf-step-number" aria-hidden="true">@((i + 1).ToString("00"))</span>
+            <span class="journey-label"><span class="wf-stage-label">@OrderStatusRules.Label(stage)</span><span class="journey-count">@Model.Counts.GetValueOrDefault(stage)</span></span>
+            <small>@subtitles[i]</small>
+        </a>
+    }
+</nav>

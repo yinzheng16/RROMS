@@ -49,6 +49,14 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RROMS.styles.css" asp-append-version="true" />
+    @* A page's own stylesheet can go here with @section Styles { <link ... /> },
+       so it loads before the page is drawn (no flash of an unstyled page). *@
+    @if (!isBackOffice)
+    {
+        @* US08 (Member 1): "Ask YORU" chat bubble on the customer pages (Pages/Shared/_ChatWidget.cshtml) *@
+        <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+    }
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="@(isBackOffice ? "back-office" : "front-of-house")">
     <header>
@@ -278,6 +286,11 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (!isBackOffice)
+    {
+        <partial name="_ChatWidget" />
+        <script src="~/js/chat.js" asp-append-version="true"></script>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
