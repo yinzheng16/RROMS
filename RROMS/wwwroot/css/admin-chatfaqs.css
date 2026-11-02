@@ -1,0 +1,182 @@
+/* =====================================================================
+   US10 Admin → Chatbot FAQs (Owner: Member 1)
+   Uses the shared parts of admin-users.css (hero, panels, search, pop-ups); only the FAQ parts are here.
+   ===================================================================== */
+
+.cf-grid { grid-template-columns: minmax(0, 1fr) 22rem; }
+
+.uu-seg .cf-n {
+    min-width: 1.2rem;
+    padding: 0 .35rem;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-align: center;
+    color: #7d5f2f;
+    background: rgba(217, 191, 146, .35);
+}
+
+/* AI status card in the hero */
+.uu-stat.cf-ai.is-on b { font-size: 1.15rem; padding: .35rem 0 .15rem; color: #8fe0b2; }
+.uu-stat.cf-ai.is-off b { font-size: 1.15rem; padding: .35rem 0 .15rem; color: #f0cd8c; }
+
+/* ---------------- FAQ list ---------------- */
+.cf-list { list-style: none; margin: 0; padding: 0; }
+
+.cf-row {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--uu-edge-2);
+    transition: background .15s;
+}
+
+    .cf-row:hover { background: rgba(255, 244, 228, .6); }
+    .cf-row.is-off .cf-q, .cf-row.is-off .cf-a, .cf-row.is-off .cf-tags { opacity: .5; }
+    .cf-row.is-off .cf-num { background: #c9bfae; }
+    .cf-row.is-new { animation: uu-new 2.6s ease-out 1; box-shadow: inset 4px 0 0 #3aa36a; }
+
+.cf-num {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(180deg, #e2584a, #b83525);
+    box-shadow: 0 4px 10px -4px rgba(150, 40, 20, .6);
+}
+
+.cf-body { flex: 1; min-width: 0; }
+.cf-q { margin: 0; font-weight: 700; font-size: .98rem; color: var(--uu-ink); overflow-wrap: anywhere; }
+.cf-a { margin: .2rem 0 0; font-size: .88rem; line-height: 1.5; color: #5d4a35; white-space: pre-line; overflow-wrap: anywhere; }
+
+.cf-tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .5rem; }
+    .cf-tags span { padding: .1rem .55rem; border-radius: 999px; font-size: .74rem; color: #7d5f2f; background: #f3e9d9; }
+
+.cf-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: .6rem; }
+.cf-switch-form { margin: 0; }
+
+/* show / hide switch */
+.cf-switch {
+    position: relative;
+    display: inline-block;
+    width: 2.75rem;
+    height: 1.55rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #d6cbbb;
+    transition: background .2s;
+}
+
+    .cf-switch span {
+        position: absolute;
+        top: .2rem;
+        left: .2rem;
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+        transition: transform .2s;
+    }
+
+    .cf-switch.is-on { background: #3aa36a; }
+        .cf-switch.is-on span { transform: translateX(1.2rem); }
+    .cf-switch:focus-visible { outline: 2px solid var(--uu-gold); outline-offset: 2px; }
+
+/* the same switch as a checkbox in the pop-up */
+.cf-check { display: flex; align-items: center; gap: .75rem; margin: .2rem 0 1.2rem; cursor: pointer; }
+    .cf-check input { position: absolute; opacity: 0; pointer-events: none; }
+    .cf-check b { display: block; font-size: .9rem; color: #1b120c; }
+    .cf-check small { display: block; font-size: .78rem; color: var(--mute); }
+    .cf-check input:checked + .cf-switch { background: #3aa36a; }
+        .cf-check input:checked + .cf-switch span { transform: translateX(1.2rem); }
+    .cf-check input:focus-visible + .cf-switch { outline: 2px solid #b79b72; outline-offset: 2px; }
+
+.cf-textarea { height: auto; min-height: 6.5rem; padding: .7rem .95rem; resize: vertical; line-height: 1.5; }
+.cf-count { text-align: right; }
+.cf-preview:empty { display: none; }
+.cf-preview { margin-top: .45rem; }
+
+/* ---------------- Try the assistant ---------------- */
+.cf-try h2 {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin: 0;
+    padding: 1.1rem 1.2rem 0;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--uu-ink);
+}
+
+    .cf-try h2 i { color: var(--uu-gold); }
+
+.cf-try-form {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 1rem 1.2rem 0;
+    padding: .3rem .3rem .3rem .9rem;
+    border-radius: 999px;
+    background: #fffdf9;
+    box-shadow: inset 0 0 0 1.5px var(--uu-edge);
+}
+
+    .cf-try-form:focus-within { box-shadow: inset 0 0 0 1.5px var(--uu-gold), 0 0 0 4px rgba(176, 138, 79, .16); }
+    .cf-try-form input { flex: 1; min-width: 0; height: 2.2rem; border: 0; outline: 0; background: transparent; color: var(--uu-ink); }
+
+    .cf-try-form button {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border: 0;
+        border-radius: 50%;
+        color: #fff;
+        background: linear-gradient(180deg, #c4402e, #8f2417);
+    }
+
+        .cf-try-form button:disabled { opacity: .5; }
+
+.cf-try-out {
+    margin: .8rem 1.2rem 0;
+    padding: .8rem .9rem;
+    border-radius: 12px;
+    font-size: .86rem;
+    line-height: 1.5;
+    color: #3b2c20;
+    background: #fbf3e6;
+    box-shadow: inset 0 0 0 1px #e2cfa9;
+}
+
+    .cf-try-out a { color: #a12a1b; font-weight: 700; }
+    .cf-try-out .cf-used { display: block; margin-top: .55rem; padding-top: .5rem; border-top: 1px dashed #dcc9a6; font-size: .78rem; color: #7d5f2f; }
+    .cf-try-out.is-wait { color: var(--uu-mute); }
+
+.cf-mode {
+    margin: 1rem 1.2rem 1.2rem;
+    padding: .75rem .9rem;
+    border-radius: 12px;
+    font-size: .8rem;
+    line-height: 1.45;
+}
+
+    .cf-mode b { display: flex; align-items: center; gap: .35rem; margin-bottom: .2rem; font-size: .86rem; }
+    .cf-mode.is-on { color: #23553a; background: #ecf7ef; box-shadow: inset 0 0 0 1px #bfe0c9; }
+    .cf-mode.is-off { color: #6b4d1d; background: #fbf1df; box-shadow: inset 0 0 0 1px #ecd3a6; }
+
+@media (max-width: 1199.98px) {
+    .cf-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 575.98px) {
+    .cf-row { flex-wrap: wrap; }
+    .cf-side { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+}
