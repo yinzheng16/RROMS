@@ -3,7 +3,7 @@ using RROMS.Models;
 namespace RROMS.Services.Interfaces;
 
 // Owner: Member 3. All cart, reservation and order database work stays in services.
-public interface ICustomerCartService
+public partial interface ICustomerCartService
 {
     Task<CartView> GetAsync(string userId, CancellationToken cancellationToken = default);
     Task<int> CountAsync(string userId, CancellationToken cancellationToken = default);

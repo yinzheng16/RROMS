@@ -1,0 +1,61 @@
+@model RROMS.Services.Interfaces.HistoryOrderDetails
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services
+@{
+    string statusIcon = Model.Status switch
+    {
+        OrderStatus.Pending => "M6 3h12M6 21h12M7 3v4l5 5-5 5v4M17 3v4l-5 5 5 5v4M9 6h6M9 18h6",
+        OrderStatus.Preparing => "m4 3 17 18M3 5l4 4M5 3l4 4M3 21l8-8M14 10l6-7c3 4 0 8-3 9",
+        OrderStatus.ReadyToServe => "M3 18h18M5 16a7 7 0 0 1 14 0M12 5v3M10 4h4",
+        OrderStatus.Cancelled => "m6 6 12 12M18 6 6 18",
+        OrderStatus.Completed => "m2 12 5 5 9-10M12 16l3 3 7-8",
+        _ => "m5 12 4 4 10-10"
+    };
+    string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+}
+<div class="oj-detail-receipt oj-detail-horizontal" data-history-detail="@Model.Id">
+    <div class="oj-receipt-top" aria-hidden="true"></div>
+    <header class="oj-detail-receipt-header">
+        <a href="@((string?)ViewData["HistoryCloseUrl"] ?? Url.Page("/Customer/Orders/Index"))" class="oh-close" data-history-close aria-label="Close order details">×</a>
+        <div class="oj-brand" aria-label="Yoru Izakaya"><span class="oj-brand-wordmark"><span>Y O R U</span><small>I Z A K A Y A</small></span><img class="oj-gold-mark" src="@Url.Content("~/images/orders/yoru-gold-yoru-mark.webp")" alt="" width="40" height="40" aria-hidden="true" /></div>
+        <div class="oj-detail-identity">
+        <p class="oj-detail-caption">ORDER DETAILS</p>
+        <h2 tabindex="-1" data-history-detail-title><time datetime="@Model.CreatedAt.ToString("s")">@Model.CreatedAt.ToString("dddd, d MMM", CultureInfo.InvariantCulture)</time></h2>
+        <p class="oj-reference">@Model.OrderNo</p>
+        <p class="oj-order-time">@Model.CreatedAt.ToString("h:mm tt", CultureInfo.InvariantCulture)</p>
+        </div>
+        <div class="oj-receipt-badges"><span class="oh-status is-@Model.Status"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="@statusIcon" /></svg>@CustomerOrderHistoryRules.StatusLabel(Model.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(Model.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(Model.Dining)</span></div>
+    </header>
+    <div class="oj-detail-receipt-content">
+    <section class="oj-detail-main" aria-label="Dishes and reservation">
+    <div class="oh-booking oj-icon-panel"><span class="oj-panel-icon" aria-hidden="true"><svg class="oj-icon"><use href="@(Model.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg></span><div><strong>@CustomerOrderHistoryRules.DiningLabel(Model.Dining)</strong>
+        @if(Model.Dining == OrderType.Takeaway){<p>No reservation required</p>}
+        else if(Model.ReservationReference is not null){<p>Reservation @Model.ReservationReference</p>@if(Model.ReservedAt is DateTime at){<p>@at.ToString("dd MMM yyyy · h:mm tt", CultureInfo.InvariantCulture) · @Model.Guests guests</p>}}
+        else{<p>No reservation (older order)</p>}
+    </div></div>
+    <h3 class="oh-section-title">Your dishes</h3>
+    <div class="oj-dish-scroll" role="region" aria-label="Order dishes" tabindex="0">
+    <ul class="oh-detail-dishes">
+    @foreach(var line in Model.Lines)
+    {
+        <li class="@(line.Quantity <= 0 ? "oh-line-cancelled" : "")">
+            <span class="oh-dish-image">@if(line.ImageUrl is not null){<img src="@Url.Content(line.ImageUrl)" alt="" loading="lazy" width="58" height="58" />}else{<span aria-hidden="true">皿</span>}</span>
+            <div><strong>@line.Name</strong><small>@line.Code · @Money(line.SavedUnitPrice) each when ordered</small><p>@(line.Quantity <= 0 ? "No remaining portions" : "Quantity: " + line.Quantity)</p>@if(!string.IsNullOrWhiteSpace(line.Notes)){<p class="oh-dish-note"><strong>Dish remark:</strong> @line.Notes</p>}</div>
+            <strong>@Money(line.SavedUnitPrice * line.Quantity)</strong>
+        </li>
+    }
+    </ul>
+    </div>
+    @if(!string.IsNullOrWhiteSpace(Model.Notes)){<div class="oh-remarks oj-icon-panel"><span class="oj-panel-icon" aria-hidden="true"><svg class="oj-accent-icon" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8M8 16h6" /></svg></span><div><strong>Order remarks</strong><p>@Model.Notes</p></div></div>}
+    </section>
+    <section class="oj-detail-summary" aria-label="Order summary">
+    <h3>Order summary</h3>
+    <dl class="oh-amounts"><div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div><div><dt>Service charge</dt><dd>@Money(Model.ServiceCharge)</dd></div><div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div><div class="oh-grand-total"><dt>Saved order total</dt><dd>@Money(Model.Total)</dd></div></dl>
+    <div class="oj-payment-note"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7v1" /></svg><p class="oh-fine-print">These are the order's saved amounts. An order total or Completed status is not proof of payment.</p></div>
+    <a asp-page="/Customer/Orders/Reorder" asp-route-id="@Model.Id" class="oh-button oh-wide"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 8a9 9 0 1 0 1 8M20 3v6h-6" /></svg><span>Choose dishes to reorder</span><span aria-hidden="true">→</span></a>
+    <a asp-page="/Customer/OrderConfirmation" asp-route-id="@Model.Id" class="oh-detail-link">Open order confirmation <span aria-hidden="true">→</span></a>
+    @if(Model.UpdatedAt is DateTime updated){<p class="oh-last-updated">Last updated @updated.ToString("dd MMM yyyy · h:mm tt", CultureInfo.InvariantCulture)</p>}
+    </section>
+    </div>
+</div>
