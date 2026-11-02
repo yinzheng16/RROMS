@@ -4283,3 +4283,78 @@ html.oj-history-js .oh-journal .oh-workspace > #history-drawer {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+/* 31 Oct: status badges use the same colours as the staff order board
+   (Pending gold, Preparing amber, Ready to Serve teal, Served plum, Completed green, Cancelled red). */
+.oh-journal .oh-status.is-Pending, .oh-status.is-Pending { background: #a7824a; border-color: #8f6c37; color: #fff; }
+.oh-journal .oh-status.is-Preparing, .oh-status.is-Preparing { background: #c4651f; border-color: #a8551a; color: #fff; }
+.oh-journal .oh-status.is-ReadyToServe, .oh-status.is-ReadyToServe { background: #2c7372; border-color: #215b5a; color: #fff; }
+.oh-journal .oh-status.is-Served, .oh-status.is-Served { background: #6b4a78; border-color: #573c62; color: #fff; }
+.oh-journal .oh-status.is-Completed, .oh-status.is-Completed { background: #315b38; border-color: #24472a; color: #fff; }
+.oh-journal .oh-status.is-Cancelled, .oh-status.is-Cancelled { background: #ac3025; border-color: #8e271e; color: #fff; }
+.oh-journal .oh-status .oj-status-icon, .oh-journal .oh-status .oj-accent-icon, .oj-detail-horizontal .oh-status.is-Pending .oj-accent-icon { color: currentColor; }
+
+/* 31 Oct: in-place paging scrolls to the result count, clear of the sticky navigation bar. */
+.oh-journal .oj-result-note {
+    scroll-margin-top: 6rem;
+}
+
+.oh-journal .oh-workspace[aria-busy="true"] .oj-receipt-grid {
+    opacity: .55;
+    transition: opacity .15s;
+}
+
+
+/* US29 (1 Nov): "You saved RM x with promotions" under the totals. */
+.promo-savings {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: .75rem 0 0;
+    padding: .55rem .8rem;
+    border-radius: .6rem;
+    background: color-mix(in srgb, #c83e2d 10%, transparent);
+    color: #a83224;
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+    .promo-savings strong {
+        font-weight: 800;
+    }
+
+/* 1 Nov: My Orders details show the crossed-out normal price for promotional dishes. */
+.oh-line-price {
+    display: inline-grid;
+    justify-items: end;
+    line-height: 1.25;
+}
+
+.oh-price-was {
+    color: #9a9b93;
+    font-size: .8rem;
+    font-weight: 500;
+    text-decoration-thickness: 1px;
+}
+
+/* 1 Nov (b): code capsule and unit price on one tidy row. */
+.oh-dish-meta {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem .5rem;
+}
+
+.oh-code {
+    display: inline-flex;
+    align-items: center;
+    padding: .1rem .55rem;
+    border: 1px solid rgba(183, 155, 114, .45);
+    border-radius: 999px;
+    background: rgba(183, 155, 114, .18);
+    color: #6a4b1d;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    line-height: 1.4;
+}

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace RROMS.Models
@@ -36,6 +37,13 @@ namespace RROMS.Models
         public decimal TaxAmount { get; set; }
         public decimal ServiceCharge { get; set; }
         public decimal TotalAmount { get; set; }
+        // Charge rates used when the order was placed, e.g. 6.00 = 6%.
+        // Null for orders placed before these were saved; pages then show amounts without a %.
+        [Precision(5, 2)]
+        public decimal? TaxRatePercent { get; set; }
+
+        [Precision(5, 2)]
+        public decimal? ServiceChargePercent { get; set; }
 
         [StringLength(500)]
         public string? Notes { get; set; }

@@ -1,0 +1,5714 @@
+/* Member 3 / US26. Scoped adaptation of the approved Kitchen & Service preview. */
+
+.us26-workflow {
+    --ink: #191919;
+    --cream: #f5f0e7;
+    --red: #bf201a;
+    --gold: #ae8550;
+    --green: #265538;
+    --muted: #68707a;
+    --line: #e4d3b7;
+    --paper: #fffaf1
+}
+
+    .us26-workflow * {
+        box-sizing: border-box
+    }
+
+.us26-workflow {
+    margin: 0;
+    background: #f7f0e3 url("../images/staff/yoru-workflow-paper.webp") center top/100% auto repeat-y;
+    color: var(--ink);
+    font: 14px/1.45 'Segoe UI',Arial,sans-serif
+}
+
+    .us26-workflow button, .us26-workflow input, .us26-workflow select, .us26-workflow textarea {
+        font: inherit
+    }
+
+    .us26-workflow button, .us26-workflow a, .us26-workflow select {
+        touch-action: manipulation
+    }
+
+    .us26-workflow button {
+        cursor: pointer;
+        border: 1px solid var(--line);
+        padding: 10px 16px;
+        border-radius: 6px;
+        background: #fffaf2;
+        color: var(--ink)
+    }
+
+        .us26-workflow button:hover {
+            filter: brightness(.96)
+        }
+
+        .us26-workflow button:disabled {
+            cursor: not-allowed;
+            opacity: .5
+        }
+
+        .us26-workflow button:focus-visible, .us26-workflow a:focus-visible, .us26-workflow .order:focus-visible {
+            outline: 3px solid #ba955b;
+            outline-offset: 3px
+        }
+
+    .us26-workflow input:focus, .us26-workflow select:focus, .us26-workflow textarea:focus {
+        outline: 2px solid #b79b72;
+        outline-offset: 1px
+    }
+
+    .us26-workflow .sample-banner {
+        text-align: center;
+        background: #f1e6d2b8;
+        color: #866746;
+        padding: 4px;
+        font-size: 9px;
+        letter-spacing: .12em;
+        border-bottom: 1px solid #d8c3a160
+    }
+
+    .us26-workflow .wf-main {
+        max-width: 1880px;
+        margin: auto;
+        padding: 0 2.4% 18px
+    }
+
+    .us26-workflow .heading {
+        position: relative;
+        min-height: 115px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 20px 2.8% 10px;
+        isolation: isolate
+    }
+
+        .us26-workflow .heading:before {
+            content: '';
+            position: absolute;
+            inset: -22px 15% -27px 18%;
+            background: url("../images/staff/yoru-workflow-sakura.svg") center top/720px 190px no-repeat;
+            z-index: -1;
+            pointer-events: none
+        }
+
+    .us26-workflow .title-block {
+        display: flex;
+        align-items: center;
+        gap: 20px
+    }
+
+    .us26-workflow .title-ornament {
+        font-size: 28px;
+        line-height: 1;
+        color: #c83e2d;
+        position: relative
+    }
+
+        .us26-workflow .title-ornament:after {
+            content: '';
+            display: block;
+            height: 30px;
+            width: 4px;
+            margin: 4px auto 0;
+            border-left: 1px solid #c83e2d;
+            border-right: 1px solid #c83e2d
+        }
+
+    .us26-workflow h1 {
+        font: 700 48px/1 Georgia,serif;
+        letter-spacing: -.03em;
+        margin: 0
+    }
+
+    .us26-workflow .subtitle {
+        font: 20px/1.3 Georgia,serif;
+        margin: 5px 0 0
+    }
+
+    .us26-workflow .header-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        align-self: flex-start;
+        padding-top: 13px
+    }
+
+    .us26-workflow .outline {
+        background: #fffaf3e8;
+        border-color: #ddcfb8;
+        box-shadow: 0 2px 4px #442c1510
+    }
+
+    .us26-workflow .live-status {
+        margin-right: 12px;
+        min-width: 135px
+    }
+
+        .us26-workflow .live-status strong {
+            font: 700 16px Georgia;
+            display: block
+        }
+
+        .us26-workflow .live-status i {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #6ba53f;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 0 3px #79ad4320
+        }
+
+        .us26-workflow .live-status small {
+            display: block;
+            color: #6d7480;
+            font-size: 10px;
+            margin: 4px 0 0 20px
+        }
+
+    .us26-workflow .header-actions button, .us26-workflow .header-actions select {
+        font-family: Georgia,serif;
+        padding: 11px 16px;
+        font-weight: 600
+    }
+
+    .us26-workflow .toolbar {
+        margin-bottom: 12px
+    }
+
+    .us26-workflow #tabs {
+        display: flex;
+        gap: 25px;
+        flex-wrap: wrap;
+        margin: 5px 0 14px;
+        padding-left: 3.5%;
+        border-bottom: 1px solid #d5b99077
+    }
+
+        .us26-workflow #tabs a {
+            border: 0;
+            border-bottom: 3px solid transparent;
+            background: transparent;
+            border-radius: 0;
+            padding: 12px 14px 9px;
+            color: #202129;
+            font: 16px Georgia;
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+            .us26-workflow #tabs a.active {
+                border-bottom-color: var(--red);
+                color: var(--red);
+                font-weight: 700
+            }
+
+            .us26-workflow #tabs a i {
+                font-size: 20px;
+                font-style: normal
+            }
+
+            .us26-workflow #tabs a span {
+                display: inline-block;
+                background: #eae0cd;
+                border-radius: 20px;
+                min-width: 34px;
+                padding: 1px 8px;
+                font-size: 13px;
+                color: #222;
+                font-weight: 400
+            }
+
+            .us26-workflow #tabs a.active span {
+                background: var(--red);
+                color: white
+            }
+
+    .us26-workflow .filters {
+        display: flex;
+        gap: 15px;
+        max-width: 1030px
+    }
+
+    .us26-workflow .search {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex: 1;
+        background: #fffaf5eb;
+        border: 1px solid #d8cab3;
+        border-radius: 6px;
+        padding: 0 13px
+    }
+
+        .us26-workflow .search span {
+            font-size: 23px;
+            color: #293440
+        }
+
+    .us26-workflow input[type=search] {
+        border: 0;
+        background: transparent;
+        padding: 10px 0;
+        min-width: 0;
+        width: 100%;
+        outline-offset: 4px
+    }
+
+    .us26-workflow input::placeholder {
+        color: #717988
+    }
+
+    .us26-workflow select {
+        padding: 10px 30px 10px 13px;
+        border: 1px solid #d8cab3;
+        border-radius: 6px;
+        background: #fffaf5eb;
+        color: #252a32
+    }
+
+    .us26-workflow .workspace {
+        display: grid;
+        grid-template-columns: minmax(0,1fr) 370px;
+        gap: 15px;
+        align-items: start
+    }
+
+    .us26-workflow .board {
+        display: grid;
+        grid-template-columns: repeat(3,minmax(0,1fr));
+        gap: 15px;
+        align-items: start
+    }
+
+        .us26-workflow .board.single {
+            grid-template-columns: repeat(3,minmax(0,1fr));
+            max-width: none
+        }
+
+            .us26-workflow .board.single .column {
+                grid-column: 1/-1
+            }
+
+                .us26-workflow .board.single .column > .order {
+                    max-width: 650px;
+                    margin: 10px auto
+                }
+
+    .us26-workflow .column {
+        background: #f0e6d2a6;
+        border: 1px solid #cfb384;
+        border-radius: 12px;
+        padding: 0 8px 4px;
+        min-height: 580px;
+        box-shadow: 0 3px 9px #6953291c;
+        overflow: hidden
+    }
+
+    .us26-workflow .column-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 15px;
+        margin: 0 -8px 7px;
+        padding: 14px 18px;
+        min-height: 64px;
+        background: #171b18;
+        color: #fffaf1;
+        position: relative;
+        isolation: isolate;
+        border-bottom: 2px solid #c3a05b
+    }
+
+        .us26-workflow .column-header:before, .us26-workflow .drawer-header:before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-radial-gradient(ellipse at 3% 130%,transparent 0 8px,#c6a4466b 9px 10px,transparent 11px 17px);
+            opacity: .65;
+            pointer-events: none;
+            z-index: -1
+        }
+
+        .us26-workflow .column-header:after, .us26-workflow .drawer-header:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 95px;
+            height: 100%;
+            background: linear-gradient(90deg,#171b1800,#171b1840),url("../images/staff/yoru-workflow-paper.webp") right bottom/420px 140px no-repeat;
+            mix-blend-mode: screen;
+            opacity: .6;
+            z-index: -1
+        }
+
+    .us26-workflow .Preparing .column-header {
+        background: linear-gradient(110deg,#a7100a,#bc211a);
+        border-bottom-color: #d99b55
+    }
+
+    .us26-workflow .ReadyToServe .column-header {
+        background: linear-gradient(110deg,#123b26,#2a5632)
+    }
+
+    .us26-workflow .column-header h2 {
+        font: 700 25px/1.1 Georgia,serif;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+        white-space: nowrap
+    }
+
+    .us26-workflow .column-symbol {
+        font: 28px Georgia;
+        color: #e4b953
+    }
+
+    .us26-workflow .column-count {
+        display: grid;
+        place-items: center;
+        min-width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        padding: 2px 7px;
+        font: 18px Georgia;
+        background: #a6814b;
+        color: white;
+        position: relative;
+        z-index: 1
+    }
+
+    .us26-workflow .Preparing .column-count {
+        background: #d54035
+    }
+
+    .us26-workflow .ReadyToServe .column-count {
+        background: #699652
+    }
+
+    .us26-workflow .order {
+        display: block;
+        text-align: left;
+        width: 100%;
+        padding: 15px 16px 12px;
+        margin: 0 0 9px;
+        background: linear-gradient(#fffdf7e8,#fffaf1d9),url("../images/staff/yoru-workflow-paper.webp") right bottom/600px 200px;
+        border: 1px solid #e8d7b9;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px #60431e15;
+        position: relative;
+        cursor: pointer;
+        isolation: isolate
+    }
+
+        .us26-workflow .order:after {
+            content: '';
+            position: absolute;
+            inset: auto 0 0 auto;
+            width: 100px;
+            height: 100px;
+            background: url("../images/staff/yoru-workflow-paper.webp") right bottom/400px 133px no-repeat;
+            opacity: .4;
+            z-index: -1;
+            pointer-events: none
+        }
+
+        .us26-workflow .order.selected {
+            border-color: #c43c2c;
+            box-shadow: 0 0 0 1px #c43c2c
+        }
+
+    .us26-workflow .order-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 5px
+    }
+
+        .us26-workflow .order-head strong {
+            font: 700 23px Georgia;
+            letter-spacing: -.02em
+        }
+
+    .us26-workflow .order-time {
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap
+    }
+
+    .us26-workflow .customer-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin: 4px 0 8px
+    }
+
+    .us26-workflow .customer {
+        font: 14px Georgia;
+        margin: 0
+    }
+
+    .us26-workflow .chips {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        justify-content: flex-end
+    }
+
+    .us26-workflow .chip {
+        font-size: 10px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        background: #ffebc9;
+        color: #4f4435;
+        white-space: nowrap
+    }
+
+        .us26-workflow .chip.table {
+            background: #e3f0d9;
+            color: #325c34
+        }
+
+    .us26-workflow .items-preview {
+        border-top: 1px solid #e8dfd0;
+        padding-top: 6px;
+        margin-top: 8px;
+        min-height: 70px;
+        position: relative;
+        padding-right: 95px
+    }
+
+    .us26-workflow .preview-line {
+        font: 14px/1.5 Georgia;
+        display: flex;
+        gap: 8px;
+        margin: 3px 0
+    }
+
+        .us26-workflow .preview-line span {
+            min-width: 20px;
+            white-space: nowrap
+        }
+
+    .us26-workflow .food-image {
+        display: block;
+        width: 116px;
+        height: 89px;
+        background-image: url("");
+        background-size: 1579px 996px;
+        background-repeat: no-repeat;
+        border-radius: 9px;
+        mask-image: radial-gradient(ellipse 65% 72% at 50% 54%,#000 52%,transparent 80%)
+    }
+
+    .us26-workflow .items-preview > .food-image {
+        position: absolute;
+        right: -6px;
+        top: 3px;
+        pointer-events: none;
+        z-index: -1
+    }
+
+    .us26-workflow .food-karaage {
+        background-position: -1002px -396px
+    }
+
+    .us26-workflow .food-edamame {
+        background-position: -276px -388px
+    }
+
+    .us26-workflow .food-drink {
+        background-position: -639px -395px;
+        height: 105px
+    }
+
+    .us26-workflow .food-sashimi {
+        background-position: -1002px -608px
+    }
+
+    .us26-workflow .food-unagi {
+        background-position: -1000px -840px
+    }
+
+    .us26-workflow .note-marker {
+        margin-top: 8px;
+        font-size: 11px;
+        color: #5c6269;
+        background: #eee5d6b3;
+        display: flex;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        position: relative;
+        z-index: 1
+    }
+
+        .us26-workflow .note-marker > span {
+            font-size: 18px;
+            color: #2c333b
+        }
+
+        .us26-workflow .note-marker strong {
+            font-weight: 400
+        }
+
+        .us26-workflow .note-marker small {
+            display: block;
+            font: 13px Georgia;
+            color: #63666b;
+            margin-top: 2px
+        }
+
+    .us26-workflow .order-bottom {
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px dashed #e3d5bf;
+        margin-top: 8px;
+        padding-top: 6px;
+        font-size: 10px;
+        color: #8b806c
+    }
+
+        .us26-workflow .order-bottom b {
+            color: #5c5549
+        }
+
+    .us26-workflow .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-top: 7px
+    }
+
+    .us26-workflow .view-link {
+        background: transparent;
+        border: 0;
+        padding: 7px 0;
+        color: #bf201a;
+        font-size: 12px;
+        white-space: nowrap
+    }
+
+    .us26-workflow .card-action {
+        display: block;
+        background: linear-gradient(#af8550,#99733f);
+        border: 1px solid #a07743;
+        border-radius: 5px;
+        padding: 8px 11px;
+        color: white;
+        font: 13px Georgia;
+        text-align: center;
+        min-width: 112px
+    }
+
+    .us26-workflow .Preparing .card-action {
+        background: linear-gradient(#d12e24,#bc1d17);
+        border-color: #c12b1e
+    }
+
+    .us26-workflow .ReadyToServe .card-action {
+        background: linear-gradient(#3a6540,#285231);
+        border-color: #315c36
+    }
+
+    .us26-workflow .empty-column {
+        font: 15px/1.8 Georgia;
+        color: #9a8b74;
+        text-align: center;
+        padding: 45px 12px
+    }
+
+    .us26-workflow .drawer {
+        background: linear-gradient(#fffaf1e8,#fffaf1de),url("../images/staff/yoru-workflow-paper.webp") right bottom/750px 250px;
+        border: 1px solid #dbc19a;
+        border-radius: 12px;
+        padding: 0 24px 18px;
+        box-shadow: 0 4px 15px #49301512;
+        min-height: 580px;
+        overflow: hidden
+    }
+
+    .us26-workflow .drawer-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 0 -24px 0;
+        padding: 13px 20px 14px;
+        background: #191b18;
+        color: #fffaf1;
+        position: relative;
+        isolation: isolate;
+        border-bottom: 2px solid #c4a468;
+        min-height: 95px
+    }
+
+    .us26-workflow .drawer h2 {
+        font: 700 28px/1.15 Georgia;
+        margin: 0 0 7px
+    }
+
+    .us26-workflow .icon {
+        padding: 0;
+        border: 0;
+        background: #fffdf3;
+        width: 29px;
+        height: 29px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        font-size: 23px;
+        line-height: 1;
+        color: #27312d
+    }
+
+    .us26-workflow .status {
+        display: inline-block;
+        font: 14px Georgia;
+        border: 1px solid #b98d55;
+        background: #a7824a;
+        color: white;
+        border-radius: 6px;
+        padding: 5px 13px
+    }
+
+        .us26-workflow .status.Preparing {
+            background: #ac3025;
+            border-color: #bb5143
+        }
+
+        .us26-workflow .status.ReadyToServe, .us26-workflow .status.Served, .us26-workflow .status.Completed {
+            background: #315b38;
+            border-color: #4c7851
+        }
+
+        .us26-workflow .status.Cancelled {
+            background: #773b37;
+            border-color: #a45f55
+        }
+
+    .us26-workflow .order-context {
+        padding: 13px 0 11px;
+        border-bottom: 1px solid #dcc6a1;
+        margin-bottom: 5px
+    }
+
+        .us26-workflow .order-context > div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 7px 0;
+            font-size: 11px
+        }
+
+            .us26-workflow .order-context > div > span {
+                width: 47%;
+                flex-shrink: 0;
+                color: #747b85
+            }
+
+        .us26-workflow .order-context strong {
+            font-weight: 500
+        }
+
+        .us26-workflow .order-context .chip {
+            font-size: 11px
+        }
+
+    .us26-workflow .allergy {
+        border-left: 3px solid #b7914e;
+        font-size: 11px;
+        padding: 7px 10px;
+        background: #f5eddd;
+        margin: 10px 0
+    }
+
+    .us26-workflow .section-title {
+        font: 700 16px Georgia;
+        margin: 10px 0 5px
+    }
+
+        .us26-workflow .section-title:before, .us26-workflow .history h3:before {
+            content: '›';
+            color: #be3024;
+            margin-right: 8px
+        }
+
+    .us26-workflow .detail-line {
+        padding: 9px 0;
+        border-bottom: 1px solid #e4d7c0;
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        font-size: 12px
+    }
+
+    .us26-workflow .dish-mark {
+        display: block;
+        flex-shrink: 0;
+        width: 62px;
+        height: 62px;
+        border-radius: 7px;
+        overflow: hidden;
+        background: #eee1ca;
+        position: relative
+    }
+
+        .us26-workflow .dish-mark > .food-image {
+            position: absolute;
+            left: -25px;
+            top: -11px
+        }
+
+    .us26-workflow .dish-copy {
+        flex: 1
+    }
+
+        .us26-workflow .dish-copy strong {
+            font: 700 15px Georgia
+        }
+
+        .us26-workflow .dish-copy small {
+            display: block;
+            font-size: 11px;
+            color: #6c7480;
+            margin-top: 3px
+        }
+
+    .us26-workflow .detail-line > strong {
+        white-space: nowrap;
+        font-size: 12px;
+        font-weight: 500
+    }
+
+    .us26-workflow .detail-line.cancelled {
+        opacity: .5
+    }
+
+    .us26-workflow .note {
+        font-size: 11px;
+        padding: 8px 10px;
+        background: #eee4d2b3;
+        border-radius: 5px;
+        margin-top: 10px
+    }
+
+    .us26-workflow .amounts {
+        font-size: 12px;
+        margin-top: 13px;
+        border-top: 1px dashed #cbb18b;
+        padding-top: 5px
+    }
+
+        .us26-workflow .amounts > div {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0
+        }
+
+            .us26-workflow .amounts > div > span:first-child {
+                color: #727781
+            }
+
+        .us26-workflow .amounts .total {
+            border: 1px solid #e6c998;
+            background: repeating-radial-gradient(ellipse at bottom left,transparent 0 4px,#dfc79b50 5px 6px,transparent 7px 10px),#fff5dd;
+            border-radius: 7px;
+            padding: 7px 10px;
+            margin: 10px 0 8px;
+            align-items: center;
+            font: 700 26px Georgia
+        }
+
+            .us26-workflow .amounts .total span:first-child {
+                color: #191919
+            }
+
+            .us26-workflow .amounts .total span:last-child {
+                color: #b9231c
+            }
+
+    .us26-workflow .primary {
+        background: linear-gradient(#c62c22,#b91f18);
+        border-color: #b51d16;
+        color: #fff;
+        font: 15px Georgia;
+        box-shadow: 0 2px 4px #78241b20
+    }
+
+    .us26-workflow .drawer .primary {
+        display: block;
+        width: 100%;
+        margin-top: 10px
+    }
+
+    .us26-workflow .secondary-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px
+    }
+
+        .us26-workflow .secondary-actions button {
+            flex: 1;
+            font-size: 10px;
+            padding: 7px
+        }
+
+    .us26-workflow .danger {
+        color: #ac281c;
+        border-color: #d4a99a;
+        background: #fff8ed
+    }
+
+    .us26-workflow .kitchen-note {
+        font-size: 9px;
+        color: #948874;
+        text-align: center;
+        margin: 7px 0 12px
+    }
+
+    .us26-workflow .history {
+        border-top: 1px solid #dcc9aa;
+        margin-top: 10px
+    }
+
+        .us26-workflow .history h3 {
+            font: 700 16px Georgia;
+            margin: 10px 0
+        }
+
+    .us26-workflow .event {
+        border-left: 1px solid #ba9a6e;
+        margin: 0 0 0 6px;
+        padding: 0 0 12px 17px;
+        font-size: 11px;
+        position: relative
+    }
+
+        .us26-workflow .event:before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: 4px;
+            width: 11px;
+            height: 11px;
+            background: #ae8550;
+            border-radius: 50%
+        }
+
+        .us26-workflow .event:first-of-type:before {
+            background: #b6271d
+        }
+
+        .us26-workflow .event strong {
+            font: 14px Georgia
+        }
+
+        .us26-workflow .event small {
+            display: block;
+            color: #80838a;
+            margin-top: 2px;
+            font-size: 10px
+        }
+
+        .us26-workflow .event p {
+            margin: 3px 0;
+            font-size: 10px;
+            color: #7e6a50
+        }
+
+    .us26-workflow .lock-demo {
+        margin-top: 10px;
+        border-top: 1px solid #e3d6bd;
+        padding-top: 8px;
+        font-size: 9px;
+        color: #94856d
+    }
+
+        .us26-workflow .lock-demo label {
+            display: block;
+            margin-top: 6px
+        }
+
+        .us26-workflow .lock-demo input {
+            accent-color: #b6271d;
+            vertical-align: middle
+        }
+
+    .us26-workflow .footnote {
+        font-size: 10px;
+        color: #887b67;
+        margin-top: 14px
+    }
+
+    .us26-workflow #notice {
+        padding: 9px 13px;
+        border-radius: 6px;
+        background: #eef2e2;
+        border: 1px solid #c2d0af;
+        margin-bottom: 10px;
+        font-size: 11px
+    }
+
+        .us26-workflow #notice.error {
+            background: #f5e0d9;
+            border-color: #dbb6a9
+        }
+
+    .us26-workflow dialog {
+        border: 1px solid #b99b6b;
+        border-radius: 12px;
+        padding: 25px;
+        width: 480px;
+        max-width: calc(100% - 30px);
+        background: #fff9ee url("../images/staff/yoru-workflow-paper.webp") right bottom/720px 240px;
+        color: #191919;
+        box-shadow: 0 18px 75px #231a1460
+    }
+
+        .us26-workflow dialog::backdrop {
+            background: #17161088
+        }
+
+        .us26-workflow dialog h2 {
+            font: 27px Georgia;
+            margin: 7px 0 10px
+        }
+
+        .us26-workflow dialog p {
+            font-size: 12px;
+            color: #7d7363
+        }
+
+    .us26-workflow .dialog-top {
+        display: flex;
+        justify-content: space-between
+    }
+
+    .us26-workflow .eyebrow {
+        font-size: 10px;
+        letter-spacing: .15em;
+        color: #b82a1d;
+        font-weight: 700;
+        margin: 0 0 7px
+    }
+
+    .us26-workflow #reason-field {
+        display: block;
+        font-size: 12px;
+        margin-top: 17px
+    }
+
+    .us26-workflow textarea {
+        display: block;
+        width: 100%;
+        border: 1px solid #d9c7a6;
+        border-radius: 6px;
+        background: #fffcf6;
+        margin-top: 7px;
+        padding: 10px;
+        resize: vertical
+    }
+
+    .us26-workflow .quantity-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid #dfcbae;
+        font-size: 12px
+    }
+
+        .us26-workflow .quantity-row label {
+            flex: 1
+        }
+
+        .us26-workflow .quantity-row input {
+            width: 65px;
+            border: 1px solid #cdbb9d;
+            border-radius: 5px;
+            padding: 6px;
+            background: white
+        }
+
+        .us26-workflow .quantity-row small {
+            display: block;
+            color: #8c8272;
+            font-size: 10px
+        }
+
+    .us26-workflow .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 22px
+    }
+
+    .us26-workflow #dialog-error {
+        color: #a02f23;
+        font-size: 12px;
+        padding-top: 10px
+    }
+
+    .us26-workflow .empty-drawer {
+        padding: 80px 8px;
+        text-align: center;
+        color: #887d68
+    }
+
+        .us26-workflow .empty-drawer span {
+            display: block;
+            font: 40px Georgia;
+            color: #b79b72;
+            margin-bottom: 16px
+        }
+
+@media(min-width:1700px) {
+    .us26-workflow .workspace {
+        grid-template-columns: minmax(0,1fr) 400px;
+        gap: 18px
+    }
+
+    .us26-workflow .column-header h2 {
+        font-size: 28px
+    }
+
+    .us26-workflow .order {
+        padding: 18px
+    }
+
+    .us26-workflow .column {
+        min-height: 700px
+    }
+
+    .us26-workflow .drawer {
+        padding-left: 26px;
+        padding-right: 26px
+    }
+
+    .us26-workflow .drawer-header {
+        margin-left: -26px;
+        margin-right: -26px
+    }
+
+    .us26-workflow .heading {
+        min-height: 130px
+    }
+}
+
+@media(max-width:1360px) and (min-width:1101px) {
+    .us26-workflow .workspace {
+        grid-template-columns: minmax(0,1fr) 320px;
+        gap: 10px
+    }
+
+    .us26-workflow .board {
+        gap: 9px
+    }
+
+    .us26-workflow .column-header {
+        padding: 14px 10px;
+        gap: 8px
+    }
+
+        .us26-workflow .column-header h2 {
+            font-size: 20px;
+            gap: 7px
+        }
+
+    .us26-workflow .column-symbol {
+        font-size: 23px
+    }
+
+    .us26-workflow .column-count {
+        font-size: 14px;
+        min-width: 23px;
+        height: 23px
+    }
+
+    .us26-workflow .order {
+        padding: 12px 10px
+    }
+
+    .us26-workflow .order-head strong {
+        font-size: 19px
+    }
+
+    .us26-workflow .order-time {
+        font-size: 10px
+    }
+
+    .us26-workflow .customer-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px
+    }
+
+    .us26-workflow .card-action {
+        font-size: 11px;
+        min-width: 90px;
+        padding: 8px
+    }
+
+    .us26-workflow .view-link {
+        font-size: 11px
+    }
+
+    .us26-workflow .drawer {
+        padding-left: 16px;
+        padding-right: 16px
+    }
+
+    .us26-workflow .drawer-header {
+        margin-left: -16px;
+        margin-right: -16px
+    }
+
+    .us26-workflow .drawer h2 {
+        font-size: 25px
+    }
+
+    .us26-workflow .items-preview {
+        padding-right: 70px
+    }
+
+        .us26-workflow .items-preview > .food-image {
+            right: -20px;
+            opacity: .85
+        }
+
+    .us26-workflow .preview-line {
+        font-size: 12px
+    }
+
+    .us26-workflow .live-status {
+        display: none
+    }
+}
+
+@media(max-width:1100px) {
+    .us26-workflow .workspace {
+        grid-template-columns: minmax(0,1fr) 340px;
+        gap: 14px
+    }
+
+    .us26-workflow .board, .us26-workflow .board.single {
+        grid-template-columns: 1fr
+    }
+
+    .us26-workflow .column {
+        min-height: 150px
+    }
+
+    .us26-workflow .heading:before {
+        opacity: .6;
+        right: 0;
+        left: 15%
+    }
+
+    .us26-workflow .header-actions {
+        gap: 7px
+    }
+
+    .us26-workflow .live-status {
+        display: none
+    }
+
+    .us26-workflow .heading {
+        padding-left: 0;
+        padding-right: 0
+    }
+
+    .us26-workflow .header-actions button, .us26-workflow .header-actions select {
+        font-size: 12px
+    }
+
+    .us26-workflow .column-header {
+        min-height: 55px;
+        padding: 12px 18px
+    }
+
+        .us26-workflow .column-header h2 {
+            font-size: 25px
+        }
+
+    .us26-workflow .column-count {
+        height: 26px;
+        min-width: 26px
+    }
+
+    .us26-workflow .order {
+        margin-bottom: 8px
+    }
+
+    .us26-workflow .column .order {
+        min-height: 220px
+    }
+
+    .us26-workflow .filters {
+        gap: 10px
+    }
+
+    .us26-workflow .items-preview > .food-image {
+        right: 0;
+        top: 0
+    }
+
+    .us26-workflow .items-preview {
+        min-height: 75px
+    }
+
+    .us26-workflow #tabs {
+        padding-left: 0;
+        gap: 10px
+    }
+
+    .us26-workflow .order-head strong {
+        font-size: 24px
+    }
+}
+
+@media(max-width:700px) {
+    .us26-workflow .wf-main {
+        padding: 0 13px 15px
+    }
+
+    .us26-workflow .heading {
+        min-height: 132px;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 9px;
+        padding-top: 16px
+    }
+
+    .us26-workflow .title-block {
+        gap: 10px
+    }
+
+    .us26-workflow .title-ornament {
+        font-size: 20px
+    }
+
+        .us26-workflow .title-ornament:after {
+            height: 20px
+        }
+
+    .us26-workflow h1 {
+        font-size: 37px
+    }
+
+    .us26-workflow .subtitle {
+        font-size: 15px
+    }
+
+    .us26-workflow .heading:before {
+        inset: 0 -13px 0 15%;
+        background-size: 420px 170px;
+        opacity: .45
+    }
+
+    .us26-workflow .header-actions {
+        padding-top: 0;
+        align-self: flex-end;
+        position: absolute;
+        right: 0;
+        bottom: 10px
+    }
+
+        .us26-workflow .header-actions button, .us26-workflow .header-actions select {
+            padding: 7px 9px;
+            font-size: 11px
+        }
+
+    .us26-workflow #tabs {
+        gap: 1px;
+        margin-top: 0;
+        margin-bottom: 10px
+    }
+
+        .us26-workflow #tabs a {
+            padding: 9px 8px;
+            font-size: 13px;
+            gap: 5px
+        }
+
+            .us26-workflow #tabs a i {
+                font-size: 17px
+            }
+
+            .us26-workflow #tabs a span {
+                font-size: 11px;
+                min-width: 25px
+            }
+
+    .us26-workflow .workspace {
+        grid-template-columns: 1fr
+    }
+
+    .us26-workflow .drawer {
+        grid-row: auto;
+        min-height: 0
+    }
+
+        .us26-workflow .drawer:has(.empty-drawer) {
+            display: none
+        }
+
+    .us26-workflow .filters {
+        flex-wrap: wrap
+    }
+
+    .us26-workflow .search {
+        flex-basis: 100%
+    }
+
+    .us26-workflow .filters select {
+        flex: 1;
+        min-width: 0
+    }
+
+    .us26-workflow .sample-banner {
+        font-size: 7px;
+        letter-spacing: .06em
+    }
+
+    .us26-workflow .column {
+        min-height: 100px
+    }
+
+    .us26-workflow .board .column > .order {
+        max-width: none
+    }
+
+    .us26-workflow .drawer-header {
+        min-height: 90px
+    }
+
+    .us26-workflow .board.single .column {
+        grid-column: auto
+    }
+
+    .us26-workflow .order {
+        padding: 16px
+    }
+
+    .us26-workflow .card-action {
+        padding: 9px 14px
+    }
+
+    .us26-workflow .view-link {
+        font-size: 13px
+    }
+}
+
+.us26-workflow {
+    background: #f6f0e5 url("../images/staff/yoru-workflow-paper.webp") center top/100% auto repeat-y
+}
+
+    .us26-workflow .queue-hero {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1900/350;
+        isolation: isolate;
+        overflow: hidden;
+        border-bottom: 1px solid #c9ad81;
+        background: #f6ecd8
+    }
+
+    .us26-workflow .banner-art {
+        position: absolute;
+        inset: 0;
+        display: block;
+        width: 100%;
+        height: 100%;
+        z-index: -1
+    }
+
+    .us26-workflow .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border: 0
+    }
+
+    .us26-workflow .banner-caption {
+        position: absolute;
+        left: 55.8%;
+        top: 20.4%;
+        width: 29%;
+        height: 7%;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #161817;
+        color: #fff9e9;
+        font-size: clamp(8px,.76vw,16px);
+        white-space: nowrap
+    }
+
+        .us26-workflow .banner-caption span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #c83e2d;
+            flex-shrink: 0
+        }
+
+    .us26-workflow .banner-metrics {
+        position: absolute;
+        left: 44.4%;
+        right: 9.2%;
+        top: 39%;
+        height: 47.4%;
+        display: grid;
+        grid-template-columns: repeat(3,minmax(0,1fr));
+        padding: 4px 0 1px;
+        background: radial-gradient(ellipse at 30% 25%,#fff9eafc,#f6e7cfff);
+        box-shadow: 0 0 9px 6px #f9eedbf7
+    }
+
+        .us26-workflow .banner-metrics > div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            min-width: 0;
+            position: relative
+        }
+
+            .us26-workflow .banner-metrics > div + div:before {
+                content: '';
+                position: absolute;
+                height: 74%;
+                left: 0;
+                top: 13%;
+                border-left: 1px dashed #c6a474
+            }
+
+        .us26-workflow .banner-metrics p {
+            font: clamp(9px,1.15vw,24px)/1.4 Georgia,serif;
+            margin: 0;
+            white-space: nowrap
+        }
+
+            .us26-workflow .banner-metrics p span {
+                font-size: .85em;
+                margin-right: 4px
+            }
+
+        .us26-workflow .banner-metrics strong {
+            font: clamp(27px,4.05vw,80px)/1.02 Georgia,serif;
+            letter-spacing: -.03em;
+            font-weight: 400
+        }
+
+    .us26-workflow .banner-scope {
+        position: absolute;
+        left: 46%;
+        top: 87%;
+        margin: 0;
+        width: 42%;
+        text-align: center;
+        color: #f7e4bb;
+        font-size: clamp(7px,.65vw,12px);
+        letter-spacing: .05em;
+        background: #171917e8;
+        border-radius: 3px
+    }
+
+    .us26-workflow .wf-main {
+        max-width: none;
+        padding: 17px 1.6% 18px;
+        background: linear-gradient(#faf7f1cc,#f8f3e9a6)
+    }
+
+    .us26-workflow .view-controls {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #ddc6a4
+    }
+
+        .us26-workflow .view-controls #tabs {
+            border: 0;
+            margin: 0;
+            padding-left: 0;
+            gap: 16px
+        }
+
+    .us26-workflow .refresh-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto
+    }
+
+    .us26-workflow #updated-time {
+        color: #8b7f6d;
+        font-size: 10px
+    }
+
+    .us26-workflow .refresh-controls select {
+        font-size: 12px;
+        padding: 8px 12px
+    }
+
+    .us26-workflow .filters {
+        max-width: none;
+        gap: 12px
+    }
+
+    .us26-workflow .refresh-button {
+        min-width: 125px;
+        font: 15px Georgia;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 9px 18px
+    }
+
+        .us26-workflow .refresh-button span {
+            font-family: Arial,sans-serif;
+            font-size: 22px;
+            line-height: 1
+        }
+
+    .us26-workflow .toolbar {
+        margin-bottom: 15px
+    }
+
+    .us26-workflow .workspace {
+        grid-template-columns: minmax(0,1fr) 370px;
+        gap: 16px
+    }
+
+    .us26-workflow .items-preview {
+        padding-right: 0;
+        min-height: 0;
+        padding-top: 9px;
+        padding-bottom: 4px
+    }
+
+    .us26-workflow .preview-line {
+        font: 14px/1.6 Georgia,serif;
+        margin: 3px 0;
+        overflow-wrap: anywhere
+    }
+
+    .us26-workflow .column .order {
+        min-height: 0
+    }
+
+    .us26-workflow .order {
+        padding: 16px 17px 12px
+    }
+
+    .us26-workflow .order-head strong {
+        font-size: 22px
+    }
+
+    .us26-workflow .order-bottom {
+        margin-top: 10px;
+        padding-top: 8px
+    }
+
+    .us26-workflow .note-marker {
+        margin: 9px 0 0
+    }
+
+    .us26-workflow .card-footer {
+        margin-top: 10px
+    }
+
+    .us26-workflow .reset-demo {
+        font-size: 10px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: #9c6c45;
+        text-decoration: underline;
+        margin-left: 8px
+    }
+
+@media(min-width:1700px) {
+    .us26-workflow .workspace {
+        grid-template-columns: minmax(0,1fr) 420px
+    }
+
+    .us26-workflow .order {
+        padding: 19px 20px 14px
+    }
+
+    .us26-workflow .column-header h2 {
+        font-size: 28px
+    }
+
+    .us26-workflow .preview-line {
+        font-size: 15px
+    }
+}
+
+@media(max-width:1360px) and (min-width:1101px) {
+    .us26-workflow .workspace {
+        grid-template-columns: minmax(0,1fr) 320px;
+        gap: 11px
+    }
+
+    .us26-workflow .items-preview {
+        padding-right: 0
+    }
+
+    .us26-workflow .order {
+        padding: 13px 11px
+    }
+
+    .us26-workflow .preview-line {
+        font-size: 13px
+    }
+}
+
+@media(max-width:1100px) {
+    .us26-workflow .workspace {
+        grid-template-columns: minmax(0,1fr) 340px
+    }
+
+    .us26-workflow .view-controls #tabs {
+        gap: 3px
+    }
+
+    .us26-workflow .refresh-controls {
+        gap: 5px
+    }
+
+    .us26-workflow #updated-time {
+        display: none
+    }
+
+    .us26-workflow .items-preview {
+        padding-right: 0;
+        min-height: 0
+    }
+
+    .us26-workflow .column .order {
+        min-height: 0
+    }
+
+    .us26-workflow .banner-metrics {
+        padding-top: 0
+    }
+
+        .us26-workflow .banner-metrics strong {
+            line-height: 1
+        }
+
+        .us26-workflow .banner-metrics p {
+            line-height: 1.2
+        }
+}
+
+@media(max-width:700px) {
+    .us26-workflow .queue-hero {
+        aspect-ratio: auto;
+        height: 250px
+    }
+
+    .us26-workflow .banner-art {
+        height: 128px;
+        inset: 0 0 auto
+    }
+
+    .us26-workflow .banner-caption {
+        display: none
+    }
+
+    .us26-workflow .banner-metrics {
+        left: 6%;
+        right: 6%;
+        top: 138px;
+        height: 82px;
+        padding: 2px 0;
+        background: linear-gradient(#fff9ed,#f4e4c8);
+        border: 1px solid #ccb180;
+        border-radius: 8px;
+        box-shadow: 0 4px 9px #48351618
+    }
+
+        .us26-workflow .banner-metrics p {
+            font-size: 12px
+        }
+
+        .us26-workflow .banner-metrics strong {
+            font-size: 37px
+        }
+
+    .us26-workflow .banner-scope {
+        left: 10%;
+        top: 226px;
+        width: 80%;
+        background: none;
+        color: #88714f;
+        font-size: 9px
+    }
+
+    .us26-workflow .view-controls {
+        align-items: flex-start;
+        gap: 4px
+    }
+
+        .us26-workflow .view-controls #tabs {
+            gap: 0;
+            flex: 1
+        }
+
+            .us26-workflow .view-controls #tabs a {
+                font-size: 12px;
+                padding: 10px 6px;
+                gap: 4px
+            }
+
+                .us26-workflow .view-controls #tabs a i {
+                    display: none
+                }
+
+                .us26-workflow .view-controls #tabs a span {
+                    font-size: 10px;
+                    min-width: 22px;
+                    padding: 1px 5px
+                }
+
+    .us26-workflow .refresh-controls {
+        padding-top: 6px
+    }
+
+        .us26-workflow .refresh-controls select {
+            font-size: 10px;
+            padding: 6px 5px;
+            max-width: 92px
+        }
+
+    .us26-workflow .filters {
+        gap: 8px
+    }
+
+        .us26-workflow .filters select {
+            flex: 1
+        }
+
+    .us26-workflow .refresh-button {
+        min-width: 94px;
+        font-size: 12px;
+        padding: 7px 9px
+    }
+
+    .us26-workflow .workspace {
+        grid-template-columns: 1fr
+    }
+
+    .us26-workflow .drawer {
+        grid-row: auto
+    }
+
+    .us26-workflow .items-preview {
+        min-height: 0
+    }
+
+    .us26-workflow .preview-line {
+        font-size: 14px
+    }
+}
+
+.us26-workflow [hidden] {
+    display: none !important
+}
+
+.us26-workflow .workspace {
+    grid-template-columns: minmax(0,1fr)
+}
+
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr) 370px
+    }
+
+.us26-workflow .board.single {
+    display: block
+}
+
+    .us26-workflow .board.single .column {
+        min-height: 0;
+        padding-bottom: 10px
+    }
+
+.us26-workflow .archive-grid {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 12px;
+    padding: 8px 6px;
+    align-items: start
+}
+
+    .us26-workflow .archive-grid > .order {
+        margin: 0;
+        width: 100%;
+        max-width: none;
+        min-width: 0
+    }
+
+    .us26-workflow .archive-grid .order-head {
+        flex-wrap: wrap
+    }
+
+.us26-workflow .column-cards {
+    min-width: 0
+}
+
+@media(min-width:1700px) {
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr) 420px
+    }
+}
+
+@media(max-width:1360px) and (min-width:1101px) {
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr) 320px
+    }
+
+    .us26-workflow .archive-grid {
+        gap: 9px
+    }
+}
+
+@media(max-width:1100px) and (min-width:701px) {
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr) 320px
+    }
+
+        .us26-workflow .workspace:has(#drawer:not([hidden])) .archive-grid {
+            grid-template-columns: repeat(2,minmax(0,1fr))
+        }
+
+    .us26-workflow .archive-grid .customer-row {
+        flex-wrap: wrap
+    }
+
+    .us26-workflow .archive-grid .card-footer {
+        flex-wrap: wrap
+    }
+}
+
+@media(max-width:700px) {
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr)
+    }
+
+    .us26-workflow .archive-grid {
+        grid-template-columns: minmax(0,1fr)
+    }
+
+    .us26-workflow .drawer:not([hidden]) {
+        grid-row: 1
+    }
+
+    .us26-workflow .view-controls {
+        flex-wrap: wrap
+    }
+
+        .us26-workflow .view-controls #tabs {
+            flex-wrap: nowrap;
+            gap: 1px;
+            flex-basis: 100%;
+            justify-content: space-between
+        }
+
+            .us26-workflow .view-controls #tabs a {
+                font-size: 11px;
+                padding: 9px 4px
+            }
+
+    .us26-workflow .refresh-controls {
+        margin-left: auto;
+        padding-bottom: 7px
+    }
+}
+
+.us26-workflow .column-header h2 > button {
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    padding: 0;
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    text-align: left
+}
+
+.us26-workflow .expand-status {
+    font: 13px Arial;
+    opacity: .7
+}
+
+.us26-workflow .order-pager {
+    padding: 10px 3px 8px;
+    border-top: 1px solid #d6c2a3;
+    margin-top: 8px;
+    text-align: center;
+    color: #84725a
+}
+
+    .us26-workflow .order-pager p {
+        font-size: 10px;
+        margin: 0 0 7px
+    }
+
+        .us26-workflow .order-pager p strong {
+            font-weight: 600;
+            color: #60523f
+        }
+
+    .us26-workflow .order-pager > div {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 5px
+    }
+
+    .us26-workflow .order-pager button {
+        padding: 6px 8px;
+        font-size: 10px;
+        background: #fff9ee;
+        border-color: #d9c4a2;
+        white-space: nowrap
+    }
+
+    .us26-workflow .order-pager > div > span {
+        font-size: 10px;
+        white-space: nowrap
+    }
+
+.us26-workflow .single .order-pager {
+    margin: 10px 8px 3px;
+    padding-top: 14px
+}
+
+    .us26-workflow .single .order-pager > div {
+        justify-content: center;
+        gap: 20px
+    }
+
+    .us26-workflow .single .order-pager p {
+        font-size: 12px
+    }
+
+    .us26-workflow .single .order-pager button {
+        font-size: 12px;
+        padding: 8px 15px
+    }
+
+.us26-workflow .column-cards .order {
+    padding: 12px 14px 9px;
+    margin-bottom: 7px
+}
+
+.us26-workflow .column-cards .order-head strong {
+    font-size: 20px
+}
+
+.us26-workflow .column-cards .customer-row {
+    margin: 3px 0 5px
+}
+
+.us26-workflow .column-cards .items-preview {
+    padding-top: 5px;
+    padding-bottom: 0;
+    margin-top: 5px
+}
+
+.us26-workflow .column-cards .preview-line {
+    font-size: 12px;
+    line-height: 1.35;
+    margin: 3px 0
+}
+
+.us26-workflow .column-cards .note-marker {
+    padding: 4px 7px;
+    margin-top: 5px;
+    gap: 6px
+}
+
+    .us26-workflow .column-cards .note-marker > span {
+        font-size: 14px
+    }
+
+    .us26-workflow .column-cards .note-marker strong {
+        display: none
+    }
+
+    .us26-workflow .column-cards .note-marker small {
+        font: 11px/1.3 Georgia;
+        margin: 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden
+    }
+
+.us26-workflow .column-cards .order-bottom {
+    padding-top: 5px;
+    margin-top: 6px;
+    font-size: 9px;
+    gap: 6px
+}
+
+.us26-workflow .column-cards .card-footer {
+    margin-top: 5px
+}
+
+.us26-workflow .column-cards .card-action {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 100px
+}
+
+.us26-workflow .column-cards .view-link {
+    font-size: 11px;
+    padding: 5px 0
+}
+
+.us26-workflow .more-dishes {
+    font-size: 10px;
+    color: #8f795b;
+    display: block;
+    margin-top: 4px
+}
+
+.us26-workflow .order-age {
+    font-size: 9px;
+    color: #9a7a4d;
+    white-space: nowrap
+}
+
+.us26-workflow .single-status-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 14px
+}
+
+    .us26-workflow .single-status-tools p {
+        font-size: 11px;
+        color: #88775f;
+        margin: 0
+    }
+
+    .us26-workflow .single-status-tools button {
+        font-size: 12px
+    }
+
+.us26-workflow .incoming-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 13px;
+    padding: 11px 15px;
+    border: 1px solid #c9b17f;
+    border-radius: 7px;
+    background: #fff1d8;
+    color: #735c35;
+    font-size: 12px
+}
+
+    .us26-workflow .incoming-banner button {
+        font-size: 12px;
+        white-space: nowrap
+    }
+
+@media(max-width:1360px) {
+    .us26-workflow .column-cards .order {
+        padding: 10px 10px 8px
+    }
+
+    .us26-workflow .column-cards .card-action {
+        min-width: 85px;
+        font-size: 10px
+    }
+
+    .us26-workflow .column-cards .view-link {
+        font-size: 10px
+    }
+
+    .us26-workflow .order-age {
+        display: none
+    }
+}
+
+@media(max-width:700px) {
+    .us26-workflow .incoming-banner {
+        align-items: flex-start;
+        gap: 9px;
+        font-size: 11px
+    }
+
+        .us26-workflow .incoming-banner button {
+            font-size: 10px;
+            padding: 7px
+        }
+
+    .us26-workflow .single-status-tools {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px
+    }
+
+    .us26-workflow .column-cards .customer-row {
+        flex-direction: row
+    }
+
+    .us26-workflow .column-cards .order {
+        padding: 14px
+    }
+
+    .us26-workflow .column-cards .card-action {
+        font-size: 12px
+    }
+
+    .us26-workflow .order-pager button {
+        font-size: 11px;
+        padding: 7px 11px
+    }
+}
+
+.us26-workflow .layout-choice-description {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 0 12px;
+    color: #76664f;
+    font-size: 12px
+}
+
+.us26-workflow .layout-option-mark {
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid #b99863;
+    background: #fff5de;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    font: 700 14px Georgia;
+    flex-shrink: 0
+}
+
+.us26-workflow .view-controls #tabs {
+    gap: 5px;
+    flex-wrap: wrap
+}
+
+    .us26-workflow .view-controls #tabs a {
+        font: 14px Georgia;
+        padding: 11px 10px;
+        gap: 6px
+    }
+
+        .us26-workflow .view-controls #tabs a span {
+            font-size: 11px;
+            min-width: 26px
+        }
+
+.us26-workflow .refresh-controls {
+    min-width: 0
+}
+
+.us26-workflow .layout-view-hint {
+    margin-left: auto;
+    color: #e7d6b3;
+    font-size: 10px
+}
+
+.us26-workflow .table-panel {
+    border: 1px solid #d2b993;
+    border-radius: 10px;
+    background: #fffaf3ee;
+    overflow: hidden;
+    box-shadow: 0 3px 12px #50311412
+}
+
+.us26-workflow .table-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 15px 19px;
+    background: #1d211d;
+    border-bottom: 2px solid #b89b66;
+    color: #fff6e8
+}
+
+    .us26-workflow .table-panel-header > div {
+        display: flex;
+        align-items: center;
+        gap: 12px
+    }
+
+    .us26-workflow .table-panel-header h2 {
+        font: 24px Georgia;
+        margin: 0
+    }
+
+    .us26-workflow .table-panel-header > div > span {
+        padding: 2px 9px;
+        border-radius: 20px;
+        background: #a9844b;
+        font-size: 12px
+    }
+
+    .us26-workflow .table-panel-header small {
+        font-size: 10px;
+        color: #d5c3a2
+    }
+
+.us26-workflow .orders-table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    font-size: 12px
+}
+
+    .us26-workflow .orders-table th {
+        text-align: left;
+        padding: 12px 13px;
+        font-size: 10px;
+        font-weight: 600;
+        color: #88765e;
+        border-bottom: 1px solid #dac6a6;
+        background: #f3e9d7
+    }
+
+        .us26-workflow .orders-table th:first-child {
+            width: 20%
+        }
+
+        .us26-workflow .orders-table th:nth-child(2) {
+            width: 15%
+        }
+
+        .us26-workflow .orders-table th:nth-child(3) {
+            width: 14%
+        }
+
+        .us26-workflow .orders-table th:nth-child(4) {
+            width: 15%
+        }
+
+        .us26-workflow .orders-table th:nth-child(5) {
+            width: 14%
+        }
+
+        .us26-workflow .orders-table th:last-child {
+            width: 22%
+        }
+
+    .us26-workflow .orders-table td {
+        border-bottom: 1px solid #eadfcb;
+        padding: 12px 13px;
+        vertical-align: middle;
+        overflow-wrap: anywhere
+    }
+
+        .us26-workflow .orders-table td:first-child {
+            border-left: 3px solid transparent
+        }
+
+    .us26-workflow .orders-table tbody tr:nth-child(even) {
+        background: #f8f2e6a6
+    }
+
+.us26-workflow .table-order {
+    cursor: pointer;
+    transition: background .15s
+}
+
+.us26-workflow .orders-table tbody .table-order:hover {
+    background: #f1e6d0
+}
+
+.us26-workflow .orders-table tbody .table-order.selected {
+    background: #f1e3c9
+}
+
+    .us26-workflow .orders-table tbody .table-order.selected td:first-child {
+        border-left-color: #bb2a1f
+    }
+
+.us26-workflow .table-order:focus-visible {
+    outline: 2px solid #b28c53;
+    outline-offset: -3px
+}
+
+.us26-workflow .table-order-number {
+    font: 700 17px Georgia
+}
+
+.us26-workflow .orders-table td > small {
+    display: block;
+    color: #8a8276;
+    font-size: 10px;
+    margin-top: 4px
+}
+
+.us26-workflow .orders-table td > strong:not(.table-order-number) {
+    font-weight: 500
+}
+
+.us26-workflow .table-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border: 1px solid #d9bf91;
+    border-radius: 16px;
+    font-size: 10px;
+    background: #f2e1bb;
+    color: #7d5c24;
+    white-space: nowrap
+}
+
+    .us26-workflow .table-status.Preparing {
+        background: #f4ddd1;
+        color: #9d4a2d;
+        border-color: #ddb7a3
+    }
+
+    .us26-workflow .table-status.ReadyToServe {
+        background: #e4edda;
+        color: #4d7036;
+        border-color: #bfd0ab
+    }
+
+    .us26-workflow .table-status.Served {
+        background: #e0eae7;
+        color: #41695e;
+        border-color: #b4ccc2
+    }
+
+    .us26-workflow .table-status.Completed {
+        background: #e4e7df;
+        color: #59634d;
+        border-color: #c1c8b6
+    }
+
+    .us26-workflow .table-status.Cancelled {
+        background: #f2e0dc;
+        color: #a34f40;
+        border-color: #dab6ae
+    }
+
+.us26-workflow .orders-table .long-wait {
+    color: #ac5334;
+    font-weight: 500
+}
+
+.us26-workflow .table-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap
+}
+
+    .us26-workflow .table-row-actions .card-action {
+        font-size: 11px;
+        min-width: 0;
+        padding: 7px 10px
+    }
+
+    .us26-workflow .table-row-actions .view-link {
+        font-size: 10px;
+        padding: 4px 0
+    }
+
+.us26-workflow .table-empty {
+    text-align: center;
+    padding: 40px !important;
+    color: #8d7d64
+}
+
+.us26-workflow .table-panel > .order-pager {
+    margin: 0;
+    padding: 14px;
+    background: #f9f2e5
+}
+
+    .us26-workflow .table-panel > .order-pager > div {
+        justify-content: center;
+        gap: 20px
+    }
+
+    .us26-workflow .table-panel > .order-pager button {
+        padding: 8px 13px;
+        font-size: 11px
+    }
+
+.us26-workflow .layout-table .board {
+    display: block
+}
+
+.us26-workflow .layout-table .drawer {
+    position: sticky;
+    top: 14px
+}
+
+.us26-workflow.layout-tabs .workspace:has(#drawer:not([hidden])) .archive-grid {
+    grid-template-columns: repeat(2,minmax(0,1fr))
+}
+
+.us26-workflow.layout-tabs .archive-grid {
+    gap: 15px;
+    padding: 13px 7px
+}
+
+    .us26-workflow.layout-tabs .archive-grid .order {
+        min-height: 210px
+    }
+
+.us26-workflow.layout-tabs .customer-row {
+    flex-wrap: wrap
+}
+
+.us26-workflow.layout-tabs .card-footer {
+    margin-top: 13px
+}
+
+@media(max-width:1250px) {
+    .us26-workflow .table-row-actions {
+        gap: 3px
+    }
+
+    .us26-workflow .orders-table td, .us26-workflow .orders-table th {
+        padding: 10px 8px
+    }
+
+    .us26-workflow .table-row-actions .card-action {
+        font-size: 10px;
+        padding: 6px
+    }
+
+    .us26-workflow .orders-table .table-status {
+        font-size: 9px;
+        padding: 4px 5px
+    }
+
+    .us26-workflow .orders-table .table-order-number {
+        font-size: 15px
+    }
+
+    .us26-workflow .table-panel-header small {
+        display: none
+    }
+
+    .us26-workflow .view-controls #tabs a {
+        font-size: 12px;
+        padding: 9px 6px
+    }
+}
+
+@media(max-width:1100px) {
+    .us26-workflow .layout-table .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr)
+    }
+
+    .us26-workflow .layout-table .drawer:not([hidden]) {
+        position: static;
+        grid-row: 1
+    }
+
+    .us26-workflow.layout-tabs .archive-grid {
+        grid-template-columns: repeat(3,minmax(0,1fr))
+    }
+
+    .us26-workflow.layout-tabs .workspace:has(#drawer:not([hidden])) .archive-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr))
+    }
+
+    .us26-workflow .layout-view-hint {
+        display: none
+    }
+}
+
+@media(max-width:800px) {
+    .us26-workflow.layout-tabs .archive-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr))
+    }
+
+    .us26-workflow.layout-tabs .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr)
+    }
+
+    .us26-workflow.layout-tabs .drawer:not([hidden]) {
+        grid-row: 1
+    }
+
+    .us26-workflow .layout-choice-description {
+        font-size: 11px
+    }
+}
+
+@media(max-width:650px) {
+    .us26-workflow .view-controls #tabs {
+        flex-wrap: wrap;
+        justify-content: flex-start
+    }
+
+        .us26-workflow .view-controls #tabs a {
+            padding: 8px 6px;
+            font-size: 11px
+        }
+
+    .us26-workflow.layout-tabs .archive-grid, .us26-workflow.layout-tabs .workspace:has(#drawer:not([hidden])) .archive-grid {
+        grid-template-columns: minmax(0,1fr)
+    }
+
+    .us26-workflow .orders-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0)
+    }
+
+    .us26-workflow .orders-table, .us26-workflow .orders-table tbody {
+        display: block;
+        width: 100%
+    }
+
+        .us26-workflow .orders-table .table-order {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            border-bottom: 1px solid #dac6a6;
+            padding: 10px 8px;
+            gap: 7px
+        }
+
+        .us26-workflow .orders-table td {
+            display: block;
+            width: auto !important;
+            padding: 3px 6px;
+            border: 0
+        }
+
+            .us26-workflow .orders-table td:before {
+                content: attr(data-label);
+                display: block;
+                color: #9b8b72;
+                font-size: 9px;
+                margin-bottom: 3px
+            }
+
+            .us26-workflow .orders-table td:last-child {
+                grid-column: 1/-1
+            }
+
+    .us26-workflow .table-row-actions {
+        justify-content: flex-end;
+        gap: 14px
+    }
+
+        .us26-workflow .table-row-actions .card-action {
+            padding: 8px 12px;
+            font-size: 12px
+        }
+
+    .us26-workflow .orders-table td:first-child {
+        border-left: 3px solid transparent
+    }
+
+    .us26-workflow .table-panel-header h2 {
+        font-size: 21px
+    }
+
+    .us26-workflow .table-panel > .order-pager > div {
+        gap: 9px
+    }
+}
+
+.us26-workflow.layout-creative .wf-main {
+    padding-top: 23px;
+    background: linear-gradient(#fcf8f0f2,#f7f1e6cf)
+}
+
+.us26-workflow .creative-intro {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    padding: 0 4px 21px;
+    border-bottom: 1px solid #d7c2a0;
+    margin-bottom: 20px
+}
+
+    .us26-workflow .creative-intro .eyebrow {
+        font-size: 9px;
+        letter-spacing: .22em;
+        margin-bottom: 4px
+    }
+
+    .us26-workflow .creative-intro h2 {
+        font: 30px Georgia;
+        margin: 0;
+        color: #322c23
+    }
+
+    .us26-workflow .creative-intro > p {
+        font: 14px Georgia;
+        color: #8c7b62;
+        max-width: 260px;
+        line-height: 1.5;
+        margin: 0;
+        padding-left: 24px;
+        border-left: 1px solid #dbc9ad
+    }
+
+.us26-workflow .creative-date {
+    margin-left: auto;
+    font-size: 9px;
+    letter-spacing: .13em;
+    color: #998467;
+    white-space: nowrap
+}
+
+    .us26-workflow .creative-date b {
+        color: #ba5141;
+        margin: 0 8px
+    }
+
+.us26-workflow.layout-creative .view-controls {
+    border: 0;
+    margin-bottom: 17px;
+    align-items: center
+}
+
+.us26-workflow.layout-creative #tabs {
+    display: grid;
+    grid-template-columns: repeat(5,minmax(0,1fr)) 170px;
+    width: 100%;
+    padding: 0;
+    gap: 0;
+    position: relative;
+    isolation: isolate;
+    overflow: visible
+}
+
+    .us26-workflow.layout-creative #tabs:before {
+        content: '';
+        position: absolute;
+        left: 7%;
+        right: calc(170px + 7%);
+        top: 24px;
+        border-top: 1px solid #cbb38c;
+        z-index: -1
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        margin: 0;
+        padding: 0 6px 9px;
+        background: none;
+        border: 0;
+        color: #786b58;
+        min-width: 0;
+        line-height: 1.3
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-node {
+        display: grid;
+        place-items: center;
+        width: 47px;
+        height: 47px;
+        border-radius: 50%;
+        border: 1px solid #c9b58e;
+        background: #fcf7ec;
+        color: #9c8361;
+        font: 15px Georgia;
+        box-shadow: 0 0 0 5px #fbf6ed;
+        margin: 0 0 10px;
+        padding: 0
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-label {
+        display: block;
+        background: none;
+        color: inherit;
+        font: 15px Georgia;
+        padding: 0;
+        border-radius: 0;
+        min-width: 0;
+        white-space: nowrap
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-count {
+        font: 10px 'Segoe UI',Arial;
+        background: #e9decc;
+        border-radius: 15px;
+        min-width: 20px;
+        padding: 2px 6px;
+        color: #786346;
+        margin-left: 5px
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step > small {
+        display: block;
+        font: 9px 'Segoe UI',Arial;
+        color: #a39177;
+        margin-top: 5px
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step.active {
+        color: #a02b21
+    }
+
+        .us26-workflow.layout-creative #tabs .journey-step.active .journey-node {
+            background: #a83024;
+            color: #fff2dc;
+            border-color: #a83024;
+            box-shadow: 0 0 0 5px #fbf6ed,0 0 0 6px #caa87a
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-step.active .journey-count {
+            background: #a83024;
+            color: white
+        }
+
+    .us26-workflow.layout-creative #tabs .journey-cancelled {
+        border-left: 1px solid #deceb5;
+        margin-left: 16px;
+        padding-left: 18px;
+        align-self: stretch
+    }
+
+        .us26-workflow.layout-creative #tabs .journey-cancelled .journey-node {
+            font-size: 23px;
+            border-style: dashed
+        }
+
+.us26-workflow.layout-creative .refresh-controls {
+    display: none
+}
+
+.us26-workflow.layout-creative .filters {
+    background: #eee5d660;
+    border: 1px solid #deceb3;
+    padding: 11px;
+    border-radius: 10px;
+    gap: 10px
+}
+
+.us26-workflow.layout-creative .search {
+    background: #fffdf8;
+    border-color: #dfd2bd
+}
+
+.us26-workflow.layout-creative .filters select {
+    background: #fffdf8;
+    border-color: #dfd2bd
+}
+
+.us26-workflow.layout-creative .refresh-button {
+    box-shadow: none;
+    background: #282d25;
+    border-color: #282d25;
+    color: #fff5df;
+    min-width: 120px
+}
+
+.us26-workflow.layout-creative .toolbar {
+    margin-bottom: 22px
+}
+
+.us26-workflow .stage-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin: 0 0 20px;
+    padding: 0 3px
+}
+
+    .us26-workflow .stage-heading .eyebrow {
+        font-size: 9px;
+        letter-spacing: .15em;
+        margin-bottom: 5px
+    }
+
+        .us26-workflow .stage-heading .eyebrow > span {
+            color: #ac9270;
+            letter-spacing: .03em;
+            margin-left: 8px
+        }
+
+    .us26-workflow .stage-heading h2 {
+        font: 29px/1.2 Georgia;
+        margin: 0 0 6px;
+        color: #31291e
+    }
+
+    .us26-workflow .stage-heading p:not(.eyebrow) {
+        font-size: 11px;
+        color: #8c7a60;
+        margin: 0
+    }
+
+.us26-workflow .ticket-section.Preparing .card-action {
+    box-shadow: none
+}
+
+.us26-workflow.layout-creative .archive-grid {
+    padding: 0;
+    gap: 15px
+}
+
+    .us26-workflow.layout-creative .archive-grid .order {
+        border-color: #ddcbb0;
+        min-height: 0;
+        padding: 17px 17px 12px;
+        border-radius: 7px;
+        position: relative;
+        box-shadow: 0 3px 7px #5034140c
+    }
+
+        .us26-workflow.layout-creative .archive-grid .order:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg,#b79764,#e9d6b5,#b79764);
+            border-radius: 7px 7px 0 0;
+            opacity: .75
+        }
+
+        .us26-workflow.layout-creative .archive-grid .order.selected {
+            border-color: #b94d32;
+            box-shadow: 0 0 0 1px #b94d32
+        }
+
+    .us26-workflow.layout-creative .archive-grid .order-head strong {
+        font-size: 23px
+    }
+
+    .us26-workflow.layout-creative .archive-grid .preview-line {
+        font-size: 13px
+    }
+
+    .us26-workflow.layout-creative .archive-grid .note-marker {
+        padding: 6px 8px
+    }
+
+        .us26-workflow.layout-creative .archive-grid .note-marker strong {
+            display: none
+        }
+
+        .us26-workflow.layout-creative .archive-grid .note-marker small {
+            font-size: 11px
+        }
+
+    .us26-workflow.layout-creative .archive-grid .order-bottom {
+        margin-top: 9px;
+        font-size: 10px
+    }
+
+    .us26-workflow.layout-creative .archive-grid .card-action {
+        font-size: 12px;
+        min-width: 0;
+        padding: 8px 12px;
+        background: #a47f4a;
+        border-color: #a47f4a
+    }
+
+.us26-workflow.layout-creative .Preparing .archive-grid .card-action {
+    background: #b6462c;
+    border-color: #b6462c
+}
+
+.us26-workflow.layout-creative .ReadyToServe .archive-grid .card-action {
+    background: #3e6348;
+    border-color: #3e6348
+}
+
+.us26-workflow.layout-creative .archive-grid .view-link {
+    font-size: 11px;
+    color: #9c553a
+}
+
+.us26-workflow.layout-creative .single .order-pager {
+    margin-top: 18px;
+    border-color: #d7c3a3
+}
+
+.us26-workflow .empty-ticket-grid {
+    padding: 28px;
+    text-align: center;
+    color: #a08a6a;
+    font: 14px Georgia;
+    background: #f5ecdd80;
+    border: 1px dashed #d9c6a7;
+    border-radius: 8px
+}
+
+.us26-workflow.layout-creative .drawer {
+    border-top: 0;
+    position: sticky;
+    top: 12px;
+    box-shadow: 0 8px 30px #3c28151a
+}
+
+.us26-workflow.layout-creative .drawer-header {
+    background: linear-gradient(120deg,#252a23,#3a3829);
+    border-bottom: 2px solid #b49b69
+}
+
+.us26-workflow.layout-creative .drawer .primary {
+    background: #a93a29;
+    border-color: #a93a29
+}
+
+@media(max-width:1450px) {
+    .us26-workflow.layout-creative #tabs {
+        grid-template-columns: repeat(5,minmax(0,1fr)) 135px
+    }
+
+        .us26-workflow.layout-creative #tabs:before {
+            right: calc(135px + 7%)
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-label {
+            font-size: 13px
+        }
+
+    .us26-workflow .creative-date {
+        display: none
+    }
+
+}
+
+@media(max-width:1100px) {
+    .us26-workflow .creative-intro h2 {
+        font-size: 26px
+    }
+
+    .us26-workflow.layout-creative #tabs {
+        grid-template-columns: repeat(3,minmax(0,1fr));
+        row-gap: 12px
+    }
+
+        .us26-workflow.layout-creative #tabs:before {
+            display: none
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-cancelled {
+            border: 0;
+            margin: 0;
+            padding-left: 6px
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-step {
+            border-bottom: 1px solid #dfcfb5;
+            padding-bottom: 13px
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-label {
+            font-size: 14px
+        }
+
+    .us26-workflow.layout-creative .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr)
+    }
+
+    .us26-workflow.layout-creative .drawer:not([hidden]) {
+        grid-row: 1;
+        position: static
+    }
+
+}
+
+@media(max-width:800px) {
+    .us26-workflow .creative-intro {
+        gap: 18px
+    }
+
+        .us26-workflow .creative-intro > p {
+            font-size: 12px
+        }
+
+    .us26-workflow .stage-heading h2 {
+        font-size: 25px
+    }
+}
+
+@media(max-width:650px) {
+    .us26-workflow .creative-intro {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        padding-bottom: 16px
+    }
+
+        .us26-workflow .creative-intro > p {
+            border: 0;
+            padding: 0;
+            max-width: none
+        }
+
+    .us26-workflow.layout-creative #tabs {
+        grid-template-columns: repeat(3,minmax(0,1fr))
+    }
+
+        .us26-workflow.layout-creative #tabs .journey-node {
+            width: 34px;
+            height: 34px;
+            margin-bottom: 7px;
+            font-size: 12px
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-label {
+            font-size: 11px
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-count {
+            font-size: 9px;
+            padding: 1px 5px;
+            margin-left: 2px;
+            min-width: 18px
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-step > small {
+            font-size: 8px
+        }
+
+    .us26-workflow.layout-creative .filters {
+        padding: 8px
+    }
+
+    .us26-workflow .stage-heading .eyebrow > span {
+        display: block;
+        margin-left: 0;
+        margin-top: 3px
+    }
+
+    .us26-workflow .stage-heading p:not(.eyebrow) {
+        font-size: 10px
+    }
+
+    .us26-workflow.layout-creative .archive-grid .order {
+        min-height: 0
+    }
+
+}
+
+/* Production: real references, real photos, accessible navigation and isolated drawer scrolling. */
+.us26-workflow {
+    --red: #C83E2D;
+    --gold: #B79B72;
+    box-sizing: border-box;
+    color: #191919;
+    font: 14px/1.5 'Segoe UI',Arial,sans-serif;
+}
+
+    .us26-workflow a {
+        text-decoration: none;
+    }
+
+    .us26-workflow button, .us26-workflow input, .us26-workflow textarea, .us26-workflow select {
+        font: inherit;
+    }
+
+    .us26-workflow .wf-main {
+        max-width: 1880px;
+        margin: auto;
+        padding: 24px 2.4% 28px;
+    }
+
+    .us26-workflow .queue-hero {
+        aspect-ratio: 2048/376;
+    }
+
+    .us26-workflow .wf-hero-title {
+        position: absolute;
+        left: 3%;
+        top: 24%;
+        width: 37%;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+        .us26-workflow .wf-hero-title h1 {
+            font: 700 clamp(24px,3vw,58px)/1.1 Georgia,serif;
+            margin: 0 0 8px;
+            letter-spacing: -.035em;
+        }
+
+        .us26-workflow .wf-hero-title p {
+            font: clamp(11px,1.1vw,21px)/1.4 Georgia,serif;
+            margin: 0 0 10px;
+            color: #5c503d;
+        }
+
+        .us26-workflow .wf-hero-title .eyebrow {
+            font: 600 clamp(7px,.65vw,12px)/1.4 'Segoe UI',Arial;
+            letter-spacing: .14em;
+            color: #9d3829;
+        }
+
+    .us26-workflow .wf-jp {
+        writing-mode: vertical-rl;
+        font: clamp(15px,1.5vw,28px) Georgia,serif;
+        color: #b44c35;
+        padding-right: 15px;
+        border-right: 1px solid #bc6650;
+    }
+
+    .us26-workflow .wf-title-rule {
+        height: 1px;
+        width: 90%;
+        background: #b65a42;
+    }
+
+    .us26-workflow .banner-caption {
+        left: 46%;
+        width: 42%;
+        top: 20%;
+        height: auto;
+        background: transparent;
+        color: #efd3a2;
+    }
+
+    .us26-workflow .banner-metrics {
+        background: transparent;
+        box-shadow: none;
+        top: 39%;
+        height: 44%;
+        left: 45%;
+        right: 9%;
+    }
+
+    .us26-workflow .banner-scope {
+        top: 87%;
+    }
+
+    .us26-workflow #tabs {
+        margin: 0 0 22px;
+    }
+
+        .us26-workflow #tabs a {
+            text-decoration: none;
+        }
+
+    .us26-workflow .filters {
+        margin-bottom: 23px;
+    }
+
+        .us26-workflow .filters label {
+            margin: 0;
+        }
+
+        .us26-workflow .filters input {
+            padding: 9px 0;
+        }
+
+    .us26-workflow .order-head {
+        flex-wrap: wrap;
+    }
+
+        .us26-workflow .order-head strong {
+            overflow-wrap: anywhere;
+            font-family: Georgia,serif;
+            font-size: 18px !important;
+            line-height: 1.2;
+            letter-spacing: 0;
+            font-variant-numeric: lining-nums tabular-nums;
+        }
+
+    .us26-workflow .order-time {
+        font-size: 10px;
+    }
+
+    .us26-workflow .order-head strong, .us26-workflow .drawer h2 {
+        font-variant-numeric: lining-nums tabular-nums;
+    }
+
+    .us26-workflow .order {
+        cursor: default;
+    }
+
+        .us26-workflow .order:after {
+            opacity: .12;
+        }
+
+    .us26-workflow .card-action {
+        transition: background .15s,box-shadow .15s;
+        white-space: normal;
+    }
+
+        .us26-workflow .card-action:hover {
+            color: white;
+            filter: brightness(.91);
+        }
+
+    .us26-workflow .view-link:hover {
+        color: #8e2f21;
+        text-decoration: underline;
+    }
+
+    .us26-workflow .note-marker small {
+        display: block !important;
+        -webkit-line-clamp: unset !important;
+        white-space: normal;
+    }
+
+    .us26-workflow .more-dishes {
+        font-size: 11px;
+        color: #8b765b;
+    }
+
+    .us26-workflow .drawer {
+        min-height: 0;
+        max-height: calc(100dvh - 24px);
+        overflow: auto;
+        padding: 0 !important;
+        scrollbar-color: #b79b72 #f5ecdd;
+        scrollbar-width: thin;
+        scroll-margin-top: 20px;
+    }
+
+    .us26-workflow .drawer-header {
+        margin: 0 !important;
+        padding: 18px 20px;
+    }
+
+    .us26-workflow .drawer h2 {
+        font-size: 23px;
+        overflow-wrap: anywhere;
+    }
+
+    .us26-workflow .drawer .eyebrow {
+        color: #ddc294;
+        font-size: 9px;
+    }
+
+    .us26-workflow .icon {
+        display: grid;
+        place-items: center;
+        text-decoration: none;
+        line-height: 1;
+    }
+
+    .us26-workflow .wf-detail-body {
+        padding: 2px 20px 20px;
+    }
+
+    .us26-workflow .order-context {
+        font-size: 12px;
+        margin: 0 0 12px;
+    }
+
+        .us26-workflow .order-context > div {
+            display: grid;
+            grid-template-columns: 92px minmax(0,1fr);
+            align-items: start;
+            gap: 10px;
+        }
+
+        .us26-workflow .order-context dt {
+            font-weight: 400;
+            color: #746b5b;
+        }
+
+        .us26-workflow .order-context dd {
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+    .us26-workflow .allergy {
+        font-size: 12px;
+    }
+
+        .us26-workflow .allergy p {
+            margin: 4px 0;
+            white-space: pre-line;
+        }
+
+        .us26-workflow .allergy small {
+            font-size: 10px;
+        }
+
+    .us26-workflow .dish-mark {
+        width: 58px;
+        height: 58px;
+        display: grid;
+        place-items: center;
+        color: #9c825e;
+    }
+
+        .us26-workflow .dish-mark img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+        }
+
+    .us26-workflow .dish-copy {
+        min-width: 0;
+    }
+
+        .us26-workflow .dish-copy strong {
+            overflow-wrap: anywhere;
+            font-size: 15px;
+        }
+
+    .us26-workflow .detail-line > strong {
+        font-family: Georgia,serif;
+        font-variant-numeric: lining-nums tabular-nums;
+        font-size: 12px;
+    }
+
+    .us26-workflow .wf-code {
+        display: inline-block;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: #efe1c9;
+        color: #7a603a;
+        margin-right: 4px;
+    }
+
+    .us26-workflow .wf-dish-note {
+        margin: 5px 0 0;
+        padding: 5px 7px;
+        background: #eee1c9;
+        border-left: 2px solid #b4935c;
+        font-size: 12px;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .us26-workflow .note p {
+        margin: 4px 0;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+    }
+
+    .us26-workflow .amounts .total {
+        font-size: 24px;
+    }
+
+    .us26-workflow .wf-cancel {
+        width: 100%;
+        margin-top: 9px;
+        font-size: 12px;
+    }
+
+    .us26-workflow .wf-nojs-reason {
+        margin-top: 10px;
+    }
+
+    .us26-workflow.js-ready .wf-nojs-reason {
+        display: none;
+    }
+
+    .us26-workflow .wf-lock, .us26-workflow .wf-history-gap {
+        background: #f1e5cf;
+        border-left: 2px solid #b59463;
+        color: #755c38;
+        padding: 9px 10px;
+        font-size: 12px;
+    }
+
+    .us26-workflow .event {
+        font-size: 12px;
+        padding-bottom: 16px;
+    }
+
+        .us26-workflow .event small {
+            color: #726958;
+            font-size: 11px;
+        }
+
+        .us26-workflow .event p {
+            font-size: 12px;
+            overflow-wrap: anywhere;
+            white-space: pre-line;
+        }
+
+    .us26-workflow .order-pager a {
+        padding: 8px 12px;
+        border: 1px solid #d9c4a2;
+        border-radius: 5px;
+        color: #705838;
+        background: #fff9ee;
+        font-size: 12px;
+    }
+
+        .us26-workflow .order-pager a:hover {
+            background: #f1e2c8;
+        }
+
+    .us26-workflow [data-notice] {
+        padding: 12px 15px;
+        border: 1px solid #c6cfae;
+        background: #edf1e3;
+        border-radius: 7px;
+    }
+
+        .us26-workflow [data-notice].error {
+            background: #f6e3dc;
+            border-color: #dbb6a9;
+        }
+
+    .us26-workflow [data-board][aria-busy=true] {
+        opacity: .65;
+    }
+
+    .us26-workflow .connection {
+        background: #f2e8d8;
+    }
+
+    .us26-workflow dialog {
+        width: 520px;
+    }
+
+        .us26-workflow dialog::backdrop {
+            background: #17161099;
+            backdrop-filter: blur(3px);
+        }
+
+        .us26-workflow dialog h2 {
+            font-size: 28px;
+        }
+
+        .us26-workflow dialog p {
+            font-size: 14px;
+        }
+
+        .us26-workflow dialog [data-reason-label] {
+            display: block;
+            margin-top: 18px;
+        }
+
+    .us26-workflow [data-dialog-error] {
+        color: #a02f23;
+    }
+
+    .us26-workflow .status {
+        font-family: 'Segoe UI',Arial,sans-serif;
+        font-size: 12px;
+    }
+
+    .us26-workflow .footnote {
+        font-size: 12px;
+    }
+
+    .us26-workflow a:focus-visible, .us26-workflow button:focus-visible {
+        outline: 3px solid #b79b72;
+        outline-offset: 3px;
+    }
+
+@media(max-width:1100px) {
+    .us26-workflow .drawer {
+        max-height: none;
+    }
+
+    .us26-workflow .wf-hero-title {
+        gap: 12px;
+    }
+}
+
+@media(max-width:700px) {
+    .us26-workflow .queue-hero {
+        height: 265px;
+        aspect-ratio: auto;
+    }
+
+    .us26-workflow .banner-art {
+        height: 135px;
+    }
+
+    .us26-workflow .wf-hero-title {
+        top: 24px;
+        left: 3%;
+        width: 38%;
+        gap: 5px;
+    }
+
+    .us26-workflow .wf-jp {
+        display: none;
+    }
+
+    .us26-workflow .wf-hero-title h1 {
+        font-size: 24px;
+    }
+
+    .us26-workflow .wf-hero-title p {
+        font-size: 10px;
+    }
+
+    .us26-workflow .wf-hero-title .eyebrow {
+        font-size: 6px;
+        letter-spacing: .04em;
+    }
+
+    .us26-workflow .banner-caption {
+        display: none;
+    }
+
+    .us26-workflow .banner-metrics {
+        top: 145px;
+        height: 85px;
+        left: 5%;
+        right: 5%;
+        background: #fff6e5;
+    }
+
+    .us26-workflow .banner-scope {
+        top: 240px;
+    }
+
+    .us26-workflow .wf-main {
+        padding: 18px 13px;
+    }
+
+    .us26-workflow .filters select {
+        max-width: 100%;
+    }
+
+    .us26-workflow .filters .refresh-button {
+        flex: 1;
+    }
+
+    .us26-workflow .filters {
+        flex-wrap: wrap;
+    }
+
+    .us26-workflow .detail-line {
+        gap: 8px;
+    }
+
+    .us26-workflow .wf-detail-body {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .us26-workflow * {
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+}
+/* Keep full 20-character references legible in the narrow detail header. */
+.us26-workflow .drawer-header > div {
+    min-width: 0;
+    flex: 1;
+}
+
+.us26-workflow .drawer-header h2 {
+    font: 700 clamp(15px,1.25vw,20px)/1.25 Georgia,serif;
+    letter-spacing: 0;
+}
+
+.us26-workflow .creative-intro h2, .us26-workflow .stage-heading h2, .us26-workflow dialog h2, .us26-workflow .journey-label, .us26-workflow .preview-line, .us26-workflow .dish-copy strong, .us26-workflow .event strong {
+    font-family: Georgia,'Times New Roman',serif;
+}
+
+/* 31 Oct: match the selected banner, readable staff labels and designed filters. */
+.us26-workflow .wf-hero-title {
+    left: 0;
+    top: 0;
+    width: 40%;
+    height: 100%;
+    display: block;
+}
+
+    .us26-workflow .wf-hero-title > div {
+        position: absolute;
+        left: 6.85vw;
+        top: 25%;
+        right: 0;
+    }
+
+    .us26-workflow .wf-hero-title .wf-jp {
+        position: absolute;
+        left: 2vw;
+        top: 16%;
+        height: 68%;
+        display: block;
+        padding-right: clamp(12px,1vw,20px);
+        font-family: var(--font-display,'Noto Serif JP','Yu Mincho',Georgia,serif);
+        font-size: clamp(22px,2.55vw,48px);
+        line-height: 1.1;
+        font-weight: 400;
+        color: #b44730;
+    }
+
+    .us26-workflow .wf-hero-title .eyebrow {
+        font: 600 clamp(10px,.8vw,15px)/1.4 'Segoe UI',Arial,sans-serif;
+        letter-spacing: .11em;
+        color: #ad3929;
+        margin: 0 0 6px;
+    }
+
+    .us26-workflow .wf-hero-title h1 {
+        font: 700 clamp(28px,4.3vw,82px)/1 Georgia,'Times New Roman',serif;
+        white-space: nowrap;
+        letter-spacing: -.035em;
+        margin: 0 0 8px;
+    }
+
+    .us26-workflow .wf-hero-title p:not(.eyebrow) {
+        font: clamp(12px,1.2vw,23px)/1.35 Georgia,'Times New Roman',serif;
+        margin: 0 0 12px;
+        color: #687075;
+    }
+
+.us26-workflow .wf-title-rule {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 80%;
+    height: 16px;
+    background: none;
+    color: #be5944;
+}
+
+    .us26-workflow .wf-title-rule span {
+        display: block;
+        flex: 1;
+        height: 1px;
+        background: currentColor;
+        position: relative;
+    }
+
+        .us26-workflow .wf-title-rule span:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -1px;
+            width: 40px;
+            height: 3px;
+            background: currentColor;
+            border-radius: 3px;
+        }
+
+    .us26-workflow .wf-title-rule i {
+        font-size: 12px;
+        line-height: 1;
+    }
+
+.us26-workflow .banner-caption {
+    left: 44%;
+    top: 20.4%;
+    width: 43%;
+    height: 7%;
+    gap: 18px;
+    background: none;
+    font: clamp(9px,.75vw,14px)/1.3 'Segoe UI',Arial,sans-serif;
+}
+
+.us26-workflow .wf-desk-label {
+    color: #b79b72;
+    font: 600 clamp(9px,.85vw,16px)/1.3 'Segoe UI',Arial,sans-serif;
+    letter-spacing: .16em;
+    white-space: nowrap;
+}
+
+.us26-workflow .banner-caption .wf-overview {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: none;
+    color: #fff3d9;
+    white-space: nowrap;
+}
+
+.us26-workflow .wf-overview i {
+    display: block;
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #c83e2d;
+}
+
+.us26-workflow .creative-date {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #806c52;
+    letter-spacing: .1em;
+}
+
+.us26-workflow .filters .search {
+    transition: background-color .16s,border-color .16s;
+}
+
+    .us26-workflow .filters .search:hover {
+        background-color: #f4eadc;
+        border-color: #b79b72;
+    }
+
+    .us26-workflow .filters .search:focus-within {
+        background-color: #f1e5d3;
+        border-color: #957243;
+    }
+
+    .us26-workflow .filters .search input:focus, .us26-workflow .filters .search input:focus-visible {
+        outline: none;
+        box-shadow: none;
+        border: 0;
+    }
+
+.us26-workflow .wf-picker {
+    position: relative;
+    flex: 0 0 205px;
+    min-width: 0;
+}
+
+    .us26-workflow .wf-picker[data-picker=sort] {
+        flex-basis: 178px;
+    }
+
+    .us26-workflow .wf-picker > select {
+        width: 100%;
+    }
+
+.us26-workflow .wf-picker-custom {
+    width: 100%;
+}
+
+.us26-workflow .wf-picker-trigger {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 13px;
+    border: 1px solid #d9c7a9;
+    border-radius: 7px;
+    background: #fffaf2;
+    color: #695235;
+    text-align: left;
+    box-shadow: 0 2px 4px #442c1509;
+    transition: background-color .15s,border-color .15s;
+}
+
+    .us26-workflow .wf-picker-trigger > [data-picker-label] {
+        flex: 1;
+        white-space: nowrap;
+    }
+
+    .us26-workflow .wf-picker-trigger > .bi {
+        color: #9b784a;
+    }
+
+.us26-workflow .wf-chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    transition: transform .15s;
+}
+
+.us26-workflow .wf-picker-trigger:hover, .us26-workflow .wf-picker-trigger[aria-expanded=true] {
+    background: #eee1cd;
+    border-color: #b1905d;
+    filter: none;
+}
+
+    .us26-workflow .wf-picker-trigger[aria-expanded=true] .wf-chevron {
+        transform: rotate(180deg);
+    }
+
+.us26-workflow .wf-picker-menu {
+    position: absolute;
+    z-index: 45;
+    inset: calc(100% + 7px) 0 auto;
+    padding: 6px;
+    border: 1px solid #c8ac7e;
+    border-radius: 9px;
+    background: #fffbf3;
+    box-shadow: 0 10px 28px #38231026;
+}
+
+.us26-workflow .wf-picker-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 11px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    text-align: left;
+    color: #665037;
+    font-size: 14px;
+}
+
+    .us26-workflow .wf-picker-option:hover, .us26-workflow .wf-picker-option:focus-visible {
+        outline: none;
+        background: #efe0c7;
+        color: #49331d;
+        filter: none;
+    }
+
+    .us26-workflow .wf-picker-option[aria-selected=true] {
+        background: #dec9a2;
+        color: #49331d;
+        font-weight: 600;
+    }
+
+.us26-workflow .wf-option-check {
+    opacity: 0;
+    color: #8e582b;
+    font-size: 14px;
+}
+
+.us26-workflow .wf-picker-option[aria-selected=true] .wf-option-check {
+    opacity: 1;
+}
+
+.us26-workflow .wf-reset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 16px;
+    min-height: 44px;
+    border: 1px solid #c9aa78;
+    border-radius: 7px;
+    color: #856131;
+    background: #fff9ec;
+    white-space: nowrap;
+    font-family: Georgia,'Times New Roman',serif;
+    transition: background-color .15s,border-color .15s;
+}
+
+    .us26-workflow .wf-reset:hover {
+        color: #61411f;
+        background: #ead8b6;
+        border-color: #a5804a;
+    }
+/* Equal-height tickets and aligned actions, without truncating dish information. */
+.us26-workflow .archive-grid {
+    grid-auto-rows: 1fr;
+    align-items: stretch;
+}
+
+.us26-workflow.layout-creative .archive-grid > .order {
+    display: flex;
+    flex-direction: column;
+    min-height: 320px;
+    height: 100%;
+}
+
+.us26-workflow.layout-creative .order .card-footer {
+    margin-top: auto;
+    padding-top: 12px;
+}
+
+.us26-workflow.layout-creative .order .order-bottom {
+    margin-top: auto;
+}
+
+    .us26-workflow.layout-creative .order .order-bottom + .card-footer {
+        margin-top: 0;
+    }
+
+.us26-workflow .order .card-footer .card-action {
+    flex-shrink: 0;
+}
+
+@media(max-width:1450px) {
+    .us26-workflow .wf-picker {
+        flex-basis: 190px;
+    }
+
+        .us26-workflow .wf-picker[data-picker=sort] {
+            flex-basis: 170px;
+        }
+}
+
+@media(max-width:900px) {
+    .us26-workflow .filters {
+        flex-wrap: wrap;
+    }
+
+        .us26-workflow .filters .search {
+            flex-basis: 100%;
+        }
+
+    .us26-workflow .wf-picker, .us26-workflow .wf-picker[data-picker=sort] {
+        flex: 1 1 180px;
+    }
+}
+
+@media(max-width:700px) {
+    .us26-workflow .wf-hero-title {
+        width: 42%;
+        height: 135px;
+    }
+
+        .us26-workflow .wf-hero-title > div {
+            left: 4vw;
+            top: 16px;
+            right: 0;
+        }
+
+        .us26-workflow .wf-hero-title .wf-jp {
+            display: none;
+        }
+
+        .us26-workflow .wf-hero-title .eyebrow {
+            font-size: 7px;
+            line-height: 1.4;
+            letter-spacing: .03em;
+            margin-bottom: 5px;
+        }
+
+        .us26-workflow .wf-hero-title h1 {
+            font-size: clamp(20px,5.2vw,34px);
+            line-height: 1.05;
+            margin-bottom: 6px;
+        }
+
+        .us26-workflow .wf-hero-title p:not(.eyebrow) {
+            font-size: clamp(9px,2.25vw,13px);
+            line-height: 1.3;
+            margin-bottom: 6px;
+        }
+
+    .us26-workflow .wf-title-rule {
+        height: 9px;
+        width: 92%;
+        gap: 3px;
+    }
+
+        .us26-workflow .wf-title-rule i {
+            font-size: 8px;
+        }
+
+    .us26-workflow .banner-caption {
+        display: none;
+    }
+
+    .us26-workflow .wf-picker, .us26-workflow .wf-picker[data-picker=sort] {
+        flex: 1 1 calc(50% - 5px);
+    }
+
+    .us26-workflow .wf-picker-trigger {
+        font-size: 13px;
+        padding: 10px;
+        gap: 6px;
+    }
+
+    .us26-workflow .wf-reset, .us26-workflow .filters .refresh-button {
+        flex: 1 1 calc(50% - 5px);
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .us26-workflow .wf-picker-trigger, .us26-workflow .wf-chevron, .us26-workflow .wf-reset, .us26-workflow .filters .search {
+        transition: none;
+    }
+}
+
+/* Clear dining types and larger, consistent action targets. */
+.us26-workflow .order-context .wf-dining-badge, .us26-workflow.layout-creative .order .wf-dining-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 5px 11px;
+    font: 500 13px/1.35 'Segoe UI',Arial,sans-serif;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.us26-workflow .wf-dining-badge .bi {
+    font-size: 15px;
+    line-height: 1;
+}
+
+.us26-workflow .order-context .wf-dining--dinein, .us26-workflow.layout-creative .order .wf-dining--dinein {
+    color: #385d38;
+    background: #e0ecd8;
+    border-color: #bbcea9;
+}
+
+.us26-workflow .order-context .wf-dining--takeaway, .us26-workflow.layout-creative .order .wf-dining--takeaway {
+    color: #9b432b;
+    background: #f6e1d4;
+    border-color: #dfb79f;
+}
+
+.us26-workflow .banner-metrics > div:nth-child(2) .bi {
+    color: #4b7041;
+}
+
+.us26-workflow .banner-metrics > div:nth-child(3) .bi {
+    color: #a14a31;
+}
+
+.us26-workflow.layout-creative .order .customer-row {
+    flex-wrap: wrap;
+}
+
+.us26-workflow.layout-creative .order .card-footer {
+    gap: 10px;
+    align-items: stretch;
+}
+
+    .us26-workflow.layout-creative .order .card-footer .view-link, .us26-workflow.layout-creative .order .card-footer .card-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1 1 100px;
+        min-width: 0;
+        min-height: 44px;
+        padding: 10px 12px;
+        font: 600 15px/1.3 Georgia,'Times New Roman',serif;
+        text-align: center;
+        white-space: normal;
+        border-radius: 6px;
+    }
+
+    .us26-workflow.layout-creative .order .card-footer .view-link {
+        color: #8b6235;
+        background: #fffaf0;
+        border: 1px solid #cdb38b;
+    }
+
+        .us26-workflow.layout-creative .order .card-footer .view-link:hover {
+            color: #65421f;
+            background: #ebd9b8;
+            border-color: #aa8653;
+            text-decoration: none;
+        }
+
+    .us26-workflow.layout-creative .order .card-footer .card-action:hover {
+        filter: brightness(.89);
+    }
+
+.us26-workflow.layout-creative .archive-grid > .order {
+    min-height: 340px;
+}
+
+.us26-workflow.layout-creative .archive-grid > .order {
+    height: var(--wf-ticket-height,100%);
+    min-height: 280px;
+}
+
+.us26-workflow .wf-dining-icon {
+    flex: none;
+    display: block;
+    width: 18px;
+    height: 18px;
+}
+
+.us26-workflow .wf-view-arrow {
+    margin-left: 5px;
+}
+
+@media(max-width:650px) {
+    .us26-workflow .wf-view-arrow {
+        display: none;
+    }
+}
+
+/* Optical icon alignment: center the icon box and remove the font's baseline offset. */
+.us26-workflow .wf-picker-trigger > .bi,
+.us26-workflow .wf-reset > .bi,
+.us26-workflow .filters .refresh-button > .bi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    flex: 0 0 1.1em;
+    width: 1.1em;
+    height: 1.1em;
+    font-size: 1.1em;
+    line-height: 1;
+    transform: translateY(1px);
+}
+
+    .us26-workflow .wf-picker-trigger > .bi::before,
+    .us26-workflow .wf-reset > .bi::before,
+    .us26-workflow .filters .refresh-button > .bi::before {
+        display: block;
+        line-height: 1;
+        vertical-align: 0;
+    }
+/* More legible status/count and supporting instructions. */
+.us26-workflow .stage-heading .eyebrow {
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 7px;
+}
+
+    .us26-workflow .stage-heading .eyebrow > span {
+        font-size: 12px;
+        color: #8d7353;
+    }
+
+.us26-workflow .stage-heading p:not(.eyebrow) {
+    font-size: 14px;
+    line-height: 1.55;
+    color: #77644f;
+}
+
+@media(max-width:650px) {
+    .us26-workflow .stage-heading p:not(.eyebrow) {
+        font-size: 13px;
+    }
+}
+
+/* Status journey: icon circle, number badge, label/count and description. Existing page artwork is retained. */
+.us26-workflow.layout-creative #tabs {
+    --wf-node-size: 48px;
+    padding: 8px 0 10px;
+    align-items: stretch;
+}
+
+    .us26-workflow.layout-creative #tabs:before {
+        top: calc(8px + var(--wf-node-size)/2);
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step {
+        position: relative;
+        padding: 0 6px 4px;
+        gap: 0;
+        justify-content: flex-start;
+        text-decoration: none;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-node {
+        display: grid;
+        place-items: center;
+        width: var(--wf-node-size);
+        height: var(--wf-node-size);
+        flex: none;
+        border: 1px solid #bfa177;
+        border-radius: 50%;
+        margin: 0;
+        background: #fff8e9;
+        color: #79522f;
+        box-shadow: 0 0 0 4px #fbf6ed;
+    }
+
+    .us26-workflow.layout-creative #tabs .wf-journey-icon {
+        display: block;
+        width: 56%;
+        height: 56%;
+    }
+
+    .us26-workflow.layout-creative #tabs .active .journey-node {
+        background: linear-gradient(145deg,#c64230,#a52a1f);
+        border-color: #c5a373;
+        color: #fff2d7;
+        box-shadow: 0 0 0 4px #fbf6ed,0 0 0 5.5px #c3a16d;
+    }
+
+    .us26-workflow.layout-creative #tabs .wf-step-number {
+        display: grid;
+        place-items: center;
+        min-width: 34px;
+        height: 18px;
+        padding: 1px 6px;
+        margin: 4px 0 5px;
+        background: #baa17c;
+        color: #fff9ec;
+        font: 600 12px/1 Georgia,'Times New Roman',serif;
+        clip-path: polygon(8% 13%,24% 5%,45% 9%,65% 3%,91% 14%,98% 39%,94% 70%,82% 87%,54% 95%,27% 91%,8% 80%,2% 53%);
+    }
+
+    .us26-workflow.layout-creative #tabs .active .wf-step-number {
+        background: #af3425;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        font: 15px/1.25 Georgia,'Times New Roman',serif;
+        white-space: normal;
+        color: #302a22;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-count {
+        flex: none;
+        min-width: 20px;
+        margin: 0;
+        padding: 2px 6px;
+        font: 10px/1.2 'Segoe UI',Arial,sans-serif;
+        background: #eee1cc;
+        color: #735433;
+        border-radius: 20px;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step.active .journey-label {
+        color: #aa3224;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step.active .journey-count {
+        color: #fff8ed;
+        background: #af3425;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step > small {
+        margin-top: 4px;
+        font: 10px/1.4 'Segoe UI',Arial,sans-serif;
+        color: #8b775d;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-cancelled {
+        border-left: 1px dashed #c4aa84;
+        margin-left: 16px;
+        padding-left: 18px;
+    }
+
+        .us26-workflow.layout-creative #tabs .journey-cancelled .journey-node {
+            border-style: dashed;
+            color: #b49a73;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-cancelled.active .journey-node {
+            color: #fff2d7;
+        }
+
+    .us26-workflow.layout-creative #tabs .journey-step:not(.journey-cancelled):not([data-view=Completed]):before {
+        content: '';
+        position: absolute;
+        top: calc(var(--wf-node-size)/2 - 4px);
+        left: calc(100% - 4px);
+        width: 8px;
+        height: 8px;
+        border: 1px solid #fbf6ed;
+        border-radius: 50%;
+        background: #bfa177;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step.active:not(.journey-cancelled):not([data-view=Completed]):before {
+        background: #af3425;
+    }
+
+    .us26-workflow.layout-creative #tabs .journey-step.active:not(.journey-cancelled):not([data-view=Completed]):after {
+        content: '';
+        position: absolute;
+        top: calc(var(--wf-node-size)/2);
+        left: calc(50% + var(--wf-node-size)/2 + 5px);
+        width: calc(100% - var(--wf-node-size) - 10px);
+        height: 1px;
+        background: #af3425;
+    }
+/* Search can be activated with its gold button or Enter. */
+.us26-workflow .filters .search {
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+}
+
+    .us26-workflow .filters .search input {
+        flex: 1;
+        align-self: center;
+        padding: 10px 13px;
+        min-width: 0;
+    }
+
+.us26-workflow .wf-search-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    flex: 0 0 46px;
+    min-height: 42px;
+    padding: 9px 11px;
+    border: 0;
+    border-left: 1px solid #aa8b5e;
+    border-radius: 0 6px 6px 0;
+    background: #b79b72;
+    color: #30271a;
+    transition: background-color .15s;
+}
+
+    .us26-workflow .wf-search-submit:hover {
+        background: #9e7d4d;
+        color: #fff7e7;
+        filter: none;
+    }
+
+    .us26-workflow .wf-search-submit svg {
+        display: block;
+        flex: none;
+    }
+
+.us26-workflow .wf-picker-custom, .us26-workflow .wf-picker-trigger {
+    height: 100%;
+}
+
+@media(max-width:1100px) {
+    .us26-workflow.layout-creative #tabs {
+        --wf-node-size: 46px;
+    }
+
+        .us26-workflow.layout-creative #tabs .journey-step {
+            border-bottom: 0;
+            padding-bottom: 12px;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-cancelled {
+            margin-left: 0;
+            padding-left: 6px;
+            border-left: 0;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-step:before, .us26-workflow.layout-creative #tabs .journey-step:after {
+            display: none;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-label {
+            font-size: 14px;
+            gap: 4px;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-step > small {
+            font-size: 10px;
+        }
+}
+
+@media(max-width:650px) {
+    .us26-workflow.layout-creative #tabs {
+        --wf-node-size: 42px;
+        row-gap: 14px;
+    }
+
+        .us26-workflow.layout-creative #tabs .wf-step-number {
+            min-width: 32px;
+            height: 18px;
+            font-size: 11px;
+            margin: 4px 0 5px;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-label {
+            font-size: 12px;
+            gap: 3px;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-count {
+            min-width: 18px;
+            font-size: 10px;
+            padding: 2px 5px;
+        }
+
+        .us26-workflow.layout-creative #tabs .journey-step > small {
+            font-size: 9px;
+        }
+}
+
+.us26-workflow.layout-creative #tabs .wf-stage-label {
+    display: inline;
+    min-width: 0;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+}
+
+/* Search guidance stays beside its field instead of using a floating notification. */
+.us26-workflow .filters {
+    align-items: flex-start;
+}
+
+.us26-workflow .wf-search-field {
+    flex: 1;
+    min-width: 0;
+}
+
+    .us26-workflow .wf-search-field .search {
+        min-height: 44px;
+    }
+
+.us26-workflow .wf-search-hint {
+    margin: 7px 0 0;
+    padding: 0 1px;
+    font: 14px/1.45 'Segoe UI',Arial,sans-serif;
+    color: #73766b;
+}
+
+    .us26-workflow .wf-search-hint[hidden] {
+        display: none;
+    }
+
+@media(max-width:900px) {
+    .us26-workflow .wf-search-field {
+        flex-basis: 100%;
+    }
+}
+
+/* Status tabs darken on pointer hover and keyboard focus. */
+.us26-workflow.layout-creative #tabs .journey-node,
+.us26-workflow.layout-creative #tabs .wf-step-number,
+.us26-workflow.layout-creative #tabs .journey-label,
+.us26-workflow.layout-creative #tabs .journey-count,
+.us26-workflow.layout-creative #tabs .journey-step > small {
+    transition: background-color .16s,color .16s,border-color .16s;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step:is(:hover,:focus-visible) .journey-node {
+    background: #e8d6b8;
+    border-color: #98703d;
+    color: #5c3b20;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step:is(:hover,:focus-visible) .wf-step-number {
+    background: #977346;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step:is(:hover,:focus-visible) .journey-label {
+    color: #5c3b20;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step:is(:hover,:focus-visible) .journey-count {
+    background: #ddc6a3;
+    color: #573a20;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step:is(:hover,:focus-visible) > small {
+    color: #655039;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step.active:is(:hover,:focus-visible) .journey-node {
+    background: linear-gradient(145deg,#a63224,#812116);
+    border-color: #a17b49;
+    color: #fff2d7;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step.active:is(:hover,:focus-visible) .wf-step-number,
+.us26-workflow.layout-creative #tabs .journey-step.active:is(:hover,:focus-visible) .journey-count {
+    background: #85251b;
+    color: #fff8ed;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step.active:is(:hover,:focus-visible) .journey-label {
+    color: #85251b;
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .us26-workflow.layout-creative #tabs .journey-step > * {
+        transition: none;
+    }
+}
+
+/* ===== 31 Oct UI batch: centred badges, matching filter buttons, readable card text ===== */
+
+/* Step number and count pills: centre the digits (lining figures avoid Georgia's low-sitting old-style digits). */
+.us26-workflow.layout-creative #tabs .wf-step-number,
+.us26-workflow.layout-creative #tabs .journey-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    text-align: center;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+.us26-workflow.layout-creative #tabs .wf-step-number {
+    padding: 0 6px;
+}
+
+.us26-workflow.layout-creative #tabs .journey-count {
+    height: 18px;
+    padding: 0 6px;
+}
+
+/* Reset and Refresh: identical size; text nudged 1px down so it sits on the optical centre. */
+.us26-workflow .filters .wf-reset,
+.us26-workflow .filters .refresh-button {
+    box-sizing: border-box;
+    align-self: center;
+    height: 44px;
+    min-height: 44px;
+    padding: 1px 14px 0;
+    gap: 7px;
+    font: 14px/1 Georgia,'Times New Roman',serif;
+}
+
+    .us26-workflow .filters .wf-reset > .bi,
+    .us26-workflow .filters .refresh-button > .bi {
+        transform: none;
+    }
+
+@media(min-width:701px) {
+    .us26-workflow .filters .wf-reset,
+    .us26-workflow .filters .refresh-button {
+        flex: 0 0 108px;
+        width: 108px;
+        min-width: 108px;
+    }
+}
+
+/* Section notes beside "Longest waiting" and "Other ... orders". */
+
+/* Same, larger card text in Longest waiting and the other order cards. */
+
+.us26-workflow.layout-creative .order .order-time {
+    font-size: 13px;
+}
+
+.us26-workflow.layout-creative .order .customer {
+    font-size: 15px;
+}
+
+/* Portions and price now also show on Longest waiting cards. */
+.us26-workflow.layout-creative .archive-grid .order-bottom {
+    display: flex;
+    align-items: baseline;
+    margin-top: auto;
+    padding-top: 7px;
+    font-size: 13px;
+}
+
+.us26-workflow.layout-creative .order .order-bottom b {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Kitchen notes: same text size as before, left-aligned and vertically centred in the note box. */
+.us26-workflow.layout-creative .order .note-marker {
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+    .us26-workflow.layout-creative .order .note-marker small {
+        margin: 0;
+    }
+
+/* 31 Oct UI batch 2: larger pager text and buttons, larger kitchen/payment footnote, All / paged toggle. */
+.us26-workflow .single .order-pager p {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.us26-workflow .single .order-pager > div {
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+    .us26-workflow .single .order-pager > div > span {
+        font-size: 14px;
+    }
+
+.us26-workflow .order-pager a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 9px 20px;
+    font-size: 15px;
+}
+
+    .us26-workflow .order-pager a.wf-page-mode {
+        border-color: #b79b72;
+        background: #f3e6cd;
+        color: #5f4321;
+        font-weight: 600;
+    }
+
+        .us26-workflow .order-pager a.wf-page-mode:hover {
+            background: #e7d3ae;
+            border-color: #a5804a;
+        }
+
+.us26-workflow .footnote {
+    font-size: 14px;
+}
+
+/* 31 Oct UI batch 3: on desktop the details drawer scrolls with the page (no fixed/sticky panel)
+   and its top lines up with the first order section on the left (offset set by staff-order-workflow.js). */
+@media(min-width:1101px) {
+    .us26-workflow.layout-creative .drawer:not([hidden]) {
+        position: relative;
+        top: auto;
+        align-self: start;
+        max-height: none;
+        overflow: hidden;
+        margin-top: var(--wf-drawer-offset, 0px);
+    }
+}
+
+/* 31 Oct: decorative 夜 stamp beside the stage heading removed (markup also removed from _WorkflowBoard.cshtml). */
+
+/* 31 Oct UI batch 4: table chip matches the Dine-in badge (Bootstrap's .table set width:100%),
+   and a waiting-time chip on active order cards (same thresholds as the old queue: 10 min warn, 20 min long). */
+.us26-workflow.layout-creative .order .chip.table,
+.us26-workflow.layout-creative .order .wf-wait-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: auto;
+    margin: 0;
+    padding: 5px 11px;
+    font: 500 13px/1.35 'Segoe UI',Arial,sans-serif;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.us26-workflow.layout-creative .order .chip.table {
+    color: #385d38;
+    background: #e0ecd8;
+    border-color: #bbcea9;
+}
+
+.us26-workflow.layout-creative .order .wf-wait-chip {
+    color: #6b5a43;
+    background: #f3ece0;
+    border-color: #e0d2bb;
+}
+
+    .us26-workflow.layout-creative .order .wf-wait-chip[data-level="warn"] {
+        color: #8a5a17;
+        background: #fbefd9;
+        border-color: #ecd09c;
+    }
+
+    .us26-workflow.layout-creative .order .wf-wait-chip[data-level="long"] {
+        color: #a5442d;
+        background: #fbe7e1;
+        border-color: #efc0b5;
+    }
+
+    .us26-workflow.layout-creative .order .wf-wait-chip .bi {
+        font-size: 14px;
+        line-height: 1;
+    }
+
+.us26-workflow .wf-wait-long {
+    display: none;
+    padding-left: 8px;
+    margin-left: 2px;
+    border-left: 1px solid currentColor;
+    font-size: 12px;
+}
+
+.us26-workflow .wf-wait-chip[data-level="long"] .wf-wait-long {
+    display: inline;
+}
+
+/* 31 Oct UI batch 5: dining / table / wait chips on their own row under the customer name (all cards),
+   and the same 16px side gap as the Menu studio page. */
+.us26-workflow.layout-creative .order .customer-row {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.us26-workflow.layout-creative .order .chips {
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+@media(min-width:701px) {
+    .us26-workflow .wf-main {
+        max-width: none;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+/* 31 Oct UI batch 6: "new orders" notice uses the shared YORU toast (site.css) with an action button.
+   Toasts are appended to <body>, so these classes are not scoped to .us26-workflow. */
+.yoru-toast-wrap:has(.wf-toast-with-action) {
+    width: min(36rem, calc(100vw - 2rem));
+}
+
+.yoru-toast.wf-toast-with-action {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .8rem;
+}
+
+    .yoru-toast.wf-toast-with-action .yoru-toast-body {
+        min-width: 0;
+    }
+
+.wf-toast-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.2rem;
+    margin-right: .6rem;
+    padding: .4rem .8rem;
+    border: 1px solid var(--yoru-gold);
+    border-radius: .5rem;
+    background: transparent;
+    color: var(--yoru-cream);
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background-color .18s ease, color .18s ease;
+}
+
+    .wf-toast-action:hover {
+        background: var(--yoru-gold);
+        color: var(--yoru-ink);
+    }
+
+    .wf-toast-action:focus-visible {
+        outline: .15rem solid var(--yoru-gold);
+        outline-offset: .2rem;
+    }
+
+@media(max-width:575.98px) {
+    .yoru-toast.wf-toast-with-action {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .wf-toast-action {
+        grid-column: 2;
+        justify-self: start;
+        margin-right: 0;
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .wf-toast-action {
+        transition: none;
+    }
+}
+
+/* 31 Oct UI batch 7: Longest-waiting rank line keeps only the rank (time now in the chip row),
+   table chip icon, and an icon in the drawer status badge. */
+
+.us26-workflow.layout-creative .order .chip.table .wf-dining-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+
+.us26-workflow .drawer-header .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+    .us26-workflow .drawer-header .status .wf-status-icon {
+        flex: none;
+        display: block;
+        width: 16px;
+        height: 16px;
+    }
+
+/* 31 Oct UI batch 8: wider details drawer, and a smooth swap when another order is opened. */
+@media(min-width:1700px) {
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr) 520px;
+    }
+}
+
+@media(max-width:1699px) and (min-width:1361px) {
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr) 450px;
+    }
+}
+
+@media(max-width:1360px) and (min-width:1101px) {
+    .us26-workflow .workspace:has(#drawer:not([hidden])) {
+        grid-template-columns: minmax(0,1fr) 380px;
+    }
+}
+
+.us26-workflow .drawer > * {
+    transition: opacity .15s ease;
+}
+
+.us26-workflow .drawer.is-switching > * {
+    opacity: .45;
+    pointer-events: none;
+}
+
+.us26-workflow .drawer.is-entering > * {
+    animation: wf-drawer-content-in .22s ease-out;
+}
+
+@keyframes wf-drawer-content-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    .us26-workflow .drawer > * {
+        transition: none;
+    }
+
+    .us26-workflow .drawer.is-entering > * {
+        animation: none;
+    }
+}
+
+/* 31 Oct UI batch 9: centred close icons, drawer header uses the order-action pop-up background,
+   plain-font total amount, and drawer buttons in the same colours as the order-card buttons. */
+
+/* Close (×) buttons on the drawer and the pop-up: draw the cross so it sits exactly in the centre. */
+.us26-workflow .icon[data-close-dialog],
+.us26-workflow .icon[data-close-drawer] {
+    position: relative;
+    font-size: 0;
+    color: #27312d;
+}
+
+    .us26-workflow .icon[data-close-dialog]::before,
+    .us26-workflow .icon[data-close-dialog]::after,
+    .us26-workflow .icon[data-close-drawer]::before,
+    .us26-workflow .icon[data-close-drawer]::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 13px;
+        height: 1.75px;
+        border-radius: 1px;
+        background: currentColor;
+        transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .us26-workflow .icon[data-close-dialog]::after,
+    .us26-workflow .icon[data-close-drawer]::after {
+        transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+/* Drawer header: same cream paper and sakura artwork as the order-action pop-up. */
+.us26-workflow.layout-creative .drawer-header {
+    background: #fff9ee url("../images/staff/yoru-workflow-paper.webp") right bottom/720px 240px;
+    color: #191919;
+    border-bottom: 1px solid #e2d0b2;
+}
+
+    .us26-workflow.layout-creative .drawer-header::before,
+    .us26-workflow.layout-creative .drawer-header::after {
+        display: none;
+    }
+
+    .us26-workflow.layout-creative .drawer-header h2 {
+        color: #191919;
+    }
+
+    .us26-workflow.layout-creative .drawer-header .eyebrow {
+        color: #b82a1d;
+    }
+
+    .us26-workflow.layout-creative .drawer-header .icon[data-close-drawer] {
+        border: 1px solid #ddcfb8;
+        box-shadow: 0 2px 4px #442c1510;
+    }
+
+/* Total amount in the normal (non-decorative) font. */
+.us26-workflow .amounts .total span:last-child {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Drawer buttons: Accept like the card's "Accept order", Cancel like the card's "View details". */
+.us26-workflow.layout-creative .drawer .primary,
+.us26-workflow.layout-creative .drawer .wf-cancel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font: 600 15px/1.3 Georgia, 'Times New Roman', serif;
+    box-shadow: none;
+}
+
+.us26-workflow.layout-creative .drawer .primary {
+    background: #a47f4a;
+    border: 1px solid #a47f4a;
+    color: #fff;
+}
+
+    .us26-workflow.layout-creative .drawer .primary:hover {
+        color: #fff;
+        filter: brightness(.89);
+    }
+
+.us26-workflow.layout-creative .drawer .wf-cancel {
+    background: #fffaf0;
+    border: 1px solid #cdb38b;
+    color: #8b6235;
+}
+
+    .us26-workflow.layout-creative .drawer .wf-cancel:hover {
+        color: #65421f;
+        background: #ebd9b8;
+        border-color: #aa8653;
+    }
+
+/* 31 Oct UI batch 10: order-details drawer: larger text, icon rows with dividers,
+   bold customer details, and a softer allergies & preferences card. */
+.us26-workflow.layout-creative .drawer-header .eyebrow {
+    font-size: 11px;
+}
+
+.us26-workflow .order-context.wf-context {
+    margin: 14px 0 12px;
+    padding: 4px 16px;
+    border: 1px solid #e8d8bd;
+    border-radius: 10px;
+    background: #fffaf0d9;
+    font-size: 14px;
+}
+
+    .us26-workflow .order-context.wf-context > div {
+        display: grid;
+        grid-template-columns: 170px minmax(0, 1fr);
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        padding: 10px 0;
+        border-bottom: 1px solid #eddfc8;
+        font-size: 14px;
+    }
+
+        .us26-workflow .order-context.wf-context > div:last-child {
+            border-bottom: 0;
+        }
+
+    .us26-workflow .order-context.wf-context dt {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        font-weight: 400;
+        color: #7a6f5f;
+    }
+
+    .us26-workflow .order-context.wf-context dd {
+        margin: 0;
+        font-weight: 700;
+        color: #1f1b16;
+        overflow-wrap: anywhere;
+    }
+
+.us26-workflow .wf-ctx-icon {
+    flex: none;
+    display: block;
+    width: 18px;
+    height: 18px;
+    color: #b9452f;
+}
+
+.us26-workflow .wf-ctx-muted {
+    margin-left: 8px;
+    font-weight: 400;
+    color: #8a7f6d;
+}
+
+/* Allergies & preferences */
+.us26-workflow .allergy.wf-allergy {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 12px 0;
+    padding: 14px 16px;
+    border: 1px solid #e8d3ad;
+    border-radius: 10px;
+    background: #f7ebd4;
+    font-size: 14px;
+}
+
+    .us26-workflow .allergy.wf-allergy strong {
+        display: block;
+        font-size: 15px;
+        font-weight: 700;
+        color: #2a2219;
+    }
+
+    .us26-workflow .allergy.wf-allergy p {
+        margin: 4px 0;
+        font-size: 14px;
+        color: #2f281f;
+    }
+
+    .us26-workflow .allergy.wf-allergy small {
+        font-size: 12px;
+        color: #6e6555;
+    }
+
+.us26-workflow .wf-allergy-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #ead5ae;
+}
+
+    .us26-workflow .wf-allergy-icon .wf-ctx-icon {
+        width: 22px;
+        height: 22px;
+        color: #7a5a2b;
+    }
+
+/* Item line, dish note and amounts */
+.us26-workflow .dish-copy small {
+    font-size: 13px;
+}
+
+.us26-workflow .wf-code {
+    font-size: 12px;
+}
+
+.us26-workflow .wf-dish-note {
+    font-size: 13.5px;
+}
+
+.us26-workflow .detail-line > strong {
+    font-size: 14px;
+}
+
+.us26-workflow .amounts {
+    font-size: 14px;
+}
+
+    .us26-workflow .amounts > div {
+        margin: 6px 0;
+    }
+
+@media(max-width:1360px) {
+    .us26-workflow .order-context.wf-context > div {
+        grid-template-columns: 150px minmax(0, 1fr);
+    }
+}
+
+/* 31 Oct UI batch 11: one totals card, serif amounts like the dish prices, a more compact detail box,
+   larger kitchen note, and an icon timeline for the status history. */
+
+/* Totals: subtotal, charges and total share one card. */
+.us26-workflow .amounts {
+    margin-top: 14px;
+    padding: 10px 16px 12px;
+    border: 1px solid #e8d8bd;
+    border-radius: 10px;
+    background: #fffaf0d9;
+}
+
+    .us26-workflow .amounts > div > span:last-child {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-variant-numeric: lining-nums tabular-nums;
+        color: #2b2520;
+    }
+
+    .us26-workflow .amounts .total {
+        margin: 10px 0 0;
+        padding: 12px 0 0;
+        border: 0;
+        border-top: 1px dashed #d9b98a;
+        border-radius: 0;
+        background: none;
+        align-items: baseline;
+    }
+
+        .us26-workflow .amounts .total span:first-child {
+            font: 700 26px Georgia, 'Times New Roman', serif;
+            color: #191919;
+        }
+
+        .us26-workflow .amounts .total span:last-child {
+            font: 700 25px Georgia, 'Times New Roman', serif;
+            font-variant-numeric: lining-nums tabular-nums;
+            color: #b9231c;
+        }
+
+/* Customer details and allergies: slightly smaller. */
+.us26-workflow .order-context.wf-context {
+    padding: 2px 14px;
+    font-size: 13px;
+}
+
+    .us26-workflow .order-context.wf-context > div {
+        grid-template-columns: 150px minmax(0, 1fr);
+        gap: 10px;
+        padding: 8px 0;
+        font-size: 13px;
+    }
+
+    .us26-workflow .order-context.wf-context dt {
+        gap: 8px;
+    }
+
+    .us26-workflow .order-context.wf-context .wf-ctx-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+.us26-workflow .allergy.wf-allergy {
+    gap: 12px;
+    padding: 11px 14px;
+}
+
+    .us26-workflow .allergy.wf-allergy strong {
+        font-size: 14px;
+    }
+
+    .us26-workflow .allergy.wf-allergy p {
+        font-size: 13px;
+    }
+
+    .us26-workflow .allergy.wf-allergy small {
+        font-size: 11.5px;
+    }
+
+.us26-workflow .wf-allergy-icon {
+    width: 36px;
+    height: 36px;
+}
+
+    .us26-workflow .wf-allergy-icon .wf-ctx-icon {
+        width: 19px;
+        height: 19px;
+    }
+
+/* Kitchen note under the buttons. */
+.us26-workflow .kitchen-note {
+    font-size: 12.5px;
+    color: #7f735f;
+    margin: 10px 0 14px;
+}
+
+/* Status history timeline */
+.us26-workflow .history.wf-history h3 {
+    display: flex;
+    align-items: center;
+    margin: 16px 0 12px;
+    font: 700 21px Georgia, 'Times New Roman', serif;
+    color: #1f1914;
+}
+
+    .us26-workflow .history.wf-history h3::before {
+        content: '';
+        flex: none;
+        width: 4px;
+        height: 22px;
+        margin-right: 12px;
+        border-radius: 2px;
+        background: #b9312a;
+    }
+
+.us26-workflow .wf-timeline {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .us26-workflow .wf-timeline::before {
+        content: '';
+        position: absolute;
+        left: 32px;
+        top: 34px;
+        bottom: 34px;
+        width: 1.5px;
+        background: #d3b98e;
+    }
+
+.us26-workflow .wf-event {
+    position: relative;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+    padding: 12px 10px;
+    border-bottom: 1px solid #eee2cd;
+}
+
+    .us26-workflow .wf-event:last-child {
+        border-bottom: 0;
+    }
+
+    .us26-workflow .wf-event strong {
+        display: block;
+        font: 600 17px/1.3 Georgia, 'Times New Roman', serif;
+        color: #2b1d16;
+    }
+
+    .us26-workflow .wf-event small {
+        display: block;
+        margin-top: 4px;
+        font-size: 13.5px;
+        color: #7a6f5f;
+    }
+
+    .us26-workflow .wf-event .wf-when {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+        .us26-workflow .wf-event .wf-when .wf-ctx-icon {
+            width: 15px;
+            height: 15px;
+            color: #b07d3c;
+        }
+
+    .us26-workflow .wf-event p {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: #7e6a50;
+        overflow-wrap: anywhere;
+        white-space: pre-line;
+    }
+
+.us26-workflow .wf-node {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #d9bf94;
+    border-radius: 50%;
+    background: #fffaf1;
+    color: #8a5a2b;
+    box-shadow: 0 0 0 4px #fdf8ef;
+}
+
+    .us26-workflow .wf-node .wf-history-icon {
+        display: block;
+        width: 22px;
+        height: 22px;
+    }
+
+.us26-workflow .wf-event.is-current {
+    margin: 2px 0;
+    border: 1px solid #f0d2c8;
+    border-radius: 10px;
+    background: #fcefe9;
+}
+
+    .us26-workflow .wf-event.is-current .wf-node {
+        border-color: #b9312a;
+        background: #b9312a;
+        color: #fff;
+        box-shadow: 0 0 0 4px #f6dcd4;
+    }
+
+    .us26-workflow .wf-event.is-current strong {
+        color: #8e2219;
+    }
+
+.us26-workflow .wf-current {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #f8dcd4;
+    color: #a83224;
+    font: 500 12px/1.5 'Segoe UI', Arial, sans-serif;
+    vertical-align: middle;
+}
+
+.us26-workflow .wf-gap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 6px 0 6px 58px;
+    padding: 12px 14px;
+    border: 1px solid #e3cc9f;
+    border-left: 3px solid #b8955b;
+    border-radius: 8px;
+    background: #f3e6cd;
+}
+
+    .us26-workflow .wf-gap p {
+        margin: 0;
+        font-size: 13.5px;
+        color: #6d5b3c;
+    }
+
+.us26-workflow .wf-gap-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #c49a55;
+    color: #fff;
+}
+
+    .us26-workflow .wf-gap-icon .wf-ctx-icon {
+        width: 18px;
+        height: 18px;
+        stroke-width: 2.4;
+    }
+
+/* 31 Oct UI batch 12: long orders show the first 5 dishes; "Show all" reveals the rest (JavaScript only). */
+.us26-workflow.js-ready .wf-dish-list:not(.is-expanded) .wf-dish-more {
+    display: none;
+}
+
+.us26-workflow .wf-dish-toggle {
+    display: none;
+}
+
+.us26-workflow.js-ready .wf-dish-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    margin: 8px 0 2px;
+    padding: 8px 12px;
+    border: 1px dashed #cdb38b;
+    border-radius: 8px;
+    background: #fffaf0;
+    color: #8b6235;
+    font: 600 14px/1.3 Georgia, 'Times New Roman', serif;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s;
+}
+
+    .us26-workflow.js-ready .wf-dish-toggle:hover {
+        background: #f3e5c9;
+        border-color: #aa8653;
+        color: #65421f;
+    }
+
+/* 31 Oct UI batch 13: larger "Overall remarks" box in the order-details drawer. */
+.us26-workflow .drawer .note {
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+    .us26-workflow .drawer .note strong {
+        display: block;
+        font-size: 14.5px;
+        font-weight: 700;
+        color: #2a2219;
+    }
+
+    .us26-workflow .drawer .note p {
+        margin: 5px 0 0;
+        font-size: 14px;
+        color: #2f281f;
+    }
+
+/* 31 Oct UI batch 14: kitchen-notes bar on order cards replaced by a compact "Notes" pill
+   in the top-right corner of the dish list (shorter cards; full wording on hover / for screen readers). */
+.us26-workflow .items-preview {
+    position: relative;
+}
+
+.us26-workflow .wf-note-pill {
+    position: absolute;
+    top: 9px;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border: 1px solid #e0cba5;
+    border-radius: 999px;
+    background: #f6ecda;
+    color: #7a5a2b;
+    font: 600 12px/1.4 'Segoe UI', Arial, sans-serif;
+    white-space: nowrap;
+    cursor: help;
+}
+
+    .us26-workflow .wf-note-pill .bi {
+        font-size: 13px;
+        line-height: 1;
+    }
+
+.us26-workflow .items-preview:has(.wf-note-pill) {
+    padding-right: 92px;
+}
+
+/* 31 Oct UI batch 15: "Found in" status links in the search hint. */
+.us26-workflow .wf-found-link {
+    display: inline;
+    margin: 0 1px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #a83224;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+    .us26-workflow .wf-found-link:hover {
+        color: #7f2117;
+    }
+
+/* 31 Oct UI batch 16: invisible spacer rows so every order card has the same dish-area height on every page. */
+.us26-workflow .wf-preview-spacer {
+    visibility: hidden;
+}
+
+/* 31 Oct UI batch 17: status history shows the latest entry until "Show full history" is clicked
+   (without JavaScript the full history stays visible). */
+
+.us26-workflow.js-ready .wf-history-list:not(.is-expanded) .wf-history-older {
+    display: none;
+}
+
+.us26-workflow .wf-history-toggle {
+    margin-top: 10px;
+}
+
+/* 31 Oct UI batch 18: "Table not assigned" aligned with the Dine-in chip; Takeaway chip in a cool slate so it no
+   longer looks like the red Long-wait chip; smaller dish notes; one-line overall remarks; drawer action button
+   in the same colour as that status's card button. */
+.us26-workflow .order-context.wf-context dd:has(.wf-dining-badge) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+}
+
+    .us26-workflow .order-context.wf-context dd .wf-dining-badge {
+        flex: none;
+    }
+
+    .us26-workflow .order-context.wf-context dd .wf-ctx-muted {
+        margin-left: 0;
+    }
+
+.us26-workflow .order-context .wf-dining--takeaway,
+.us26-workflow.layout-creative .order .wf-dining--takeaway {
+    color: #33506e;
+    background: #e3eaf2;
+    border-color: #bccbdb;
+}
+
+.us26-workflow .wf-dish-note {
+    padding: 4px 8px;
+    font-size: 12.5px;
+}
+
+.us26-workflow .drawer .note strong {
+    display: inline;
+}
+
+    .us26-workflow .drawer .note strong::after {
+        content: ':';
+        margin-right: 4px;
+    }
+
+.us26-workflow .drawer .note p {
+    display: inline;
+    margin: 0;
+}
+
+.us26-workflow.layout-creative .drawer [data-order-details][data-status="Preparing"] .primary {
+    background: #b6462c;
+    border-color: #b6462c;
+}
+
+.us26-workflow.layout-creative .drawer [data-order-details][data-status="ReadyToServe"] .primary {
+    background: #3e6348;
+    border-color: #3e6348;
+}
+
+/* 31 Oct UI batch 19: Served gets its own colour (deep plum), so it no longer matches Pending (gold)
+   on the card button and drawer button, or Ready to Serve (green) on the status badge. */
+.us26-workflow.layout-creative .Served .archive-grid .card-action {
+    background: #6b4a78;
+    border-color: #6b4a78;
+    color: #fff;
+}
+
+.us26-workflow.layout-creative .drawer [data-order-details][data-status="Served"] .primary {
+    background: #6b4a78;
+    border-color: #6b4a78;
+}
+
+.us26-workflow .status.Served {
+    background: #6b4a78;
+    border-color: #84648f;
+    color: #fff;
+}
+
+/* 31 Oct UI batch 20: Completed badge in Japanese indigo (ai-iro), so it no longer matches Ready to Serve (green). */
+.us26-workflow .status.Completed {
+    background: #34466e;
+    border-color: #52648c;
+    color: #fff;
+}
+
+/* 31 Oct UI batch 21: status step tracker uses each status's own colour (same as its badge and buttons):
+   the selected step is filled in that colour, and every step's icon is tinted with it. */
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Pending"] { --wf-step: #a7824a; --wf-step-dark: #86662f; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Preparing"] { --wf-step: #ac3025; --wf-step-dark: #85251b; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="ReadyToServe"] { --wf-step: #315b38; --wf-step-dark: #22432a; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Served"] { --wf-step: #6b4a78; --wf-step-dark: #523859; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Completed"] { --wf-step: #34466e; --wf-step-dark: #253354; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Cancelled"] { --wf-step: #773b37; --wf-step-dark: #5a2a27; }
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view]:not(.active) .journey-node {
+    color: var(--wf-step);
+}
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active .journey-node {
+    background: var(--wf-step);
+    border-color: var(--wf-step);
+    color: #fff;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active .wf-step-number,
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active .journey-count {
+    background: var(--wf-step);
+    color: #fff;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active .journey-label {
+    color: var(--wf-step);
+}
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active:not(.journey-cancelled):not([data-view=Completed])::before,
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active:not(.journey-cancelled):not([data-view=Completed])::after {
+    background: var(--wf-step);
+}
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active:is(:hover,:focus-visible) .journey-node {
+    background: var(--wf-step-dark);
+    border-color: var(--wf-step-dark);
+    color: #fff;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active:is(:hover,:focus-visible) .wf-step-number,
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active:is(:hover,:focus-visible) .journey-count {
+    background: var(--wf-step-dark);
+    color: #fff;
+}
+
+.us26-workflow.layout-creative #tabs .journey-step[data-view].active:is(:hover,:focus-visible) .journey-label {
+    color: var(--wf-step-dark);
+}
+
+/* 31 Oct UI batch 22: status colours by meaning. Cancelled = red, Completed = green,
+   Preparing = amber (cooking), Ready to Serve = teal. Pending (gold) and Served (plum) unchanged.
+   Applies to the status steps, drawer badges, card buttons and drawer buttons. */
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Preparing"] { --wf-step: #c4651f; --wf-step-dark: #9c4d15; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="ReadyToServe"] { --wf-step: #2c7372; --wf-step-dark: #1f5756; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Completed"] { --wf-step: #315b38; --wf-step-dark: #22432a; }
+.us26-workflow.layout-creative #tabs .journey-step[data-view="Cancelled"] { --wf-step: #ac3025; --wf-step-dark: #85251b; }
+
+.us26-workflow .status.Preparing { background: #c4651f; border-color: #d4823f; color: #fff; }
+.us26-workflow .status.ReadyToServe { background: #2c7372; border-color: #4a8c8b; color: #fff; }
+.us26-workflow .status.Completed { background: #315b38; border-color: #4c7851; color: #fff; }
+.us26-workflow .status.Cancelled { background: #ac3025; border-color: #bb5143; color: #fff; }
+
+.us26-workflow.layout-creative .Preparing .archive-grid .card-action,
+.us26-workflow.layout-creative .drawer [data-order-details][data-status="Preparing"] .primary {
+    background: #c4651f;
+    border-color: #c4651f;
+    color: #fff;
+}
+
+.us26-workflow.layout-creative .ReadyToServe .archive-grid .card-action,
+.us26-workflow.layout-creative .drawer [data-order-details][data-status="ReadyToServe"] .primary {
+    background: #2c7372;
+    border-color: #2c7372;
+    color: #fff;
+}
+
+/* 31 Oct: close (×) buttons on the drawer and pop-ups darken on hover and keyboard focus. */
+.us26-workflow .icon[data-close-drawer],
+.us26-workflow .icon[data-close-dialog] {
+    transition: background-color .15s, color .15s, border-color .15s;
+}
+
+    .us26-workflow .icon[data-close-drawer]:is(:hover,:focus-visible),
+    .us26-workflow .icon[data-close-dialog]:is(:hover,:focus-visible),
+    .us26-workflow.layout-creative .drawer-header .icon[data-close-drawer]:is(:hover,:focus-visible) {
+        background: #2b2620;
+        border-color: #2b2620;
+        color: #fff8ec;
+    }
+
+@media(prefers-reduced-motion:reduce) {
+    .us26-workflow .icon[data-close-drawer],
+    .us26-workflow .icon[data-close-dialog] {
+        transition: none;
+    }
+}
+
+/* 31 Oct: dining-type and sort pickers show their icon and label centred, like Reset and Refresh;
+   the arrow stays at the right edge. */
+.us26-workflow .wf-picker-trigger {
+    position: relative;
+    justify-content: center;
+    padding-left: 34px;
+    padding-right: 34px;
+}
+
+    .us26-workflow .wf-picker-trigger > [data-picker-label] {
+        flex: 0 1 auto;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .us26-workflow .wf-picker-trigger > .wf-chevron {
+        position: absolute;
+        right: 13px;
+        top: 50%;
+        margin-top: -8px;
+    }

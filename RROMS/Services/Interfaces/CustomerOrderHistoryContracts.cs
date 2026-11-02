@@ -35,6 +35,8 @@ public sealed record HistoryOrderRow(int Id, string OrderNo, OrderStatus Status,
     public decimal Subtotal { get; init; }
     public decimal ServiceCharge { get; init; }
     public decimal Tax { get; init; }
+    public decimal? TaxRatePercent { get; init; }
+    public decimal? ServiceChargePercent { get; init; }
 }
 public sealed record CustomerOrderHistory(IReadOnlyList<HistoryOrderRow> Orders,
     int MatchingCount, int AllOrdersCount, int PageNumber, HistoryFilter Filter,
@@ -48,15 +50,23 @@ public sealed record CustomerOrderHistory(IReadOnlyList<HistoryOrderRow> Orders,
 }
 public sealed record HistoryOrderLine(int Id, int MenuItemId, string Code, string Name,
     string? ImageUrl, int Quantity, decimal SavedUnitPrice, string? Notes,
-    bool AvailableNow, decimal? CurrentUnitPrice)
+    bool AvailableNow, decimal? CurrentUnitPrice, decimal? NormalUnitPrice = null)
 {
+    // US29: promotion saving on this line (0 for orders placed before US29).
+    public decimal Saving => NormalUnitPrice is decimal normal && normal > SavedUnitPrice
+        ? (normal - SavedUnitPrice) * Quantity : 0m;
     public bool CanReorder => Quantity > 0 && AvailableNow;
     public bool PriceChanged => CurrentUnitPrice.HasValue && CurrentUnitPrice != SavedUnitPrice;
 }
 public sealed record HistoryOrderDetails(int Id, string OrderNo, OrderStatus Status, OrderType Dining,
     DateTime CreatedAt, DateTime? UpdatedAt, string? Notes, string? ReservationReference,
     DateTime? ReservedAt, int? Guests, IReadOnlyList<HistoryOrderLine> Lines,
-    decimal Subtotal, decimal ServiceCharge, decimal Tax, decimal Total);
+    decimal Subtotal, decimal ServiceCharge, decimal Tax, decimal Total)
+{
+    public decimal Savings => Lines.Sum(line => line.Saving);
+    public decimal? TaxRatePercent { get; init; }
+    public decimal? ServiceChargePercent { get; init; }
+}
 public sealed class HistoryReorderChoice
 {
     public int OrderItemId { get; set; }

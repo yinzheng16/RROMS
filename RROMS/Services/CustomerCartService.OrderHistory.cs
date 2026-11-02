@@ -64,7 +64,13 @@ public sealed partial class CustomerCartService
             order.Items.Count(line => line.Quantity > 0), order.TotalAmount,
             order.Items.Where(line => line.Quantity > 0).OrderBy(line => line.Id).Take(3)
                 .Select(line => new HistoryDishPreview(line.MenuItem?.Name ?? "Dish no longer listed", line.Quantity, line.UnitPrice * line.Quantity)).ToArray())
-            { Subtotal = order.Subtotal, ServiceCharge = order.ServiceCharge, Tax = order.TaxAmount }).ToArray(),
+        {
+            Subtotal = order.Subtotal,
+            ServiceCharge = order.ServiceCharge,
+            Tax = order.TaxAmount,
+            TaxRatePercent = order.TaxRatePercent,
+            ServiceChargePercent = order.ServiceChargePercent
+        }).ToArray(),
             count, allCount, page, filter) { StatusCounts = counts };
     }
 
@@ -89,8 +95,9 @@ public sealed partial class CustomerCartService
                 CustomerOrderHistoryRules.SafeImage(line.MenuItem?.ImageUrl), line.Quantity, line.UnitPrice, line.Notes,
                 line.MenuItem is not null && line.MenuItem.IsAvailable && line.MenuItem.Price > 0,
                 line.MenuItem is null ? null : OrderPricingRules.DiscountedPrice(line.MenuItem.Price,
-                    discounts.GetValueOrDefault(line.MenuItemId)))).ToArray(),
-            order.Subtotal, order.ServiceCharge, order.TaxAmount, order.TotalAmount);
+                    discounts.GetValueOrDefault(line.MenuItemId)), line.NormalUnitPrice)).ToArray(),
+            order.Subtotal, order.ServiceCharge, order.TaxAmount, order.TotalAmount)
+        { TaxRatePercent = order.TaxRatePercent, ServiceChargePercent = order.ServiceChargePercent };
     }
 
     public async Task<HistoryReorderPreview> PrepareReorderAsync(string userId, int orderId,

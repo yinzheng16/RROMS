@@ -30,9 +30,13 @@ namespace RROMS.Pages.Menu
         public CustomerMenuPage Menu { get; private set; } = CustomerMenuPage.Empty;
         public MenuItemSummary? SelectedItem { get; private set; }
         public string? DetailNotice { get; private set; }
-        public string CurrentCategory => CategoryId.HasValue
-            ? Menu.Categories.FirstOrDefault(c => c.Id == CategoryId)?.Name ?? "Selected category"
-            : "All dishes";
+        public bool ShowingSpecials => CategoryId == RROMS.Services.CustomerMenuBrowseRules.SpecialsCategoryId;
+        public bool ShowingNew => CategoryId == RROMS.Services.CustomerMenuBrowseRules.NewCategoryId;
+        public string CurrentCategory => ShowingSpecials ? "Specials"
+            : ShowingNew ? "New dishes"
+            : CategoryId.HasValue
+                ? Menu.Categories.FirstOrDefault(c => c.Id == CategoryId)?.Name ?? "Selected category"
+                : "All dishes";
         public bool HasFilters => Search is not null || CategoryId.HasValue || Sort != "menu";
 
         public async Task OnGetAsync(CancellationToken cancellationToken)
@@ -40,7 +44,9 @@ namespace RROMS.Pages.Menu
             Search = string.IsNullOrWhiteSpace(Search) ? null : Search.Trim();
             if (Search?.Length > 100) Search = Search[..100];
             Sort = CustomerMenuBrowsing.NormalizeSort(Sort);
-            Menu = await _menu.GetCustomerMenuPageAsync(Search, CategoryId, Sort, Limit, cancellationToken);
+            // US30: "Recommended for you" only for signed-in customer accounts.
+            string? customerId = User.IsInRole(Roles.Customer) ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
+            Menu = await _menu.GetCustomerMenuPageAsync(Search, CategoryId, Sort, Limit, cancellationToken, customerId);
             Limit = Menu.Limit;
             if (ItemId.HasValue)
             {

@@ -3,16 +3,8 @@
 @using RROMS.Models
 @using RROMS.Services
 @{
-    string statusIcon = Model.Status switch
-    {
-        OrderStatus.Pending => "M6 3h12M6 21h12M7 3v4l5 5-5 5v4M17 3v4l-5 5 5 5v4M9 6h6M9 18h6",
-        OrderStatus.Preparing => "m4 3 17 18M3 5l4 4M5 3l4 4M3 21l8-8M14 10l6-7c3 4 0 8-3 9",
-        OrderStatus.ReadyToServe => "M3 18h18M5 16a7 7 0 0 1 14 0M12 5v3M10 4h4",
-        OrderStatus.Cancelled => "m6 6 12 12M18 6 6 18",
-        OrderStatus.Completed => "m2 12 5 5 9-10M12 16l3 3 7-8",
-        _ => "m5 12 4 4 10-10"
-    };
     string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+    string Rate(decimal? percent) => percent is decimal p ? $" ({p.ToString("0.##", CultureInfo.InvariantCulture)}%)" : "";
 }
 <div class="oj-detail-receipt oj-detail-horizontal" data-history-detail="@Model.Id">
     <div class="oj-receipt-top" aria-hidden="true"></div>
@@ -25,7 +17,7 @@
         <p class="oj-reference">@Model.OrderNo</p>
         <p class="oj-order-time">@Model.CreatedAt.ToString("h:mm tt", CultureInfo.InvariantCulture)</p>
         </div>
-        <div class="oj-receipt-badges"><span class="oh-status is-@Model.Status"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="@statusIcon" /></svg>@CustomerOrderHistoryRules.StatusLabel(Model.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(Model.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(Model.Dining)</span></div>
+        <div class="oj-receipt-badges"><span class="oh-status is-@Model.Status">@Html.Raw(OrderStatusRules.IconSvg(Model.Status, "oj-accent-icon yoru-status-icon", 17, 3.4))@CustomerOrderHistoryRules.StatusLabel(Model.Status)</span><span class="oj-badge-divider" aria-hidden="true"></span><span class="oj-dining"><svg class="oj-icon" aria-hidden="true"><use href="@(Model.Dining == OrderType.Takeaway ? "#oj-icon-bag" : "#oj-icon-bowl")"></use></svg>@CustomerOrderHistoryRules.DiningLabel(Model.Dining)</span></div>
     </header>
     <div class="oj-detail-receipt-content">
     <section class="oj-detail-main" aria-label="Dishes and reservation">
@@ -41,8 +33,9 @@
     {
         <li class="@(line.Quantity <= 0 ? "oh-line-cancelled" : "")">
             <span class="oh-dish-image">@if(line.ImageUrl is not null){<img src="@Url.Content(line.ImageUrl)" alt="" loading="lazy" width="58" height="58" />}else{<span aria-hidden="true">皿</span>}</span>
-            <div><strong>@line.Name</strong><small>@line.Code · @Money(line.SavedUnitPrice) each when ordered</small><p>@(line.Quantity <= 0 ? "No remaining portions" : "Quantity: " + line.Quantity)</p>@if(!string.IsNullOrWhiteSpace(line.Notes)){<p class="oh-dish-note"><strong>Dish remark:</strong> @line.Notes</p>}</div>
-            <strong>@Money(line.SavedUnitPrice * line.Quantity)</strong>
+            @{ bool promo = line.Quantity > 0 && line.NormalUnitPrice is decimal normal && normal > line.SavedUnitPrice; }
+            <div><strong>@line.Name</strong><small class="oh-dish-meta"><span class="oh-code">@line.Code</span>@if (promo) {<s class="oh-price-was">@Money(line.NormalUnitPrice!.Value)</s>}<span>@Money(line.SavedUnitPrice) each</span></small><p>@(line.Quantity <= 0 ? "No remaining portions" : "Quantity: " + line.Quantity)</p>@if(!string.IsNullOrWhiteSpace(line.Notes)){<p class="oh-dish-note"><strong>Dish remark:</strong> @line.Notes</p>}</div>
+            <strong class="oh-line-price">@if (promo) {<s class="oh-price-was"><span class="visually-hidden">Was </span>@Money(line.NormalUnitPrice!.Value * line.Quantity)</s>}@Money(line.SavedUnitPrice * line.Quantity)</strong>
         </li>
     }
     </ul>
@@ -51,7 +44,8 @@
     </section>
     <section class="oj-detail-summary" aria-label="Order summary">
     <h3>Order summary</h3>
-    <dl class="oh-amounts"><div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div><div><dt>Service charge</dt><dd>@Money(Model.ServiceCharge)</dd></div><div><dt>Tax</dt><dd>@Money(Model.Tax)</dd></div><div class="oh-grand-total"><dt>Saved order total</dt><dd>@Money(Model.Total)</dd></div></dl>
+    <dl class="oh-amounts"><div><dt>Subtotal</dt><dd>@Money(Model.Subtotal)</dd></div><div><dt>Service charge@(Rate(Model.ServiceChargePercent))</dt><dd>@Money(Model.ServiceCharge)</dd></div><div><dt>Tax@(Rate(Model.TaxRatePercent))</dt><dd>@Money(Model.Tax)</dd></div><div class="oh-grand-total"><dt>Order total</dt><dd>@Money(Model.Total)</dd></div></dl>
+    @if (Model.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You saved <strong>@Money(Model.Savings)</strong> with promotions</p> }
     <div class="oj-payment-note"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7v1" /></svg><p class="oh-fine-print">These are the order's saved amounts. An order total or Completed status is not proof of payment.</p></div>
     <a asp-page="/Customer/Orders/Reorder" asp-route-id="@Model.Id" class="oh-button oh-wide"><svg class="oj-accent-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 8a9 9 0 1 0 1 8M20 3v6h-6" /></svg><span>Choose dishes to reorder</span><span aria-hidden="true">→</span></a>
     <a asp-page="/Customer/OrderConfirmation" asp-route-id="@Model.Id" class="oh-detail-link">Open order confirmation <span aria-hidden="true">→</span></a>

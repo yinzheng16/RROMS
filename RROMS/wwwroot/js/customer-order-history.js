@@ -378,6 +378,42 @@
       }});
     }
     if (!drawer.hidden) showDetails();
+    // Previous / Next / Show all: load the next page in place and scroll smoothly back to the list top,
+    // like the staff order queue. Any failure falls back to a normal page load.
+    const workspace = page.querySelector('.oh-workspace');
+    let pageRequest = null;
+    async function loadPage(href, push) {
+      pageRequest?.abort(); pageRequest = new AbortController();
+      workspace.setAttribute('aria-busy', 'true');
+      try {
+        const response = await fetch(href, {credentials: 'same-origin', cache: 'no-store', signal: pageRequest.signal});
+        if (!response.ok || response.redirected) throw new Error('page');
+        const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+        const nextWorkspace = doc.querySelector('[data-history-page] .oh-workspace');
+        if (!nextWorkspace) throw new Error('page');
+        if (!drawer.hidden || (modal && dialog.open)) closeDrawer();
+        [...workspace.children].forEach(child => { if (child !== drawer) child.remove(); });
+        // The drawer may live inside the details dialog; only insert before it while it is still in the workspace.
+        const anchor = drawer.parentElement === workspace ? drawer : null;
+        [...nextWorkspace.children].forEach(child => { if (child.id !== 'history-drawer') workspace.insertBefore(document.adoptNode(child), anchor); });
+        const note = page.querySelector('.oj-result-note'), nextNote = doc.querySelector('[data-history-page] .oj-result-note');
+        if (note && nextNote) note.replaceWith(document.adoptNode(nextNote));
+        if (push) window.history.pushState({historyPage: true}, '', href);
+        const top = page.querySelector('.oj-result-note') || workspace;
+        top.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+        message.textContent = 'Showing ' + (page.querySelector('.oh-pagination > span')?.textContent || 'the next orders') + '.';
+      } catch (error) {
+        if (error.name !== 'AbortError') window.location.assign(href);
+      } finally {
+        workspace.removeAttribute('aria-busy');
+      }
+    }
+    page.addEventListener('click', event => {
+      const pager = event.target.closest('.oh-pagination a[href]');
+      if (!pager || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault(); loadPage(pager.href, true);
+    });
+    window.addEventListener('popstate', () => loadPage(window.location.href, false));
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && (!drawer.hidden || request)) closeDrawer(); });
   }
 
