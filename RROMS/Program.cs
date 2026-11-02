@@ -106,7 +106,7 @@ builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US3
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 builder.Services.AddScoped<IStaffReservationService, StaffReservationService>();   // Member 2: US16 staff reservations
-
+builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics
 
 //Member 5
 builder.Services.AddScoped<IReportService, ReportService>();
