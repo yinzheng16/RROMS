@@ -143,7 +143,7 @@
             }
 
             @* a long text is cut to three lines with a View more button (handled in staff-reservations.js) *@
-            @{ var prefLong = Model.DiningPreferences is { Length: > 80 }; }
+            @{ var prefLong = Model.DiningPreferences is { Length: > 70 }; }
             <section class="dv-pref@(prefLong ? " is-long" : "")" aria-label="Dining preferences">
                 @Icon("cup")
                 <div>
