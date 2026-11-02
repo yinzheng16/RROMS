@@ -23,8 +23,10 @@ public partial class ReservationService : IMyReservationsService
             .Include(r => r.Table)
                 .ThenInclude(t => t!.TableTypeDefinition)
             .Where(r => r.UserId == userId &&
-                (r.Status == ReservationStatus.Pending || r.Status == ReservationStatus.Confirmed) &&
-                r.ReservedAt >= cutoff)
+                (((r.Status == ReservationStatus.Pending || r.Status == ReservationStatus.Confirmed) &&
+                  r.ReservedAt >= cutoff) ||
+                 // US18: a party that is being served is still "live" until staff complete the booking.
+                 r.Status == ReservationStatus.Seated))
             .OrderBy(r => r.ReservedAt)
             .ThenBy(r => r.Id)
             .ToListAsync(cancellationToken);
@@ -46,10 +48,165 @@ public partial class ReservationService : IMyReservationsService
             r.MinimumSpendAccepted ?? 0m,
             r.MinimumSpendAcceptedAt.HasValue,
             r.Status.ToString(),
-            r.ReservedAt > now,
+            r.ReservedAt > now && r.Status != ReservationStatus.Seated,   // a party that is already seated cannot be modified or cancelled
             r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var area) ? area : null,
             // The customer only sees the table number once staff have confirmed the booking.
-            r.Status == ReservationStatus.Confirmed ? r.Table?.TableNumber : null)).ToArray();
+            r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Seated
+                ? r.Table?.TableNumber : null)).ToArray();
+    }
+
+    // ================= US18: reservation history and live status =================
+
+    private static string StepBy(string role) => role switch
+    {
+        "Customer" => "You",
+        "Staff" or "Admin" => "Our team",
+        _ => "Automatic"
+    };
+
+    // A short reason for the timeline, such as "Modified: date, guests". The log notes written by the modify
+    // feature (customer and staff) are read here; any other note is not shown to the customer.
+    private static string? ModifyReason(string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note) || !note.Contains("odified", StringComparison.Ordinal)) return null;
+        var found = new List<string>();
+        void Add(string what) { if (!found.Contains(what)) found.Add(what); }
+
+        // customer, date/time/table type changed:  "Modified by customer: 5 Nov 7:00 PM, 2 guests -> 6 Nov 7:30 PM, 4 guests, table type X"
+        var m = System.Text.RegularExpressions.Regex.Match(note,
+            @"^Modified by customer: (?<a>\d+ \w+) (?<at>[\d:]+ [AP]M), (?<ag>\d+) guests -> (?<b>\d+ \w+) (?<bt>[\d:]+ [AP]M), (?<bg>\d+) guests(?<rest>.*)$");
+        if (m.Success)
+        {
+            if (m.Groups["a"].Value != m.Groups["b"].Value) Add("date");
+            if (m.Groups["at"].Value != m.Groups["bt"].Value) Add("time");
+            if (m.Groups["ag"].Value != m.Groups["bg"].Value) Add("guests");
+            if (m.Groups["rest"].Value.Contains("table type")) Add("table type");
+            if (m.Groups["rest"].Value.Contains("special request")) Add("special request");
+        }
+        else
+        {
+            // customer, same table:  "Guests modified by customer: 2 -> 3; Special request modified by customer"
+            // staff:                 "Modified by staff: time 5 Nov, 7:00 PM -> 6 Nov, 7:30 PM; guests 2 -> 3; table A1 -> B2; special request updated"
+            if (note.Contains("Guests modified", StringComparison.Ordinal)) Add("guests");
+            if (note.Contains("Special request modified", StringComparison.Ordinal)) Add("special request");
+            var t = System.Text.RegularExpressions.Regex.Match(note,
+                @"time (?<a>\d+ \w+), (?<at>[\d:]+ [AP]M) -> (?<b>\d+ \w+), (?<bt>[\d:]+ [AP]M)");
+            if (t.Success)
+            {
+                if (t.Groups["a"].Value != t.Groups["b"].Value) Add("date");
+                if (t.Groups["at"].Value != t.Groups["bt"].Value) Add("time");
+            }
+            if (System.Text.RegularExpressions.Regex.IsMatch(note, @"guests \d+ -> \d+")) Add("guests");
+            if (note.Contains("table ", StringComparison.Ordinal) && note.Contains(" -> ", StringComparison.Ordinal)
+                && System.Text.RegularExpressions.Regex.IsMatch(note, @"table [^;>]+ -> ")) Add("table");
+            if (note.Contains("special request updated", StringComparison.Ordinal) ||
+                note.Contains("special request removed", StringComparison.Ordinal)) Add("special request");
+        }
+        return found.Count == 0 ? "Modified" : "Modified: " + string.Join(", ", found);
+    }
+
+    public async Task<IReadOnlyList<MyHistoryItem>> GetMyHistoryAsync(
+        string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId)) return Array.Empty<MyHistoryItem>();
+
+        // A booking nobody turned up for is released here first, so it shows up as finished and not as "Pending".
+        await ReleaseOverdueReservationsAsync();
+
+        var rows = await _db.Reservations
+            .AsNoTracking()
+            .Include(r => r.Table)
+                .ThenInclude(t => t!.TableTypeDefinition)
+            .Where(r => r.UserId == userId &&
+                (r.Status == ReservationStatus.Completed ||
+                 r.Status == ReservationStatus.Cancelled ||
+                 r.Status == ReservationStatus.NoShow))
+            .OrderByDescending(r => r.ReservedAt)
+            .ThenByDescending(r => r.Id)
+            .Take(200)
+            .ToListAsync(cancellationToken);
+        if (rows.Count == 0) return Array.Empty<MyHistoryItem>();
+
+        var ids = rows.Select(r => r.Id).ToList();
+        var logs = (await _db.ReservationStatusLogs.AsNoTracking()
+                .Where(l => ids.Contains(l.ReservationId))
+                .OrderBy(l => l.ChangedAt).ThenBy(l => l.Id)
+                .ToListAsync(cancellationToken))
+            .GroupBy(l => l.ReservationId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var areaIds = rows.Where(r => r.Table != null).Select(r => r.Table!.DiningAreaId).Distinct().ToList();
+        var areaNames = await _db.DiningAreas.AsNoTracking()
+            .Where(a => areaIds.Contains(a.Id))
+            .ToDictionaryAsync(a => a.Id, a => a.Name, cancellationToken);
+
+        return rows.Select(r =>
+        {
+            // Every booking starts as Pending when it is made; the log holds every change after that.
+            var steps = new List<MyStatusStep> { new("Pending", r.CreatedAt, "You") };
+            if (logs.TryGetValue(r.Id, out var list))
+            {
+                // every log line is a step of its own; a modification shows its reason beside the status it left the booking in
+                foreach (var l in list)
+                    steps.Add(new MyStatusStep(l.ToStatus.ToString(), l.ChangedAt, StepBy(l.ChangedByRole), ModifyReason(l.Note)));
+            }
+
+            // A booking that nobody confirmed (or nobody came for) is released automatically and that writes no log line.
+            // Without this the timeline would stop at "Pending" while the booking says "Cancelled".
+            if (steps[^1].Status != r.Status.ToString())
+            {
+                // Only Cancelled and No-show are released by the system. Any other missing step (for example data that was
+                // loaded straight into the database) is shown as the restaurant's, at the booking time.
+                var auto = r.Status is ReservationStatus.Cancelled or ReservationStatus.NoShow;
+                steps.Add(new MyStatusStep(r.Status.ToString(),
+                    auto ? r.ReservedAt.AddMinutes(BookingRules.NoShowGraceMinutes) : r.ReservedAt,
+                    auto ? "Automatic" : "Our team",
+                    r.Status == ReservationStatus.Cancelled ? "Not confirmed in time" : r.Status == ReservationStatus.NoShow ? "Did not arrive" : null));
+            }
+
+            return new MyHistoryItem(
+                r.Id,
+                r.ReferenceNo,
+                r.ReservedAt,
+                r.Guests,
+                r.Table?.TableTypeDefinition?.Name ?? "Table",
+                r.Table?.TableTypeDefinition?.JapaneseName,
+                r.Table != null && areaNames.TryGetValue(r.Table.DiningAreaId, out var area) ? area : null,
+                // The table number is only worth showing for a booking that really took place.
+                r.Status == ReservationStatus.Completed ? r.Table?.TableNumber : null,
+                r.Status.ToString(),
+                r.MinimumSpendAccepted ?? 0m,
+                r.SpecialRequest,
+                r.CreatedAt,
+                steps);
+        }).ToArray();
+    }
+
+    public async Task<IReadOnlyList<MyStatusSnapshot>> GetMyStatusesAsync(
+        string userId, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId)) return Array.Empty<MyStatusSnapshot>();
+
+        await ReleaseOverdueReservationsAsync();
+
+        var rows = await _db.Reservations
+            .AsNoTracking()
+            .Where(r => r.UserId == userId)
+            .OrderByDescending(r => r.ReservedAt)
+            .Take(300)
+            .Select(r => new
+            {
+                r.Id,
+                r.Status,
+                TableNumber = r.Table != null ? r.Table.TableNumber : null
+            })
+            .ToListAsync(cancellationToken);
+
+        return rows.Select(r => new MyStatusSnapshot(
+            r.Id,
+            r.Status.ToString(),
+            r.Status == ReservationStatus.Confirmed || r.Status == ReservationStatus.Seated
+                ? r.TableNumber : null)).ToArray();
     }
 
     public async Task<MyReservationCancelResult> CancelMyReservationAsync(

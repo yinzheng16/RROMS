@@ -112,14 +112,17 @@
             arrival.append(ampm);
         }
         const confirmed = item.status === 'Confirmed';
+        const seated = item.status === 'Seated';
         const status = byId('myrDetailsStatus');
         status.classList.toggle('is-confirmed', confirmed);
-        status.classList.toggle('is-pending', !confirmed);
-        const icon = confirmed ? '#myr-check' : '#myr-hourglass';
+        status.classList.toggle('is-seated', seated);
+        status.classList.toggle('is-pending', !confirmed && !seated);
+        const icon = confirmed ? '#myr-check' : seated ? '#myr-table' : '#myr-hourglass';
         byId('myrStatusIcon').setAttribute('href', icon);
         byId('myrStatusLargeIcon').setAttribute('href', icon);
-        byId('myrStatusCaption').textContent = confirmed
-            ? 'We look forward to welcoming you.' : 'Awaiting restaurant confirmation.';
+        byId('myrStatusCaption').textContent = seated
+            ? 'You are being served. Enjoy your evening.'
+            : confirmed ? 'We look forward to welcoming you.' : 'Awaiting restaurant confirmation.';
         const seal = byId('myrDetailSeal');
         const table = item.tableNumber ? String(item.tableNumber) : '';
         seal.hidden = !table;

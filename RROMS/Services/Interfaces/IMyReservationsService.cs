@@ -36,6 +36,19 @@ public sealed record MyReservationChangeResult(
     string? ReferenceNo = null, DateTime? NewReservedAt = null, int? NewGuests = null, bool BackToPending = false,
     bool RequestChanged = false);
 
+// US18: one step of a booking's life ("Confirmed", at 4:12 PM, by "Our team").
+// Note is a short reason shown beside the step, such as "Modified: date, guests".
+public sealed record MyStatusStep(string Status, DateTime At, string By, string? Note = null);
+
+// US18: a booking that is over (Completed, Cancelled or No-show), with the steps it went through.
+public sealed record MyHistoryItem(
+    int Id, string ReferenceNo, DateTime ReservedAt, int Guests, string TableTypeName, string? JapaneseName,
+    string? AreaName, string? TableNumber, string Status, decimal MinimumSpend, string? SpecialRequest,
+    DateTime BookedAt, IReadOnlyList<MyStatusStep> Steps);
+
+// US18: the live status of one booking, small enough to ask for every few seconds.
+public sealed record MyStatusSnapshot(int Id, string Status, string? TableNumber);
+
 public interface IMyReservationsService
 {
     Task<IReadOnlyList<MyReservationItem>> GetMyUpcomingReservationsAsync(
@@ -55,4 +68,12 @@ public interface IMyReservationsService
         string userId, int reservationId, DateTime start, int guests, int? tableTypeId,
         bool acceptedMinimumSpend, decimal expectedMinimumSpend, string? specialRequest = null,
         CancellationToken cancellationToken = default);
+
+    // US18: my finished bookings (Completed, Cancelled, No-show), newest first, each with its status steps.
+    Task<IReadOnlyList<MyHistoryItem>> GetMyHistoryAsync(
+        string userId, CancellationToken cancellationToken = default);
+
+    // US18: the current status of my bookings, used by the page to refresh the badges without a reload.
+    Task<IReadOnlyList<MyStatusSnapshot>> GetMyStatusesAsync(
+        string userId, CancellationToken cancellationToken = default);
 }

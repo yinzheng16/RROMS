@@ -2,7 +2,7 @@
 (() => {
     'use strict';
     const PAGE_SIZE = 5;
-    const list = document.querySelector('.myr-later-list');
+    const list = document.querySelector('#myrList .myr-later-list');
     if (!list) return;
     const rows = [...list.querySelectorAll(':scope > .myr-later')];
     if (rows.length <= PAGE_SIZE) return;
