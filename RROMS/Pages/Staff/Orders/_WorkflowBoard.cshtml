@@ -1,0 +1,35 @@
+@model RROMS.Services.Interfaces.StaffWorkflowBoard
+@using RROMS.Models
+@using RROMS.Services
+@using RROMS.Services.Interfaces
+@{
+    string Link(OrderStatus status, int page = 1) => Url.Page("/Staff/Orders/Index", new { status = status.ToString(), search = Model.Search, dining = Model.Dining, sort = Model.Sort, pageNumber = page })!;
+    var subtitles = new[] { "Receive & review", "In the kitchen", "At the pass", "With the guest", "Kitchen complete", "Closed without service" };
+    string title = Model.Status switch { OrderStatus.Pending => "A warm welcome starts here.", OrderStatus.Preparing => "Keep the kitchen moving.", OrderStatus.ReadyToServe => "Ready for the final few steps.", OrderStatus.Served => "At the table. In good hands.", OrderStatus.Completed => "A service well finished.", _ => "A clear record of what changed." };
+    string hint = Model.Status switch { OrderStatus.Pending => "Review the details, then send the order to preparation.", OrderStatus.Preparing => "Check the dishes before marking the order ready.", OrderStatus.ReadyToServe => "Verify the destination and mark the order served.", OrderStatus.Served => "Mark kitchen work complete when appropriate. Payment stays separate.", OrderStatus.Completed => "Kitchen history. Completed does not mean paid.", _ => "Cancelled orders remain available for reference." };
+}
+<div data-snapshot data-search="@Model.Search" data-exact-id="@Model.ExactOrderId" data-exact-status="@Model.ExactOrderStatus" data-matching="@Model.MatchingCount" data-matching-across-stages="@Model.Counts.Values.Sum()" data-stamp="@Model.Signal.Stamp" data-status="@Model.Status" data-page="@Model.PageNumber" data-active="@Model.Signal.Active" data-dine-in="@Model.Signal.DineIn" data-takeaway="@Model.Signal.Takeaway" data-pending="@Model.Signal.Pending" data-server-now="@Model.ServerNow.ToString("O")">
+<template data-tabs-template><partial name="_WorkflowTabs" model="Model" /></template>
+<div class="board single @Model.Status">
+    <div class="stage-heading"><div><p class="eyebrow">@OrderStatusRules.Label(Model.Status).ToUpperInvariant() <span>· @Model.MatchingCount matching orders</span></p><h2>@title</h2><p>@hint</p></div></div>
+    <section class="ticket-section @Model.Status">
+        @if (Model.Rows.Count > 0) { <div class="archive-grid">@foreach (var row in Model.Rows) { <partial name="_WorkflowCard" model="row" /> }</div> }
+        else { <div class="empty-ticket-grid">No matching orders.</div> }
+        @if (Model.RemainingCount > 0 && Model.ShowAll)
+        {
+            <nav class="order-pager" aria-label="Order pages"><p>Showing all @Model.RemainingCount orders</p><div>
+                @if (Model.RemainingCount > StaffWorkflowBoard.PageSize) { <a href="@Link(Model.Status, 1)" data-page="1" class="wf-page-mode">Show @StaffWorkflowBoard.PageSize per page</a> }
+            </div></nav>
+        }
+        else if (Model.RemainingCount > 0)
+        {
+            <nav class="order-pager" aria-label="Order pages"><p>Showing @((Model.PageNumber - 1) * StaffWorkflowBoard.PageSize + 1)–@Math.Min(Model.PageNumber * StaffWorkflowBoard.PageSize, Model.RemainingCount) of @Model.RemainingCount orders</p><div>
+                @if (Model.PageNumber > 1) { <a href="@Link(Model.Status, Model.PageNumber - 1)" data-page="@(Model.PageNumber - 1)">← Previous</a> }
+                <span>Page @Model.PageNumber of @Model.TotalPages</span>
+                @if (Model.PageNumber < Model.TotalPages) { <a href="@Link(Model.Status, Model.PageNumber + 1)" data-page="@(Model.PageNumber + 1)">Next →</a> }
+                @if (Model.TotalPages > 1) { <a href="@Link(Model.Status, StaffWorkflowBoard.ShowAllPage)" data-page="@StaffWorkflowBoard.ShowAllPage" class="wf-page-mode">All</a> }
+            </div></nav>
+        }
+    </section>
+</div>
+</div>

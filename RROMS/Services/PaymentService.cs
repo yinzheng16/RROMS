@@ -290,7 +290,40 @@ namespace RROMS.Services
                 .ToListAsync();
         }
 
-        public async Task<Payment> RecordPaymentAsync(
+        // US26 integration: a legacy payment attempt and order cancellation must not both succeed.
+        // Counter payments already require a Confirmed bill, which locks cancellation.
+        private async Task<Payment> WithLegacyOrderLockAsync(int orderId, Func<Task<Payment>> operation)
+        {
+            if (orderId <= 0) throw new ArgumentException("Invalid order ID.");
+            var before = await _orders.Query().AsNoTracking().Where(o => o.Id == orderId)
+                .Select(o => new { o.DiningSessionId }).SingleOrDefaultAsync();
+            if (before == null) throw new InvalidOperationException("Order does not exist.");
+            async Task<Payment> CheckAndRun()
+            {
+                var current = await _orders.Query().AsNoTracking().Where(o => o.Id == orderId)
+                    .Select(o => new { o.DiningSessionId }).SingleOrDefaultAsync();
+                if (current == null || current.DiningSessionId != before.DiningSessionId)
+                    throw new InvalidOperationException("The order's dining session changed. Refresh before recording payment.");
+                return await operation();
+            }
+            return before.DiningSessionId is int sessionId
+                ? await _billingTransaction.ExecuteForSessionBillAsync(sessionId, CheckAndRun)
+                : await _billingTransaction.ExecuteForTakeawayOrderAsync(orderId, CheckAndRun);
+        }
+
+        public Task<Payment> RecordPaymentAsync(int orderId, decimal amount, PaymentMethod method, string? transactionRef = null)
+            => WithLegacyOrderLockAsync(orderId, () => RecordOrderPaymentCoreAsync(orderId, amount, method, transactionRef));
+
+        public async Task<Payment> ConfirmPaymentAsync(int paymentId)
+        {
+            var payment = await _payments.Query().AsNoTracking().SingleOrDefaultAsync(p => p.Id == paymentId);
+            if (payment == null) throw new InvalidOperationException("Payment does not exist.");
+            if (payment.OrderId is not int orderId)
+                throw new InvalidOperationException("This payment belongs to a bill. Use the bill payment workflow.");
+            return await WithLegacyOrderLockAsync(orderId, () => ConfirmOrderPaymentCoreAsync(paymentId));
+        }
+
+        private async Task<Payment> RecordOrderPaymentCoreAsync(
             int orderId,
             decimal amount,
             PaymentMethod method,
@@ -306,7 +339,7 @@ namespace RROMS.Services
             if (!Enum.IsDefined(method))
                 throw new ArgumentException("Invalid payment method.");
 
-            var order = await _orders.GetByIdAsync(orderId);
+            var order = await _orders.Query().AsNoTracking().SingleOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
                 throw new InvalidOperationException(
@@ -376,9 +409,9 @@ namespace RROMS.Services
             return payment;
         }
 
-        public async Task<Payment> ConfirmPaymentAsync(int paymentId)
+        private async Task<Payment> ConfirmOrderPaymentCoreAsync(int paymentId)
         {
-            var payment = await _payments.GetByIdAsync(paymentId);
+            var payment = await _payments.Query().AsNoTracking().SingleOrDefaultAsync(p => p.Id == paymentId);
 
             if (payment == null)
                 throw new InvalidOperationException(
@@ -394,7 +427,7 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "This payment belongs to a bill. Use the bill payment workflow.");
 
-            var order = await _orders.GetByIdAsync(orderId);
+            var order = await _orders.Query().AsNoTracking().SingleOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null || order.Status == OrderStatus.Cancelled)
                 throw new InvalidOperationException(
@@ -414,32 +447,37 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "This order already has a successful payment.");
 
+            DateTime now = DateTime.Now;
+            int changed = await _payments.Query().Where(p => p.Id == paymentId && p.Status == PaymentStatus.Pending)
+                .ExecuteUpdateAsync(set => set.SetProperty(p => p.Status, PaymentStatus.Paid)
+                    .SetProperty(p => p.PaidAt, (DateTime?)now));
+            if (changed != 1) throw new InvalidOperationException("This payment is no longer pending.");
             payment.Status = PaymentStatus.Paid;
-            payment.PaidAt = DateTime.Now;   // team rule: local server time
-
-            await _payments.SaveChangesAsync();
+            payment.PaidAt = now;
 
             return payment;
         }
 
         public async Task<Payment> MarkPaymentFailedAsync(int paymentId)
         {
-            var payment = await _payments.GetByIdAsync(paymentId);
-
-            if (payment == null)
-                throw new InvalidOperationException(
-                    "Payment does not exist.");
-
-            if (payment.Status != PaymentStatus.Pending)
-                throw new InvalidOperationException(
-                    "Only pending payments can be marked as failed.");
-
-            payment.Status = PaymentStatus.Failed;
-            payment.PaidAt = null;
-
-            await _payments.SaveChangesAsync();
-
-            return payment;
+            var snapshot = await _payments.Query().AsNoTracking().SingleOrDefaultAsync(p => p.Id == paymentId);
+            if (snapshot == null) throw new InvalidOperationException("Payment does not exist.");
+            async Task<Payment> FailPending()
+            {
+                // Never overwrite a payment another request has already confirmed.
+                int changed = await _payments.Query().Where(p => p.Id == paymentId && p.Status == PaymentStatus.Pending)
+                    .ExecuteUpdateAsync(set => set.SetProperty(p => p.Status, PaymentStatus.Failed)
+                        .SetProperty(p => p.PaidAt, (DateTime?)null));
+                if (changed != 1) throw new InvalidOperationException("Only pending payments can be marked as failed.");
+                snapshot.Status = PaymentStatus.Failed;
+                snapshot.PaidAt = null;
+                return snapshot;
+            }
+            if (snapshot.OrderId is int orderId)
+                return await WithLegacyOrderLockAsync(orderId, FailPending);
+            if (snapshot.BillId is int billId)
+                return await _billingTransaction.ExecuteForBillPaymentAsync(billId, FailPending);
+            throw new InvalidOperationException("This payment is not linked to an order or bill.");
         }
 
         public Task<Payment?> GetPaymentByIdAsync(int paymentId)

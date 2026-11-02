@@ -6,6 +6,7 @@ using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services;
 using RROMS.Services.Interfaces;
+using RROMS.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,6 +98,10 @@ builder.Services.AddScoped<IMyReservationsService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
+builder.Services.AddScoped<IPromotionService, PromotionService>(); // Member 3 / US29
+// SignalR (shared, set up by Member 3 for US27; Member 4 adds NotificationHub for US37)
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IOrderStatusNotifier, OrderStatusNotifier>(); // Member 3 / US27
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
@@ -151,5 +156,6 @@ app.Use(async (context, next) =>
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+app.MapHub<OrderStatusHub>(OrderStatusHub.Path); // Member 3 / US27 live order status
 
 app.Run();

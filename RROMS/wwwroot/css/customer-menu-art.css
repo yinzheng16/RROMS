@@ -294,3 +294,1355 @@
         grid-area: 2 / 1 / auto / -1;
     }
 }
+
+
+/* US29 (1 Nov): promotional prices on the customer menu. */
+.tasting-card__photo {
+    position: relative;
+}
+
+.menu-promo-badge {
+    position: absolute;
+    inset-block-start: .75rem;
+    inset-inline-start: .75rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .7rem;
+    border-radius: 999px;
+    background: #c83e2d;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    box-shadow: 0 .35rem .9rem rgba(0, 0, 0, .25);
+    pointer-events: none;
+}
+
+    .menu-promo-badge [lang="ja"] {
+        font-weight: 600;
+        opacity: .9;
+    }
+
+.menu-price {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .1rem .5rem;
+}
+
+.menu-price__was {
+    color: #73766b;
+    font-size: .82em;
+    font-weight: 500;
+    text-decoration-thickness: 1px;
+}
+
+.menu-price.is-promo .menu-price__now {
+    color: #c83e2d;
+}
+
+.dish-detail__promo {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin: 0 0 .75rem;
+    padding: .3rem .75rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, #c83e2d 12%, transparent);
+    color: #c83e2d;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+
+/* US29 extras (1 Nov): end-date line on the promo badge, and the Specials filter. */
+.menu-promo-badge {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    line-height: 1.25;
+    border-radius: .7rem;
+}
+
+    .menu-promo-badge small {
+        font-size: .68rem;
+        font-weight: 600;
+        opacity: .9;
+    }
+
+.dish-detail__promo small {
+    font-weight: 600;
+    opacity: .85;
+}
+
+.menu-book__category.menu-book__category--specials .menu-book__label {
+    color: #c83e2d;
+}
+
+.menu-book__category--specials .menu-book__label i {
+    margin-inline-end: .35rem;
+}
+
+.menu-book__category--specials.is-active .menu-book__label {
+    color: inherit;
+}
+
+
+/* 1 Nov: live search (no Search button) with Reset beside the sort picker. */
+.customer-menu .menu-search {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: .75rem;
+}
+
+.customer-menu .menu-search__category-mobile {
+    flex: 1 1 100%;
+}
+
+.customer-menu .menu-search__entry {
+    flex: 1 1 20rem;
+    min-inline-size: 0;
+}
+
+    .customer-menu .menu-search__entry .menu-search__field {
+        inline-size: 100%;
+    }
+
+.customer-menu .menu-search__sort {
+    flex: 0 0 auto;
+}
+
+.customer-menu .menu-search .form-control {
+    transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+}
+
+    .customer-menu .menu-search .form-control:hover {
+        border-color: #8a6a3c;
+        background-color: #f6efe2;
+    }
+
+    .customer-menu .menu-search .form-control:focus {
+        border-color: #8a6a3c;
+        background-color: #fff;
+        box-shadow: 0 0 0 .2rem rgba(183, 155, 114, .3);
+    }
+
+.customer-menu .menu-reset--tool {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    flex: 0 0 auto;
+    min-block-size: 3.4rem;
+    padding: 0 1.15rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: .35rem;
+    background: rgba(255, 253, 248, .9);
+    color: #c83e2d;
+    font-size: .95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+    .customer-menu .menu-reset--tool svg {
+        inline-size: 1.05rem;
+        block-size: 1.05rem;
+    }
+
+.customer-menu a.menu-reset--tool:hover, .customer-menu a.menu-reset--tool:focus-visible {
+    border-color: #c83e2d;
+    background: rgba(200, 62, 45, .08);
+    color: #a83224;
+}
+
+.customer-menu .menu-reset--tool:disabled {
+    color: #a7a39a;
+    cursor: default;
+}
+
+@media (max-width: 47.99rem) {
+    .customer-menu .menu-search__sort {
+        flex: 1 1 auto;
+    }
+}
+
+/* Promo seal: a small round stamp in the photo corner instead of the wide badge. */
+.menu-promo-badge {
+    display: none;
+}
+
+.menu-promo-seal {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: .65rem;
+    inset-inline-start: .65rem;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    inline-size: 3.3rem;
+    block-size: 3.3rem;
+    border: 2px solid rgba(255, 255, 255, .85);
+    border-radius: 50%;
+    background: #c83e2d;
+    color: #fff;
+    line-height: 1;
+    text-align: center;
+    box-shadow: 0 .3rem .8rem rgba(0, 0, 0, .3);
+    transform: rotate(-10deg);
+    pointer-events: none;
+}
+
+    .menu-promo-seal strong {
+        font-size: .95rem;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    .menu-promo-seal small {
+        margin-block-start: .1rem;
+        font-size: .55rem;
+        font-weight: 700;
+        letter-spacing: .12em;
+    }
+
+.tasting-card.is-unavailable .menu-promo-seal {
+    background: #6b6a65;
+}
+
+/* Promo price: stacked, so the Add to cart button never moves. */
+.tasting-card__footer {
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: .75rem;
+}
+
+    .tasting-card__footer .tasting-card__price {
+        min-inline-size: 0;
+    }
+
+.menu-price.is-promo {
+    display: grid;
+    gap: .05rem;
+    align-items: start;
+}
+
+.menu-price__line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .3rem;
+    font-size: .78rem;
+    line-height: 1.2;
+}
+
+    .menu-price__line .menu-price__was {
+        font-size: 1em;
+    }
+
+.menu-price__ends {
+    color: #c83e2d;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.menu-price.is-promo .menu-price__now {
+    line-height: 1.15;
+}
+
+.tasting-card__footer .tasting-card__actions {
+    flex: none;
+}
+
+/* Load more: progress bar + vermilion pill button. */
+.customer-menu .menu-load-more {
+    display: grid;
+    justify-items: center;
+    gap: .65rem;
+    margin-block: 2rem 1rem;
+}
+
+.menu-load-more__count {
+    margin: 0;
+    color: #73766b;
+    font-size: .9rem;
+}
+
+    .menu-load-more__count strong {
+        color: #191919;
+    }
+
+.menu-load-more__bar {
+    display: block;
+    inline-size: min(16rem, 70vw);
+    block-size: 4px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: rgba(183, 155, 114, .3);
+}
+
+    .menu-load-more__bar > span {
+        display: block;
+        block-size: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #b79b72, #c83e2d);
+        transition: width .4s ease;
+    }
+
+.menu-load-more__button {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    margin-block-start: .35rem;
+    padding: .7rem 1.1rem .7rem 1.5rem;
+    border: 1px solid #c83e2d;
+    border-radius: 999px;
+    background: #fffdf8;
+    color: #c83e2d;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 .4rem 1rem rgba(200, 62, 45, .12);
+    transition: background-color .2s ease, color .2s ease, transform .2s ease;
+}
+
+    .menu-load-more__button svg {
+        inline-size: 1.1rem;
+        block-size: 1.1rem;
+        transition: transform .2s ease;
+    }
+
+.menu-load-more__next {
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    background: rgba(200, 62, 45, .1);
+    font-size: .78rem;
+}
+
+.menu-load-more__button:hover, .menu-load-more__button:focus-visible {
+    background: #c83e2d;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+    .menu-load-more__button:hover .menu-load-more__next, .menu-load-more__button:focus-visible .menu-load-more__next {
+        background: rgba(255, 255, 255, .22);
+    }
+
+    .menu-load-more__button:hover svg {
+        transform: translateY(2px);
+    }
+
+.menu-load-more__end {
+    margin: 0;
+    color: #73766b;
+    font-size: .85rem;
+}
+
+    .menu-load-more__end span {
+        display: inline-grid;
+        place-items: center;
+        inline-size: 1.6rem;
+        block-size: 1.6rem;
+        margin-inline-end: .35rem;
+        border: 1px solid #c83e2d;
+        border-radius: 50%;
+        color: #c83e2d;
+        font-size: .8rem;
+    }
+
+@media (prefers-reduced-motion: reduce) {
+    .menu-load-more__button, .menu-load-more__button svg, .menu-load-more__bar > span {
+        transition: none;
+    }
+}
+
+/* 1 Nov (b): Reset same height as Sort. */
+.customer-menu .menu-search {
+    align-items: stretch;
+}
+
+.customer-menu .menu-reset--tool {
+    align-self: stretch;
+    min-block-size: 0;
+    block-size: auto;
+    padding-block: 0;
+}
+
+/* Cards line up: the description stretches, so the status row and price row sit at the bottom. */
+.customer-menu .tasting-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.customer-menu .tasting-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.customer-menu .tasting-card__description {
+    flex: 1;
+}
+
+/* Hover: lift the card and zoom the photo (same as the admin Promotions cards). */
+.customer-menu .tasting-card {
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+
+    .customer-menu .tasting-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .85rem 1.8rem rgba(25, 25, 25, .12);
+    }
+
+.customer-menu .tasting-card__photo {
+    overflow: hidden;
+}
+
+    .customer-menu .tasting-card__photo img {
+        transition: transform .5s ease;
+    }
+
+.customer-menu .tasting-card:hover .tasting-card__photo img {
+    transform: scale(1.04);
+}
+
+.customer-menu .tasting-card.is-unavailable:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+    .customer-menu .tasting-card.is-unavailable:hover .tasting-card__photo img {
+        transform: none;
+    }
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .tasting-card, .customer-menu .tasting-card__photo img {
+        transition: none;
+    }
+
+        .customer-menu .tasting-card:hover, .customer-menu .tasting-card:hover .tasting-card__photo img {
+            transform: none;
+        }
+}
+
+/* Dish pop-up: promotion ticket under the title. */
+.dish-detail__promo {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 0;
+    margin: .65rem 0 1rem;
+    padding: 0;
+    overflow: hidden;
+    border: 1px dashed rgba(200, 62, 45, .55);
+    border-radius: .55rem;
+    background: #fff8f4;
+    color: #191919;
+    font-size: .85rem;
+    font-weight: 500;
+}
+
+.dish-detail__promo-off {
+    display: grid;
+    place-items: center;
+    padding: .45rem .75rem;
+    background: #c83e2d;
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+.dish-detail__promo-text {
+    display: grid;
+    align-content: center;
+    padding: .35rem .85rem;
+    line-height: 1.25;
+}
+
+    .dish-detail__promo-text strong {
+        color: #c83e2d;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    .dish-detail__promo-text small {
+        color: #73766b;
+        font-size: .76rem;
+    }
+
+/* 1 Nov (c): Sort keeps one fixed width (any option fits); same text size as Reset; search a little narrower. */
+.customer-menu .menu-search__entry {
+    flex: 1 1 16rem;
+}
+
+.customer-menu .menu-search__sort {
+    flex: 0 0 15.5rem;
+    inline-size: 15.5rem;
+}
+
+    .customer-menu .menu-search__sort > *, .customer-menu .menu-search__sort .menu-sort-trigger {
+        inline-size: 100%;
+    }
+
+    .customer-menu .menu-search__sort .menu-sort-trigger,
+    .customer-menu .menu-search__sort .form-select {
+        font-size: .95rem;
+    }
+
+    .customer-menu .menu-search__sort .menu-sort-trigger__value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+@media (max-width: 47.99rem) {
+    .customer-menu .menu-search__sort {
+        flex: 1 1 auto;
+        inline-size: auto;
+    }
+}
+
+/* Dish pop-up: promo seal on the photo instead of a ticket under the title. */
+.dish-detail__photo {
+    position: relative;
+}
+
+    .dish-detail__photo .menu-promo-seal {
+        inset-block-start: 1rem;
+        inset-inline-start: 1rem;
+        inline-size: 4.2rem;
+        block-size: 4.2rem;
+    }
+
+        .dish-detail__photo .menu-promo-seal strong {
+            font-size: 1.2rem;
+        }
+
+        .dish-detail__photo .menu-promo-seal small {
+            font-size: .62rem;
+        }
+
+
+/* 1 Nov (d): Sort text the same size as Reset. */
+.customer-menu .menu-search__sort .menu-sort-trigger,
+.customer-menu .menu-search__sort .menu-sort-trigger__label,
+.customer-menu .menu-search__sort .menu-sort-trigger__value,
+.customer-menu .menu-reset--tool,
+.customer-menu .menu-reset--tool span {
+    font-size: 1rem !important;
+}
+
+.customer-menu .menu-search__sort .menu-sort-trigger__label {
+    color: #73766b;
+}
+
+/* Dish count pill with a small bowl icon. */
+.customer-menu .menu-results__count {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .3rem .85rem .3rem .65rem;
+    border: 1px solid rgba(183, 155, 114, .4);
+    border-radius: 999px;
+    background: rgba(255, 250, 240, .9);
+    color: #5a4a3a;
+    font-size: .85rem;
+}
+
+    .customer-menu .menu-results__count::before {
+        content: "";
+        flex: none;
+        inline-size: 1.05rem;
+        block-size: 1.05rem;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11h18a9 9 0 0 1-18 0Z'/%3E%3Cpath d='M8 7c0-1.5 1-2 1-3.5M12 7c0-1.5 1-2 1-3.5M16 7c0-1.5 1-2 1-3.5'/%3E%3Cpath d='M8 20h8'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+
+/* Category list: the selected item is a gold bar (no icons). */
+.customer-menu .menu-book__category {
+    border-radius: .6rem;
+}
+
+    .customer-menu .menu-book__category.is-active {
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%) !important;
+        border-color: transparent !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 233, 196, .25), 0 .3rem .8rem rgba(0, 0, 0, .25);
+        color: #fff8ec !important;
+    }
+
+        .customer-menu .menu-book__category.is-active::before {
+            display: none !important;
+        }
+
+        .customer-menu .menu-book__category.is-active .menu-book__label,
+        .customer-menu .menu-book__category.is-active .menu-book__label small,
+        .customer-menu .menu-book__category.is-active .menu-book__label i {
+            color: #fff8ec !important;
+        }
+
+        .customer-menu .menu-book__category.is-active .menu-book__count {
+            border-color: rgba(255, 248, 236, .55) !important;
+            background: rgba(25, 25, 25, .25) !important;
+            color: #fff8ec !important;
+        }
+
+/* Promo badge: plum-blossom stamp in the top-right corner. */
+.menu-promo-seal {
+    inset-block-start: .55rem;
+    inset-inline: auto .55rem;
+    inline-size: 4.8rem;
+    block-size: 4.8rem;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: #a8321f;
+    line-height: .95;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50.0' cy='26.0' r='23.5' fill='%23b5452f'/%3E%3Ccircle cx='72.8' cy='42.6' r='23.5' fill='%23b5452f'/%3E%3Ccircle cx='64.1' cy='69.4' r='23.5' fill='%23b5452f'/%3E%3Ccircle cx='35.9' cy='69.4' r='23.5' fill='%23b5452f'/%3E%3Ccircle cx='27.2' cy='42.6' r='23.5' fill='%23b5452f'/%3E%3Ccircle cx='50' cy='50' r='31' fill='%23b5452f'/%3E%3Ccircle cx='50.0' cy='26.0' r='21' fill='%23fbf1e2'/%3E%3Ccircle cx='72.8' cy='42.6' r='21' fill='%23fbf1e2'/%3E%3Ccircle cx='64.1' cy='69.4' r='21' fill='%23fbf1e2'/%3E%3Ccircle cx='35.9' cy='69.4' r='21' fill='%23fbf1e2'/%3E%3Ccircle cx='27.2' cy='42.6' r='21' fill='%23fbf1e2'/%3E%3Ccircle cx='50' cy='50' r='29' fill='%23fbf1e2'/%3E%3Ccircle cx='20.0' cy='75.8' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='24.0' cy='78.7' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='22.5' cy='83.4' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='17.5' cy='83.4' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='16.0' cy='78.7' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='20' cy='80' r='4' fill='%23e98ba0'/%3E%3Ccircle cx='20' cy='80' r='1.6' fill='%23b5452f'/%3E%3Ccircle cx='80.0' cy='78.8' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='83.0' cy='81.0' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='81.9' cy='84.6' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='78.1' cy='84.6' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='77.0' cy='81.0' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='80' cy='82' r='3' fill='%23f2a9b9'/%3E%3Ccircle cx='80' cy='82' r='1.2' fill='%23b5452f'/%3E%3C/svg%3E") center / contain no-repeat;
+    filter: drop-shadow(0 .25rem .45rem rgba(0, 0, 0, .3));
+    transform: rotate(-6deg);
+}
+
+    .menu-promo-seal strong {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -.02em;
+    }
+
+    .menu-promo-seal small {
+        margin-block-start: .1rem;
+        font-size: .66rem;
+        font-weight: 800;
+        letter-spacing: .1em;
+    }
+
+.tasting-card.is-unavailable .menu-promo-seal {
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50.0' cy='26.0' r='23.5' fill='%237d7a73'/%3E%3Ccircle cx='72.8' cy='42.6' r='23.5' fill='%237d7a73'/%3E%3Ccircle cx='64.1' cy='69.4' r='23.5' fill='%237d7a73'/%3E%3Ccircle cx='35.9' cy='69.4' r='23.5' fill='%237d7a73'/%3E%3Ccircle cx='27.2' cy='42.6' r='23.5' fill='%237d7a73'/%3E%3Ccircle cx='50' cy='50' r='31' fill='%237d7a73'/%3E%3Ccircle cx='50.0' cy='26.0' r='21' fill='%23efece6'/%3E%3Ccircle cx='72.8' cy='42.6' r='21' fill='%23efece6'/%3E%3Ccircle cx='64.1' cy='69.4' r='21' fill='%23efece6'/%3E%3Ccircle cx='35.9' cy='69.4' r='21' fill='%23efece6'/%3E%3Ccircle cx='27.2' cy='42.6' r='21' fill='%23efece6'/%3E%3Ccircle cx='50' cy='50' r='29' fill='%23efece6'/%3E%3Ccircle cx='20.0' cy='75.8' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='24.0' cy='78.7' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='22.5' cy='83.4' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='17.5' cy='83.4' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='16.0' cy='78.7' r='3.6' fill='%23e98ba0'/%3E%3Ccircle cx='20' cy='80' r='4' fill='%23e98ba0'/%3E%3Ccircle cx='20' cy='80' r='1.6' fill='%23b5452f'/%3E%3Ccircle cx='80.0' cy='78.8' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='83.0' cy='81.0' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='81.9' cy='84.6' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='78.1' cy='84.6' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='77.0' cy='81.0' r='2.8' fill='%23f2a9b9'/%3E%3Ccircle cx='80' cy='82' r='3' fill='%23f2a9b9'/%3E%3Ccircle cx='80' cy='82' r='1.2' fill='%23b5452f'/%3E%3C/svg%3E") center / contain no-repeat;
+    color: #5f5d57;
+}
+
+.dish-detail__photo .menu-promo-seal {
+    inset-block-start: 1rem;
+    inset-inline: auto 1rem;
+    inline-size: 6rem;
+    block-size: 6rem;
+}
+
+    .dish-detail__photo .menu-promo-seal strong {
+        font-size: 1.55rem;
+    }
+
+    .dish-detail__photo .menu-promo-seal small {
+        font-size: .78rem;
+    }
+
+
+/* 1 Nov (e): category hover edge in gold instead of red. */
+.customer-menu .menu-book__category:hover,
+.customer-menu .menu-book__category:focus-visible {
+    border-inline-start-color: #b79b72 !important;
+}
+
+    .customer-menu .menu-book__category:hover::before,
+    .customer-menu .menu-book__category:focus-visible::before {
+        background: #b79b72 !important;
+        border-color: #b79b72 !important;
+    }
+
+/* "New" entry in the category list: gold, like Specials is red. */
+.menu-book__category.menu-book__category--new .menu-book__label {
+    color: #d8b47a;
+}
+
+.menu-book__category--new .menu-book__label i {
+    margin-inline-end: .35rem;
+}
+
+/* Discount badge: red and gold scalloped plaque with a sakura (image), cream serif text. */
+.menu-promo-seal {
+    inset-block-start: .55rem;
+    inset-inline: .55rem auto;
+    inline-size: 5.4rem;
+    block-size: 5.4rem;
+    padding: 0 0 .15rem;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    transform: none;
+    color: #fbf1dc;
+    line-height: .95;
+    text-shadow: 0 1px 2px rgba(60, 0, 0, .55);
+    background: url("../images/menu/yoru-promo-badge.webp") center / contain no-repeat;
+    filter: drop-shadow(0 .3rem .5rem rgba(0, 0, 0, .35));
+}
+
+    .menu-promo-seal strong {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.3rem;
+        font-weight: 700;
+        letter-spacing: -.02em;
+    }
+
+    .menu-promo-seal small {
+        margin-block-start: .15rem;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: .72rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+    }
+
+.tasting-card.is-unavailable .menu-promo-seal {
+    background: url("../images/menu/yoru-promo-badge-grey.webp") center / contain no-repeat;
+    color: #f3f0ea;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
+}
+
+.dish-detail__photo .menu-promo-seal {
+    inset-block-start: 1rem;
+    inset-inline: 1rem auto;
+    inline-size: 7rem;
+    block-size: 7rem;
+}
+
+    .dish-detail__photo .menu-promo-seal strong {
+        font-size: 1.7rem;
+    }
+
+    .dish-detail__photo .menu-promo-seal small {
+        font-size: .88rem;
+    }
+
+/* Sort and Reset: clean sans font; a filter icon replaces the word "Sort:". */
+.customer-menu .menu-search__sort .menu-sort-trigger,
+.customer-menu .menu-search__sort .menu-sort-trigger__value,
+.customer-menu .menu-reset--tool,
+.customer-menu .menu-reset--tool span {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-size: 1rem !important;
+}
+
+.customer-menu .menu-search__sort .menu-sort-trigger__value {
+    color: #2b241c;
+    font-weight: 500;
+}
+
+.customer-menu .menu-search__sort .menu-sort-trigger__text {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    min-inline-size: 0;
+}
+
+.customer-menu .menu-search__sort .menu-sort-trigger__label {
+    flex: none;
+    display: inline-block;
+    inline-size: 1.2rem;
+    block-size: 1.2rem;
+    overflow: hidden;
+    font-size: 0 !important;
+    color: transparent !important;
+    background-color: #8a6a3c;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 4v16M3 17l3 3 3-3M12 6h9M12 11h6.5M12 16h4'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 4v16M3 17l3 3 3-3M12 6h9M12 11h6.5M12 16h4'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.customer-menu .menu-reset--tool {
+    font-weight: 600;
+    line-height: 1;
+}
+
+    .customer-menu .menu-reset--tool i {
+        display: block;
+        font-size: 1.05rem;
+        line-height: 1;
+    }
+
+        .customer-menu .menu-reset--tool i::before {
+            display: block;
+            line-height: 1;
+        }
+
+/* No end date under the price (cards and dish pop-up). */
+.customer-menu .menu-price__ends {
+    display: none;
+}
+
+
+/* 1 Nov (f): petal washi paper as the page background (replaces gold sakura + plain washi). */
+.customer-menu {
+    background-color: #f8ebd8;
+    background-image: url('../images/menu/yoru-menu-petal-paper.webp');
+    background-repeat: repeat;
+    background-size: min(100vw, 60rem) auto;
+    background-position: center top;
+    background-blend-mode: normal;
+}
+
+    /* Torn paper edge under the hero: same paper, so there is no visible seam. */
+    .customer-menu .customer-menu-hero::after {
+        background: #f8ebd8 url('../images/menu/yoru-menu-petal-paper.webp') center top / min(100vw, 60rem) auto repeat;
+    }
+
+@media (max-width: 47.99rem) {
+    .customer-menu .customer-menu-hero::after {
+        background-size: 36rem auto;
+    }
+
+    .customer-menu {
+        background-size: 36rem auto;
+        background-position: center top;
+    }
+}
+
+/* Reset: plain red text button (no box), like the admin Promotions page. */
+.customer-menu .menu-reset--tool {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: .7rem;
+    padding-inline: .9rem;
+}
+
+.customer-menu a.menu-reset--tool:hover,
+.customer-menu a.menu-reset--tool:focus-visible {
+    border-color: rgba(200, 62, 45, .35) !important;
+    background: rgba(200, 62, 45, .08) !important;
+    color: #a83224;
+}
+
+/* 1 Nov (g): Sort box fits its longest option; the search bar gets the extra space. */
+.customer-menu .menu-search__sort {
+    flex: 0 0 14rem;
+    inline-size: 14rem;
+}
+
+/* Filter icon turns over (sort-down → sort-up) while the sort list is open. */
+.customer-menu .menu-search__sort .menu-sort-trigger__label {
+    transition: transform .25s ease;
+}
+
+.customer-menu .menu-sort-trigger[aria-expanded="true"] .menu-sort-trigger__label {
+    transform: scaleY(-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .menu-search__sort .menu-sort-trigger__label {
+        transition: none;
+    }
+}
+
+@media (max-width: 47.99rem) {
+    .customer-menu .menu-search__sort {
+        flex: 1 1 auto;
+        inline-size: auto;
+    }
+}
+
+/* 1 Nov (h): item code as a gold capsule (same style as the admin Promotions cards). */
+.customer-menu .tasting-card__code,
+.dish-detail__code {
+    display: inline-flex;
+    align-items: center;
+    inline-size: fit-content;
+    padding: .1rem .55rem !important;
+    border: 1px solid rgba(183, 155, 114, .45) !important;
+    border-radius: 999px;
+    background: rgba(183, 155, 114, .18);
+    color: #6a4b1d;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    line-height: 1.4;
+}
+
+/* The capsule replaces the thin line between the category and the code. */
+.customer-menu .tasting-card__code::before,
+.customer-menu .tasting-card__code::after {
+    content: none !important;
+    display: none !important;
+}
+
+.customer-menu .tasting-card__meta {
+    align-items: center;
+    gap: .5rem;
+}
+
+/* Dish pop-up: capsule sits under the category, with a little space before the title. */
+.dish-detail__code {
+    margin-block: .35rem .5rem;
+    font-size: .76rem;
+}
+
+
+/* US30: "Picked for you" tabs (For you / Popular this week / New) above the shared carousel. */
+.customer-menu .menu-picks__tabs {
+    grid-area: 2 / 1 / auto / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: -.25rem 0 1rem;
+}
+
+.customer-menu .menu-picks__tab {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-block-size: 2.4rem;
+    padding: .35rem 1rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: 999px;
+    background: rgba(255, 253, 248, .9);
+    color: #2b241c;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: .92rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+    .customer-menu .menu-picks__tab:hover {
+        border-color: #8a6a3c;
+        background: #f6efe2;
+    }
+
+    .customer-menu .menu-picks__tab:focus-visible {
+        outline: .15rem solid #8a6a3c;
+        outline-offset: .15rem;
+    }
+
+    .customer-menu .menu-picks__tab[aria-selected="true"] {
+        border-color: transparent;
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%);
+        color: #fff8ec;
+        box-shadow: 0 .3rem .8rem rgba(0, 0, 0, .18);
+    }
+
+.customer-menu .menu-picks__tab-count {
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 1.5rem;
+    block-size: 1.5rem;
+    padding: 0 .35rem;
+    border-radius: 999px;
+    background: rgba(183, 155, 114, .2);
+    color: #6a4b1d;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.customer-menu .menu-picks__tab[aria-selected="true"] .menu-picks__tab-count {
+    background: rgba(25, 25, 25, .25);
+    color: #fff8ec;
+}
+
+/* Tabs sit on row 2; every tab panel shares row 3 (only one is visible). */
+.customer-menu .menu-picks > .menu-new-arrivals__viewport {
+    grid-area: 3 / 1 / auto / -1 !important;
+}
+
+.customer-menu .menu-picks [data-menu-pick-panel][hidden] {
+    display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .menu-picks__tab {
+        transition: none;
+    }
+}
+
+/* US30 fix: the gradient fills the whole pill, so its edges stay clean. */
+.customer-menu .menu-picks__tab[aria-selected="true"] {
+    background-origin: border-box;
+    background-clip: border-box;
+}
+
+/* US30 polish: sort dropdown in the YORU style (cream paper, gold accents, icon per option). */
+.customer-menu .menu-sort-options {
+    padding: .55rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: 1rem;
+    background: #fffaf0 linear-gradient(180deg, rgba(183, 155, 114, .08), transparent 3.5rem);
+    box-shadow: 0 1.1rem 2.4rem rgba(25, 25, 25, .16), 0 0 0 4px rgba(255, 250, 240, .6);
+    overflow: hidden;
+}
+
+/* Heading: small gold caps with a fine rule. */
+.customer-menu .menu-sort-options__heading {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: .2rem .55rem .5rem;
+    color: #8a6a3c;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .18em;
+}
+
+    .customer-menu .menu-sort-options__heading::after {
+        content: "";
+        flex: 1;
+        block-size: 1px;
+        background: linear-gradient(90deg, rgba(183, 155, 114, .6), transparent);
+    }
+
+.customer-menu .menu-sort-option {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    inline-size: 100%;
+    min-block-size: 2.9rem;
+    margin: .1rem 0;
+    padding: .5rem .75rem .5rem .55rem;
+    border: 0;
+    border-radius: .7rem;
+    background: transparent;
+    color: #2b241c;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: .95rem;
+    font-weight: 500;
+    text-align: start;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+    /* Icon tile on the left of each option. */
+    .customer-menu .menu-sort-option::before {
+        content: "";
+        flex: none;
+        inline-size: 2rem;
+        block-size: 2rem;
+        border-radius: .55rem;
+        background: rgba(183, 155, 114, .16) center / 1.05rem no-repeat;
+        transition: background-color .15s ease;
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="menu"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v14H4zM9 5v14M12 9h5M12 13h5'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="name"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 15l3-9 3 9M4 12h4M13 6h6l-6 9h6M17 18v3M15 19l2 2 2-2'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="name-desc"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h6l-6 9h6M14 15l3-9 3 9M15 12h4M6 18v3M4 19l2 2 2-2'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="price"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19h4M4 14h8M4 9h12M4 4h16'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option[data-menu-sort-value="price-desc"]::before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6a3c' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h4M4 9h8M4 14h12M4 19h16'/%3E%3C/svg%3E");
+    }
+
+    .customer-menu .menu-sort-option > span:first-child {
+        flex: 1;
+        display: grid;
+        gap: .1rem;
+        line-height: 1.2;
+    }
+
+    .customer-menu .menu-sort-option small {
+        color: #73766b;
+        font-size: .74rem;
+        font-weight: 400;
+    }
+
+    .customer-menu .menu-sort-option:hover,
+    .customer-menu .menu-sort-option:focus-visible {
+        background: rgba(183, 155, 114, .16);
+        outline: none;
+    }
+
+        .customer-menu .menu-sort-option:hover::before,
+        .customer-menu .menu-sort-option:focus-visible::before {
+            background-color: rgba(183, 155, 114, .3);
+        }
+
+    /* Selected: the same gold gradient as the selected category and the "Picked for you" tab. */
+    .customer-menu .menu-sort-option[aria-selected="true"] {
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%);
+        background-origin: border-box;
+        color: #fff8ec;
+        font-weight: 600;
+        box-shadow: 0 .3rem .8rem rgba(0, 0, 0, .15);
+    }
+
+        .customer-menu .menu-sort-option[aria-selected="true"]::before {
+            background-color: rgba(255, 248, 236, .2);
+            filter: brightness(0) invert(1);
+        }
+
+        .customer-menu .menu-sort-option[aria-selected="true"] small {
+            color: rgba(255, 248, 236, .8);
+        }
+
+.customer-menu .menu-sort-option__check {
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+    border-radius: 50%;
+    font-size: .75rem;
+    visibility: hidden;
+}
+
+.customer-menu .menu-sort-option[aria-selected="true"] .menu-sort-option__check {
+    visibility: visible;
+    background: rgba(255, 248, 236, .25);
+    color: #fff8ec;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .menu-sort-option,
+    .customer-menu .menu-sort-option::before {
+        transition: none;
+    }
+}
+
+/* Sort dropdown: no tick; same left/right edges as the sort button. */
+.customer-menu .menu-sort-option__check {
+    display: none !important;
+}
+
+.customer-menu .menu-sort-picker {
+    position: relative;
+}
+
+.customer-menu .menu-sort-options {
+    inset-inline: 0 !important;
+    inline-size: auto !important;
+    min-inline-size: 0 !important;
+    max-inline-size: none !important;
+    margin-block-start: .4rem;
+}
+
+.customer-menu .menu-sort-option {
+    padding-inline-end: .55rem;
+}
+
+/* Toolbar, carousel arrows and Add to cart in the same style as the sort dropdown. */
+
+/* Search bar */
+.customer-menu .menu-search .form-control {
+    min-block-size: 3.2rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: .85rem;
+    background: #fffaf0;
+    color: #2b241c;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05);
+}
+
+    .customer-menu .menu-search .form-control::placeholder {
+        color: #8b8676;
+    }
+
+    .customer-menu .menu-search .form-control:hover {
+        border-color: #b79b72;
+        background: #fffaf0;
+    }
+
+    .customer-menu .menu-search .form-control:focus {
+        border-color: #9a7a4c;
+        background: #fffdf8;
+        box-shadow: 0 0 0 .22rem rgba(183, 155, 114, .25);
+    }
+
+.customer-menu .menu-search__field > svg {
+    color: #8a6a3c;
+}
+
+/* Sort button */
+.customer-menu .menu-sort-trigger {
+    min-block-size: 3.2rem;
+    border: 1px solid rgba(183, 155, 114, .55) !important;
+    border-radius: .85rem !important;
+    background: #fffaf0 !important;
+    color: #2b241c;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+    .customer-menu .menu-sort-trigger:hover {
+        border-color: #b79b72 !important;
+    }
+
+    .customer-menu .menu-sort-trigger[aria-expanded="true"],
+    .customer-menu .menu-sort-trigger:focus-visible {
+        border-color: #9a7a4c !important;
+        box-shadow: 0 0 0 .22rem rgba(183, 155, 114, .25);
+        outline: none;
+    }
+
+/* Reset: same font, gold-brown text; red only on hover */
+.customer-menu .menu-reset--tool {
+    color: #8a6a3c !important;
+}
+
+.customer-menu a.menu-reset--tool:hover,
+.customer-menu a.menu-reset--tool:focus-visible {
+    color: #a83224 !important;
+}
+
+.customer-menu .menu-reset--tool:disabled {
+    color: #b9b3a6 !important;
+}
+
+/* Carousel arrows: cream circles with a gold edge; gold gradient on hover */
+.customer-menu .menu-new-arrivals__arrow {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border: 1px solid rgba(183, 155, 114, .6);
+    border-radius: 50%;
+    background: #fffaf0;
+    color: #6a4b1d;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .08);
+    transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+
+    .customer-menu .menu-new-arrivals__arrow:hover:not(:disabled),
+    .customer-menu .menu-new-arrivals__arrow:focus-visible {
+        border-color: transparent;
+        background: linear-gradient(135deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%);
+        background-origin: border-box;
+        color: #fff8ec;
+    }
+
+    .customer-menu .menu-new-arrivals__arrow:disabled {
+        border-color: rgba(183, 155, 114, .3);
+        background: rgba(255, 250, 240, .6);
+        color: #c9bfae;
+        box-shadow: none;
+    }
+
+/* Add to cart: the same gold gradient as the selected sort option */
+.customer-menu .tasting-card__add {
+    border: 0 !important;
+    border-radius: .7rem !important;
+    background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    font-weight: 600;
+    box-shadow: 0 .35rem .9rem rgba(111, 84, 48, .25);
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+    .customer-menu .tasting-card__add:hover:not(:disabled),
+    .customer-menu .tasting-card__add:focus-visible {
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+        box-shadow: 0 .5rem 1.1rem rgba(111, 84, 48, .32);
+    }
+
+    .customer-menu .tasting-card__add:disabled {
+        background: #d9d3c7 !important;
+        color: #8b8676 !important;
+        box-shadow: none;
+        transform: none;
+    }
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu .tasting-card__add,
+    .customer-menu .menu-new-arrivals__arrow,
+    .customer-menu .menu-sort-trigger {
+        transition: none;
+    }
+}
+
+/* Red version of the dropdown-style buttons: Reset, card Add to cart, pop-up Add to cart. */
+.customer-menu a.menu-reset--tool,
+.customer-menu .tasting-card__add,
+.customer-menu .dish-detail__cart button[type="submit"] {
+    border: 0 !important;
+    border-radius: .7rem !important;
+    background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    font-weight: 600;
+    box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28);
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+    .customer-menu a.menu-reset--tool:hover,
+    .customer-menu a.menu-reset--tool:focus-visible,
+    .customer-menu .tasting-card__add:hover:not(:disabled),
+    .customer-menu .tasting-card__add:focus-visible,
+    .customer-menu .dish-detail__cart button[type="submit"]:hover:not(:disabled),
+    .customer-menu .dish-detail__cart button[type="submit"]:focus-visible {
+        color: #fff8ec !important;
+        filter: brightness(1.07);
+        transform: translateY(-1px);
+        box-shadow: 0 .5rem 1.1rem rgba(168, 50, 36, .35);
+        outline: none;
+    }
+
+/* Reset: same height and corners as the search bar and the sort button. */
+.customer-menu .menu-reset--tool {
+    min-block-size: 3.2rem;
+    padding-inline: 1.1rem !important;
+    border-radius: .85rem !important;
+}
+
+    /* Nothing to reset: a quiet cream button with a gold edge. */
+    .customer-menu .menu-reset--tool:disabled {
+        border: 1px solid rgba(183, 155, 114, .45) !important;
+        background: #fffaf0 !important;
+        color: #b9b3a6 !important;
+        box-shadow: none !important;
+        transform: none;
+        filter: none;
+    }
+
+/* Unavailable dishes keep a greyed button. */
+.customer-menu .tasting-card__add:disabled,
+.customer-menu .dish-detail__cart button[type="submit"]:disabled {
+    background: #d9d3c7 !important;
+    color: #8b8676 !important;
+    box-shadow: none;
+    transform: none;
+    filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .customer-menu a.menu-reset--tool,
+    .customer-menu .tasting-card__add,
+    .customer-menu .dish-detail__cart button[type="submit"] {
+        transition: none;
+    }
+}
+
+/* Dish pop-up: the photo fills the whole left side, so there is no white strip under it. */
+.menu-dish-dialog {
+    overflow: hidden;
+}
+
+    .menu-dish-dialog .dish-detail {
+        align-items: stretch;
+    }
+
+    .menu-dish-dialog .dish-detail__photo {
+        align-self: stretch;
+        block-size: auto;
+        min-block-size: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+        .menu-dish-dialog .dish-detail__photo img,
+        .menu-dish-dialog .dish-detail__photo .menu-photo-placeholder {
+            display: block;
+            inline-size: 100%;
+            block-size: 100%;
+            min-block-size: 100%;
+            object-fit: cover;
+        }
+
+    /* A little breathing room under the price row, so the button isn't pressed against the edge. */
+    .menu-dish-dialog .dish-detail__body,
+    .menu-dish-dialog .dish-detail__content {
+        padding-block-end: 1.75rem;
+    }
