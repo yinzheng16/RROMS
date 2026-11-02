@@ -125,6 +125,14 @@ namespace RROMS.Services
               "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday", "holiday", "last order",
               "buka", "tutup", "jam", "营业", "几点" };
 
+        private static readonly string[] PromoWords =
+            { "promo", "promotion", "promotions", "offer", "offers", "deal", "deals", "discount", "discounts", "specials",
+              "happy hour", "limited time", "sale", "cheaper", "diskaun", "tawaran", "优惠", "折扣" };
+
+        // The exact promo price (fixed price or % off), same rounding as the menu and the cart.
+        private static decimal OfferPrice(HomeOffer o) =>
+            o.FinalPrice ?? OrderPricingRules.DiscountedPrice(o.Price, o.DiscountPercent);
+
         private static readonly string[] MenuWords =
             { "menu", "dish", "dishes", "food", "eat", "price", "recommend", "popular", "best", "signature",
               "vegetarian", "vegan", "drink", "sake", "makan", "菜" };
@@ -156,10 +164,25 @@ namespace RROMS.Services
             if (hours is not null)
                 return new ChatReply($"Here are our opening hours. {hours.Status}.", "help", null, hours);
 
+            // Promotions without the AI: list what is running now (Member 3's promotions, live).
+            if (Has(question, PromoWords))
+            {
+                var offers = await _home.GetActiveOffersAsync(5);
+                if (offers.Count == 0)
+                    return new ChatReply("There are no promotions running right now, but have a look at our [full menu](/Menu).", "help");
+                var lines = string.Join("\n", offers.Select(o =>
+                    $"- **{o.DishName}** · RM {Money(OfferPrice(o))} (was RM {Money(o.Price)}) · {PromotionRules.EndsLabel(o.EndDate, DateTime.Now)}"));
+                return new ChatReply($"Here's what's on offer right now:\n{lines}\nSee them all in our [Specials](/Menu?CategoryId=-1#menu-browser).", "help");
+            }
+
+            // "How much is the lager?" / "price of OT02" without the AI: find the dish by its name or code.
+            var dishReply = await DishPriceAsync(question);
+            if (dishReply is not null) return dishReply;
+
             if (Has(question, MenuWords))
             {
                 var dishes = await _home.GetSignatureDishesAsync(4);
-                var list = string.Join("\n", dishes.Select(d => $"- **{d.Name}** · RM {Money(d.DiscountPercent is decimal p ? d.Price * (100 - p) / 100 : d.Price)}"));
+                var list = string.Join("\n", dishes.Select(d => $"- **{d.Name}** · RM {Money(d.DiscountPercent is decimal p ? OrderPricingRules.DiscountedPrice(d.Price, p) : d.Price)}"));
                 return new ChatReply(dishes.Count == 0
                     ? "Have a look at our [full menu](/Menu)."
                     : $"Some favourites at YORU:\n{list}\nSee the [full menu](/Menu) for everything.", "help");
@@ -167,6 +190,61 @@ namespace RROMS.Services
 
             return new ChatReply($"Sorry, I'm not sure about that one. Try the FAQs below, or call us at {await PhoneAsync()}.", "help");
         }
+
+        // Words in dish names that don't point to one dish on their own.
+        private static readonly HashSet<string> CommonDishWords = new(StringComparer.OrdinalIgnoreCase)
+            { "japanese", "pieces", "piece", "set", "roll", "rolls", "sauce", "with", "style", "glass", "bottle", "small", "large" };
+
+        // Matches dish names (and codes like OT02) in the question; shows the price, with the live promo price if any.
+        private async Task<ChatReply?> DishPriceAsync(string question)
+        {
+            var qWords = Words(question.ToLowerInvariant());
+            var code = Regex.Match(question, @"\b([A-Za-z]{2}\d{2})\b");
+            if (qWords.Count == 0 && !code.Success) return null;
+
+            var items = await _db.MenuItems.AsNoTracking()
+                .Select(m => new DishRow(m.Id, m.Name, m.Code, m.Price, m.IsAvailable))
+                .ToListAsync();
+
+            var matches = items
+                .Select(m => new
+                {
+                    Item = m,
+                    Score = code.Success && string.Equals(m.Code, code.Groups[1].Value, StringComparison.OrdinalIgnoreCase)
+                        ? 100
+                        : Words(m.Name.ToLowerInvariant()).Count(w => w.Length >= 4 && !CommonDishWords.Contains(w) && qWords.Contains(w))
+                })
+                .Where(x => x.Score > 0)
+                .ToList();
+            if (matches.Count == 0) return null;
+
+            var top = matches.Max(x => x.Score);
+            var found = matches.Where(x => x.Score == top).Select(x => x.Item).Take(4).ToList();
+
+            // Member 3's rule: best running promotion per dish (% off or fixed price), same price as the Menu and cart.
+            var now = DateTime.Now;
+            var ids = found.Select(f => f.Id).ToList();
+            var discounts = PromotionRules.BestPercents(await PromotionRules.Running(_db.Promotions.AsNoTracking(), now)
+                .Where(p => ids.Contains(p.MenuItemId))
+                .Select(p => new PromotionPriceRow(p.MenuItemId, p.MenuItem.Price, p.DiscountPercent, p.PromoPrice))
+                .ToListAsync());
+
+            string Line(DishRow m)
+            {
+                var text = discounts.TryGetValue(m.Id, out var pct)
+                    ? $"**{m.Name}** · RM {Money(OrderPricingRules.DiscountedPrice(m.Price, pct))} (was RM {Money(m.Price)})"
+                    : $"**{m.Name}** · RM {Money(m.Price)}";
+                return m.IsAvailable ? text : text + " · not available right now";
+            }
+
+            if (found.Count == 1)
+                return new ChatReply($"{Line(found[0])}.\nSee it on our [menu](/Menu?itemId={found[0].Id}#dish-details).", "help");
+
+            var lines = string.Join("\n", found.Select(f => "- " + Line(f)));
+            return new ChatReply($"Here's what I found:\n{lines}\nSee them on our [menu](/Menu).", "help");
+        }
+
+        private sealed record DishRow(int Id, string Name, string Code, decimal Price, bool IsAvailable);
 
         // Keywords count most; words shared with the FAQ question help too.
         private static ChatFaq? BestFaq(string question, List<ChatFaq> faqs)
@@ -217,6 +295,12 @@ namespace RROMS.Services
             messages.Add(new JsonObject { ["role"] = "user", ["content"] = question });
 
             var reply = await CallAsync(_ai.Model, messages, _ai.ReasoningEffort);
+            // Free quota: a few requests per minute. Busy (429) -> wait a moment and try once more.
+            if (reply.Status == HttpStatusCode.TooManyRequests)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2));
+                reply = await CallAsync(_ai.Model, messages, _ai.ReasoningEffort);
+            }
             // Some models don't accept "reasoning_effort": try once more without it.
             if (reply.Status == HttpStatusCode.BadRequest && !string.IsNullOrEmpty(_ai.ReasoningEffort))
                 reply = await CallAsync(_ai.Model, messages, null);
@@ -287,7 +371,7 @@ namespace RROMS.Services
             sb.AppendLine("- If a dish or drink is not in the MENU, say clearly that we don't serve it and suggest something similar from the MENU.");
             sb.AppendLine("- If the answer is not in the data, say you are not sure and suggest calling the restaurant.");
             sb.AppendLine("- Keep it short and warm: 1 to 4 sentences, or a short list of at most 6 items. Prices are in RM.");
-            sb.AppendLine("- You can use **bold**, new lines and '- ' bullets. Links only to these pages: [our menu](/Menu), [booking page](/Customer/Reservations/Create), [about us](/About).");
+            sb.AppendLine("- You can use **bold**, new lines and '- ' bullets. Links only to these pages: [our menu](/Menu), [specials](/Menu?CategoryId=-1#menu-browser) (dishes on promotion), [booking page](/Customer/Reservations/Create), [about us](/About).");
             sb.AppendLine("- You cannot make, change or cancel bookings or orders yourself.");
             sb.AppendLine("- TABLE AVAILABILITY: when the customer asks for a table or whether a time is free, and you know the DATE, the TIME and the NUMBER OF GUESTS,");
             sb.AppendLine("  write one short friendly sentence and end with the tag [check:YYYY-MM-DD HH:MM GUESTS] (24-hour time), e.g. [check:2026-11-08 20:00 4].");
@@ -315,11 +399,10 @@ namespace RROMS.Services
             var popular = await _home.GetSignatureDishesAsync(5);
 
             var now = DateTime.Now;
-            var discounts = await _db.Promotions.AsNoTracking()
-                .Where(p => p.IsActive && p.StartDate <= now && p.EndDate >= now.Date)
-                .GroupBy(p => p.MenuItemId)
-                .Select(g => new { Id = g.Key, Percent = g.Max(p => p.DiscountPercent) })
-                .ToDictionaryAsync(x => x.Id, x => x.Percent);
+            // Member 3's shared promotion rule (US29): % off or a fixed promo price, best one per dish.
+            var discounts = PromotionRules.BestPercents(await PromotionRules.Running(_db.Promotions.AsNoTracking(), now)
+                .Select(p => new PromotionPriceRow(p.MenuItemId, p.MenuItem.Price, p.DiscountPercent, p.PromoPrice))
+                .ToListAsync());
 
             var items = await _db.MenuItems.AsNoTracking()
                 .Include(m => m.Category)
@@ -375,7 +458,7 @@ namespace RROMS.Services
             {
                 sb.AppendLine("Current promotions:");
                 foreach (var o in offers)
-                    sb.AppendLine($"- {o.Title}: {o.DishName} {o.DiscountPercent:0.##}% off (RM {Money(o.Price)} → RM {Money(o.Price * (100 - o.DiscountPercent) / 100)}) until {o.EndDate.ToString("d MMM", CultureInfo.InvariantCulture)}");
+                    sb.AppendLine($"- {o.Title}: {o.DishName} now RM {Money(OfferPrice(o))} (normally RM {Money(o.Price)}, {o.DiscountPercent:0}% off) until {o.EndDate.ToString("d MMM", CultureInfo.InvariantCulture)}");
             }
             if (popular.Count > 0) sb.AppendLine($"Popular dishes: {string.Join(", ", popular.Select(p => p.Name))}");
 
@@ -383,7 +466,7 @@ namespace RROMS.Services
             foreach (var m in items)
             {
                 var price = discounts.TryGetValue(m.Id, out var pct)
-                    ? $"RM {Money(m.Price * (100 - pct) / 100)} (promo, normally RM {Money(m.Price)})"
+                    ? $"RM {Money(OrderPricingRules.DiscountedPrice(m.Price, pct))} (promo, normally RM {Money(m.Price)})"
                     : $"RM {Money(m.Price)}";
                 var note = Shorten(m.Description ?? "", 90);
                 sb.AppendLine($"{m.Category} · {m.Name} · {price}{(m.IsAvailable ? "" : " · SOLD OUT today")}{(note.Length > 0 ? " · " + note : "")}");
