@@ -228,20 +228,6 @@
     var EMPTY = '<p class="occ-slot-empty"><i class="bi bi-hand-index" aria-hidden="true"></i> Select a time slot to explore.</p>';
 
     // back to the resting hint: click the box again, the x, or press Esc
-    // the two panels end on the same line while closed; once a time slot opens, the trend card keeps its height
-    var trendCard = document.querySelector('.occ-trendcard');
-    function pinTrend(on) {
-        if (!trendCard) return;
-        if (on) {
-            if (trendCard.style.height) return;
-            trendCard.style.height = trendCard.offsetHeight + 'px';
-            trendCard.style.alignSelf = 'start';
-        } else {
-            trendCard.style.height = '';
-            trendCard.style.alignSelf = '';
-        }
-    }
-
     function closeSlot() {
         token++;                                   // ignore a reply that is still on its way
         var prev = root.querySelector('.occ-cell.is-sel');
@@ -250,17 +236,14 @@
         if (inner && !reduce) {
             inner.classList.add('is-leaving');
             setTimeout(function () { if (!root.querySelector('.occ-cell.is-sel')) swap(EMPTY); }, 200);
-            setTimeout(function () { if (!root.querySelector('.occ-cell.is-sel')) pinTrend(false); }, 700);
         } else {
             swap(EMPTY);
-            pinTrend(false);
         }
     }
 
     function select(btn) {
         if (btn.classList.contains('is-sel')) { closeSlot(); return; }
         var prev = root.querySelector('.occ-cell.is-sel');
-        if (!prev) pinTrend(true);
         if (prev) prev.classList.remove('is-sel');
         btn.classList.add('is-sel');
 
@@ -286,6 +269,25 @@
         if (e.target.closest('#occSlotX')) { closeSlot(); return; }
         var btn = e.target.closest('button.occ-cell');
         if (btn && slot && slotUrl) select(btn);
+    });
+
+    /* ---------- quick ranges (7 / 30 / 90 days) and Export CSV use the filter as it is now ----------
+       The dining area, table type and count chosen in the filter stay, even before Apply is pressed;
+       Export also takes the dates that are showing in the filter. */
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('.occ-seg a, a[href*="handler=Export"]');
+        var form = document.getElementById('occFilter');
+        if (!link || !form) return;
+
+        var url = new URL(link.getAttribute('href'), window.location.href);
+        var names = ['area', 'type', 'mode'];
+        if (link.href.indexOf('handler=Export') >= 0) names = names.concat(['from', 'to']);
+        names.forEach(function (name) {
+            var field = form.elements[name];
+            if (!field) return;
+            if (field.value) url.searchParams.set(name, field.value); else url.searchParams.delete(name);
+        });
+        link.setAttribute('href', url.pathname + url.search);
     });
 
     /* ---------- themed date + dropdown pickers inside the filter ---------- */
