@@ -783,7 +783,7 @@
     /* ---- Table Type Details modal: horizontal Japanese membership-card layout ---- */
     #yoruTypeDetailsModal .modal-dialog.modal-dialog-centered {max-width:min(940px,calc(100vw - 32px));}
     #yoruTypeDetailsModal .modal-content {position:relative; isolation:isolate; overflow:hidden; box-shadow:0 24px 60px rgba(40,25,18,.35);}
-    #yoruTypeDetailsModal .modal-content::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/tables/yoru-table-type-details-bg.webp') no-repeat center/cover;}
+    #yoruTypeDetailsModal .modal-content::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; background:url('/images/decorations/yoru-table-type-details-bg.webp') no-repeat center/cover;}
     #yoruTypeDetailsModal .modal-content .modal-header {position:absolute; top:12px; right:14px; z-index:3; padding:0; border:0; background:transparent;}
     #yoruTypeDetailsModal .modal-content .modal-title {position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
     #yoruTypeDetailsModal .modal-content .btn-close {width:34px; height:34px; margin:0; padding:9px; border:1px solid #e3c887; border-radius:50%; background-color:rgba(255,250,244,.92); opacity:1;}
@@ -831,15 +831,15 @@
     .yoru-area-type-more:focus-visible {outline:2px solid var(--area-main); outline-offset:2px;}
     /* ---- Operating Hours: three section backgrounds, schedule banner, day badges ---- */
     #opening-hours-section .yoru-hours-main {position:relative; isolation:isolate; overflow:hidden; background:#FFF8F0!important; border-color:#e3c887!important;}
-    #opening-hours-section .yoru-hours-main::before,#opening-hours-section .yoru-hours-main::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/tables/yoru-weekly-schedule-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
+    #opening-hours-section .yoru-hours-main::before,#opening-hours-section .yoru-hours-main::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/decorations/yoru-weekly-schedule-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
     #opening-hours-section .yoru-hours-main::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 62%,transparent); mask-image:linear-gradient(180deg,#000 62%,transparent);}
     #opening-hours-section .yoru-hours-main::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 62%,transparent); mask-image:linear-gradient(0deg,#000 62%,transparent);}
     #opening-hours-section .yoru-timeline-card {position:relative; isolation:isolate; overflow:hidden; background:#FFF8F0!important; border-color:#e3c887!important;}
-    #opening-hours-section .yoru-timeline-card::before,#opening-hours-section .yoru-timeline-card::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/tables/yoru-weekly-timeline-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
+    #opening-hours-section .yoru-timeline-card::before,#opening-hours-section .yoru-timeline-card::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/decorations/yoru-weekly-timeline-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
     #opening-hours-section .yoru-timeline-card::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 62%,transparent); mask-image:linear-gradient(180deg,#000 62%,transparent);}
     #opening-hours-section .yoru-timeline-card::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 62%,transparent); mask-image:linear-gradient(0deg,#000 62%,transparent);}
     #opening-hours-section #yoruSpecialDatesCard {position:relative; isolation:isolate; overflow:hidden; background:#FFF8F0!important; border-color:#e3c887!important;}
-    #opening-hours-section #yoruSpecialDatesCard::before,#opening-hours-section #yoruSpecialDatesCard::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/tables/yoru-special-dates-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
+    #opening-hours-section #yoruSpecialDatesCard::before,#opening-hours-section #yoruSpecialDatesCard::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:58%; pointer-events:none; background:url('/images/decorations/yoru-special-dates-bg.webp') no-repeat; background-size:100% auto; opacity:.7;}
     #opening-hours-section #yoruSpecialDatesCard::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 62%,transparent); mask-image:linear-gradient(180deg,#000 62%,transparent);}
     #opening-hours-section #yoruSpecialDatesCard::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 62%,transparent); mask-image:linear-gradient(0deg,#000 62%,transparent);}
     #opening-hours-section .yoru-luxury-eyebrow {font-size:11px; letter-spacing:.22em; color:#8C2437;}
@@ -854,7 +854,7 @@
     #opening-hours-section .yoru-luxury-btn:hover {background:linear-gradient(135deg,#8f2236,#6a1625);}
     #opening-hours-section .yoru-luxury-btn.secondary {background:rgba(255,252,247,.92); color:#4a3a30;}
     #opening-hours-section .yoru-hours-banner {--bh:128px; position:relative; isolation:isolate; display:flex; flex-direction:column; align-items:center; gap:10px; height:auto; min-height:var(--bh); margin:0 0 12px; padding:11px 20px 12px; border-radius:0; background:transparent; color:#fff;}
-    #opening-hours-section .yoru-hours-banner::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; border:solid transparent; border-width:0 calc(var(--bh) * 2.01) 0 calc(var(--bh) * 1.38); border-image:url('/images/tables/yoru-weekly-banner.webp') 0 700 0 480 fill / 0 calc(var(--bh) * 2.01) 0 calc(var(--bh) * 1.38) stretch;}
+    #opening-hours-section .yoru-hours-banner::before {content:""; position:absolute; inset:0; z-index:-1; pointer-events:none; border:solid transparent; border-width:0 calc(var(--bh) * 2.01) 0 calc(var(--bh) * 1.38); border-image:url('/images/decorations/yoru-weekly-banner.webp') 0 700 0 480 fill / 0 calc(var(--bh) * 2.01) 0 calc(var(--bh) * 1.38) stretch;}
     #opening-hours-section .yoru-hours-banner-title {display:block; position:relative; font-family:Georgia,serif; font-size:23px; font-weight:600; letter-spacing:.03em; color:#FBEFD2; text-shadow:0 2px 6px rgba(40,5,15,.55);}
     #opening-hours-section .yoru-hours-banner-title::before,#opening-hours-section .yoru-hours-banner-title::after {content:""; display:inline-block; width:16px; height:16px; margin:0 12px; vertical-align:-1px; background:#F3DCA0; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.5' cy='20.0' r='7.4'/%3E%3Ccircle cx='23.6' cy='30.9' r='7.4'/%3E%3Ccircle cx='10.7' cy='26.8' r='7.4'/%3E%3Ccircle cx='10.7' cy='13.2' r='7.4'/%3E%3Ccircle cx='23.6' cy='9.1' r='7.4'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='31.5' cy='20.0' r='7.4'/%3E%3Ccircle cx='23.6' cy='30.9' r='7.4'/%3E%3Ccircle cx='10.7' cy='26.8' r='7.4'/%3E%3Ccircle cx='10.7' cy='13.2' r='7.4'/%3E%3Ccircle cx='23.6' cy='9.1' r='7.4'/%3E%3C/svg%3E") center/contain no-repeat;}
     .yoru-hours-sr {position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
@@ -898,7 +898,7 @@
     #opening-hours-section #yoruSpecialDatesCard > p {width:fit-content; padding:0 16px 8px; border-radius:0 12px 12px 12px; background:rgba(255,249,242,.8);}
     @@media (max-width:650px) {
         #opening-hours-section .yoru-hours-banner {background:#7a1c2c; border-radius:18px; padding:14px 12px 14px;}
-        #opening-hours-section .yoru-hours-banner::before {border:0; border-radius:18px; border-image:none; background:url('/images/tables/yoru-weekly-banner.webp') no-repeat center/auto 100%;}
+        #opening-hours-section .yoru-hours-banner::before {border:0; border-radius:18px; border-image:none; background:url('/images/decorations/yoru-weekly-banner.webp') no-repeat center/auto 100%;}
         #opening-hours-section .yoru-hours-banner-title {font-size:20px; text-align:center;}
         #opening-hours-section .yoru-hours-banner-strip {width:100%; flex-direction:column; gap:6px; margin-top:6px; padding:8px 10px;}
         #opening-hours-section .yoru-hours-banner-item {padding:0; border-left:0;}
@@ -912,10 +912,10 @@
     /* ---- Edit Weekly Schedule + Special Dates modals ---- */
     #yoruSchedOverlay .yoru-sched-panel,#yoruCalOverlay .yoru-cal-panel {position:relative; isolation:isolate; border:1px solid #e3c887; background:#FFF8F0; box-shadow:0 25px 65px rgba(40,10,15,.38);}
     #yoruSchedOverlay .yoru-sched-panel .yoru-luxury-eyebrow {display:inline-block; padding:3px 11px; border-radius:999px; background:linear-gradient(180deg,#9a2a40,#7a1a30); color:#fff4dc;}
-    #yoruSchedOverlay .yoru-sched-panel::before,#yoruSchedOverlay .yoru-sched-panel::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:min(42%,320px); pointer-events:none; background:url('/images/tables/yoru-edit-schedule-bg.webp') no-repeat; background-size:100% auto;}
+    #yoruSchedOverlay .yoru-sched-panel::before,#yoruSchedOverlay .yoru-sched-panel::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:min(42%,320px); pointer-events:none; background:url('/images/decorations/yoru-edit-schedule-bg.webp') no-repeat; background-size:100% auto;}
     #yoruSchedOverlay .yoru-sched-panel::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 66%,transparent); mask-image:linear-gradient(180deg,#000 66%,transparent);}
     #yoruSchedOverlay .yoru-sched-panel::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 66%,transparent); mask-image:linear-gradient(0deg,#000 66%,transparent);}
-    #yoruCalOverlay .yoru-cal-panel::before,#yoruCalOverlay .yoru-cal-panel::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:60%; pointer-events:none; background:url('/images/tables/yoru-special-dates-modal-bg.webp') no-repeat; background-size:100% auto;}
+    #yoruCalOverlay .yoru-cal-panel::before,#yoruCalOverlay .yoru-cal-panel::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:60%; pointer-events:none; background:url('/images/decorations/yoru-special-dates-modal-bg.webp') no-repeat; background-size:100% auto;}
     #yoruCalOverlay .yoru-cal-panel::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 66%,transparent); mask-image:linear-gradient(180deg,#000 66%,transparent);}
     #yoruCalOverlay .yoru-cal-panel::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 66%,transparent); mask-image:linear-gradient(0deg,#000 66%,transparent);}
     #yoruSchedOverlay .yoru-sched-head,#yoruCalOverlay .yoru-sched-head {border-bottom:0; background:transparent; align-items:center;}
@@ -984,7 +984,7 @@
     #yoruSpecialModal .modal-dialog {max-width:640px;}
     #yoruSpecialDetailsModal .modal-dialog {max-width:460px;}
     #yoruSpecialModal .modal-content.yoru-special-modal,#yoruSpecialDetailsModal .modal-content.yoru-special-modal {position:relative; isolation:isolate; overflow:visible; border:1.5px solid #dcb866; border-radius:20px; background:#fdf4e8; box-shadow:0 28px 70px rgba(60,20,20,.38);}
-    #yoruSpecialModal .modal-content::before,#yoruSpecialModal .modal-content::after,#yoruSpecialDetailsModal .modal-content::before,#yoruSpecialDetailsModal .modal-content::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:min(48%,340px); border-radius:18px; pointer-events:none; opacity:.5; background:url('/images/tables/yoru-add-special-date-bg.webp') no-repeat; background-size:100% auto;}
+    #yoruSpecialModal .modal-content::before,#yoruSpecialModal .modal-content::after,#yoruSpecialDetailsModal .modal-content::before,#yoruSpecialDetailsModal .modal-content::after {content:""; position:absolute; left:0; right:0; z-index:-1; height:min(48%,340px); border-radius:18px; pointer-events:none; opacity:.5; background:url('/images/decorations/yoru-add-special-date-bg.webp') no-repeat; background-size:100% auto;}
     #yoruSpecialModal .modal-content::before,#yoruSpecialDetailsModal .modal-content::before {top:0; background-position:center top; -webkit-mask-image:linear-gradient(180deg,#000 68%,transparent); mask-image:linear-gradient(180deg,#000 68%,transparent);}
     #yoruSpecialModal .modal-content::after,#yoruSpecialDetailsModal .modal-content::after {bottom:0; background-position:center bottom; -webkit-mask-image:linear-gradient(0deg,#000 68%,transparent); mask-image:linear-gradient(0deg,#000 68%,transparent);}
     #yoruSpecialModal .modal-header,#yoruSpecialDetailsModal .modal-header {align-items:flex-start; padding:20px 26px 8px; border:0; background:transparent;}
