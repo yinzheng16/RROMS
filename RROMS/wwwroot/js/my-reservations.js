@@ -101,6 +101,16 @@
         details.querySelectorAll('[data-fill]').forEach(el => {
             el.textContent = String(values[el.dataset.fill] ?? '');
         });
+        // The arrival time shows AM/PM smaller than the clock.
+        const arrival = details.querySelector('[data-fill="time"]');
+        const clock = /^(.+?)\s*(AM|PM)$/i.exec(item.time || '');
+        if (arrival && clock) {
+            const ampm = document.createElement('em');
+            ampm.className = 'myr-ampm';
+            ampm.textContent = clock[2].toUpperCase();
+            arrival.textContent = clock[1] + ' ';
+            arrival.append(ampm);
+        }
         const confirmed = item.status === 'Confirmed';
         const status = byId('myrDetailsStatus');
         status.classList.toggle('is-confirmed', confirmed);
