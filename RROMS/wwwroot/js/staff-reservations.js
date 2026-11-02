@@ -756,6 +756,14 @@
     // US19: this guest's earlier bookings (read-only). One booking is always selected and shown on the right.
     // Pages are 5 bookings each; a new page selects its first booking.
     modalBox.addEventListener('click', e => {
+        // dining preferences: a long text is cut to three lines until View more is pressed
+        const prefMore = e.target.closest('[data-pref-more]');
+        if (prefMore) {
+            const open = prefMore.closest('.dv-pref').classList.toggle('is-open');
+            prefMore.setAttribute('aria-expanded', String(open));
+            prefMore.firstElementChild.textContent = open ? 'Show less' : 'View more';
+            return;
+        }
         const band = e.target.closest('[data-past]');
         if (!band) return;
         const select = card => {

@@ -142,16 +142,25 @@
                 </section>
             }
 
-            <section class="dv-pref" aria-label="Dining preferences">
-                <h3 class="dv-h">@Icon("cup")Dining preferences<em>From guest profile</em></h3>
-                @if (Model.DiningPreferences != null)
-                {
-                    <p>@Model.DiningPreferences</p>
-                }
-                else
-                {
-                    <p class="is-none">No preferences saved.</p>
-                }
+            @* a long text is cut to three lines with a View more button (handled in staff-reservations.js) *@
+            @{ var prefLong = Model.DiningPreferences is { Length: > 80 }; }
+            <section class="dv-pref@(prefLong ? " is-long" : "")" aria-label="Dining preferences">
+                @Icon("cup")
+                <div>
+                    <small>DINING PREFERENCES <em>From guest profile</em></small>
+                    @if (Model.DiningPreferences != null)
+                    {
+                        <p>@Model.DiningPreferences</p>
+                        if (prefLong)
+                        {
+                            <button type="button" class="dv-pref-more" data-pref-more aria-expanded="false"><span>View more</span></button>
+                        }
+                    }
+                    else
+                    {
+                        <p class="is-none">No preferences saved.</p>
+                    }
+                </div>
             </section>
         </div>
     </div>
