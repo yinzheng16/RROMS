@@ -1,0 +1,500 @@
+/* =====================================================
+   YORU IZAKAYA — US34 MY PAYMENTS (Member 4)
+   Used by Pages/Customer/Payments/Index.cshtml.
+   Colours and parts follow Customer/Cart (washi paper, gold lines,
+   dark sakura summary, red patterned button) so the customer pages match.
+   ===================================================== */
+
+.us34-payments {
+    --pay-gold-line: color-mix(in srgb, var(--yoru-gold) 55%, transparent);
+    --pay-washi: url('../images/menu/yoru-menu-washi.webp');
+    background: #fcf8ef var(--pay-washi) left top / 34rem 34rem repeat;
+    padding-bottom: 3rem;
+}
+
+/* ---------- Banner (edge to edge) ---------- */
+.us34-payments .pay-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid color-mix(in srgb, var(--yoru-gold) 70%, var(--yoru-paper));
+    background:
+        url('../images/payments/yoru-payments-banner.svg') right center / auto 100% no-repeat,
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='18'%3E%3Cg fill='none' stroke='%23D6AD67' stroke-width='.9' opacity='.6'%3E%3Cpath d='M0 18a18 18 0 0 1 36 0M5 18a13 13 0 0 1 26 0M10 18a8 8 0 0 1 16 0M-18 9a18 18 0 0 1 36 0M18 9a18 18 0 0 1 36 0'/%3E%3C/g%3E%3C/svg%3E") left bottom / 36px 18px repeat-x,
+        linear-gradient(rgba(252,250,245,.72), rgba(252,250,245,.72)),
+        var(--pay-washi) left top / 34rem 34rem repeat;
+}
+
+.us34-payments .pay-hero-inner {
+    display: flex;
+    align-items: center;
+    min-height: 240px;
+    padding-top: 28px;
+    padding-bottom: 36px;
+}
+
+.us34-payments .pay-hero-copy {
+    position: relative;
+    max-width: 30rem;
+}
+
+.us34-payments .pay-eyebrow {
+    color: var(--yoru-red-text);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    margin: 0 0 .55rem;
+}
+
+.us34-payments .pay-hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+    line-height: 1.1;
+    letter-spacing: -.03em;
+    margin: 0 0 .5rem;
+}
+
+    .us34-payments .pay-hero h1 > span {
+        color: var(--yoru-red-text);
+    }
+
+.us34-payments .pay-intro {
+    color: var(--yoru-olive-text);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ---------- Two columns, like Cart: list left, summary right ---------- */
+.us34-payments .pay-body {
+    padding-top: 1.75rem;
+}
+
+.us34-payments .pay-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* ---------- One card per day ---------- */
+.us34-payments .pay-day,
+.us34-payments .pay-empty {
+    background: linear-gradient(rgba(255,252,245,.7), rgba(255,252,245,.7)), var(--pay-washi);
+    border: 1px solid var(--yoru-line);
+    border-radius: .55rem;
+    padding: 1.1rem 1.25rem 1rem;
+    margin-bottom: 1.1rem;
+}
+
+.us34-payments .pay-day-head {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding-bottom: .9rem;
+    border-bottom: 1px dashed var(--pay-gold-line);
+}
+
+/* hanko-style date stamp */
+.us34-payments .pay-stamp {
+    flex: none;
+    width: 54px;
+    height: 54px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--yoru-red);
+    border-radius: 6px;
+    background: #fff8f0;
+    color: var(--yoru-red-text);
+    font-family: var(--font-display);
+    line-height: 1;
+    transform: rotate(-4deg);
+}
+
+    .us34-payments .pay-stamp b {
+        font-size: 22px;
+    }
+
+    .us34-payments .pay-stamp small {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .08em;
+    }
+
+.us34-payments .pay-day-title h2 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.us34-payments .pay-day-title p {
+    margin: 2px 0 0;
+    color: var(--yoru-olive-text);
+    font-size: .85rem;
+}
+
+.us34-payments .pay-day-total {
+    margin-left: auto;
+    text-align: right;
+    font-size: .8rem;
+    color: var(--yoru-olive-text);
+}
+
+    .us34-payments .pay-day-total b {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 1.15rem;
+        color: var(--yoru-ink);
+    }
+
+/* ---------- Ledger lines (like the dish list on the order confirmation) ---------- */
+.us34-payments .pay-lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.us34-payments .pay-line {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto auto;
+    gap: 1rem;
+    align-items: center;
+    padding: .8rem 0;
+    border-top: 1px dashed var(--pay-gold-line);
+}
+
+    .us34-payments .pay-line:first-child {
+        border-top: 0;
+    }
+
+.us34-payments .pay-num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--yoru-gold);
+}
+
+.us34-payments .pay-line-info h3 {
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    margin: 0;
+}
+
+.us34-payments .pay-line-info p {
+    margin: .15rem 0 0;
+    font-size: .8rem;
+    color: var(--yoru-olive-text);
+    overflow-wrap: anywhere;
+}
+
+.us34-payments .pay-amount {
+    min-width: 110px;
+    text-align: right;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.15rem;
+    white-space: nowrap;
+}
+
+.us34-payments .pay-line.is-muted .pay-amount {
+    color: var(--yoru-olive-text);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+/* status pill (same family as Cart's item count pill) */
+.us34-payments .pay-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .2rem .65rem;
+    border: 1px solid;
+    border-radius: 2rem;
+    font-size: .78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+    .us34-payments .pay-status::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+.us34-payments .pay-status-paid { color: #2f6b3e; border-color: #2f6b3e55; background: #2f6b3e10; }
+.us34-payments .pay-status-pending { color: #845400; border-color: #84540055; background: #d9a21b14; }
+.us34-payments .pay-status-failed { color: #8E2A1E; border-color: #8E2A1E55; background: #c83e2d10; }
+.us34-payments .pay-status-refunded { color: var(--yoru-olive-text); border-color: #73766b66; background: #73766b10; }
+
+/* ---------- Empty and error states ---------- */
+.us34-payments .pay-empty {
+    padding: 2rem 1.5rem;
+    text-align: center;
+}
+
+    .us34-payments .pay-empty h2 {
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        margin: 0 0 .4rem;
+    }
+
+    .us34-payments .pay-empty p {
+        color: var(--yoru-olive-text);
+        margin: 0 0 .9rem;
+    }
+
+.us34-payments .pay-empty-error {
+    border-color: #c83e2d55;
+}
+
+.us34-payments .pay-errors ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 .5rem;
+    color: var(--yoru-red-text);
+    font-weight: 700;
+}
+
+.us34-payments .pay-empty-link {
+    color: var(--yoru-red-text);
+    font-weight: 700;
+}
+
+/* ---------- Dark summary panel (Cart summary style) ---------- */
+.us34-payments .pay-summary {
+    position: sticky;
+    top: 1rem;
+    overflow: hidden;
+    border: 1px solid #3a3226;
+    border-radius: .55rem;
+    color: #f5efe4;
+    background:
+        linear-gradient(#191919 45%, rgba(25,25,25,.55)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='18'%3E%3Cg fill='none' stroke='%23B79B72' stroke-width='.8' opacity='.5'%3E%3Cpath d='M0 18a18 18 0 0 1 36 0M5 18a13 13 0 0 1 26 0M10 18a8 8 0 0 1 16 0M-18 9a18 18 0 0 1 36 0M18 9a18 18 0 0 1 36 0'/%3E%3C/g%3E%3C/svg%3E") left top / 36px 18px repeat,
+        #191919;
+}
+
+.us34-payments .pay-summary-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+}
+
+.us34-payments .pay-summary-in {
+    position: relative;
+    padding: 1.3rem 1.3rem 1.4rem;
+}
+
+.us34-payments .pay-summary-jp {
+    color: #D6AD67;
+    font-size: .8rem;
+    letter-spacing: .2em;
+}
+
+.us34-payments .pay-summary h2 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    margin: 0;
+    color: #f5efe4;
+}
+
+/* gold paper total strip */
+.us34-payments .pay-total {
+    margin: 1rem 0 .3rem;
+    padding: .9rem 1rem;
+    border: 1px solid #D6AD67;
+    border-radius: .45rem;
+    color: var(--yoru-ink);
+    background: linear-gradient(100deg, #f3dfb6, #fff4dc 70%, #f6e3bd);
+}
+
+    .us34-payments .pay-total small {
+        display: block;
+        color: #6b5428;
+        font-size: .76rem;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+
+    .us34-payments .pay-total b {
+        font-family: var(--font-display);
+        font-size: 1.9rem;
+    }
+
+.us34-payments .pay-counts {
+    list-style: none;
+    margin: .8rem 0 1.1rem;
+    padding: 0;
+    font-size: .88rem;
+}
+
+    .us34-payments .pay-counts li {
+        display: flex;
+        justify-content: space-between;
+        padding: .35rem 0;
+        border-bottom: 1px solid #ffffff1a;
+    }
+
+        .us34-payments .pay-counts li span:first-child {
+            color: #cfc5b4;
+        }
+
+/* date filter */
+.us34-payments .pay-filter h3 {
+    margin: 0 0 .5rem;
+    color: #D6AD67;
+    font-family: var(--font-body);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.us34-payments .pay-filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .6rem;
+}
+
+.us34-payments .pay-filter label {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    color: #cfc5b4;
+    font-size: .75rem;
+}
+
+.us34-payments .pay-filter input {
+    min-width: 0;
+    padding: .45rem .5rem;
+    border: 1px solid #5b4f3c;
+    border-radius: .35rem;
+    background: #fffaf0;
+    color: var(--yoru-ink);
+    font: inherit;
+    font-size: .88rem;
+}
+
+    .us34-payments .pay-filter input:focus-visible {
+        outline: 2px solid #D6AD67;
+        outline-offset: 1px;
+    }
+
+.us34-payments .pay-filter-error {
+    margin: .5rem 0 0;
+    color: #ffb3a6;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.us34-payments .pay-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin: .7rem 0;
+}
+
+    .us34-payments .pay-quick a {
+        padding: .25rem .65rem;
+        border: 1px solid #b79b7288;
+        border-radius: 2rem;
+        color: #f5efe4;
+        font-size: .78rem;
+        text-decoration: none;
+    }
+
+        .us34-payments .pay-quick a:hover {
+            border-color: #D6AD67;
+        }
+
+        .us34-payments .pay-quick a.is-on {
+            background: var(--yoru-gold);
+            border-color: var(--yoru-gold);
+            color: var(--yoru-ink);
+        }
+
+/* red patterned button (Cart "place order" style) */
+.us34-payments .pay-apply {
+    width: 100%;
+    padding: .65rem;
+    border: 1px solid #e0573f;
+    border-radius: .4rem;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    background-image:
+        radial-gradient(circle at 0 100%, transparent 0 9px, #ffffff18 9px 10px, transparent 10px 14px, #ffffff14 14px 15px, transparent 15px),
+        linear-gradient(110deg, #a81b13, #cd2f1f 50%, #a81b13);
+    background-size: 30px 18px, auto;
+}
+
+    .us34-payments .pay-apply:hover {
+        filter: brightness(1.08);
+    }
+
+    .us34-payments .pay-apply:focus-visible {
+        outline: 2px solid #D6AD67;
+        outline-offset: 2px;
+    }
+
+.us34-payments .pay-clear {
+    display: block;
+    margin-top: .55rem;
+    text-align: center;
+    color: #e9d9bb;
+    font-size: .82rem;
+}
+
+.us34-payments .pay-hint {
+    margin: .9rem 0 0;
+    color: #bfb4a2;
+    font-size: .78rem;
+    line-height: 1.5;
+}
+
+/* ---------- Narrow screens: summary goes above the list ---------- */
+@media (max-width: 991.98px) {
+    .us34-payments .pay-cols {
+        grid-template-columns: 1fr;
+    }
+
+    .us34-payments .pay-summary {
+        position: static;
+        order: -1;
+    }
+
+    .us34-payments .pay-hero {
+        background-position: 75% center, left bottom, 0 0, left top;
+    }
+
+    .us34-payments .pay-hero-copy {
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(252,250,245,.82);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .us34-payments .pay-line {
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+    }
+
+    .us34-payments .pay-status {
+        grid-column: 2;
+        justify-self: start;
+    }
+
+    .us34-payments .pay-amount {
+        grid-column: 3;
+        grid-row: 1;
+        min-width: 0;
+    }
+}
