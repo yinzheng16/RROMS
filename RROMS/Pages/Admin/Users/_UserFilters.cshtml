@@ -1,0 +1,18 @@
+@model RROMS.Pages.Admin.Users.IndexModel
+@* US07 (Member 1): sent with every button in the pop-ups, so the list comes back with the same search, filters and page. *@
+@if (!string.IsNullOrWhiteSpace(Model.Search))
+{
+    <input type="hidden" name="q" value="@Model.Search.Trim()" />
+}
+@if (!string.IsNullOrEmpty(Model.RoleFilter))
+{
+    <input type="hidden" name="role" value="@Model.RoleFilter" />
+}
+@if (!string.IsNullOrEmpty(Model.StatusFilter))
+{
+    <input type="hidden" name="status" value="@Model.StatusFilter" />
+}
+@if (Model.PageNo > 1)
+{
+    <input type="hidden" name="p" value="@Model.PageNo" />
+}

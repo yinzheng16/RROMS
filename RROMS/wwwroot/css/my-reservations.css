@@ -2337,11 +2337,40 @@ html.myr-has-dialog {
 
 /* ---- Dining area under the table type; wax seal with the table number (shown only after staff confirm) ---- */
 .myr-area {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     margin-top: 2px;
     font-size: clamp(12px,.95vw,14px);
     color: var(--myr-muted)
 }
+
+/* dining area icon: the symbols are in _AreaIcons.cshtml */
+.area-ico {
+    width: 1.15em;
+    height: 1.15em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none
+}
+
+.myr-area .area-ico,
+.myr-area-line .area-ico {
+    color: var(--myr-gold-bright)
+}
+
+.myr-detail-cell small.myr-area-line {
+    display: flex;
+    align-items: center;
+    gap: 6px
+}
+
+    .myr-detail-cell small.myr-area-line[hidden] {
+        display: none
+    }
 
 .myr-detail-cell small:empty {
     display: none

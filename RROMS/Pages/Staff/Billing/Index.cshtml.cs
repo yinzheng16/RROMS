@@ -83,5 +83,13 @@ namespace RROMS.Pages.Staff.Billing
 
         // True for a time before today (local time, like the rest of billing).
         public static bool IsBeforeToday(DateTime value) => value < DateTime.Today;
+
+        // "Earlier · still unpaid" table: placed / seated before today and not paid.
+        public static bool IsOlderUnpaid(DateTime startedAt, BillStatus? status) =>
+            status != BillStatus.Paid && IsBeforeToday(startedAt);
+
+        // Today's table shows the time only; the older table also shows the date.
+        public static string FormatListTime(DateTime value, bool showDate) =>
+            showDate ? value.ToString("d MMM, h:mm tt") : value.ToString("h:mm tt");
     }
 }

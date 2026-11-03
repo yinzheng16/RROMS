@@ -54,13 +54,20 @@
                             <span class="checkout-review__photo checkout-review__photo--placeholder" aria-hidden="true">夜</span>
                         }
                         <div class="checkout-review__line-details">
+                            <span class="cart-line__code checkout-review__code">@line.Code</span>
                             <div class="checkout-review__dish-name"><strong>@line.Name</strong><span class="checkout-review__quantity"><span class="visually-hidden">Quantity </span>× @line.Quantity</span></div>
                             @if (line.Notes is not null)
                             {
                                 <p class="checkout-review__note"><span>Note · </span>@line.Notes</p>
                             }
                         </div>
-                        <span class="checkout-review__price">RM @Money(line.LineTotal)</span>
+                        <span class="checkout-review__price">
+                            @if (line.Saving > 0 && line.NormalUnitPrice is decimal normalPrice)
+                            {
+                                <s class="checkout-review__was"><span class="visually-hidden">Was </span>RM @Money(normalPrice * line.Quantity)</s>
+                            }
+                            RM @Money(line.LineTotal)
+                        </span>
                     </li>
                 }
             </ol>
@@ -77,6 +84,7 @@
                 <div><dt>Tax (@Rate(Model.Cart.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Cart.Totals.Tax)</dd></div>
                 <div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Cart.Totals.Total)</dd></div>
             </dl>
+            @if (Model.Cart.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You save <strong>RM @Money(Model.Cart.Savings)</strong> with promotions</p> }
             <p class="checkout-review__pending">Your order will be sent to the restaurant with <strong>Pending</strong> status.</p>
         </section>
     </div>
