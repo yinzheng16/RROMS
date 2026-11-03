@@ -1,0 +1,58 @@
+@page
+@model RROMS.Areas.Identity.Pages.Account.ConfirmEmailChangeModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    // US03 / US04 (Member 1): result of clicking "Confirm my email". Same look as the Security pop-ups.
+    Layout = "/Pages/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model.Result.Ok ? "Email confirmed" : "Link not valid";
+    var r = Model.Result;
+}
+
+<link rel="stylesheet" href="~/css/profile-security.css" asp-append-version="true" />
+
+<main class="sx-page">
+    <div class="sx-box" role="region" aria-labelledby="sxConfirmTitle">
+        <aside class="sx-art">
+            <div class="sx-stamp @(r.Ok ? "is-done" : "")"><span class="jp" aria-hidden="true">@(r.Ok ? "済" : "便")</span></div>
+            <h2>@(r.Ok ? "Email" : "Link")<br />@(r.Ok ? "confirmed" : "not valid")</h2>
+            <div class="sx-jp jp" lang="ja">@(r.Ok ? "変更が完了しました" : "リンクが無効です")</div>
+            <p>@(r.Ok ? "Your new address is ready to use." : "No changes were made to your account.")</p>
+            <ol class="sx-steps">
+                <li class="done">New email + your password</li>
+                <li class="@(r.Ok ? "done" : "on")">Click the link we send</li>
+                <li class="@(r.Ok ? (r.SignedIn ? "done" : "on") : "")">Log in with the new email</li>
+            </ol>
+        </aside>
+
+        <div class="sx-card">
+            <div class="sx-done">
+                @if (r.Ok)
+                {
+                    <div class="sx-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7" /></svg></div>
+                    <h3 id="sxConfirmTitle">Email confirmed</h3>
+                    <p>@r.Message</p>
+                    <div class="sx-chip">@r.NewEmail</div>
+                    @if (r.SignedIn)
+                    {
+                        <p style="font-size:.86rem">From now on, log in with this email. We've let your old address know about the change.</p>
+                        <div class="sx-btns"><a class="sx-btn main" href="/Identity/Account/Manage">Back to my profile</a></div>
+                    }
+                    else
+                    {
+                        <p style="font-size:.86rem">Please log in with your new email. We've let your old address know about the change.</p>
+                        <div class="sx-btns"><a class="sx-btn main" href="/Identity/Account/Login">Log in</a></div>
+                    }
+                }
+                else
+                {
+                    <div class="sx-tick" style="background:radial-gradient(circle at 40% 35%,#d24a37,#9e2c1f);box-shadow:0 0 0 8px rgba(200,62,45,.12)" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 1 21h22L12 2Zm1 15h-2v2h2v-2Zm0-7h-2v5h2v-5Z" /></svg>
+                    </div>
+                    <h3 id="sxConfirmTitle">This link can't be used</h3>
+                    <p>@r.Message</p>
+                    <div class="sx-btns"><a class="sx-btn main" href="/Identity/Account/Manage">Go to my profile</a></div>
+                }
+            </div>
+        </div>
+    </div>
+</main>

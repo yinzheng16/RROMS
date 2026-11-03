@@ -1,0 +1,426 @@
+﻿@page
+@model RROMS.Pages.Customer.Reservations.CreateModel
+@using System.Text.Json
+@{
+    // US12: customer reservation in 3 steps. Route is fixed by the shared layout (/Customer/Reservations/Create).
+    ViewData["Title"] = "Reserve a table";
+    ViewData["FullWidth"] = true;
+
+    var config = JsonSerializer.Serialize(new
+    {
+        dates = Model.BookableDates,
+        maxGuests = Model.MaxGuests,
+        durationMinutes = Model.DurationMinutes,
+        maxActive = Model.MaxActiveBookings,
+        graceMinutes = Model.NoShowGraceMinutes,
+        name = Model.CustomerName,
+        phone = Model.CustomerPhone ?? ""
+    });
+}
+<link rel="stylesheet" href="~/css/customer-reservation.css" asp-append-version="true" />
+<partial name="_AreaIcons" />
+
+<div class="rsv" id="rsv">
+    <div class="rsv-wrap">
+        <header class="rsv-head">
+            <p class="rsv-eyebrow"><span lang="ja">ご予約</span> <i aria-hidden="true">/</i> RESERVATIONS</p>
+            <h1>An evening at <span>YORU.</span></h1>
+            <p class="rsv-tagline">Good food. Good company. A place for you.</p>
+        </header>
+
+        @Html.AntiForgeryToken()
+
+        <div class="rsv-shell" id="rsvShell" data-step="1">
+
+            @* ---------- left: where you are ---------- *@
+            <aside class="rsv-rail" aria-label="Reservation progress">
+                <span class="rsv-rail-jp" lang="ja" aria-hidden="true">良い食と、良い仲間と、特別な夜を。</span>
+                <svg class="rsv-rail-ornament" viewBox="0 0 300 230" aria-hidden="true" focusable="false">
+                    <g fill="none" stroke="#aa3027" stroke-linecap="round">
+                        <path d="M-8 224 C52 176 82 170 118 125 S206 69 306 14" stroke-width="2.4" />
+                        <path d="M66 180 Q55 137 29 120 M113 131 Q119 88 95 68
+                        M170 93 Q188 50 181 28 M236 56 Q255 28 275 24" stroke-width="1.5" />
+                    </g>
+                    <g fill="#b52f28" opacity=".82">
+                        <path d="M19 133 l-8-17 16 10 6-16 1 19 19-5-13 12 13 11-20-4-7 17-4-19-17 5z
+                        M95 69 l-8-17 16 10 6-16 1 19 19-5-13 12 13 11-20-4-7 17-4-19-17 5z
+                        M176 36 l-8-17 16 10 6-16 1 19 19-5-13 12 13 11-20-4-7 17-4-19-17 5z
+                        M253 38 l-8-17 16 10 6-16 1 19 19-5-13 12 13 11-20-4-7 17-4-19-17 5z" />
+                    </g>
+                </svg>
+                <p class="rsv-rail-eyebrow">YOUR RESERVATION</p>
+                <h2 class="rsv-rail-title">A place at YORU.</h2>
+
+                <ol class="rsv-steps" id="rsvSteps">
+                    <li class="is-active" data-step-item="1">
+                        <span class="rsv-dot"><b>1</b><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                        <span class="rsv-step-text"><strong>Date &amp; Time</strong><small id="rsvStepNote1">Pick a date, time and party size.</small></span>
+                    </li>
+                    <li data-step-item="2">
+                        <span class="rsv-dot"><b>2</b><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                        <span class="rsv-step-text"><strong>Table Type</strong><small id="rsvStepNote2">Choose your setting.</small></span>
+                    </li>
+                    <li data-step-item="3">
+                        <span class="rsv-dot"><b>3</b><i class="bi bi-check-lg" aria-hidden="true"></i></span>
+                        <span class="rsv-step-text"><strong>Review &amp; Submit</strong><small>Confirm and complete your reservation.</small></span>
+                    </li>
+                </ol>
+
+                <div class="rsv-rail-note">
+                    <strong>We assign your table.</strong>
+                    <span>You choose the kind of seating. The restaurant picks the exact table for you.</span>
+                </div>
+            </aside>
+
+            @* ---------- centre: the three steps ---------- *@
+            <section class="rsv-main" aria-live="polite">
+
+                @* Step 1 *@
+                <div class="rsv-panel is-current" id="rsvStep1" data-panel="1">
+                    <p class="rsv-kicker">STEP 1 OF 3</p>
+                    <h2 class="rsv-title">Choose your evening.</h2>
+                    <p class="rsv-sub">Pick a date and time, then tell us how many are joining.</p>
+
+                    <div class="rsv-step1-grid">
+                        <div class="rsv-card" id="rsvCalendar">
+                            <div class="rsv-cal-head">
+                                <button type="button" class="rsv-icon-btn" id="rsvCalPrev" aria-label="Previous month"><i class="bi bi-chevron-left"></i></button>
+                                <strong id="rsvCalTitle">Month</strong>
+                                <button type="button" class="rsv-icon-btn" id="rsvCalNext" aria-label="Next month"><i class="bi bi-chevron-right"></i></button>
+                            </div>
+                            <div class="rsv-cal-week" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+                            <div class="rsv-cal-grid" id="rsvCalGrid"></div>
+                            <p class="rsv-hint">Dates in grey are closed or fully past booking time. Bookings need at least @Model.MinLeadText notice, so late-evening times are not offered for today.</p>
+                        </div>
+
+                        <div class="rsv-side">
+                            <div class="rsv-card rsv-time-card" id="rsvTimeCard">
+                                <p class="rsv-label">Time</p>
+                                <div class="rsv-slots" id="rsvSlots" role="radiogroup" aria-label="Arrival time">
+                                    <p class="rsv-empty">Pick a date first.</p>
+                                </div>
+                                <button type="button" class="rsv-other" id="rsvOtherBtn" aria-haspopup="dialog" aria-expanded="false" disabled>
+                                    <i class="bi bi-clock" aria-hidden="true"></i> <span id="rsvOtherLabel">Other time</span>
+                                </button>
+
+                                @* "Set your own time": any 5 minutes, with a live check for free tables *@
+                                <div class="rsv-pop" id="rsvPop" role="dialog" aria-labelledby="rsvPopTitle" hidden>
+                                    <div class="rsv-pop-head">
+                                        <strong id="rsvPopTitle">Set your own time</strong>
+                                        <button type="button" class="rsv-icon-btn" id="rsvPopClose" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+                                    </div>
+                                    <div class="rsv-pop-row">
+                                        <div class="rsv-spin">
+                                            <button type="button" id="rsvHourUp" aria-label="Hour up"><i class="bi bi-chevron-up"></i></button>
+                                            <output id="rsvHourVal" aria-label="Hour">6</output>
+                                            <button type="button" id="rsvHourDown" aria-label="Hour down"><i class="bi bi-chevron-down"></i></button>
+                                        </div>
+                                        <span class="rsv-colon" aria-hidden="true">:</span>
+                                        <div class="rsv-spin">
+                                            <button type="button" id="rsvMinUp" aria-label="Minutes up 5"><i class="bi bi-chevron-up"></i></button>
+                                            <output id="rsvMinVal" aria-label="Minutes">00</output>
+                                            <button type="button" id="rsvMinDown" aria-label="Minutes down 5"><i class="bi bi-chevron-down"></i></button>
+                                        </div>
+                                        <button type="button" class="rsv-ampm" id="rsvAmPm" aria-label="Switch AM or PM">PM</button>
+                                        <button type="button" class="rsv-btn rsv-btn-primary rsv-pop-use" id="rsvPopUse" disabled>Use this time</button>
+                                    </div>
+                                    <p class="rsv-pop-status" id="rsvPopStatus" role="status" aria-live="polite"></p>
+                                    <div class="rsv-pop-sug" id="rsvPopSug" hidden>
+                                        <p class="rsv-pop-sug-title">Try one of these</p>
+                                        <div class="rsv-pop-sug-list" id="rsvPopSugList"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rsv-card">
+                                <p class="rsv-label">Guests</p>
+                                <div class="rsv-stepper">
+                                    <button type="button" class="rsv-icon-btn" id="rsvGuestsDown" aria-label="Fewer guests"><i class="bi bi-dash-lg"></i></button>
+                                    <input id="rsvGuests" class="rsv-num" type="text" inputmode="numeric" autocomplete="off" maxlength="3" value="2" aria-label="Number of guests" />
+                                    <button type="button" class="rsv-icon-btn" id="rsvGuestsUp" aria-label="More guests"><i class="bi bi-plus-lg"></i></button>
+                                </div>
+                                <p class="rsv-hint" id="rsvGuestsHint">Up to @Model.MaxGuests guests per booking.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="rsv-error" id="rsvError1" role="alert" hidden></p>
+
+                    <div class="rsv-actions">
+                        <span></span>
+                        <button type="button" class="rsv-btn rsv-btn-primary" id="rsvNext1" disabled>
+                            <span class="rsv-btn-label">Continue</span> <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                @* Step 2 *@
+                <div class="rsv-panel" id="rsvStep2" data-panel="2" hidden>
+                    <p class="rsv-kicker">STEP 2 OF 3</p>
+                    <h2 class="rsv-title">Choose your setting.</h2>
+                    <p class="rsv-sub">Choose a table type for your party.</p>
+
+                    <div class="rsv-chips">
+                        <span class="rsv-chip"><i class="bi bi-calendar3"></i><span id="rsvChipDate">-</span></span>
+                        <span class="rsv-chip"><i class="bi bi-clock"></i><span id="rsvChipTime">-</span></span>
+                        <span class="rsv-chip"><i class="bi bi-people"></i><span id="rsvChipGuests">-</span></span>
+                        <button type="button" class="rsv-link" data-goto="1"><i class="bi bi-pencil-fill"></i> Edit</button>
+                    </div>
+
+                    <div class="rsv-types" id="rsvTypes" role="radiogroup" aria-label="Table type"></div>
+                    <p class="rsv-error" id="rsvError2" role="alert" hidden></p>
+
+                    <div class="rsv-special">
+                        <label for="rsvSpecial">Special requests <small>(optional)</small></label>
+                        <textarea id="rsvSpecial" maxlength="500" rows="2" placeholder="Birthday, high chair, or anything we should know?"></textarea>
+                        <small class="rsv-count"><span id="rsvSpecialCount">0</span>/500</small>
+                    </div>
+
+                    <div class="rsv-actions">
+                        <button type="button" class="rsv-btn rsv-btn-ghost" data-goto="1"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="rsv-btn rsv-btn-primary" id="rsvNext2" disabled>
+                            <span class="rsv-btn-label">Continue</span> <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                @* Step 3 *@
+                <div class="rsv-panel" id="rsvStep3" data-panel="3" hidden>
+                    <p class="rsv-kicker">STEP 3 OF 3</p>
+                    <h2 class="rsv-title">Review &amp; submit.</h2>
+                    <p class="rsv-sub">Check everything, then send your reservation.</p>
+
+                    <div class="rsv-review" id="rsvReview"></div>
+
+                    <div class="rsv-notice rsv-spend" id="rsvSpendBox" hidden>
+                        <p class="rsv-notice-title"><i class="bi bi-cash-coin"></i> Minimum spend: <span id="rsvSpendAmount">RM 0</span></p>
+                        <p>This table type needs a minimum food and drink spend per booking<span id="rsvSpendSmall"></span>. Any shortfall may be charged at the end of your visit.</p>
+                        <label class="rsv-check">
+                            <input type="checkbox" id="rsvSpendAccept" />
+                            <span>I understand and accept the minimum spend.</span>
+                        </label>
+                    </div>
+                    <p class="rsv-nospend" id="rsvNoSpend" hidden><i class="bi bi-check2-circle"></i> No minimum spend for this table.</p>
+
+                    <div class="rsv-notice rsv-arrival">
+                        <p class="rsv-notice-title"><i class="bi bi-alarm"></i> Arrival reminder</p>
+                        <p>Please arrive on time. If you will be late, please contact the restaurant. Without notice, we will hold your table for @Model.NoShowGraceMinutes minutes only, and after that your reservation will be cancelled.</p>
+                        <p class="rsv-hint">Your table is held for @(Model.DurationMinutes / 60.0) hours from the booking time.</p>
+                    </div>
+
+                    <p class="rsv-error" id="rsvError3" role="alert" hidden></p>
+
+                    <div class="rsv-actions">
+                        <button type="button" class="rsv-btn rsv-btn-ghost" data-goto="2"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="rsv-btn rsv-btn-primary" id="rsvSubmit" disabled>
+                            <span class="rsv-btn-label">Submit reservation</span>
+                            <span class="rsv-spinner" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            @* ---------- right: live summary that turns into the ticket ---------- *@
+            <aside class="rsv-summary-wrap" id="rsvSummaryWrap" aria-label="Reservation summary">
+                <div class="rsv-flip" id="rsvFlip">
+
+                    <div class="rsv-face rsv-front">
+                        <header class="rsv-sum-head">
+                            <div>
+                                <p class="rsv-sum-eyebrow"><span lang="ja">ご予約内容</span></p>
+                                <h2>Reservation Summary</h2>
+                            </div>
+                            <span class="rsv-badge" id="rsvBadge">Not submitted</span>
+                        </header>
+
+                        <ul class="rsv-sum-list">
+                            <li data-sum="type"><i class="bi bi-grid-3x3-gap"></i><div><small>Table type</small><strong id="sumType">Not chosen yet</strong><span class="rsv-sum-sub"><span id="sumTypeJp" lang="ja"></span><span class="rsv-area-line" id="sumTypeAreaLine" hidden><svg class="area-ico" aria-hidden="true"><use id="sumTypeAreaIco" href="#area-map-pin" /></svg><span id="sumTypeArea"></span></span></span></div><button type="button" class="rsv-link" data-goto="2" hidden>Edit</button></li>
+                            <li data-sum="date"><i class="bi bi-calendar3"></i><div><small>Date</small><strong id="sumDate">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
+                            <li data-sum="time"><i class="bi bi-clock"></i><div><small>Arrival time</small><strong id="sumTime">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
+                            <li data-sum="guests"><i class="bi bi-people"></i><div><small>Guests</small><strong id="sumGuests">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
+                            <li data-sum="special"><i class="bi bi-card-text"></i><div><small>Special requests</small><strong id="sumSpecial">None added</strong></div><button type="button" class="rsv-link" data-goto="2" hidden>Edit</button></li>
+                            <li data-sum="spend" hidden><i class="bi bi-cash-coin"></i><div><small>Minimum spend</small><strong id="sumSpend">-</strong></div></li>
+                        </ul>
+
+                        <p class="rsv-sum-note"><i class="bi bi-info-circle"></i> Your reservation stays Pending until our team confirms it. Unconfirmed reservations are cancelled @Model.NoShowGraceMinutes minutes after the booking time.</p>
+                        <span class="rsv-sum-seal" lang="ja" aria-hidden="true">夜</span>
+                    </div>
+
+                    <div class="rsv-face rsv-back" id="rsvTicket" aria-hidden="true">
+                        <div class="rsv-ticket-shadow">
+                            <article class="rsv-ticket" aria-label="Reservation pass">
+                                <svg class="rsv-ticket-landscape" viewBox="0 0 350 168"
+                                     preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+                                    <defs>
+                                        <linearGradient id="rsvInk" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#716b60" stop-opacity=".06" />
+                                            <stop offset="1" stop-color="#535650" stop-opacity=".38" />
+                                        </linearGradient>
+                                        <linearGradient id="rsvMist" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#f1e7d5" stop-opacity="0" />
+                                            <stop offset="1" stop-color="#f1e7d5" stop-opacity=".72" />
+                                        </linearGradient>
+                                        <filter id="rsvBrush" x="-5%" y="-10%" width="110%" height="130%">
+                                            <feTurbulence type="fractalNoise" baseFrequency=".025 .05"
+                                                          numOctaves="3" seed="7" result="grain" />
+                                            <feDisplacementMap in="SourceGraphic" in2="grain"
+                                                               scale="7" xChannelSelector="R" yChannelSelector="G" />
+                                        </filter>
+                                    </defs>
+                                    <g filter="url(#rsvBrush)">
+                                        <path d="M0 132 C26 120 35 112 52 103 Q63 77 74 95
+                                        C86 113 98 91 113 76 Q126 60 140 86
+                                        C153 106 163 82 179 64 Q193 47 207 75
+                                        C222 100 236 91 250 78 Q263 69 275 89
+                                        C293 105 305 76 316 70 Q328 66 338 86 L350 79
+                                        V168 H0 Z" fill="url(#rsvInk)" />
+                                        <path d="M0 139 C25 131 43 135 61 124 C77 114 91 126 112 113
+                                        S145 118 165 111 C190 103 210 123 235 112
+                                        S274 113 291 105 C318 99 331 112 350 105
+                                        V168 H0 Z" fill="#575b55" opacity=".15" />
+                                    </g>
+                                    <path d="M7 129 Q41 113 62 110 M90 111 Q111 88 123 80
+                                    M152 101 Q179 72 191 65 M252 99 Q280 91 315 75"
+                                          fill="none" stroke="#66675f" stroke-width="1.2" opacity=".27" />
+                                    <path d="M0 126 Q70 113 113 125 T222 118 T350 119
+                                    V168 H0 Z" fill="url(#rsvMist)" opacity=".6" />
+                                    <path d="M0 151 C49 135 67 147 94 139 S147 149 176 138
+                                    S223 142 249 135 S310 144 350 124 V168 H0 Z"
+                                          fill="#50544d" opacity=".13" />
+                                    <path d="M0 146 Q42 140 77 147 T151 144 T229 146 T350 137
+                                    V168 H0 Z" fill="url(#rsvMist)" />
+                                    <g fill="none" stroke="#424941" stroke-linecap="round" opacity=".32">
+                                        <path d="M18 168 Q20 135 17 111 M17 128 Q8 120 1 124 M17 118 Q27 108 38 112
+                                        M316 168 Q314 136 316 112 M315 131 Q305 123 293 127
+                                        M316 120 Q328 109 343 116" stroke-width="2.2" />
+                                        <path d="M7 133 Q18 125 30 129 M4 140 Q19 131 32 137
+                                        M298 135 Q316 125 335 133 M297 141 Q320 134 343 141"
+                                              stroke-width="1.4" />
+                                    </g>
+                                </svg>
+                                <svg class="rsv-ticket-art" viewBox="0 0 210 160" aria-hidden="true" focusable="false">
+                                    <defs>
+                                        <g id="rsvSakura">
+                                            <ellipse cy="-8" rx="4" ry="8" />
+                                            <ellipse cy="-8" rx="4" ry="8" transform="rotate(72)" />
+                                            <ellipse cy="-8" rx="4" ry="8" transform="rotate(144)" />
+                                            <ellipse cy="-8" rx="4" ry="8" transform="rotate(216)" />
+                                            <ellipse cy="-8" rx="4" ry="8" transform="rotate(288)" />
+                                            <circle r="2.7" fill="#a26b3f" />
+                                        </g>
+                                    </defs>
+                                    <g fill="none" stroke="#785741" stroke-linecap="round">
+                                        <path d="M217 2 C184 14 166 22 149 40 S112 75 50 92" stroke-width="3" />
+                                        <path d="M181 18 Q161 8 140 4 M155 38 Q143 16 123 11 M133 58 Q118 50 106 36
+                                        M105 76 Q106 58 92 45 M89 84 Q78 67 63 65 M168 29 Q174 48 166 62"
+                                              stroke-width="1.7" />
+                                    </g>
+                                    <g fill="#bb594e">
+                                        <use href="#rsvSakura" transform="translate(184 13) rotate(18) scale(.9)" />
+                                        <use href="#rsvSakura" transform="translate(150 34) rotate(-18) scale(1.12)" />
+                                        <use href="#rsvSakura" transform="translate(131 56) scale(.78)" />
+                                        <use href="#rsvSakura" transform="translate(105 74) rotate(25) scale(1.02)" />
+                                        <use href="#rsvSakura" transform="translate(67 89) rotate(-12) scale(.72)" />
+                                        <use href="#rsvSakura" transform="translate(137 9) scale(.65)" />
+                                        <use href="#rsvSakura" transform="translate(107 38) scale(.7)" />
+                                        <use href="#rsvSakura" transform="translate(168 61) scale(.62)" />
+                                    </g>
+                                    <g fill="#cc756b" opacity=".6">
+                                        <path d="M76 118 q-6-9 3-10 q6 4-3 10 M47 133 q-5-7 2-9 q6 3-2 9
+                                        M113 110 q-5-7 2-9 q6 3-2 9" />
+                                    </g>
+                                </svg>
+
+                                <div class="rsv-ticket-inner">
+                                    <header class="rsv-ticket-header">
+                                        <div class="rsv-ticket-brand">
+                                            <span>YORU</span>
+                                            <b lang="ja">夜</b>
+                                            <small>IZAKAYA</small>
+                                        </div>
+
+                                        <span class="rsv-badge rsv-badge-pending rsv-ticket-status">
+                                            <i class="bi bi-hourglass-split" aria-hidden="true"></i><span id="tkStatus">Pending</span>
+                                        </span>
+                                        <h2 id="tkTitle" tabindex="-1">Reservation request received</h2>
+                                        <p class="rsv-ticket-message">
+                                            Thank you, <span id="tkName"></span>. Awaiting restaurant confirmation.
+                                        </p>
+                                    </header>
+
+                                    <div class="rsv-ticket-grid">
+                                        <div class="rsv-ticket-hero">
+                                            <div class="rsv-ticket-day">
+                                                <b id="tkDay">-</b>
+                                                <span><strong id="tkMonth">-</strong><em id="tkWeekday"></em></span>
+                                            </div>
+                                            <div class="rsv-ticket-clock">
+                                                <small>Arrival time</small>
+                                                <strong id="tkTime">-</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="rsv-ticket-pair">
+                                            <div class="rsv-ticket-detail">
+                                                <i class="bi bi-people" aria-hidden="true"></i>
+                                                <div><small>Guests</small><strong id="tkGuests">-</strong></div>
+                                            </div>
+                                            <div class="rsv-ticket-detail">
+                                                <i class="bi bi-grid-3x3-gap" aria-hidden="true"></i>
+                                                <div>
+                                                    <small>Table type</small>
+                                                    <strong id="tkType">-</strong>
+                                                    <span class="rsv-ticket-sub" id="tkTypeSub"><span id="tkTypeJp" lang="ja"></span><span class="rsv-area-line" id="tkAreaLine" hidden><svg class="area-ico" aria-hidden="true"><use id="tkAreaIco" href="#area-map-pin" /></svg><span id="tkArea"></span></span></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="rsv-ticket-detail is-spend" id="tkSpendRow">
+                                            <i class="bi bi-cash-coin" aria-hidden="true"></i>
+                                            <div><small id="tkSpendLabel">Minimum spend</small><strong id="tkSpend">-</strong></div>
+                                            <span class="rsv-ticket-accepted" id="tkAccepted" hidden>&#10003; Accepted</span>
+                                        </div>
+
+                                        <div class="rsv-ticket-request" id="tkSpecialRow" hidden>
+                                            <small>Special requests</small>
+                                            <strong id="tkSpecial"></strong>
+                                        </div>
+                                    </div>
+
+                                    <footer class="rsv-ticket-stub">
+                                        <div id="tkRefBox">
+                                            <small>BOOKING REFERENCE</small>
+                                            <strong id="tkRef">-</strong>
+                                        </div>
+                                        <p>
+                                            <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                            <span>Arrive on time. @Model.NoShowGraceMinutes-minute hold without notice.</span>
+                                        </p>
+                                    </footer>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+                <a class="rsv-btn rsv-btn-primary rsv-ticket-close" href="/">Close</a>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="rsvConfig">@Html.Raw(config)</script>
+
+@section Scripts {
+    <script src="~/js/customer-reservation.js" asp-append-version="true"></script>
+    @if (!string.IsNullOrEmpty(Model.DiningSummary))
+    {
+        <script>
+            // The box is pre-filled from the customer's profile; tell the page so the counter and the summary update.
+            // Only runs on a fresh load, so nothing the customer typed is ever replaced.
+            document.addEventListener('DOMContentLoaded', function () {
+                var box = document.getElementById('rsvSpecial');
+                if (box && box.value) box.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        </script>
+    }
+}

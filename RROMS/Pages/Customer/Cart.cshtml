@@ -4,6 +4,7 @@
     ViewData["Title"] = "Your cart";
 }
 <link rel="stylesheet" href="~/css/customer-cart.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/customer-cart-art.css" asp-append-version="true" />
 <div class="customer-cart" data-customer-cart>
     <header class="cart-page-heading">
         <div class="cart-page-heading__text">
@@ -13,10 +14,7 @@
             <a class="btn btn-outline-secondary" asp-page="/Menu/Index">← Continue browsing</a>
         </div>
         <div class="cart-page-heading__art" aria-hidden="true">
-            <picture>
-                <source media="(max-width: 74.999rem)" srcset="@Url.Content("~/images/cart/yoru-cart-watercolour.png")" />
-                <img src="~/images/cart/yoru-cart-header-paper.png" asp-append-version="true" alt="" width="2048" height="768" />
-            </picture>
+            <img src="~/images/cart/yoru-cart-illustrated-header.webp" asp-append-version="true" alt="" width="2172" height="724" />
         </div>
     </header>
     <partial name="_CartContent" model="Model.Cart" />

@@ -1,0 +1,1987 @@
+/* =====================================================
+   YORU IZAKAYA — US32 STAFF BILLING (Member 4)
+   Used by Pages/Staff/Billing/Index.cshtml (list)
+   and Pages/Staff/Billing/Bill.cshtml (one bill).
+   The screen, payment and A4 print styles below were moved
+   unchanged from the old Index.cshtml <style> block.
+   ===================================================== */
+
+/* =====================================================
+           YORU IZAKAYA — US32 SCREEN STYLES
+           ===================================================== */
+
+@media screen {
+
+    .us32-billing .billing-card {
+        margin-bottom: 24px !important;
+        border-radius: 8px;
+    }
+
+        .us32-billing .billing-card > .card-body {
+            padding: 24px;
+        }
+
+        .us32-billing .billing-card .billing-card-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.4;
+            letter-spacing: 0;
+            margin-bottom: 8px !important;
+        }
+
+        .us32-billing .billing-card h6 {
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .us32-billing .billing-card .form-label {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .us32-billing .billing-card .billing-order-label {
+            font-family: var(--font-body);
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .us32-billing .billing-card .form-control {
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.5;
+            min-height: 42px;
+        }
+
+        .us32-billing .billing-card p {
+            font-family: var(--font-body);
+            font-size: 13px;
+            font-weight: 400;
+            line-height: 1.65;
+        }
+
+        .us32-billing .billing-card table {
+            font-family: var(--font-body);
+        }
+
+            .us32-billing .billing-card table th {
+                font-size: 11px;
+                font-weight: 600;
+                line-height: 1.5;
+                letter-spacing: .7px;
+                padding: 12px;
+            }
+
+            .us32-billing .billing-card table td {
+                font-size: 13px;
+                font-weight: 400;
+                line-height: 1.5;
+                padding: 13px 12px;
+            }
+
+        .us32-billing .billing-card
+        .row.justify-content-end span {
+            font-family: var(--font-body);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+    .us32-billing #printableBill h4 {
+        font-family: var(--font-body);
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .us32-billing .billing-card .btn {
+        font-family: var(--font-body);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.5;
+        padding: 10px 18px;
+    }
+
+    .us32-billing .billing-card .badge {
+        font-family: var(--font-body);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: .3px;
+    }
+    /* Bill heading */
+    .us32-billing #printableBill
+    .bill-preview-heading {
+        margin-bottom: 8px !important;
+    }
+
+        .us32-billing #printableBill
+        .bill-preview-heading .billing-card-title {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-bottom: 0 !important;
+        }
+
+    .us32-billing #printableBill
+    .bill-order-number {
+        font-family: var(--font-body);
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 1.5;
+        margin-bottom: 22px !important;
+    }
+    /* Balanced Final Total spacing */
+    .us32-billing #printableBill
+    .billing-total-divider {
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .us32-billing #printableBill
+    .billing-final-total {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .us32-billing #printableBill
+    .billing-actions-divider {
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-card > .card-body {
+        padding: 18px;
+    }
+}
+
+/* =====================================================
+           PAYMENT MANAGEMENT
+           ===================================================== */
+
+/* Reduce spacing below Payment Management heading */
+.us32-billing .payment-management-card
+.payment-empty-message {
+    margin-top: 0 !important;
+    margin-bottom: 12px !important;
+    line-height: 1.5;
+}
+
+.us32-billing .payment-method-fieldset {
+    min-width: 0;
+}
+
+    .us32-billing .payment-method-fieldset legend {
+        float: none;
+        width: auto;
+    }
+
+.us32-billing .payment-method-tile {
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    text-align: center;
+    cursor: pointer;
+    padding: 14px 8px;
+    border: 1px solid #d8cfc2;
+    border-radius: 7px;
+    background: #fffdf9;
+    transition: border-color .15s, background-color .15s;
+}
+
+    .us32-billing .payment-method-tile strong {
+        font-size: 14px;
+    }
+
+    .us32-billing .payment-method-tile small {
+        font-size: 11px;
+        color: #746d63;
+    }
+
+.us32-billing .payment-method-icon {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.us32-billing
+.payment-method-radio:checked + .payment-method-tile {
+    border-color: #a67b3f;
+    background: #fff0d3;
+    box-shadow: inset 0 0 0 1px #a67b3f;
+}
+
+.us32-billing
+.payment-method-radio:focus-visible + .payment-method-tile {
+    outline: 3px solid #896a42;
+    outline-offset: 3px;
+}
+
+.us32-billing .payment-method-tile-disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.us32-billing .payment-readonly-value {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #e0d8cc;
+    border-radius: 6px;
+    background: #faf8f4;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.us32-billing .payment-result {
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+}
+
+.us32-billing .payment-result-success {
+    background: #e8f6eb;
+    color: #166534;
+}
+
+.us32-billing .payment-result-pending {
+    background: #fff2d6;
+    color: #845400;
+}
+
+.us32-billing .payment-result-failed {
+    background: #fce8e7;
+    color: #9b2823;
+}
+
+/* =====================================================
+           PRINT-ONLY ELEMENTS
+           ===================================================== */
+
+.yoru-print-header,
+.yoru-print-footer {
+    display: none;
+}
+
+.yoru-print-logo {
+    display: block;
+    width: 100px;
+    max-height: 85px;
+    object-fit: contain;
+    margin: 0 auto 12px;
+}
+
+/* =====================================================
+           PRINT BILL — A4
+           ===================================================== */
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 18mm;
+    }
+
+    html, body {
+        background: #fff !important;
+        color: #24201c !important;
+    }
+
+        body * {
+            visibility: hidden !important;
+        }
+
+    #printableBill,
+    #printableBill * {
+        visibility: visible !important;
+    }
+
+    #printableBill {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        font-family: var(--font-body) !important;
+        font-weight: 400;
+    }
+
+        #printableBill .card-body {
+            padding: 0 !important;
+        }
+
+        #printableBill .billing-actions,
+        #printableBill .billing-actions-divider,
+        .us32-billing .payment-management-card {
+            display: none !important;
+        }
+        /* Restaurant branding */
+        #printableBill .yoru-print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+            #printableBill .yoru-print-brand h1,
+            #printableBill .yoru-print-header h2 {
+                font-family: var(--font-display) !important;
+                font-weight: 700;
+            }
+
+        #printableBill .yoru-print-brand h1 {
+            margin: 0;
+            font-size: 34px;
+            letter-spacing: 3px;
+        }
+
+        #printableBill .yoru-print-subtitle {
+            margin-top: 3px;
+            color: #9b8062 !important;
+            font-size: 11px;
+            letter-spacing: 5px;
+        }
+
+        /* SST no.: a little space under I Z A K A Y A */
+        #printableBill .yoru-print-sst {
+            margin: 12px 0 0 !important;
+            font-size: 11px;
+            letter-spacing: .5px;
+        }
+
+        #printableBill .yoru-print-divider {
+            width: 100%;
+            height: 1px;
+            background: #b49a76 !important;
+            margin: 20px 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        #printableBill .yoru-print-header h2 {
+            font-size: 15px;
+            letter-spacing: 1px;
+            margin: 14px 0 5px;
+        }
+
+        #printableBill .yoru-print-header p {
+            color: #77716b !important;
+            font-size: 11px;
+            margin: 0;
+        }
+        /* Avoid duplicate headings */
+        #printableBill .card-body >
+        .yoru-print-header + .d-flex {
+            display: none !important;
+        }
+        /* Item table */
+        #printableBill .table-responsive {
+            overflow: visible !important;
+        }
+
+        #printableBill table {
+            width: 100% !important;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        #printableBill th {
+            background: #f7f3ed !important;
+            color: #6f5b47 !important;
+            font-size: 10px;
+            letter-spacing: .7px;
+            padding: 12px 8px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        #printableBill td {
+            padding: 12px 8px !important;
+            border-color: #e8e2d9 !important;
+        }
+
+        #printableBill tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        /* Bill totals */
+        #printableBill .row.justify-content-end {
+            margin-top: 24px !important;
+        }
+
+            #printableBill
+            .row.justify-content-end > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+            }
+
+        #printableBill h4 {
+            color: var(--yoru-red-text) !important;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        /* Balanced Final Total spacing */
+        #printableBill .billing-total-divider {
+            margin-top: 12px !important;
+            margin-bottom: 12px !important;
+        }
+
+        #printableBill .billing-final-total {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        /* Print footer */
+        #printableBill .yoru-print-footer {
+            display: block !important;
+            text-align: center;
+            margin-top: 0 !important;
+        }
+
+            #printableBill .yoru-print-footer
+            .yoru-print-divider {
+                margin-top: 12px !important;
+                margin-bottom: 20px !important;
+            }
+
+            #printableBill .yoru-print-footer p {
+                font-family: var(--font-body) !important;
+                font-size: 11px;
+                color: #77716b !important;
+                margin: 5px 0;
+            }
+
+            #printableBill .yoru-print-footer
+            .yoru-japanese {
+                font-family: var(--font-display) !important;
+                font-size: 17px;
+                color: #9b8062 !important;
+            }
+
+            #printableBill .yoru-print-footer strong {
+                display: block;
+                margin-top: 12px;
+                font-size: 11px;
+                letter-spacing: 2px;
+                color: #a94736 !important;
+            }
+
+            #printableBill .yoru-print-footer
+            .yoru-print-notice {
+                margin-top: 16px;
+                font-size: 10px;
+                font-style: italic;
+            }
+}
+
+/* =====================================================
+   BILLING LIST (Index)
+   ===================================================== */
+
+.us32-billing .billing-tabs .nav-link {
+    color: var(--yoru-ink);
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 999px;
+    padding: 8px 18px;
+}
+
+    .us32-billing .billing-tabs .nav-link.active {
+        background: var(--yoru-ink);
+        color: var(--yoru-cream);
+    }
+
+.us32-billing .billing-tab-count {
+    display: inline-block;
+    min-width: 22px;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .08);
+    font-size: 12px;
+    text-align: center;
+}
+
+.us32-billing .billing-tabs .nav-link.active .billing-tab-count {
+    background: rgba(255, 255, 255, .18);
+}
+
+.us32-billing .billing-search {
+    position: relative;
+    flex: 1 1 280px;
+    max-width: 380px;
+}
+
+    .us32-billing .billing-search .bi-search {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--yoru-olive-text);
+        pointer-events: none;
+    }
+
+    .us32-billing .billing-search .form-control {
+        padding-left: 36px;
+    }
+
+.us32-billing .billing-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.us32-billing .billing-filter {
+    border: 1px solid var(--yoru-line);
+    background: var(--yoru-paper);
+    color: var(--yoru-ink);
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+    .us32-billing .billing-filter.active {
+        border-color: #a67b3f;
+        background: #fff0d3;
+    }
+
+.us32-billing .billing-card .billing-list .btn {
+    padding: 6px 14px;
+}
+
+.us32-billing .billing-sub {
+    font-size: 11px;
+    color: var(--yoru-olive-text);
+    margin-top: 2px;
+}
+
+.us32-billing .billing-kitchen {
+    color: #845400;
+}
+
+.us32-billing .billing-order-no {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 12px !important;
+    white-space: nowrap;
+}
+
+.us32-billing .billing-empty {
+    margin: 12px 0 0;
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .billing-row-done td {
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .billing-old-tag {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: #fce8e7;
+    color: #9b2823;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.us32-billing .billing-lookup {
+    margin: 14px 0 0;
+    font-size: 13px;
+}
+
+/* Bill state pill (list + bill page header) */
+.us32-billing .bill-state {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.us32-billing .bill-state-nobill {
+    background: transparent;
+    color: var(--yoru-olive-text);
+    border-color: #c9c1b3;
+}
+
+.us32-billing .bill-state-awaiting {
+    background: #fff2d6;
+    color: #845400;
+    border-color: #ecd29b;
+}
+
+.us32-billing .bill-state-paid {
+    background: #191919;
+    color: #f5f0e7;
+}
+
+.us32-billing .bill-state-lg {
+    font-size: 13px;
+    padding: 6px 14px;
+}
+
+/* =====================================================
+   ONE BILL (Bill.cshtml)
+   ===================================================== */
+
+.us32-billing .billing-back {
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.us32-billing .billing-heading-type {
+    margin-left: 8px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .bill-round-orderno {
+    font-size: 12px;
+    color: var(--yoru-olive-text);
+}
+
+@media screen and (min-width: 992px) {
+    .us32-billing .billing-side {
+        position: sticky;
+        top: 24px;
+    }
+}
+
+/* Stepper */
+.us32-billing .billing-steps {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 18px;
+}
+
+.us32-billing .billing-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    font-size: 12px;
+    color: var(--yoru-olive-text);
+    text-align: center;
+}
+
+    .us32-billing .billing-step:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 14px;
+        left: calc(50% + 18px);
+        right: calc(-50% + 18px);
+        height: 2px;
+        background: var(--yoru-line);
+    }
+
+    .us32-billing .billing-step.done:not(:last-child)::after {
+        background: #a67b3f;
+    }
+
+.us32-billing .billing-step-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--yoru-line);
+    background: var(--yoru-paper);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.us32-billing .billing-step.current {
+    color: var(--yoru-ink);
+    font-weight: 600;
+}
+
+    .us32-billing .billing-step.current .billing-step-dot {
+        border-color: var(--yoru-ink);
+        background: var(--yoru-ink);
+        color: var(--yoru-cream);
+    }
+
+.us32-billing .billing-step.done .billing-step-dot {
+    border-color: #a67b3f;
+    background: #fff0d3;
+    color: #6e4f24;
+}
+
+.us32-billing .billing-side-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border-radius: 6px;
+    background: #faf8f4;
+    border: 1px solid #e0d8cc;
+    font-size: 13px;
+}
+
+    .us32-billing .billing-side-total strong {
+        font-size: 20px;
+        color: var(--yoru-red-text);
+    }
+
+.us32-billing .billing-card p.billing-side-note {
+    font-size: 12px;
+    color: var(--yoru-olive-text);
+}
+
+.us32-billing .billing-paid-details {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    margin: 0 0 12px;
+    font-size: 13px;
+}
+
+    .us32-billing .billing-paid-details dt {
+        font-weight: 500;
+        color: var(--yoru-olive-text);
+    }
+
+    .us32-billing .billing-paid-details dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+
+.us32-billing .billing-history summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Orders (rounds) behind a dine-in bill, in the action panel */
+.us32-billing .billing-rounds {
+    border: 1px solid #e0d8cc;
+    border-radius: 6px;
+    background: #faf8f4;
+}
+
+    .us32-billing .billing-rounds summary {
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+.us32-billing .billing-rounds-count {
+    display: inline-block;
+    min-width: 20px;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .08);
+    font-size: 11px;
+    text-align: center;
+}
+
+.us32-billing .billing-rounds-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 12px 8px;
+}
+
+    .us32-billing .billing-rounds-list > li {
+        border-top: 1px dashed #e0d8cc;
+        font-size: 12px;
+    }
+
+/* One round: click the row to see its dishes */
+.us32-billing .billing-round-head {
+    display: grid;
+    grid-template-columns: 12px auto 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    cursor: pointer;
+    list-style: none;
+}
+
+    .us32-billing .billing-round-head::-webkit-details-marker {
+        display: none;
+    }
+
+    .us32-billing .billing-round-head::before {
+        content: "\25B8";
+        color: var(--yoru-olive-text);
+        font-size: 10px;
+        transition: transform .15s;
+    }
+
+.us32-billing .billing-round[open] > .billing-round-head::before {
+    transform: rotate(90deg);
+}
+
+.us32-billing .billing-round-items {
+    list-style: none;
+    margin: 0 0 8px 20px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: #fff;
+}
+
+    .us32-billing .billing-round-items li {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        gap: 6px;
+        padding: 3px 0;
+        font-size: 12px;
+    }
+
+        .us32-billing .billing-round-items li span:last-child {
+            white-space: nowrap;
+        }
+
+.us32-billing .billing-round-no {
+    font-weight: 600;
+}
+
+.us32-billing .billing-round-orderno {
+    color: var(--yoru-olive-text);
+    font-size: 11px;
+    overflow-wrap: anywhere;
+}
+
+.us32-billing .billing-round-amount {
+    white-space: nowrap;
+}
+
+@media print {
+    .us32-billing .billing-side {
+        display: none !important;
+    }
+}
+
+/* =====================================================
+   HEADER BANNER (Index) — UI step 1
+   Artwork: images/billing/yoru-billing-banner.svg
+   Colours follow the YORU washi / ink / shu palette.
+   ===================================================== */
+
+/* Edge to edge (page sets ViewData["FullWidth"] = true), like Staff/Orders */
+.us32-billing .billing-hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid #E7DBC8;
+    background: #FBF4E8 url(../images/billing/yoru-billing-banner.svg) right center / auto 100% no-repeat;
+}
+
+.us32-billing .billing-hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 260px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+/* Bill page: lower banner */
+.us32-billing .billing-hero-slim .billing-hero-inner {
+    min-height: 150px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.us32-billing .billing-hero-copy {
+    position: relative;
+    max-width: 480px;
+}
+
+.us32-billing .billing-hero-eyebrow {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #9A7440;
+}
+
+.us32-billing .billing-hero-title {
+    margin: 6px 0 4px;
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #191919;
+}
+
+.us32-billing .billing-hero-seal {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    border: 1.5px solid #C83E2D;
+    border-radius: 4px;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: #C83E2D;
+    vertical-align: middle;
+}
+
+.us32-billing .billing-hero-intro {
+    margin: 0;
+    font-size: 14px;
+    color: #6E645B;
+}
+
+.us32-billing .billing-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+    .us32-billing .billing-hero-chips > span,
+    .us32-billing .billing-hero-refresh {
+        padding: 6px 12px;
+        border: 1px solid #E7DBC8;
+        border-radius: 999px;
+        background: rgba(255, 252, 246, .9);
+        font-size: 12px;
+        color: #191919;
+    }
+
+    .us32-billing .billing-hero-chips b {
+        color: #C83E2D;
+    }
+
+.us32-billing .billing-hero-refresh {
+    text-decoration: none;
+    border-color: #191919;
+}
+
+    .us32-billing .billing-hero-refresh:hover {
+        background: #191919;
+        color: #F5F0E7;
+    }
+
+@media screen and (max-width: 700px) {
+    .us32-billing .billing-hero {
+        background-position: 70% center;
+    }
+
+    .us32-billing .billing-hero-inner {
+        flex-wrap: wrap;
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    .us32-billing .billing-hero-copy {
+        padding: 12px;
+        border-radius: 12px;
+        background: rgba(251, 244, 232, .88);
+    }
+
+    .us32-billing .billing-hero-title {
+        font-size: 30px;
+    }
+}
+
+/* =====================================================
+   BILLING LIST (Index) — UI step 2
+   Toolbar like the staff Order queue; table restyled
+   with the washi palette. Structure is unchanged.
+   ===================================================== */
+
+/* No outer card: the toolbar sits on the page, the table has its own box */
+.us32-billing .billing-card.billing-list-card {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+    .us32-billing .billing-card.billing-list-card > .card-body {
+        padding: 0;
+    }
+
+/* Dine-in / Takeaway: one segmented control */
+.us32-billing .billing-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: min(100%, 17rem);
+    padding: 3px;
+    border: 1px solid var(--yoru-line);
+    border-radius: 999px; /* same round pills as before */
+    background: var(--yoru-paper);
+}
+
+    .us32-billing .billing-tabs .nav-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 40px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 500;
+    }
+
+        .us32-billing .billing-tabs .nav-link:not(.active):hover {
+            background: var(--yoru-line);
+        }
+
+.us32-billing .billing-tab-count,
+.us32-billing .billing-tabs .nav-link.active .billing-tab-count {
+    min-width: 0;
+    padding: 0;
+    background: none;
+    font-size: 13px;
+    opacity: .75;
+}
+
+    .us32-billing .billing-tab-count::before { content: "("; }
+    .us32-billing .billing-tab-count::after { content: ")"; }
+
+.us32-billing .billing-search {
+    margin-left: auto;
+}
+
+    .us32-billing .billing-search .form-control {
+        height: 42px;
+        border-color: var(--yoru-line);
+        border-radius: 8px;
+        background: var(--yoru-paper);
+        font-size: 13px;
+    }
+
+        .us32-billing .billing-search .form-control:hover {
+            border-color: var(--yoru-gold);
+        }
+
+/* Status filters + count */
+.us32-billing .billing-filters {
+    align-items: center;
+}
+
+.us32-billing .billing-filter {
+    padding: 5px 12px;
+}
+
+    .us32-billing .billing-filter:hover {
+        border-color: var(--yoru-gold);
+    }
+
+    .us32-billing .billing-filter.active {
+        border-color: var(--yoru-gold);
+        background: #F6ECD8;
+        font-weight: 700;
+    }
+
+.us32-billing .billing-match-count {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--yoru-olive-text);
+}
+
+/* Table box */
+.us32-billing .billing-list-card .table-responsive {
+    border: 1px solid var(--yoru-line);
+    border-radius: 12px;
+    background: var(--yoru-paper);
+}
+
+.us32-billing .billing-list {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: #FBF5EA;
+    --bs-table-hover-color: inherit;
+}
+
+    .us32-billing .billing-card .billing-list thead th {
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--yoru-line);
+        background: #F4ECDF;
+        color: #6F5B47;
+        text-transform: uppercase;
+    }
+
+    .us32-billing .billing-card .billing-list td {
+        padding: 12px 14px;
+        border-color: var(--yoru-line);
+    }
+
+    .us32-billing .billing-list tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .us32-billing .billing-list td:first-child strong {
+        font-family: var(--font-display);
+        font-size: 15px;
+    }
+
+    .us32-billing .billing-card .billing-list .btn {
+        border-radius: 999px;
+        font-size: 12px;
+    }
+
+/* "1 in kitchen" as a small amber pill */
+.us32-billing .billing-kitchen {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border: 1px solid #DCB872;
+    border-radius: 999px;
+    background: #F5DBA5;
+    color: #6F4707;
+    font-weight: 600;
+}
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-search {
+        flex-basis: 100%;
+        max-width: none;
+        margin-left: 0;
+    }
+
+    .us32-billing .billing-match-count {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+/* =====================================================
+   ONE BILL (Bill.cshtml) — UI step 3
+   Same washi palette as the list. Screen only:
+   the A4 print styles above are unchanged.
+   ===================================================== */
+
+@media screen {
+
+    /* Header */
+    .us32-billing .billing-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border: 1px solid var(--yoru-line);
+        border-radius: 999px;
+        background: rgba(255, 252, 246, .9);
+        color: var(--yoru-ink);
+        font-size: 12px;
+    }
+
+        .us32-billing .billing-back:hover {
+            border-color: var(--yoru-gold);
+            color: var(--yoru-ink);
+        }
+
+    .us32-billing .billing-hero-slim .billing-hero-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 10px 0 0;
+        font-size: 32px;
+    }
+
+    .us32-billing .billing-type-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border: 1px solid;
+        border-radius: 999px;
+        font-family: var(--font-body);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0;
+    }
+
+    .us32-billing .billing-type-dinein {
+        border-color: #B7C6A3;
+        background: #E3EAD8;
+        color: #3E522D;
+    }
+
+    .us32-billing .billing-type-takeaway {
+        border-color: #D6B985;
+        background: #F3E3C6;
+        color: #725022;
+    }
+
+    .us32-billing .billing-hero .bill-state-lg {
+        position: relative;
+    }
+
+    /* Cards */
+    .us32-billing .billing-card {
+        border: 1px solid var(--yoru-line);
+        border-radius: 14px;
+        background: var(--yoru-paper);
+        box-shadow: 0 3px 10px rgba(105, 78, 40, .05);
+    }
+
+    .us32-billing #printableBill h6 {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #6F5B47;
+    }
+
+    /* Ordered items table (same look as the list) */
+    .us32-billing #printableBill .table-responsive {
+        border: 1px solid var(--yoru-line);
+        border-radius: 10px;
+    }
+
+    .us32-billing #printableBill .table {
+        --bs-table-bg: transparent;
+        --bs-table-hover-bg: #FBF5EA;
+        margin-bottom: 0;
+    }
+
+        .us32-billing #printableBill .table > :not(caption) > * > * {
+            border-width: 0 0 1px;
+            border-color: var(--yoru-line);
+        }
+
+        .us32-billing #printableBill .table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .us32-billing #printableBill .table thead th {
+            background: #F4ECDF;
+            color: #6F5B47;
+            text-transform: uppercase;
+        }
+
+    /* Totals */
+    .us32-billing #printableBill .billing-total-divider {
+        border-top: 1px dashed #CDBBA2;
+        opacity: 1;
+    }
+
+    .us32-billing #printableBill .billing-final-total h4 {
+        font-family: var(--font-display);
+        font-size: 24px;
+        color: var(--yoru-red-text);
+    }
+
+    /* Right panel */
+    .us32-billing .billing-step.done .billing-step-dot {
+        border-color: var(--yoru-gold);
+        background: #F6ECD8;
+    }
+
+    .us32-billing .billing-step.done:not(:last-child)::after {
+        background: var(--yoru-gold);
+    }
+
+    .us32-billing .billing-rounds {
+        border-radius: 10px;
+        background: #FBF6EC;
+    }
+
+    .us32-billing .billing-rounds-count {
+        background: var(--yoru-line);
+    }
+
+    .us32-billing .billing-side-total {
+        border-color: #E7DBC8;
+        border-radius: 10px;
+        background: #FBF4E8;
+    }
+
+        .us32-billing .billing-side-total strong {
+            font-family: var(--font-display);
+            font-size: 22px;
+        }
+
+    /* Payment method tiles + icons */
+    .us32-billing .payment-method-tile {
+        min-height: 104px;
+        border-color: var(--yoru-line);
+        border-radius: 10px;
+        background: var(--yoru-paper);
+    }
+
+        .us32-billing .payment-method-tile:hover {
+            border-color: var(--yoru-gold);
+        }
+
+    .us32-billing .payment-method-icon {
+        display: inline-flex;
+        color: #5A3D2E;
+        line-height: 1;
+    }
+
+        .us32-billing .payment-method-icon svg {
+            width: 26px;
+            height: 26px;
+        }
+
+    .us32-billing .payment-method-radio:checked + .payment-method-tile {
+        border-color: var(--yoru-gold);
+        background: #F6ECD8;
+        box-shadow: inset 0 0 0 1px var(--yoru-gold);
+    }
+
+        .us32-billing .payment-method-radio:checked + .payment-method-tile .payment-method-icon {
+            color: var(--yoru-red-text);
+        }
+
+    .us32-billing .payment-method-tile-disabled:hover {
+        border-color: var(--yoru-line);
+    }
+
+    .us32-billing #billActions .form-control {
+        border-color: var(--yoru-line);
+        border-radius: 8px;
+        background: #FFFDF8;
+    }
+
+    /* Buttons: round pills */
+    .us32-billing #billActions .btn,
+    .us32-billing .billing-card .text-center .btn {
+        border-radius: 999px;
+    }
+
+    .us32-billing #billActions .btn-dark {
+        min-height: 44px;
+        font-size: 14px;
+    }
+
+    .us32-billing #billActions .btn-outline-dark:hover {
+        background: #F6ECD8;
+        color: var(--yoru-ink);
+    }
+
+    .us32-billing .billing-history summary {
+        padding-left: 18px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-hero-slim .billing-hero-title {
+        font-size: 24px;
+    }
+}
+
+/* =====================================================
+   FIXES (29 Oct, after review)
+   ===================================================== */
+
+/* "Table TFT001 · Dine-in": the dot sits in the middle of the line */
+.us32-billing .bill-sep {
+    display: inline-block;
+    width: .22em;
+    height: .22em;
+    margin: 0 .45em;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: middle;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+@media screen {
+
+    /* Dine-in / Takeaway pill: text and icon centred */
+    .us32-billing .billing-hero-slim .billing-hero-title {
+        line-height: 1.15;
+    }
+
+    .us32-billing .billing-type-pill {
+        line-height: 1;
+        padding: 5px 10px;
+    }
+
+        .us32-billing .billing-type-pill i {
+            display: block;
+            line-height: 1;
+        }
+
+            .us32-billing .billing-type-pill i::before {
+                display: block;
+                vertical-align: 0;
+            }
+
+    /* One table look everywhere: billing list, ordered items, payment history */
+    .us32-billing .billing-list-card .table-responsive,
+    .us32-billing #printableBill .table-responsive,
+    .us32-billing .billing-history .table-responsive {
+        overflow-x: auto; /* still scrolls on phones; also clips the corners */
+        border: 1px solid #DCCFB9;
+        border-radius: 12px;
+        background: var(--yoru-paper);
+    }
+
+    .us32-billing .billing-list-card .table,
+    .us32-billing #printableBill .table,
+    .us32-billing .billing-history .table {
+        --bs-table-bg: transparent;
+        --bs-table-hover-bg: #FBF5EA;
+        --bs-table-hover-color: inherit;
+        margin-bottom: 0;
+        border: 0;
+    }
+
+        .us32-billing .billing-list-card .table > :not(caption) > * > *,
+        .us32-billing #printableBill .table > :not(caption) > * > *,
+        .us32-billing .billing-history .table > :not(caption) > * > * {
+            border-width: 0 0 1px;
+            border-color: var(--yoru-line);
+        }
+
+        .us32-billing .billing-card .billing-list-card .table thead th,
+        .us32-billing .billing-card#printableBill .table thead th,
+        .us32-billing .billing-card.billing-history .table thead th,
+        .us32-billing .billing-card .table thead th {
+            padding: 11px 14px;
+            border-bottom: 1px solid #DCCFB9;
+            background: #F4ECDF;
+            color: #6F5B47;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .us32-billing .billing-card .table td {
+            padding: 12px 14px;
+        }
+
+        .us32-billing .billing-card .table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+}
+
+/* =====================================================
+   ORDERED ITEMS as a list (screen + print), 29 Oct
+   ===================================================== */
+
+.us32-billing .bill-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid #B49A76;
+}
+
+    .us32-billing .bill-items li {
+        padding: 10px 0;
+        border-bottom: 1px dashed #D8CCB8;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+.us32-billing .bill-item-main {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+    .us32-billing .bill-item-main span:last-child {
+        white-space: nowrap;
+    }
+
+.us32-billing .bill-item-sub {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #77716B;
+}
+
+@media print {
+    #printableBill h6 {
+        margin-bottom: 6px;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: #6F5B47 !important;
+    }
+
+    #printableBill .bill-items {
+        border-top-color: #B49A76 !important;
+    }
+
+    #printableBill .bill-item-main {
+        font-size: 12.5px;
+    }
+
+    #printableBill .bill-item-sub {
+        font-size: 11px;
+        color: #77716B !important;
+    }
+}
+
+/* =====================================================
+   REVIEW 29 Oct (2): lines, label size, corner radius
+   ===================================================== */
+
+/* The 4 solid lines on the bill are the same: items top, items bottom,
+   above Final Total, and the print footer line. */
+.us32-billing .bill-items li:last-child {
+    border-bottom: 1px solid #B49A76;
+}
+
+.us32-billing #printableBill .billing-total-divider {
+    border: 0;
+    border-top: 1px solid #B49A76;
+    opacity: 1;
+}
+
+@media print {
+    #printableBill .bill-items li:last-child {
+        border-bottom: 1px solid #B49A76 !important;
+    }
+
+    #printableBill .billing-total-divider {
+        border: 0 !important;
+        border-top: 1px solid #B49A76 !important;
+        opacity: 1 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #printableBill h6 {
+        font-size: 11.5px;
+    }
+}
+
+/* ORDERED ITEMS label a little bigger (screen) */
+@media screen {
+    .us32-billing #printableBill h6 {
+        font-size: 13px;
+    }
+}
+
+/* Corners: small labels look like the お会計 seal (4px);
+   toggle and buttons look like the search box (8px). */
+.us32-billing .billing-hero-chips > span,
+.us32-billing .billing-hero-refresh,
+.us32-billing .billing-filter,
+.us32-billing .bill-state,
+.us32-billing .billing-type-pill,
+.us32-billing .billing-back,
+.us32-billing .billing-kitchen,
+.us32-billing .billing-tab-count,
+.us32-billing .billing-rounds-count,
+.us32-billing .status-badge {
+    border-radius: 4px;
+}
+
+.us32-billing .billing-tabs {
+    border-radius: 8px;
+}
+
+    .us32-billing .billing-tabs .nav-link {
+        border-radius: 6px;
+    }
+
+.us32-billing .billing-card .billing-list .btn,
+.us32-billing #billActions .btn,
+.us32-billing .billing-card .text-center .btn {
+    border-radius: 8px;
+}
+
+/* =====================================================
+   REVIEW 29 Oct (3): text instead of boxes
+   ===================================================== */
+
+/* Billing list: status as plain coloured text, left aligned with the bill no. */
+.us32-billing .billing-list .bill-state {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font-size: 12px;
+}
+
+.us32-billing .billing-list .bill-state-paid {
+    color: var(--yoru-ink);
+}
+
+/* Open / View: a text link that changes colour on hover */
+.us32-billing .billing-open-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--yoru-ink);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+    .us32-billing .billing-open-link.is-open {
+        color: var(--yoru-red-text);
+    }
+
+    .us32-billing .billing-open-link:hover,
+    .us32-billing .billing-open-link:focus-visible {
+        color: var(--yoru-red-dark);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+/* Bill page banner: "All bills" as a text link */
+@media screen {
+    .us32-billing .billing-back {
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
+        color: var(--yoru-olive-text);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+        .us32-billing .billing-back:hover,
+        .us32-billing .billing-back:focus-visible {
+            border: 0;
+            color: var(--yoru-red-text);
+        }
+
+    /* "Table TFT001 · Dine-in": smaller text on the same line as the title */
+    .us32-billing .billing-hero-slim .billing-hero-title {
+        display: block;
+    }
+
+    .us32-billing .billing-hero-type {
+        font-family: var(--font-body);
+        font-size: 16px;
+        font-weight: 500;
+        letter-spacing: 0;
+        color: var(--yoru-olive-text);
+        overflow-wrap: anywhere;
+    }
+
+    .us32-billing .billing-hero-title .bill-sep {
+        color: var(--yoru-olive-text);
+        width: 5px;
+        height: 5px;
+    }
+}
+
+/* =====================================================
+   REVIEW 29 Oct (4)
+   ===================================================== */
+
+/* Dot: centred on capital letters (vertical-align: middle sat a bit low) */
+.us32-billing .bill-sep {
+    vertical-align: .24em;
+}
+
+/* Item amount in the middle of the name line and the "qty × price" line */
+.us32-billing .bill-items li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.us32-billing .bill-item-text {
+    min-width: 0;
+}
+
+.us32-billing .bill-item-amount {
+    flex: none;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+@media print {
+    #printableBill .bill-item-amount {
+        font-size: 12.5px;
+    }
+}
+
+@media screen {
+    /* A line under Final Total on screen (print already has the footer line) */
+    .us32-billing #printableBill .billing-final-total {
+        padding-bottom: 12px !important;
+        border-bottom: 1px solid #B49A76;
+    }
+
+    /* Payment history: status as plain coloured text */
+    .us32-billing .billing-history .status-badge {
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 12px;
+        letter-spacing: 0;
+    }
+
+    .us32-billing .billing-history .status-Paid { color: var(--yoru-ink); }
+    .us32-billing .billing-history .status-Pending { color: #845400; }
+    .us32-billing .billing-history .status-Failed { color: #8E2A1E; }
+    .us32-billing .billing-history .status-Refunded { color: var(--yoru-olive-text); }
+}
+
+/* Bill page banner title, option C: red line + Japanese label (29 Oct) */
+@media screen {
+    .us32-billing .billing-hero-slim .billing-hero-title {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 16px;
+        font-size: 34px;
+        line-height: 1.15;
+    }
+
+    .us32-billing .billing-hero-side {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        padding-left: 16px;
+        border-left: 2px solid var(--yoru-red);
+        line-height: 1.25;
+    }
+
+    .us32-billing .billing-hero-jp {
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        color: var(--yoru-red);
+    }
+
+    .us32-billing .billing-hero-side .billing-hero-type {
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-hero-slim .billing-hero-title {
+        font-size: 26px;
+    }
+}
+
+/* "Amount to collect" / "Total to confirm": label centred with the big amount (was baseline) */
+.us32-billing .billing-side-total {
+    align-items: center;
+}
+
+/* Billing list: one text colour for the data (29 Oct).
+   Kept as before: first column (table no. / Guests left), bill status text,
+   Open / View links, and the small status tags (in kitchen, old date, kitchen status). */
+.us32-billing .billing-list tbody td:not(:first-child),
+.us32-billing .billing-list tbody td:not(:first-child) .billing-sub:not(.billing-kitchen) {
+    color: var(--yoru-ink);
+}
+
+/* Takeaway order no.: same grey on every row (paid or not), 2 Nov */
+.us32-billing .billing-list tbody td.billing-order-no {
+    color: var(--yoru-olive-text);
+}
+
+/* Dine-in / Takeaway toggle: a small gap so the hover colour never touches the black tab */
+.us32-billing .billing-tabs {
+    gap: 4px;
+}
+
+    .us32-billing .billing-tabs .nav-item {
+        min-width: 0;
+    }
+
+/* =====================================================
+   LIST GROUPS: Today / Earlier · still unpaid
+   ===================================================== */
+
+.us32-billing .billing-group + .billing-group {
+    margin-top: 28px;
+}
+
+.us32-billing .billing-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.us32-billing .billing-group-count {
+    display: inline-block;
+    min-width: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .08);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Older unpaid bills: red title so staff notice them */
+.us32-billing .billing-group-older .billing-group-title {
+    color: #9b2823;
+}
+
+.us32-billing .billing-group-older .billing-group-count {
+    background: #fce8e7;
+    color: #9b2823;
+}
+
+/* Today / Earlier titles: same Mincho font as the table no. (TFT001) */
+.us32-billing .billing-card h6.billing-group-title {
+    align-items: baseline;
+    gap: 10px;
+    margin: 4px 0 12px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: .02em;
+    color: var(--yoru-ink);
+}
+
+.us32-billing .billing-card h6.billing-group-title .billing-group-count {
+    min-width: 0;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: #F4ECDF;
+    color: #6F5B47;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.us32-billing .billing-group-older h6.billing-group-title {
+    color: var(--yoru-red-text);
+}
+
+.us32-billing .billing-group-older h6.billing-group-title .billing-group-count {
+    background: #FCE8E7;
+    color: #9B2823;
+}
+
+/* Same space above "Today" and above "Earlier · still unpaid" (24px each) */
+.us32-billing .billing-filters {
+    margin-bottom: 24px;
+}
+
+.us32-billing .billing-group + .billing-group {
+    margin-top: 24px;
+}
+
+.us32-billing .billing-card h6.billing-group-title {
+    margin-top: 0;
+}
+
+/* Newest / oldest first (same look as the search box) */
+.us32-billing .billing-sort {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+    .us32-billing .billing-sort .bi {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--yoru-olive-text);
+        pointer-events: none;
+    }
+
+    .us32-billing .billing-sort .form-select {
+        height: 42px;
+        min-width: 168px;
+        padding-left: 36px;
+        border-color: var(--yoru-line);
+        border-radius: 8px;
+        background-color: var(--yoru-paper);
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+        .us32-billing .billing-sort .form-select:hover {
+            border-color: var(--yoru-gold);
+        }
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-sort {
+        flex-basis: 100%;
+    }
+
+        .us32-billing .billing-sort .form-select {
+            width: 100%;
+        }
+}
+
+/* =====================================================
+   2 Nov: make unconfirmed / unpaid rows easier to spot (option A)
+   Left colour bar + small dot; status text not bold.
+   ===================================================== */
+
+/* Bar drawn with an inset shadow (no border), so the columns don't move.
+   The second shadow keeps Bootstrap's row / hover background. */
+.us32-billing .billing-list tbody tr[data-state="nobill"] > td:first-child {
+    box-shadow: inset 4px 0 0 var(--yoru-red),
+                inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
+}
+
+.us32-billing .billing-list tbody tr[data-state="awaiting"] > td:first-child {
+    box-shadow: inset 4px 0 0 #D99A1E,
+                inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
+}
+
+.us32-billing .billing-list .bill-state {
+    font-weight: 500;
+}
+
+    .us32-billing .billing-list .bill-state::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: .12em;
+        background: #9A9A90;
+    }
+
+.us32-billing .billing-list .bill-state-nobill {
+    color: var(--yoru-red-text);
+}
+
+    .us32-billing .billing-list .bill-state-nobill::before {
+        background: var(--yoru-red);
+        vertical-align: .04em; /* a little lower: optical centre of "No bill" */
+    }
+
+.us32-billing .billing-list .bill-state-awaiting {
+    color: #845400;
+}
+
+    .us32-billing .billing-list .bill-state-awaiting::before {
+        background: #D99A1E;
+    }
+
+.us32-billing .billing-list .bill-state-paid {
+    color: var(--yoru-olive-text);
+}

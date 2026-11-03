@@ -1,3 +1,5 @@
+using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RROMS.Models;
 using RROMS.Services.Interfaces;
@@ -10,15 +12,20 @@ namespace RROMS.Pages
     {
         private readonly IHomeService _home;
         private readonly IAccountService _accounts;
+        private readonly IReservationService _reservations;
 
-        public IndexModel(IHomeService home, IAccountService accounts)
+        public IndexModel(IHomeService home, IAccountService accounts, IReservationService reservations)
         {
             _home = home;
             _accounts = accounts;
+            _reservations = reservations;
         }
 
         public List<HomeDish> Dishes { get; private set; } = new();
         public List<HomeOffer> Offers { get; private set; } = new();
+
+        // All dishes on promotion now; the home page shows 3 and the button says "See all 5 specials".
+        public int OfferTotal { get; private set; }
         public List<HomeHoursRow> Hours { get; private set; } = new();
         public List<OmikujiDish> OmikujiDishes { get; private set; } = new();
         public BookingSetup Booking { get; private set; } = null!;
@@ -34,6 +41,7 @@ namespace RROMS.Pages
         {
             Dishes = await _home.GetSignatureDishesAsync(3);
             Offers = await _home.GetActiveOffersAsync(3);   // empty -> the section is hidden
+            OfferTotal = Offers.Count > 0 ? await _home.CountOfferDishesAsync() : 0;
             Hours = await _home.GetOpeningHoursAsync();
             Info = await _home.GetInfoAsync();
             OmikujiDishes = await _home.GetOmikujiDishesAsync();
@@ -60,6 +68,17 @@ namespace RROMS.Pages
                 OmikujiDishes = Dishes.Select(d => new OmikujiDish(d.Name, d.CategoryName, d.Price)).ToList();
                 OmikujiDishes.Add(new OmikujiDish("Karaage", "Fried", 16m));
             }
+        }
+
+        // Quick booking box: the times for one date, from Member 2's booking rules (same list as her page).
+        // Read-only and anonymous on purpose: visitors may look before logging in; booking itself needs a login.
+        public async Task<IActionResult> OnGetSlotsAsync(string? date)
+        {
+            if (!DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var day))
+                return new JsonResult(Array.Empty<object>());
+
+            var slots = await _reservations.GetTimeSlotsAsync(day);
+            return new JsonResult(slots.Select(s => new { value = s.Time, label = s.Label }));
         }
     }
 }

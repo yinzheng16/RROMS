@@ -24,7 +24,7 @@ namespace RROMS.Models
         // Used by the availability check to detect overlapping bookings.
         public int DurationMinutes { get; set; } = 90;
 
-        [Range(1, 20)]
+        [Range(1, 100)]
         public int Guests { get; set; }
 
         [StringLength(500)]
@@ -35,5 +35,11 @@ namespace RROMS.Models
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        public decimal? MinimumSpendAccepted { get; set; }
+
+        public DateTime? MinimumSpendAcceptedAt { get; set; }
+
+        [StringLength(40)] public string? SubmissionToken { get; set; }
     }
 }

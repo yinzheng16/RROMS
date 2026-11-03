@@ -428,3 +428,14 @@ FodyWeavers.xsd
 #*.lscache
 
 RROMS/App_Data/MenuImages/
+
+# Branding images uploaded in Admin -> Restaurant Settings (US49)
+**/wwwroot/uploads/
+
+# Table type photos uploaded in Admin -> Tables (keep the 5 seeded ones)
+**/wwwroot/images/tables/*
+!**/wwwroot/images/tables/counter.webp
+!**/wwwroot/images/tables/double.webp
+!**/wwwroot/images/tables/standard.webp
+!**/wwwroot/images/tables/vip.webp
+!**/wwwroot/images/tables/vvip.webp

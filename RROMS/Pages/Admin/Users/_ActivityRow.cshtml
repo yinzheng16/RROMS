@@ -1,0 +1,58 @@
+@model RROMS.Services.Interfaces.UserLogRow
+@using RROMS.Models
+@using System.Globalization
+@{
+    // US07 (Member 1): one entry on the Activity page timeline.
+    var e = Model;
+    var inv = CultureInfo.InvariantCulture;
+    var (tone, icon, title) = e.Action switch
+    {
+        UserAdminAction.Created => ("is-add", "bi-person-plus-fill", "User created"),
+        UserAdminAction.RoleChanged => ("is-role", "bi-arrow-left-right", "Role changed"),
+        UserAdminAction.Deactivated => ("is-off", "bi-person-x-fill", "User deactivated"),
+        UserAdminAction.Reactivated => ("is-on", "bi-person-check-fill", "User reactivated"),
+        UserAdminAction.Removed => ("is-gone", "bi-trash3-fill", "User removed"),
+        _ => ("is-link", "bi-key-fill", e.Detail == "set-password link" ? "Set-password link sent" : "Password reset link sent")
+    };
+    // "Customer → Staff" -> two role pills
+    var roles = e.Action == UserAdminAction.RoleChanged ? (e.Detail ?? "").Split('→', StringSplitOptions.TrimEntries) : Array.Empty<string>();
+}
+<li class="uu-tl @tone">
+    <span class="uu-tl-dot" aria-hidden="true"></span>
+    <div class="uu-tl-card">
+        <span class="uu-mon @tone" aria-hidden="true"><svg><use href="#uuMon" /></svg><i class="bi @icon"></i></span>
+        <div class="uu-tl-main">
+            <b>@title</b>
+            <p>
+                @switch (e.Action)
+                {
+                    case UserAdminAction.Created:
+                        <span><strong>@e.TargetName</strong> was added @e.Detail.</span>
+                        break;
+                    case UserAdminAction.RoleChanged when roles.Length == 2:
+                        <span><strong>@e.TargetName</strong>'s role was changed from <span class="uu-pill">@roles[0]</span> <i class="bi bi-arrow-right uu-pill-arrow" aria-hidden="true"></i> <span class="uu-pill is-to">@roles[1]</span></span>
+                        break;
+                    case UserAdminAction.Deactivated:
+                        <span><strong>@e.TargetName</strong> was deactivated.</span>
+                        break;
+                    case UserAdminAction.Reactivated:
+                        <span><strong>@e.TargetName</strong> was reactivated.</span>
+                        break;
+                    case UserAdminAction.Removed:
+                        <span><strong>@e.TargetName</strong> was removed from the system (@e.Detail).</span>
+                        break;
+                    case UserAdminAction.PasswordLinkSent:
+                        <span><strong>@e.TargetName</strong> was emailed a @e.Detail.</span>
+                        break;
+                    default:
+                        <span><strong>@e.TargetName</strong> @e.Detail</span>
+                        break;
+                }
+            </p>
+        </div>
+        <div class="uu-tl-meta">
+            <span><i class="bi bi-person" aria-hidden="true"></i>By @e.DoneByName</span>
+            <span><i class="bi bi-calendar3" aria-hidden="true"></i><time datetime="@e.DoneAt.ToString("s", inv)">@e.DoneAt.ToString("d MMM yyyy, h:mm tt", inv)</time></span>
+        </div>
+    </div>
+</li>

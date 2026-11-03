@@ -318,7 +318,7 @@
             const text = element('span', 'cart-reservation__option-text');
             text.append(element('span', 'cart-reservation__option-title', option.dataset.bookingDate || option.textContent));
             if (option.dataset.bookingDetails) text.append(element('span', 'cart-reservation__option-details', option.dataset.bookingDetails));
-            row.append(icon(option.dataset.unavailable ? 'exclamation-circle' : option.value ? 'calendar4' : 'shop'), text, icon('check-lg'));
+            row.append(icon(option.dataset.unavailable ? 'exclamation-circle' : 'calendar4'), text, icon('check-lg'));
             list.append(row); return row;
         });
         if (!choices.some(option => option.dataset.bookingDate)) {
@@ -329,7 +329,7 @@
         const sync = () => {
             const option = choices[select.selectedIndex] || choices[0];
             trigger.querySelector(':scope > i')?.remove();
-            trigger.prepend(icon(option.dataset.unavailable ? 'exclamation-circle' : option.value ? 'calendar4' : 'shop'));
+            trigger.prepend(icon(option.dataset.unavailable ? 'exclamation-circle' : 'calendar4'));
             value.replaceChildren(element('span', '', option.dataset.bookingDate || option.textContent));
             if (option.dataset.bookingDetails) value.append(element('small', '', option.dataset.bookingDetails));
             rows.forEach((row, index) => row.setAttribute('aria-selected', String(index === select.selectedIndex)));

@@ -16,23 +16,15 @@ namespace RROMS.Models
         [StringLength(40)]
         public string IconName { get; set; } = "layout-grid";
 
-        // Auto = calculate from tables
-        // Manual = use ManualStatus
-        public DiningAreaStatusMode StatusMode { get; set; }
-            = DiningAreaStatusMode.Auto;
+        // One of the six fixed card themes (wine, gold, plum, sage, midnight, terracotta).
+        // Null = use the default colour picked from the area Id.
+        [StringLength(20)]
+        public string? ThemeKey { get; set; }
 
-        public DiningAreaManualStatus? ManualStatus { get; set; }
+        public bool IsActive { get; set; } = true;
+
+        public bool IsOccupied { get; set; }
+
         public ICollection<RestaurantTable> Tables { get; set; } = new List<RestaurantTable>();
-    }
-    public enum DiningAreaStatusMode
-    {
-        Auto = 0,
-        Manual = 1
-    }
-
-    public enum DiningAreaManualStatus
-    {
-        Available = 0,
-        Occupied = 1
     }
 }
