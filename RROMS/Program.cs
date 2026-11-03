@@ -111,6 +111,7 @@ builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService
 //Member 5
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalesReportService, SalesReportService>();   // Member 5: US44 Filtered reports
+builder.Services.AddScoped<IDashboardService, DashboardService>();   // Member 5: US46 Dashboard
 var app = builder.Build();
 
 // Apply migrations and create the roles and test accounts.
