@@ -23,11 +23,13 @@ public sealed partial class CustomerCartService : ICustomerCartService
     private readonly IReservationService _reservations;
     private readonly IDiningSessionService _sessions;
     private readonly IReportService _reportService;
+    private readonly INotificationService _notifications;   // US37 (Member 4): "Order received" notice
     private const int MaxLines = 100;
 
     public CustomerCartService(ApplicationDbContext db, IDataProtectionProvider protection,
         ILogger<CustomerCartService> logger, IProfileService profiles, IReportService reportService,
-        IReservationService reservations, IDiningSessionService sessions, TimeProvider? clock = null)
+        IReservationService reservations, IDiningSessionService sessions,
+        INotificationService notifications, TimeProvider? clock = null)
     {
         _db = db;
         _protector = protection.CreateProtector("RROMS.US24.Checkout.v1");
@@ -36,6 +38,7 @@ public sealed partial class CustomerCartService : ICustomerCartService
         _reservations = reservations;
         _sessions = sessions;
         _reportService = reportService;
+        _notifications = notifications;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -186,21 +189,25 @@ public sealed partial class CustomerCartService : ICustomerCartService
             _protector.Protect(JsonSerializer.Serialize(quote)));
     }
 
-    public Task<CartOperation> PlaceAsync(string userId, string? token,
+    public async Task<CartOperation> PlaceAsync(string userId, string? token,
         CancellationToken cancellationToken = default)
     {
         QuotePayload? quote;
         try
         {
-            if (string.IsNullOrWhiteSpace(token) || token.Length > 8000) return Task.FromResult(Expired());
+            if (string.IsNullOrWhiteSpace(token) || token.Length > 8000) return Expired();
             quote = JsonSerializer.Deserialize<QuotePayload>(_protector.Unprotect(token));
         }
         catch (Exception error) when (error is CryptographicException or JsonException or FormatException)
-        { return Task.FromResult(Expired()); }
-        if (quote is null || quote.UserId != userId) return Task.FromResult(Expired());
+        { return Expired(); }
+        if (quote is null || quote.UserId != userId) return Expired();
 
-        return WriteAsync(userId, async (cart, now, ct) =>
+        // US37: set only when THIS request creates the order (not for a retry of the same
+        // confirmation), and reset on every retry attempt of the save transaction.
+        int? createdOrderId = null;
+        var result = await WriteAsync(userId, async (cart, now, ct) =>
         {
+            createdOrderId = null;
             // A retry of the SAME confirmation returns the existing order, even if
             // the customer has since added new dishes. It never clears that new cart.
             var existing = await _db.Orders.AsNoTracking()
@@ -270,8 +277,16 @@ public sealed partial class CustomerCartService : ICustomerCartService
             Touch(cart, now);
             // Save together so a failure leaves BOTH the cart and order unchanged.
             await _db.SaveChangesAsync(ct);
+            createdOrderId = order.Id;
             return new(CartResult.Success, "Your order has been received.", order.Id);
         }, cancellationToken);
+
+        // US37 / US38 (Member 4): bell notification, plus the "order received" email for takeaway.
+        // Sent only after WriteAsync has committed the order. NotifyOrderStatusAsync never throws,
+        // so the customer's order is never affected by a notification problem.
+        if (result.Succeeded && createdOrderId is int newOrderId)
+            await _notifications.NotifyOrderStatusAsync(newOrderId, OrderStatus.Pending);
+        return result;
     }
 
     // Lightweight, read-only status check. Never expose another customer's order.
