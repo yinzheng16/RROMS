@@ -18,6 +18,7 @@
     });
 }
 <link rel="stylesheet" href="~/css/customer-reservation.css" asp-append-version="true" />
+<partial name="_AreaIcons" />
 
 <div class="rsv" id="rsv">
     <div class="rsv-wrap">
@@ -233,7 +234,7 @@
                         </header>
 
                         <ul class="rsv-sum-list">
-                            <li data-sum="type"><i class="bi bi-grid-3x3-gap"></i><div><small>Table type</small><strong id="sumType">Not chosen yet</strong><span class="rsv-sum-sub"><span id="sumTypeJp" lang="ja"></span><span id="sumTypeArea"></span></span></div><button type="button" class="rsv-link" data-goto="2" hidden>Edit</button></li>
+                            <li data-sum="type"><i class="bi bi-grid-3x3-gap"></i><div><small>Table type</small><strong id="sumType">Not chosen yet</strong><span class="rsv-sum-sub"><span id="sumTypeJp" lang="ja"></span><span class="rsv-area-line" id="sumTypeAreaLine" hidden><svg class="area-ico" aria-hidden="true"><use id="sumTypeAreaIco" href="#area-map-pin" /></svg><span id="sumTypeArea"></span></span></span></div><button type="button" class="rsv-link" data-goto="2" hidden>Edit</button></li>
                             <li data-sum="date"><i class="bi bi-calendar3"></i><div><small>Date</small><strong id="sumDate">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
                             <li data-sum="time"><i class="bi bi-clock"></i><div><small>Arrival time</small><strong id="sumTime">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
                             <li data-sum="guests"><i class="bi bi-people"></i><div><small>Guests</small><strong id="sumGuests">-</strong></div><button type="button" class="rsv-link" data-goto="1" hidden>Edit</button></li>
@@ -369,7 +370,7 @@
                                                 <div>
                                                     <small>Table type</small>
                                                     <strong id="tkType">-</strong>
-                                                    <span class="rsv-ticket-sub" id="tkTypeSub"><span id="tkTypeJp" lang="ja"></span><span id="tkArea"></span></span>
+                                                    <span class="rsv-ticket-sub" id="tkTypeSub"><span id="tkTypeJp" lang="ja"></span><span class="rsv-area-line" id="tkAreaLine" hidden><svg class="area-ico" aria-hidden="true"><use id="tkAreaIco" href="#area-map-pin" /></svg><span id="tkArea"></span></span></span>
                                                 </div>
                                             </div>
                                         </div>

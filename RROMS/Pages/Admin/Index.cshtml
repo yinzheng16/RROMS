@@ -1,0 +1,524 @@
+@page
+@model RROMS.Pages.Admin.Index
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@inject Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = "Admin Overview";
+
+    var o = Model.Overview;
+    var now = o.GeneratedAt;
+
+    // ---------- Links to other members' pages ----------
+    // null = that page is not on develop yet, so the link is shown as disabled.
+    // When the page is merged, replace null with the address in the comment.
+    string? reservationsUrl = null; // "/Staff"          (US16, Member 2)
+    string? ordersUrl = null;       // "/Staff/Orders"   (US25, Member 3)
+    string? paymentsUrl = null;     // "/Admin/Payments" (US40, Member 4)
+    string? reportsUrl = null;      // "/Admin/Reports"  (US44, Member 5)
+
+    // ---------- Greeting ----------
+    var me = await UserManager.GetUserAsync(User);
+    var adminName = string.IsNullOrWhiteSpace(me?.FullName) ? "Admin" : me!.FullName;
+    var greeting = now.Hour < 12 ? "Good morning" : now.Hour < 18 ? "Good afternoon" : "Good evening";
+
+    // ---------- Opening status ----------
+    var isOpenNow = false;
+    var openStatus = "Closed today";
+    string? closesIn = null;
+    var dayProgress = 0;
+
+    if (!o.IsClosedToday && o.TodayOpenTime.HasValue && o.TodayCloseTime.HasValue)
+    {
+        var open = o.TodayOpenTime.Value.ToTimeSpan();
+        var close = o.TodayCloseTime.Value.ToTimeSpan();
+        var time = now.TimeOfDay;
+
+        if (close <= open)
+        {
+            isOpenNow = true;
+            openStatus = "Open today";
+        }
+        else if (time < open)
+        {
+            openStatus = "Opens at " + o.TodayOpenTime.Value.ToString("h:mm tt");
+        }
+        else if (time >= close)
+        {
+            openStatus = "Closed for today";
+        }
+        else
+        {
+            isOpenNow = true;
+            openStatus = "Open now";
+            closesIn = "Closes in " + Duration(close - time);
+            dayProgress = (int)Math.Round((time - open).TotalMinutes * 100 / (close - open).TotalMinutes);
+        }
+    }
+
+    // Hanging sign: 営業中 (open), 準備中 (not open yet / finished), 休業 (closed all day)
+    var signText = isOpenNow ? "営業中" : (o.IsClosedToday ? "休業" : "準備中");
+
+    // ---------- Period words ----------
+    var periodWord = o.Period switch
+    {
+        OverviewPeriod.Week => "this week",
+        OverviewPeriod.Month => "this month",
+        _ => "today"
+    };
+    var periodLabel = RangeLabel(o.PeriodStart, o.PeriodEnd);
+
+    // ---------- Today's reservations ----------
+    var coverPercent = o.TotalSeatCount > 0
+        ? Math.Min(100, (int)Math.Round(o.TodayGuestCount * 100.0 / o.TotalSeatCount))
+        : 0;
+    var upcoming = o.UpcomingReservations.Take(3).ToList();
+    var nextGuest = upcoming.FirstOrDefault();
+    var latestOrders = o.LatestOrders.Take(3).ToList();
+    var latestPayments = o.LatestPayments.Take(3).ToList();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-overview.css" asp-append-version="true" />
+}
+
+<div class="ov">
+
+    <!-- ===== 1. Daily pad ===== -->
+    <section class="ov-pad" aria-label="Today at YORU">
+        <div class="ov-pad-bind">
+            <span>YORU IZAKAYA · DAILY PAD · No. @now.ToString("MMdd")</span>
+            <span class="ov-updated">
+                <span class="dot"></span>Updated @now.ToString("h:mm tt")
+                <a class="ov-refresh" asp-page="/Admin/Index" asp-route-period="@Model.Period">↻ Refresh</a>
+            </span>
+        </div>
+
+        <div class="row g-0 ov-pad-sheet">
+            <div class="ov-art" aria-hidden="true">
+                <img src="~/images/admin/overview-lanterns.svg" alt="" />
+            </div>
+
+            <div class="ov-fuda @(isOpenNow ? null : "closed")" role="img" aria-label="@openStatus">
+                <span class="cord"></span>
+                <div class="board">
+                    @foreach (var ch in signText)
+                    {
+                        <span>@ch</span>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-5 ov-pad-left">
+                <p class="eyebrow">Admin Overview <span class="jp">本日の概要</span></p>
+                <h1 class="ov-hello">@greeting, <span>@adminName.</span></h1>
+                <div class="ov-date">
+                    <b>@now.Day</b>
+                    <span><strong>@now.ToString("dddd, MMMM yyyy")</strong> · <span class="jp">@Wareki(now)</span></span>
+                </div>
+            </div>
+
+            <div class="col-lg-3 d-none d-lg-block" aria-hidden="true"></div>
+
+            <div class="col-lg-4 ov-pad-right">
+                <div class="ov-svc">
+                    <div class="ov-svc-head">
+                        <h2>Today's Service <span class="jp">本日の営業</span></h2>
+                        <span class="when">@now.ToString("d MMM").ToUpperInvariant()</span>
+                    </div>
+
+                    <div class="ov-svc-row">
+                        <span class="k">Opening hours<small>営業時間</small></span>
+                        <span class="v">
+                            @if (o.IsClosedToday || !o.TodayOpenTime.HasValue || !o.TodayCloseTime.HasValue)
+                            {
+                                <text>Closed today</text>
+                            }
+                            else
+                            {
+                                <text>@o.TodayOpenTime.Value.ToString("h:mm tt") – @o.TodayCloseTime.Value.ToString("h:mm tt")</text>
+                            }
+                            <em>@(closesIn ?? openStatus)</em>
+                        </span>
+                    </div>
+                    @if (closesIn != null)
+                    {
+                        <div class="ov-meter" role="progressbar" aria-label="Today's service" aria-valuenow="@dayProgress" aria-valuemin="0" aria-valuemax="100">
+                            <i style="width:@(dayProgress)%"></i>
+                        </div>
+                    }
+
+                    <div class="ov-svc-row">
+                        <span class="k">Active tables<small>お席</small></span>
+                        <span class="v">@o.ActiveTableCount · @o.TotalSeatCount seats</span>
+                    </div>
+
+                    <div class="ov-svc-row">
+                        <span class="k">Menu items<small>お品書き</small></span>
+                        <span class="v">
+                            @o.AvailableMenuItemCount / @o.TotalMenuItemCount available
+                            @if (o.UnavailableMenuItemCount > 0)
+                            {
+                                <em class="warn">@o.UnavailableMenuItemCount marked unavailable</em>
+                            }
+                            else
+                            {
+                                <em>Every dish can be ordered</em>
+                            }
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 2. Needs attention ===== -->
+    <section aria-label="Needs attention">
+        <div class="ov-label">
+            Needs Attention <span class="jp">要対応</span>
+            @if (o.AttentionCount > 0)
+            {
+                <span class="ov-count-pill">@o.AttentionCount to check</span>
+            }
+        </div>
+
+        @if (o.AttentionCount == 0)
+        {
+            <div class="ov-clear">
+                <span class="ov-ok-stamp"><span>問題</span><span>なし</span></span>
+                <div><b>All clear</b><span>Nothing needs your attention right now.</span></div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @if (o.PendingReservationCount > 0)
+                {
+                    <div class="col-md-4">
+                        <a class="ov-memo hot @(reservationsUrl == null ? "disabled" : null)" href="@reservationsUrl">
+                            <b>@o.PendingReservationCount</b>
+                            <div>
+                                <strong>@(o.PendingReservationCount == 1 ? "Reservation" : "Reservations") to confirm</strong>
+                                <span class="sub">Pending · first one at @o.FirstPendingReservationAt?.ToString("h:mm tt")</span>
+                            </div>
+                            <span class="go">Open reservations →</span>
+                        </a>
+                    </div>
+                }
+
+                @if (o.PendingOrderCount > 0)
+                {
+                    <div class="col-md-4">
+                        <a class="ov-memo hot @(ordersUrl == null ? "disabled" : null)" href="@ordersUrl">
+                            <b>@o.PendingOrderCount</b>
+                            <div>
+                                <strong>@(o.PendingOrderCount == 1 ? "Order" : "Orders") not started</strong>
+                                <span class="sub">Pending · oldest @o.OldestPendingOrderNo</span>
+                            </div>
+                            <span class="go">Open order queue →</span>
+                        </a>
+                    </div>
+                }
+
+                @if (o.FailedPaymentCount > 0)
+                {
+                    var fp = o.LatestFailedPayment;
+                    <div class="col-md-4">
+                        <a class="ov-memo @(paymentsUrl == null ? "disabled" : null)" href="@paymentsUrl">
+                            <b>@o.FailedPaymentCount</b>
+                            <div>
+                                <strong>Failed @(o.FailedPaymentCount == 1 ? "payment" : "payments")</strong>
+                                @if (fp != null)
+                                {
+                                    <span class="sub">@fp.Order?.OrderNo · @fp.Method · RM @fp.Amount.ToString("N2")</span>
+                                }
+                            </div>
+                            <span class="go">Open payments →</span>
+                        </a>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- ===== 3. Order tickets (Today / This week / This month) ===== -->
+    <section id="tickets" aria-label="Overview numbers" style="scroll-margin-top: 1.5rem">
+        <div class="ov-label">
+            Overview <span class="jp">伝票</span>
+            <nav class="ov-seg" aria-label="Period">
+                <a asp-page="/Admin/Index" asp-fragment="tickets" class="@(o.Period == OverviewPeriod.Today ? "active" : null)">Today</a>
+                <a asp-page="/Admin/Index" asp-route-period="week" asp-fragment="tickets" class="@(o.Period == OverviewPeriod.Week ? "active" : null)">This week</a>
+                <a asp-page="/Admin/Index" asp-route-period="month" asp-fragment="tickets" class="@(o.Period == OverviewPeriod.Month ? "active" : null)">This month</a>
+            </nav>
+        </div>
+
+        <div class="ov-rail">
+            <div class="row g-4">
+                <div class="col-sm-6 col-xl-3">
+                    <a class="ov-slip" href="@reservationsUrl" style="--r:-1.2deg">
+                        <span class="ov-clip"></span>
+                        <div class="ov-slip-no"><span>TICKET No. 01</span><span>@periodLabel</span></div>
+                        <h3>Reservations <span class="jp">予約</span></h3>
+                        <div class="ov-slip-num">@o.PeriodReservationCount</div>
+                        <div class="ov-slip-cap">Reservations scheduled @periodWord</div>
+                        <div class="ov-slip-foot"><span>@(reservationsUrl == null ? "" : "View all")</span><span>@(reservationsUrl == null ? "" : "→")</span></div>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <a class="ov-slip" href="@ordersUrl" style="--r:.9deg">
+                        <span class="ov-clip"></span>
+                        <div class="ov-slip-no"><span>TICKET No. 02</span><span>@periodLabel</span></div>
+                        <h3>Orders <span class="jp">注文</span></h3>
+                        <div class="ov-slip-num">@o.PeriodOrderCount</div>
+                        <div class="ov-slip-cap">Orders created @periodWord</div>
+                        <div class="ov-slip-foot"><span>@(ordersUrl == null ? "" : "View all")</span><span>@(ordersUrl == null ? "" : "→")</span></div>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <a class="ov-slip" href="@paymentsUrl" style="--r:-.6deg">
+                        <span class="ov-clip"></span>
+                        <div class="ov-slip-no"><span>TICKET No. 03</span><span>@periodLabel</span></div>
+                        <h3>Payments <span class="jp">支払</span></h3>
+                        <div class="ov-slip-num">@o.PeriodPaymentCount</div>
+                        <div class="ov-slip-cap">Payments received @periodWord</div>
+                        <div class="ov-slip-foot"><span>@(paymentsUrl == null ? "" : "View all")</span><span>@(paymentsUrl == null ? "" : "→")</span></div>
+                    </a>
+                </div>
+                <div class="col-sm-6 col-xl-3">
+                    <a class="ov-slip receipt" href="@reportsUrl" style="--r:1.4deg">
+                        <span class="ov-clip"></span>
+                        <div class="ov-slip-no"><span>RECEIPT</span><span>@periodLabel</span></div>
+                        <h3>Revenue <span class="jp">売上</span></h3>
+                        <div class="ov-slip-num"><small>RM</small>@o.PeriodPaymentTotal.ToString("N2")</div>
+                        <div class="ov-total-line"><span>TOTAL @periodWord.ToUpperInvariant()</span><span>合計</span></div>
+                        <div class="ov-slip-foot"><span>@(reportsUrl == null ? "" : "Open reports")</span><span>@(reportsUrl == null ? "" : "→")</span></div>
+                        @if (o.PeriodPaymentTotal > 0)
+                        {
+                            <span class="ov-paid" aria-hidden="true"><b>PAID</b><span>済</span></span>
+                        }
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 4. Today's activity ===== -->
+    <section aria-label="Today's activity">
+        <div class="ov-label">Today's Activity <span class="jp">本日の動き</span></div>
+
+        <div class="row g-4 align-items-start">
+
+            <!-- Today's reservations -->
+            <div class="col-lg-5">
+                <div class="ov-card">
+                    <div class="ov-card-head">
+                        <h3>Today's Reservations <span class="jp">本日の予約</span></h3>
+                        @LinkOrDisabled(reservationsUrl, "View all →")
+                    </div>
+
+                    @if (o.TodayGuestCount > 0)
+                    {
+                        <div class="ov-covers">
+                            <span><b>@o.TodayGuestCount</b> guests booked today</span>
+                            <span class="bar"><i style="width:@(coverPercent)%"></i></span>
+                            <span>@coverPercent% of @o.TotalSeatCount seats</span>
+                        </div>
+                    }
+
+                    @if (upcoming.Count == 0)
+                    {
+                        <div class="ov-empty-book">
+                            <span class="ov-empty-stamp"><span>予約</span><span>なし</span></span>
+                            <div>
+                                <b>@(o.TodayReservationCount == 0 ? "No bookings for today yet" : "No more guests to arrive")</b>
+                                <span>@(o.TodayReservationCount == 0 ? "New reservations will be written in here as guests book." : "Every booking for today has been seated or closed.")</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="ov-book-cols"><span>Time</span><span>Guest</span><span>Pax</span><span>Status</span></div>
+                        <div class="ov-book-lines">
+                            @foreach (var r in upcoming)
+                            {
+                                var hasRequest = !string.IsNullOrWhiteSpace(r.SpecialRequest);
+                                var tableText = r.Table != null ? "Table " + r.Table.TableNumber : "No table yet";
+                                <div class="ov-brow @(r == nextGuest ? "next" : null)">
+                                    <span class="t">@r.ReservedAt.ToString("h:mm")<small>@r.ReservedAt.ToString("tt")</small></span>
+                                    <span class="g">
+                                        <b>@(r.User?.FullName ?? "Guest") · @tableText</b>
+                                        <em class="@(hasRequest ? "req" : null)">@(hasRequest ? r.SpecialRequest : "No special request")</em>
+                                    </span>
+                                    <span class="px">@r.Guests</span>
+                                    <span><span class="status-badge status-@r.Status">@Label(r.Status)</span></span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <div class="ov-card-foot">
+                        @if (nextGuest != null)
+                        {
+                            <text>Next guest in @Duration(nextGuest.ReservedAt - now) · @o.RemainingReservationCount of @o.TodayReservationCount still to arrive</text>
+                        }
+                        else
+                        {
+                            <text>@o.TodayReservationCount @(o.TodayReservationCount == 1 ? "reservation" : "reservations") today</text>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order tickets -->
+            <div class="col-md-6 col-lg-4">
+                <div class="ov-plain-head">
+                    <h3>Order Tickets <span class="jp">注文</span></h3>
+                    @LinkOrDisabled(ordersUrl, "View all →")
+                </div>
+
+                @if (latestOrders.Count == 0)
+                {
+                    <div class="ov-empty-tk">
+                        <span class="ov-empty-stamp"><span>注文</span><span>なし</span></span>
+                        <div><b>No orders yet</b><span>New tickets will hang here when guests order.</span></div>
+                    </div>
+                }
+                else
+                {
+                    <div class="ov-tickets">
+                        @foreach (var order in latestOrders)
+                        {
+                            <div class="ov-tk @TicketClass(order.Status)">
+                                <b>@order.OrderNo</b>
+                                <span class="status-badge status-@order.Status">@Label(order.Status)</span>
+                                <span class="meta">@Label(order.OrderType) · <strong>RM @order.TotalAmount.ToString("N2")</strong></span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Payments receipt -->
+            <div class="col-md-6 col-lg-3">
+                <div class="ov-receipt">
+                    <div class="ov-receipt-top"><b>YORU IZAKAYA</b>PAYMENTS · 支払 · @now.ToString("dd/MM/yyyy")</div>
+
+                    @if (latestPayments.Count == 0)
+                    {
+                        <div class="ov-empty-till">
+                            <span class="ov-empty-stamp"><span>会計</span><span>なし</span></span>
+                            <b>No payments yet today</b>
+                            <span>Paid bills will print on this receipt.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var p in latestPayments)
+                        {
+                            <div class="ov-trow">
+                                <span>@p.Order?.OrderNo</span>
+                                <span class="a">RM @p.Amount.ToString("N2")</span>
+                                <span class="m">@p.Method · @(p.PaidAt?.ToString("h:mm tt") ?? "not paid")</span>
+                                <span class="s"><span class="status-badge status-@p.Status">@p.Status</span></span>
+                            </div>
+                        }
+                    }
+
+                    <div class="ov-tsum"><span>Total today</span><span>RM @o.TodayPaymentTotal.ToString("N2")</span></div>
+                    @LinkOrDisabled(paymentsUrl, "View all →")
+                </div>
+            </div>
+
+        </div>
+    </section>
+</div>
+
+<script>
+    // Today / This week / This month: swap only the ticket section, no page reload.
+    document.addEventListener("click", async function (e) {
+        var link = e.target.closest("#tickets .ov-seg a");
+        if (!link) return;
+        e.preventDefault();
+
+        var url = link.getAttribute("href");
+        try {
+            var res = await fetch(url);
+            var html = await res.text();
+            var fresh = new DOMParser().parseFromString(html, "text/html").getElementById("tickets");
+            var current = document.getElementById("tickets");
+
+            if (fresh && current) {
+                current.innerHTML = fresh.innerHTML;
+                history.replaceState(null, "", url.split("#")[0]);
+            } else {
+                window.location.href = url;
+            }
+        } catch {
+            window.location.href = url;
+        }
+    });
+</script>
+
+@functions {
+    // Shows a link, or a greyed-out label when the target page does not exist yet.
+    static Microsoft.AspNetCore.Html.IHtmlContent LinkOrDisabled(string? url, string text)
+    {
+        var enc = System.Text.Encodings.Web.HtmlEncoder.Default;
+        return url == null
+            ? new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"ov-link disabled\" aria-disabled=\"true\">{enc.Encode(text)}</span>")
+            : new Microsoft.AspNetCore.Html.HtmlString($"<a class=\"ov-link\" href=\"{enc.Encode(url)}\">{enc.Encode(text)}</a>");
+    }
+
+    // Uses the [Display(Name = "...")] label if the enum value has one, e.g. "Ready to Serve".
+    static string Label(Enum value)
+    {
+        var member = value.GetType().GetMember(value.ToString()).FirstOrDefault();
+        var display = member?
+            .GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false)
+            .OfType<System.ComponentModel.DataAnnotations.DisplayAttribute>()
+            .FirstOrDefault();
+        return display?.GetName() ?? value.ToString();
+    }
+
+    static string TicketClass(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending => "k-pend",
+        OrderStatus.Preparing or OrderStatus.ReadyToServe => "k-prep",
+        OrderStatus.Served or OrderStatus.Completed => "k-done",
+        _ => ""
+    };
+
+    // "1 h 15 min" or "45 min".
+    static string Duration(TimeSpan span)
+    {
+        if (span < TimeSpan.Zero) span = TimeSpan.Zero;
+        return span.TotalHours >= 1
+            ? $"{(int)span.TotalHours} h {span.Minutes} min"
+            : $"{span.Minutes} min";
+    }
+
+    // "25 OCT", "19–25 OCT" or "28 SEP – 1 OCT".
+    static string RangeLabel(DateTime start, DateTime end)
+    {
+        var endText = end.ToString("d MMM").ToUpperInvariant();
+        if (start.Date == end.Date) return endText;
+        if (start.Month == end.Month) return $"{start.Day}–{endText}";
+        return $"{start.ToString("d MMM").ToUpperInvariant()} – {endText}";
+    }
+
+    // Japanese calendar date, e.g. 令和8年10月26日（月）. Returns "" if the system can't format it.
+    static string Wareki(DateTime date)
+    {
+        try
+        {
+            var jp = new System.Globalization.CultureInfo("ja-JP");
+            jp.DateTimeFormat.Calendar = new System.Globalization.JapaneseCalendar();
+            return date.ToString("gg y年M月d日", jp) + "（" + jp.DateTimeFormat.GetShortestDayName(date.DayOfWeek) + "）";
+        }
+        catch
+        {
+            return "";
+        }
+    }
+}

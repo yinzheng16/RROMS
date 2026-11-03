@@ -8,18 +8,12 @@ public interface IReservationService
     // Get all table types, including inactive types.
     Task<List<TableTypeDefinition>> GetTableTypesAsync();
 
-    // Get one table type by ID.
-    Task<TableTypeDefinition?> GetTableTypeByIdAsync(int id);
-
     // Add or update a table type.
     // Id = 0 means Add; otherwise Edit.
     // createFirstTable is used only when adding a new type.
-    // applyToExistingTables is used only when editing.
     Task<ReservationResult> SaveTableTypeAsync(
         TableTypeDefinition input,
-        bool createFirstTable = false,
-        string? firstTableName = null,
-        bool applyToExistingTables = false);
+        bool createFirstTable = false);
 
     // Delete a type only if it has no tables.
     Task<ReservationResult> DeleteTableTypeAsync(int id);
@@ -30,9 +24,6 @@ public interface IReservationService
         int tableTypeId,
         IFormFile photo);
 
-    // Suggest the next available table name, e.g. P2 or VIP02.
-    Task<string> GetNextTableNameAsync(int tableTypeId);
-
     // ---- US11: dining areas, tables, operating hours ----
     Task<List<DiningArea>> GetAreasWithTablesAsync();
     /// <summary>Id = 0 adds a new area, otherwise updates it.</summary>
@@ -42,9 +33,6 @@ public interface IReservationService
     /// <summary>Id = 0 adds a new table, otherwise updates it (live status and photo are not changed here).</summary>
     Task<ReservationResult> SaveTableAsync(RestaurantTable input);
     Task<ReservationResult> DeleteTableAsync(int id);
-    Task<ReservationResult> SetTablePhotoAsync(int tableId, IFormFile photo);
-    Task<ReservationResult> SetTypePhotoAsync(TableType type, IFormFile photo);
-    Task<ReservationResult> SetTableStatusAsync(int id, TableStatus status);
     Task<ReservationResult> RemoveTableTypePhotoAsync(int tableTypeId);
 
     /// <summary>Always returns 7 rows (Monday to Sunday).</summary>

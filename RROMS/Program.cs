@@ -105,10 +105,18 @@ builder.Services.AddScoped<IOrderStatusNotifier, OrderStatusNotifier>(); // Memb
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
+builder.Services.AddScoped<IStaffReservationService, StaffReservationService>();   // Member 2: US16 staff reservations
+builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics
+builder.Services.AddScoped<IAdminOverviewService, AdminOverviewService>();   // Member 5: US41
 
-//Member 5
+// Member 5: Feedback, Reports & Dashboard
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();   // US42
+builder.Services.AddScoped<IAdminFeedbackService, AdminFeedbackService>();   // US43
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ISalesReportService, SalesReportService>();   // Member 5: US44 Filtered reports
+builder.Services.AddScoped<IDashboardService, DashboardService>();   // Member 5: US46 Dashboard
 var app = builder.Build();
+
 
 // Apply migrations and create the roles and test accounts.
 using (var scope = app.Services.CreateScope())

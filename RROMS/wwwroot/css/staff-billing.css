@@ -1793,6 +1793,11 @@
     color: var(--yoru-ink);
 }
 
+/* Takeaway order no.: same grey on every row (paid or not), 2 Nov */
+.us32-billing .billing-list tbody td.billing-order-no {
+    color: var(--yoru-olive-text);
+}
+
 /* Dine-in / Takeaway toggle: a small gap so the hover colour never touches the black tab */
 .us32-billing .billing-tabs {
     gap: 4px;
@@ -1801,3 +1806,182 @@
     .us32-billing .billing-tabs .nav-item {
         min-width: 0;
     }
+
+/* =====================================================
+   LIST GROUPS: Today / Earlier · still unpaid
+   ===================================================== */
+
+.us32-billing .billing-group + .billing-group {
+    margin-top: 28px;
+}
+
+.us32-billing .billing-group-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+
+.us32-billing .billing-group-count {
+    display: inline-block;
+    min-width: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .08);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Older unpaid bills: red title so staff notice them */
+.us32-billing .billing-group-older .billing-group-title {
+    color: #9b2823;
+}
+
+.us32-billing .billing-group-older .billing-group-count {
+    background: #fce8e7;
+    color: #9b2823;
+}
+
+/* Today / Earlier titles: same Mincho font as the table no. (TFT001) */
+.us32-billing .billing-card h6.billing-group-title {
+    align-items: baseline;
+    gap: 10px;
+    margin: 4px 0 12px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: .02em;
+    color: var(--yoru-ink);
+}
+
+.us32-billing .billing-card h6.billing-group-title .billing-group-count {
+    min-width: 0;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: #F4ECDF;
+    color: #6F5B47;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.us32-billing .billing-group-older h6.billing-group-title {
+    color: var(--yoru-red-text);
+}
+
+.us32-billing .billing-group-older h6.billing-group-title .billing-group-count {
+    background: #FCE8E7;
+    color: #9B2823;
+}
+
+/* Same space above "Today" and above "Earlier · still unpaid" (24px each) */
+.us32-billing .billing-filters {
+    margin-bottom: 24px;
+}
+
+.us32-billing .billing-group + .billing-group {
+    margin-top: 24px;
+}
+
+.us32-billing .billing-card h6.billing-group-title {
+    margin-top: 0;
+}
+
+/* Newest / oldest first (same look as the search box) */
+.us32-billing .billing-sort {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+    .us32-billing .billing-sort .bi {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--yoru-olive-text);
+        pointer-events: none;
+    }
+
+    .us32-billing .billing-sort .form-select {
+        height: 42px;
+        min-width: 168px;
+        padding-left: 36px;
+        border-color: var(--yoru-line);
+        border-radius: 8px;
+        background-color: var(--yoru-paper);
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+        .us32-billing .billing-sort .form-select:hover {
+            border-color: var(--yoru-gold);
+        }
+
+@media screen and (max-width: 576px) {
+    .us32-billing .billing-sort {
+        flex-basis: 100%;
+    }
+
+        .us32-billing .billing-sort .form-select {
+            width: 100%;
+        }
+}
+
+/* =====================================================
+   2 Nov: make unconfirmed / unpaid rows easier to spot (option A)
+   Left colour bar + small dot; status text not bold.
+   ===================================================== */
+
+/* Bar drawn with an inset shadow (no border), so the columns don't move.
+   The second shadow keeps Bootstrap's row / hover background. */
+.us32-billing .billing-list tbody tr[data-state="nobill"] > td:first-child {
+    box-shadow: inset 4px 0 0 var(--yoru-red),
+                inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
+}
+
+.us32-billing .billing-list tbody tr[data-state="awaiting"] > td:first-child {
+    box-shadow: inset 4px 0 0 #D99A1E,
+                inset 0 0 0 9999px var(--bs-table-bg-state, var(--bs-table-bg-type, var(--bs-table-accent-bg)));
+}
+
+.us32-billing .billing-list .bill-state {
+    font-weight: 500;
+}
+
+    .us32-billing .billing-list .bill-state::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: .12em;
+        background: #9A9A90;
+    }
+
+.us32-billing .billing-list .bill-state-nobill {
+    color: var(--yoru-red-text);
+}
+
+    .us32-billing .billing-list .bill-state-nobill::before {
+        background: var(--yoru-red);
+        vertical-align: .04em; /* a little lower: optical centre of "No bill" */
+    }
+
+.us32-billing .billing-list .bill-state-awaiting {
+    color: #845400;
+}
+
+    .us32-billing .billing-list .bill-state-awaiting::before {
+        background: #D99A1E;
+    }
+
+.us32-billing .billing-list .bill-state-paid {
+    color: var(--yoru-olive-text);
+}
