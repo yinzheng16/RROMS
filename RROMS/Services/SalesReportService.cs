@@ -56,8 +56,9 @@ namespace RROMS.Services
         {
             var from = q.From.Date;
             var to = q.To.Date;
-            var prevTo = from.AddDays(-1);
-            var prevFrom = prevTo.AddDays(-(q.Days - 1));
+            var prevFrom = q.PreviousFrom;
+            var prevTo = q.PreviousTo;
+            var shift = (from - prevFrom).Days;   // chart: day N of this period vs day N of the earlier one
 
             // One trip to the database covers this period and the one before it.
             var facts = await LoadFactsAsync(q.Type, prevFrom, to.AddDays(1));
@@ -115,7 +116,7 @@ namespace RROMS.Services
                 decimal? prev = null;
                 if (q.Compare)
                 {
-                    var prevDay = day.AddDays(-q.Days);
+                    var prevDay = day.AddDays(-shift);
                     prev = ChartValue(q.Type, previous.Where(f => f.Date.Date == prevDay));
                 }
                 result.Chart.Add(new ReportChartPoint
@@ -384,7 +385,9 @@ namespace RROMS.Services
             var compare = "";
             if (main.Change.HasValue)
             {
-                var span = q.Days == 1 ? "the day before" : $"the {q.Days} days before";
+                var span = string.IsNullOrEmpty(q.CompareSpan)
+                    ? (q.Days == 1 ? "the day before" : $"the {q.Days} days before")
+                    : q.CompareSpan;
                 compare = main.Change == 0
                     ? $", the same as {span}"
                     : $", {Math.Abs(main.Change.Value)}% {(main.Change > 0 ? "more" : "less")} than {span}";
