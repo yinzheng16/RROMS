@@ -1123,6 +1123,26 @@ public partial class ReservationService : IReservationService
                 $"({dateText}). Please choose different dates.");
         }
 
+        // Do not close a day (or cut its hours) that already has bookings.
+        // Serializable: a customer cannot book into these dates while we check and save.
+        await using var tx = await _db.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.Serializable);
+
+        var proposed = new SpecialDate
+        {
+            Id = input.Id,
+            Date = startDate,
+            EndDate = endDate,
+            Name = name,
+            IsClosed = input.IsClosed,
+            OpenTime = input.IsClosed ? null : input.OpenTime,
+            CloseTime = input.IsClosed ? null : input.CloseTime
+        };
+
+        var clash = await FindBookingClashAsync(input.Id, startDate, endDate, proposed);
+        if (clash is not null)
+            return ReservationResult.Fail(clash);
+
         SpecialDate row;
 
         if (input.Id == 0)
@@ -1150,6 +1170,7 @@ public partial class ReservationService : IReservationService
         try
         {
             await _db.SaveChangesAsync();
+            await tx.CommitAsync();
             return ReservationResult.Ok();
         }
         catch (DbUpdateException)
@@ -1160,6 +1181,63 @@ public partial class ReservationService : IReservationService
         }
     }
 
+    // Pending and Confirmed bookings that are open now but would not be after this change:
+    // the special date being saved (proposed), or removed (proposed is null). Bookings after
+    // midnight that belong to the previous day's opening are included. Returns the error text, or null.
+    private async Task<string?> FindBookingClashAsync(
+        int specialId, DateTime startDate, DateTime endDate, SpecialDate? proposed)
+    {
+        var hours = await GetOperatingHoursAsync();
+        var current = await _db.SpecialDates.AsNoTracking().ToListAsync();
+
+        var after = current.Where(s => s.Id != specialId).ToList();
+        if (proposed is not null) after.Add(proposed);
+
+        var booked = await _db.Reservations
+            .AsNoTracking()
+            .Where(r =>
+                r.ReservedAt >= startDate &&
+                r.ReservedAt < endDate.AddDays(2) &&
+                (r.Status == ReservationStatus.Pending ||
+                 r.Status == ReservationStatus.Confirmed))
+            .Select(r => r.ReservedAt)
+            .ToListAsync();
+
+        var clashes = booked
+            .Where(t => IsOpenAt(t, hours, current) && !IsOpenAt(t, hours, after))
+            .ToList();
+
+        if (clashes.Count == 0) return null;
+
+        var first = clashes.Min();
+        var count = clashes.Count;
+        var when = first.ToString("d MMM yyyy, h:mm tt",
+            System.Globalization.CultureInfo.InvariantCulture);
+        var noun = count == 1 ? "reservation is" : "reservations are";
+
+        if (proposed is null)
+            return $"{count} {noun} booked in this special date's opening hours, which the normal weekly hours " +
+                   $"do not cover (first: {when}). Please cancel or move them in Today's reservations before deleting.";
+
+        return proposed.IsClosed
+            ? $"{count} {noun} already booked on these dates (first: {when}). " +
+              "Please cancel or move them in Today's reservations before closing."
+            : $"{count} {noun} already booked outside these opening hours (first: {when}). " +
+              "Please cancel or move them in Today's reservations, or choose hours that cover them.";
+    }
+
+    // Is the restaurant open at this time? Looks at that day's opening and at the day before
+    // (a day that runs past midnight).
+    private static bool IsOpenAt(DateTime time, List<OperatingHour> hours, List<SpecialDate> specials)
+    {
+        foreach (var day in new[] { time.Date, time.Date.AddDays(-1) })
+        {
+            var session = SessionFor(day, hours, specials);
+            if (time >= session.Open && time < session.Close) return true;
+        }
+        return false;
+    }
+
     // Delete a special date.
     public async Task<ReservationResult> DeleteSpecialDateAsync(int id)
     {
@@ -1168,8 +1246,18 @@ public partial class ReservationService : IReservationService
         if (row is null)
             return ReservationResult.Fail("Special date not found.");
 
+        // Deleting puts the normal weekly hours back; do not leave bookings outside them.
+        await using var tx = await _db.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.Serializable);
+
+        var clash = await FindBookingClashAsync(
+            row.Id, row.Date.Date, (row.EndDate ?? row.Date).Date, null);
+        if (clash is not null)
+            return ReservationResult.Fail(clash);
+
         _db.SpecialDates.Remove(row);
         await _db.SaveChangesAsync();
+        await tx.CommitAsync();
 
         return ReservationResult.Ok();
     }

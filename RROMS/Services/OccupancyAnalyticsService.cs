@@ -179,9 +179,19 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         var inv = CultureInfo.InvariantCulture;
         var sb = new StringBuilder();
 
+        // the report says which dining area it was cut to ("All" when none was chosen) and which table types it covers
+        var areaName = filter.AreaId.HasValue
+            ? await _db.DiningAreas.AsNoTracking().Where(a => a.Id == filter.AreaId.Value)
+                .Select(a => a.Name).FirstOrDefaultAsync(ct)
+            : null;
+        // every table type that is in this report (one name when a table type was chosen)
+        var typeNames = string.Join("; ", ds.Tables.Select(x => x.TypeName).Distinct());
+
         sb.AppendLine("Table occupancy report");
         sb.AppendLine($"From,{filter.From:yyyy-MM-dd}");
         sb.AppendLine($"To,{filter.To:yyyy-MM-dd}");
+        sb.AppendLine($"Dining area,{Csv(areaName ?? "All")}");
+        sb.AppendLine($"Table type,{Csv(typeNames.Length > 0 ? typeNames : "None")}");
         sb.AppendLine($"Counted,{(filter.IncludeWalkIns ? "Reservations and walk-ins" : "Reservations only")}");
         sb.AppendLine($"Tables,{totals.TableCount}");
         sb.AppendLine($"Reservations,{totals.Reservations}");

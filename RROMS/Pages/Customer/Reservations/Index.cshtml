@@ -33,6 +33,7 @@
             guests = r.Guests,
             seating = IndexModel.Seating(r),
             area = IndexModel.Area(r),
+            areaIcon = r.AreaIcon,
             tableNumber = IndexModel.TableNumber(r),
             request = string.IsNullOrWhiteSpace(r.SpecialRequest) ? "None" : r.SpecialRequest,
             specialRequest = r.SpecialRequest ?? "",
@@ -62,6 +63,7 @@
 <link rel="stylesheet" href="~/css/my-reservations-change.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/my-reservations-history.css" asp-append-version="true" />
 <partial name="_ReservationIcons" />
+<partial name="_AreaIcons" />
 <section class="myr" id="myReservations" aria-labelledby="myrTitle" data-statuses-url="@Url.Page("/Customer/Reservations/Index", "Statuses")">
     <div class="myr-wrap">
         <header class="myr-heading">
@@ -95,7 +97,7 @@
                         </div>
                         <div class="myr-row-body">
                             <div class="myr-facts">
-                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong>@IndexModel.Seating(next)</strong>@if (nextArea is not null){<span class="myr-area">@nextArea</span>}</div></div>
+                                <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong>@IndexModel.Seating(next)</strong>@if (nextArea is not null){<span class="myr-area"><svg class="area-ico" aria-hidden="true"><use href="@IndexModel.AreaIconHref(next.AreaIcon)" /></svg>@nextArea</span>}</div></div>
                                 <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-users" /></svg><div><span class="myr-label">Guests</span><strong>@next.Guests @(next.Guests == 1 ? "guest" : "guests")</strong></div></div>
                                 <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-ticket" /></svg><div><span class="myr-label">Reservation reference</span><strong>@next.ReferenceNo</strong></div></div>
                                 <div class="myr-fact"><svg aria-hidden="true"><use href="#myr-coins" /></svg><div><span class="myr-label">Minimum spend (per booking)</span><strong>@IndexModel.Spend(next)</strong></div></div>
@@ -139,7 +141,7 @@
                                 </div>
                                 <div class="myr-later-main">
                                     <strong class="myr-later-time"><time>@IndexModel.ClockParts(r.ReservedAt).Time <em class="myr-ampm">@IndexModel.ClockParts(r.ReservedAt).Meridiem</em></time><span>@IndexModel.When(r.ReservedAt)</span></strong>
-                                    <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@r.Guests @(r.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@IndexModel.Seating(r)@if (rowArea is not null){<i></i><span>@rowArea</span>}@if (rowTable is not null){<i></i><strong class="myr-later-table">Table @rowTable</strong>}</p>
+                                    <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@r.Guests @(r.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@IndexModel.Seating(r)@if (rowArea is not null){<i></i><svg class="area-ico" aria-hidden="true"><use href="@IndexModel.AreaIconHref(r.AreaIcon)" /></svg><span>@rowArea</span>}@if (rowTable is not null){<i></i><strong class="myr-later-table">Table @rowTable</strong>}</p>
                                     @Html.Raw(TrackHtml(r.Status, null, true))
                                     @if (r.MinimumSpend > 0m)
                                     {
@@ -199,7 +201,7 @@
                             </div>
                             <div class="myr-later-main">
                                 <strong class="myr-later-time"><time>@IndexModel.ClockParts(h.ReservedAt).Time <em class="myr-ampm">@IndexModel.ClockParts(h.ReservedAt).Meridiem</em></time><span>@h.ReservedAt.ToString("yyyy", en)</span></strong>
-                                <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@h.Guests @(h.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@(string.IsNullOrWhiteSpace(h.JapaneseName) ? h.TableTypeName : $"{h.TableTypeName} / {h.JapaneseName}")@if (hArea is not null){<i></i><span>@hArea</span>}@if (!string.IsNullOrWhiteSpace(h.TableNumber)){<i></i><strong class="myr-later-table">Table @h.TableNumber</strong>}</p>
+                                <p><svg aria-hidden="true"><use href="#myr-users" /></svg>@h.Guests @(h.Guests == 1 ? "guest" : "guests")<i></i><svg aria-hidden="true"><use href="#myr-table" /></svg>@(string.IsNullOrWhiteSpace(h.JapaneseName) ? h.TableTypeName : $"{h.TableTypeName} / {h.JapaneseName}")@if (hArea is not null){<i></i><svg class="area-ico" aria-hidden="true"><use href="@IndexModel.AreaIconHref(h.AreaIcon)" /></svg><span>@hArea</span>}@if (!string.IsNullOrWhiteSpace(h.TableNumber)){<i></i><strong class="myr-later-table">Table @h.TableNumber</strong>}</p>
                             </div>
                             <div class="myr-later-ref"><span class="myr-label">Reference</span><strong>@h.ReferenceNo</strong></div>
                             <span class="myr-status @IndexModel.StatusClass(h.Status)"><svg aria-hidden="true"><use href="@IndexModel.StatusIcon(h.Status)" /></svg><span>@IndexModel.StatusLabel(h.Status)</span></span>
@@ -248,7 +250,7 @@
                 </div>
                 <div class="myr-detail-grid myr-detail-grid-two">
                     <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-users" /></svg><div><span class="myr-label">Guests</span><strong data-fill="guestText"></strong></div></div>
-                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong data-fill="seating"></strong><small data-fill="area"></small></div></div>
+                    <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-table" /></svg><div><span class="myr-label">Table type</span><strong data-fill="seating"></strong><small class="myr-area-line" data-area-line hidden><svg class="area-ico" aria-hidden="true"><use href="#area-map-pin" /></svg><span data-fill="area"></span></small></div></div>
                 </div>
                 <div class="myr-detail-grid myr-detail-grid-spend">
                     <div class="myr-detail-cell"><svg aria-hidden="true"><use href="#myr-message" /></svg><div><div class="myr-request-head"><span class="myr-label">Special requests</span><button type="button" class="myr-readmore" id="myrReadMore" aria-expanded="false" hidden>Read more</button></div><div class="myr-request-box" id="myrRequestBox" tabindex="-1"><strong data-fill="request" class="myr-request"></strong></div></div></div>

@@ -298,19 +298,52 @@
 
 .dv-count p { margin: 0; font: 600 22px var(--sr-serif, Georgia, serif); color: #fff3df }
 
-.dv-pref { position: relative; padding: 14px 20px 16px; border: 1px solid var(--g-line); border-radius: 14px; background: var(--panel); flex: 1; overflow: hidden }
+/* dining preferences: same washi banner as the special request, in the narrower right column */
+.dv-pref {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex: 1;
+    min-height: 92px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    color: #3a220d;
+    background: url('../images/staff/yoru-details-washi.webp') 0 0 / 256px 256px repeat;
+    box-shadow: inset 0 0 0 1px rgba(150,100,40,.35), inset 0 0 22px rgba(150,100,40,.28), 0 6px 18px rgba(0,0,0,.35);
+    overflow: hidden;
+}
 
-    .dv-pref::before { content: ""; position: absolute; inset: 0; background: url('../images/staff/yoru-details-seigaiha.webp') 0 0 / 120px 60px repeat; opacity: .5; -webkit-mask-image: linear-gradient(135deg, transparent 35%, #000 100%); mask-image: linear-gradient(135deg, transparent 35%, #000 100%); pointer-events: none }
+    .dv-pref::after { content: ""; position: absolute; right: -4px; top: 0; bottom: 0; width: 150px; background: url('../images/staff/yoru-details-sakura.webp') right center / contain no-repeat; opacity: .95; pointer-events: none }
 
-    .dv-pref > * { position: relative }
+    .dv-pref > * { position: relative; z-index: 1 }
 
-    .dv-pref .dv-h { margin-bottom: 10px; padding-bottom: 0; border: 0; gap: 10px; font-size: 11.5px; letter-spacing: .14em }
+    .dv-pref > svg { flex: none; width: 44px; height: 44px; color: #8a4a1d; stroke-width: 1.5 }
 
-        .dv-pref .dv-h svg { width: 20px; height: 20px }
+    .dv-pref > div { min-width: 0; padding-right: 44px }
 
-    .dv-pref p { margin: 0; font: 400 19px var(--sr-serif, Georgia, serif); color: var(--cream) }
+    .dv-pref small { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; font: 800 13px var(--sr-sans, system-ui, sans-serif); letter-spacing: .2em; color: #5a3410 }
 
-        .dv-pref p.is-none { font-style: italic; color: var(--mute) }
+        .dv-pref small em { padding-left: 12px; border-left: 1px solid rgba(90,52,16,.4); font: 400 15px var(--sr-serif, Georgia, serif); letter-spacing: 0; font-style: normal; color: #7a5a38 }
+
+    .dv-pref p { margin: 3px 0 0; font: 800 22px/1.25 var(--sr-serif, Georgia, serif); color: #2e1a08; overflow-wrap: anywhere }
+
+        .dv-pref p.is-none { font-weight: 400; font-style: italic; font-size: 20px; color: #7a5a38 }
+
+    /* a long text shows three lines and a View more button */
+    .dv-pref.is-long p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: 20px }
+
+    .dv-pref.is-long.is-open p { display: block; -webkit-line-clamp: unset; overflow: visible }
+
+    .dv-pref-more { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 12px; border: 1px solid rgba(90,52,16,.45); border-radius: 999px; background: rgba(90,52,16,.08); color: #5a3410; font: 800 12px var(--sr-sans, system-ui, sans-serif); letter-spacing: .14em; text-transform: uppercase; cursor: pointer; transition: background .2s }
+
+        .dv-pref-more:hover { background: rgba(90,52,16,.18) }
+
+        .dv-pref-more:focus-visible { outline: 2px solid #8a4a1d; outline-offset: 2px }
+
+        .dv-pref-more::after { content: ""; width: 7px; height: 7px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .2s }
+
+    .dv-pref.is-open .dv-pref-more::after { margin-top: 3px; transform: rotate(-135deg) }
 
 /* ------------------------------------------------------------ special request (washi banner) */
 .dv-request {
@@ -769,6 +802,9 @@
   .dv-split.has-past .dv-left { display: flex; flex-direction: column; gap: 16px }
       .dv-split.has-past .dv-left .dv-grid, .dv-split.has-past .dv-left .dv-col { display: contents }
       .dv-split.has-past .dv-left .dv-request, .dv-split.has-past .dv-left .dv-state, .dv-split.has-past .dv-left .dv-pref { margin: 0 }
+      /* the dining preferences get the full banner width here, like the special request */
+      .dv-split.has-past .dv-left .dv-pref > div { padding-right: 0 }
+      .dv-split.has-past .dv-left .dv-pref::after { width: 300px }
   /* right: summary on top; the list takes the free height, the pager stays at the bottom, the details end with their content */
   .dv-split.has-past > .dv-past { margin-top: 0; grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); align-content: start }
       .dv-split.has-past > .dv-past .dv-past-side { padding: 0 0 12px; margin-bottom: 12px; border-right: 0; border-bottom: 1px solid var(--g-line) }

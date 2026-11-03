@@ -211,13 +211,19 @@ public class IndexModel : PageModel
     };
 
     public string PageUrl(string? from = null, string? to = null, int? range = null, string? mode = null,
-                       int? area = null, int? type = null, string? handler = null) =>
-        Url.Page("/Admin/Occupancy/Index", new
+                       int? area = null, int? type = null, string? handler = null)
+    {
+        var url = Url.Page("/Admin/Occupancy/Index", new
         {
             handler,
             from, to, range,
-            area = area ?? AreaId,
             type = type ?? TableTypeId,
             mode = mode ?? (Filter.IncludeWalkIns ? null : "res")
         })!;
+
+        // "area" is a reserved route value in ASP.NET Core (it names an MVC area), so Url.Page returns null
+        // when it is passed as a value. The dining area goes on the address by hand instead.
+        var areaId = area ?? AreaId;
+        return areaId.HasValue ? url + (url.Contains('?') ? "&" : "?") + "area=" + areaId.Value : url;
+    }
 }

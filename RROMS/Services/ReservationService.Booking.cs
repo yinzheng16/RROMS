@@ -344,7 +344,8 @@ public partial class ReservationService
                 status,
                 reason,
                 left,
-                type.DefaultDiningArea?.Name));
+                type.DefaultDiningArea?.Name,
+                AreaIcon: AreaIconOf(type.DefaultDiningArea)));
         }
 
         // A fully booked type gets its own nearest free times, so the customer knows where to go next.
@@ -724,7 +725,8 @@ public partial class ReservationService
                 type.DefaultDiningArea?.Name,
                 reservation.SpecialRequest,
                 spend,
-                reservation.Status.ToString()));
+                reservation.Status.ToString(),
+                AreaIconOf(type.DefaultDiningArea)));
         }
         catch (Exception ex) when (
             ex is DbUpdateException ||
@@ -735,6 +737,10 @@ public partial class ReservationService
                 "Someone just booked that table. Please try again.");
         }
     }
+
+    // The icon of a dining area for the customer pages (null when the table type has no area).
+    private static string? AreaIconOf(DiningArea? area) =>
+        area is null ? null : AreaIconRules.Resolve(area.IconName, area.Name);
 
     private async Task<ReservationTicket?> BuildTicketAsync(int reservationId)
     {
@@ -758,7 +764,8 @@ public partial class ReservationService
             type?.DefaultDiningArea?.Name,
             r.SpecialRequest,
             r.MinimumSpendAccepted ?? 0m,
-            r.Status.ToString());
+            r.Status.ToString(),
+            AreaIconOf(type?.DefaultDiningArea));
     }
 
     // e.g. YR-7K3M9Q (no 0/O/1/I, easy to read out over the phone)

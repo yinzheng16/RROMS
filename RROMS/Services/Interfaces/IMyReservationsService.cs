@@ -14,7 +14,8 @@ public sealed record MyReservationItem(
     string Status,
     bool CanCancel,
     string? AreaName = null,
-    string? TableNumber = null);
+    string? TableNumber = null,
+    string? AreaIcon = null);
 
 public sealed record MyReservationCancelResult(bool Success, string Code, string Message);
 
@@ -44,7 +45,8 @@ public sealed record MyStatusStep(string Status, DateTime At, string By, string?
 public sealed record MyHistoryItem(
     int Id, string ReferenceNo, DateTime ReservedAt, int Guests, string TableTypeName, string? JapaneseName,
     string? AreaName, string? TableNumber, string Status, decimal MinimumSpend, string? SpecialRequest,
-    DateTime BookedAt, IReadOnlyList<MyStatusStep> Steps);
+    DateTime BookedAt, IReadOnlyList<MyStatusStep> Steps,
+    string? AreaIcon = null);
 
 // US18: the live status of one booking, small enough to ask for every few seconds.
 public sealed record MyStatusSnapshot(int Id, string Status, string? TableNumber);

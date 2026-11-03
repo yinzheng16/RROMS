@@ -1058,6 +1058,26 @@ html {
         min-width: 0;
     }
 
+    /* Japanese name and dining area on one line */
+    .rsv-rv-tile .rsv-rv-sub {
+        display: flex;
+        align-items: center;
+        gap: 0 8px;
+    }
+
+        .rsv-rv-tile .rsv-rv-sub > span + span::before {
+            content: "\00B7";
+            margin-right: 8px;
+        }
+
+    .rsv-rv-tile .rsv-area-line {
+        gap: 6px;
+    }
+
+        .rsv-rv-tile .rsv-area-line .area-ico {
+            color: var(--rsv-gold);
+        }
+
     .rsv-rv-tile span {
         font-size: 13px;
         letter-spacing: .1em;
@@ -2544,7 +2564,54 @@ html {
     gap: 6px;
 }
 
-    .rsv-type-meta-item i {
+    .rsv-type-meta-item i,
+    .rsv-type-meta-item .area-ico {
+        color: #8f1f17;
+    }
+
+/* dining area icon: the symbols are in _AreaIcons.cshtml */
+.area-ico {
+    width: 1.15em;
+    height: 1.15em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex: none;
+}
+
+/* dining area under the table type (review step and ticket) */
+.rsv-sum-sub {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 8px;
+    margin-top: 2px;
+    color: #7a6254;
+    font-size: 13px;
+}
+
+    .rsv-sum-sub > span:empty {
+        display: none;
+    }
+
+    .rsv-sum-sub > span:not(:empty) + span:not(:empty)::before {
+        content: "\00B7";
+        margin-right: 8px;
+    }
+
+.rsv-area-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .rsv-area-line[hidden] {
+        display: none;
+    }
+
+    .rsv-area-line .area-ico {
         color: #8f1f17;
     }
 
