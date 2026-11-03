@@ -15,6 +15,23 @@
     var awaitingCount = allStates.Count(k => k == "awaiting");
     var noBillCount = allStates.Count(k => k == "nobill");
     var paidCount = allStates.Count(k => k == "paid");
+
+    // Each tab is split into two tables: today's work, then older bills
+    // that are still unpaid (placed / seated before today).
+    var dineInGroups = new[]
+    {
+        (Title: "Today", Older: false,
+         Rows: Model.DineInRows.Where(r => !IndexModel.IsOlderUnpaid(r.OpenedAt, r.BillStatus)).ToList()),
+        (Title: "Earlier · still unpaid", Older: true,
+         Rows: Model.DineInRows.Where(r => IndexModel.IsOlderUnpaid(r.OpenedAt, r.BillStatus)).ToList())
+    };
+    var takeawayGroups = new[]
+    {
+        (Title: "Today", Older: false,
+         Rows: Model.TakeawayRows.Where(r => !IndexModel.IsOlderUnpaid(r.CreatedAt, r.BillStatus)).ToList()),
+        (Title: "Earlier · still unpaid", Older: true,
+         Rows: Model.TakeawayRows.Where(r => IndexModel.IsOlderUnpaid(r.CreatedAt, r.BillStatus)).ToList())
+    };
 }
 
 <link rel="stylesheet" href="~/css/staff-billing.css" asp-append-version="true" />
@@ -77,6 +94,15 @@
                            placeholder="Search table, order no., bill no., name or reservation"
                            aria-label="Search the billing list" autocomplete="off" />
                 </div>
+
+                @* Sort by seated time (dine-in) / order time (takeaway), inside each table *@
+                <div class="billing-sort">
+                    <i class="bi bi-sort-down" aria-hidden="true"></i>
+                    <select id="billingSort" class="form-select" aria-label="Sort the billing list">
+                        <option value="newest" selected>Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                    </select>
+                </div>
             </div>
 
             <div class="tab-content">
@@ -99,6 +125,12 @@
                     }
                     else
                     {
+                        foreach (var group in dineInGroups.Where(g => g.Rows.Any()))
+                        {
+                        <section class="billing-group @(group.Older ? "billing-group-older" : "")">
+                        <h6 class="billing-group-title">
+                            @group.Title <span class="billing-group-count">@group.Rows.Count</span>
+                        </h6>
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0 billing-list">
                                 <thead class="table-light">
@@ -113,7 +145,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var row in Model.DineInRows)
+                                    @foreach (var row in group.Rows)
                                     {
                                         var searchText = string.Join(" ",
                                             row.TableNumber, row.ReservationRef, row.CustomerName,
@@ -121,7 +153,8 @@
                                         var isPaid = row.BillStatus == BillStatus.Paid;
 
                                         <tr class="@(row.IsClosed ? "billing-row-done" : "")"
-                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)"
+                                            data-time="@row.OpenedAt.Ticks">
                                             <td>
                                                 <strong>@row.TableNumber</strong>
                                                 @if (row.IsClosed)
@@ -136,16 +169,9 @@
                                                     <div class="billing-sub">Reservation @row.ReservationRef</div>
                                                 }
                                             </td>
-                                            <td>@row.OpenedAt.ToString("h:mm tt")</td>
+                                            <td>@IndexModel.FormatListTime(row.OpenedAt, group.Older)</td>
                                             <td class="text-center">
                                                 @row.OrderCount
-                                                @if (row.OrdersInKitchenCount > 0 && row.BillId == null)
-                                                {
-                                                    <div class="billing-sub billing-kitchen">
-                                                        <i class="bi bi-fire" aria-hidden="true"></i>
-                                                        @row.OrdersInKitchenCount in kitchen
-                                                    </div>
-                                                }
                                             </td>
                                             <td class="text-end">@row.TotalAmount.ToString("F2")</td>
                                             <td>
@@ -174,6 +200,8 @@
                                 </tbody>
                             </table>
                         </div>
+                        </section>
+                        }
 
                         <p class="billing-empty billing-no-match d-none">No tables match.</p>
                     }
@@ -197,6 +225,12 @@
                     }
                     else
                     {
+                        foreach (var group in takeawayGroups.Where(g => g.Rows.Any()))
+                        {
+                        <section class="billing-group @(group.Older ? "billing-group-older" : "")">
+                        <h6 class="billing-group-title">
+                            @group.Title <span class="billing-group-count">@group.Rows.Count</span>
+                        </h6>
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0 billing-list">
                                 <thead class="table-light">
@@ -211,27 +245,19 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var row in Model.TakeawayRows)
+                                    @foreach (var row in group.Rows)
                                     {
                                         var searchText = string.Join(" ",
                                             row.OrderNo, row.CustomerName,
                                             row.BillId is int tb ? IndexModel.FormatBillNo(tb) : null).ToLowerInvariant();
                                         var isPaid = row.BillStatus == BillStatus.Paid;
-                                        var isOld = !isPaid && IndexModel.IsBeforeToday(row.CreatedAt);
 
                                         <tr class="@(isPaid ? "billing-row-done" : "")"
-                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)">
+                                            data-search="@searchText" data-state="@IndexModel.BillStateKey(row.BillStatus)"
+                                            data-time="@row.CreatedAt.Ticks">
                                             <td class="billing-order-no">@row.OrderNo</td>
                                             <td>@(row.CustomerName ?? "—")</td>
-                                            <td>
-                                                @if (isOld)
-                                                {
-                                                    <span class="billing-old-tag" title="Ordered before today and still not paid">
-                                                        @row.CreatedAt.ToString("d MMM")
-                                                    </span>
-                                                }
-                                                @row.CreatedAt.ToString("h:mm tt")
-                                            </td>
+                                            <td>@IndexModel.FormatListTime(row.CreatedAt, group.Older)</td>
                                             <td>
                                                 <span class="status-badge status-@row.OrderStatus">
                                                     @IndexModel.OrderStatusLabel(row.OrderStatus)
@@ -264,6 +290,8 @@
                                 </tbody>
                             </table>
                         </div>
+                        </section>
+                        }
 
                         <p class="billing-empty billing-no-match d-none">No takeaway orders match.</p>
                     }
@@ -325,6 +353,14 @@
                         + ' \u00b7 showing ' + shown;
                 }
 
+                // Hide a group (Today / Earlier) when none of its rows are shown.
+                pane.querySelectorAll('.billing-group').forEach(function (group) {
+                    const visibleRows = group.querySelectorAll('tbody tr:not(.d-none)').length;
+                    group.classList.toggle('d-none', visibleRows === 0);
+                    const count = group.querySelector('.billing-group-count');
+                    if (count) count.textContent = visibleRows;
+                });
+
                 const noMatch = pane.querySelector('.billing-no-match');
                 if (noMatch) noMatch.classList.toggle('d-none', rows.length === 0 || shown > 0);
 
@@ -343,6 +379,27 @@
             }
 
             search.addEventListener('input', apply);
+
+            // Newest / oldest first: re-orders the rows inside each table (both tabs).
+            const sort = document.getElementById('billingSort');
+            const sortIcon = document.querySelector('.billing-sort .bi');
+
+            function applySort() {
+                const newest = sort.value !== 'oldest';
+                if (sortIcon) sortIcon.className = 'bi ' + (newest ? 'bi-sort-down' : 'bi-sort-up');
+
+                document.querySelectorAll('.billing-list tbody').forEach(function (body) {
+                    Array.from(body.rows)
+                        .sort(function (a, b) {
+                            const diff = Number(a.dataset.time) - Number(b.dataset.time);
+                            return newest ? -diff : diff;
+                        })
+                        .forEach(function (row) { body.appendChild(row); });
+                });
+            }
+
+            sort.addEventListener('change', applySort);
+            applySort();
 
             document.querySelectorAll('.billing-filters').forEach(function (group) {
                 group.addEventListener('click', function (e) {
