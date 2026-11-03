@@ -58,14 +58,24 @@ namespace RROMS.Services
         public async Task SendAsync(string userId, string title, string message, NotificationType type,
             NotificationEmail? email)
         {
-            await _notifications.AddAsync(new Notification
+            // US37: a notification is extra; it must never undo or break the caller's work
+            // (a booking, an order status change, a payment), so a save failure is only logged.
+            try
             {
-                UserId = userId,
-                Title = title,
-                Message = message,
-                Type = type
-            });
-            await _notifications.SaveChangesAsync();
+                await _notifications.AddAsync(new Notification
+                {
+                    UserId = userId,
+                    Title = Cut(title, 100),
+                    Message = Cut(message, 500),
+                    Type = type
+                });
+                await _notifications.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "In-app notification for user {UserId} ({Title}) was not saved.", userId, title);
+                return;
+            }
 
             // US38: the in-app notification is already saved; the email is extra and must never fail the caller.
             try
@@ -97,6 +107,196 @@ namespace RROMS.Services
             n.IsRead = true;
             await _notifications.SaveChangesAsync();
         }
+
+        // ======================= US37 in-app notifications =======================
+
+        public async Task NotifyOrderStatusAsync(int orderId, OrderStatus newStatus)
+        {
+            try
+            {
+                var order = await _orders.Query()
+                    .AsNoTracking()
+                    .Where(o => o.Id == orderId)
+                    .Select(o => new { o.UserId, o.OrderNo, o.OrderType })
+                    .FirstOrDefaultAsync();
+                if (order is null || string.IsNullOrEmpty(order.UserId)) return;
+
+                var text = OrderStatusText(order.OrderNo, order.OrderType == OrderType.Takeaway, newStatus);
+                if (text is null) return;
+
+                await SendAsync(order.UserId, text.Value.Title, text.Value.Message, NotificationType.Order);
+            }
+            catch (Exception ex)
+            {
+                // The status is already saved by the caller; a missing notification must not undo it.
+                _logger.LogWarning(ex, "Order status notification for order {OrderId} ({Status}) was not sent.", orderId, newStatus);
+            }
+        }
+
+        // The order number stays in the message: US38 finds the order for the email from it,
+        // and US37 uses it to open the right order.
+        private static (string Title, string Message)? OrderStatusText(string orderNo, bool takeaway, OrderStatus status) =>
+            status switch
+            {
+                OrderStatus.Pending => ("Order received", $"We have received your order {orderNo}."),
+                OrderStatus.Preparing => ("Order being prepared", $"The kitchen has started your order {orderNo}."),
+                OrderStatus.ReadyToServe => takeaway
+                    ? ("Order ready for pickup", $"Your takeaway order {orderNo} is ready at the counter.")
+                    : ("Order ready", $"Your order {orderNo} is ready and on its way to your table."),
+                OrderStatus.Served => ("Order served", $"Your order {orderNo} has been served. Enjoy your meal!"),
+                OrderStatus.Completed => ("Order completed", $"Your order {orderNo} is complete. Thank you for dining with us."),
+                OrderStatus.Cancelled => ("Order cancelled", $"Your order {orderNo} was cancelled."),
+                _ => null
+            };
+
+        public async Task<List<NotificationItem>> GetItemsAsync(string userId, int? take = null,
+            bool unreadOnly = false, NotificationType? type = null)
+        {
+            var query = _notifications.Query()
+                .AsNoTracking()
+                .Where(n => n.UserId == userId && (!unreadOnly || !n.IsRead));
+            if (type is not null) query = query.Where(n => n.Type == type);
+            query = query.OrderByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id);
+            if (take is not null) query = query.Take(take.Value);
+
+            var list = await query.ToListAsync();
+            if (list.Count == 0) return new List<NotificationItem>();
+
+            var refs = await LoadRefsAsync(userId, list);
+            return list.Select(n => ToItem(n, refs)).ToList();
+        }
+
+        public async Task<List<int>> MarkAllAsReadAsync(string userId)
+        {
+            var unread = await _notifications.Query()
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ToListAsync();
+            if (unread.Count == 0) return new List<int>();
+
+            foreach (var n in unread) n.IsRead = true;
+            await _notifications.SaveChangesAsync();
+            return unread.Select(n => n.Id).ToList();
+        }
+
+        public async Task MarkAsUnreadAsync(string userId, IEnumerable<int> notificationIds)
+        {
+            var ids = notificationIds.Where(id => id > 0).Distinct().Take(500).ToList();
+            if (ids.Count == 0) return;
+
+            var rows = await _notifications.Query()
+                .Where(n => n.UserId == userId && n.IsRead && ids.Contains(n.Id))
+                .ToListAsync();
+            if (rows.Count == 0) return;
+
+            foreach (var n in rows) n.IsRead = false;
+            await _notifications.SaveChangesAsync();
+        }
+
+        public async Task<string> OpenAsync(int notificationId, string userId)
+        {
+            var n = await _notifications.Query()
+                .FirstOrDefaultAsync(x => x.Id == notificationId && x.UserId == userId);
+            if (n is null) return NotificationsPage;
+
+            if (!n.IsRead)
+            {
+                n.IsRead = true;
+                await _notifications.SaveChangesAsync();
+            }
+
+            var refs = await LoadRefsAsync(userId, new List<Notification> { n });
+            return ToItem(n, refs).TargetPath;
+        }
+
+        private const string NotificationsPage = "/Customer/Notifications";
+
+        // The customer's order numbers and reservation references, loaded once per list
+        // (only when the list has order / reservation notifications).
+        private sealed record Refs(List<(int Id, string OrderNo)> Orders, List<string> Reservations);
+
+        private async Task<Refs> LoadRefsAsync(string userId, List<Notification> list)
+        {
+            var orders = new List<(int, string)>();
+            var reservations = new List<string>();
+
+            if (list.Any(n => n.Type == NotificationType.Order))
+            {
+                orders = (await _orders.Query()
+                        .AsNoTracking()
+                        .Where(o => o.UserId == userId && o.OrderNo != "")
+                        .Select(o => new { o.Id, o.OrderNo })
+                        .ToListAsync())
+                    .Select(o => (o.Id, o.OrderNo))
+                    .ToList();
+            }
+
+            if (list.Any(n => n.Type == NotificationType.Reservation))
+            {
+                reservations = await _reservations.Query()
+                    .AsNoTracking()
+                    .Where(r => r.UserId == userId && r.ReferenceNo != "")
+                    .Select(r => r.ReferenceNo)
+                    .ToListAsync();
+            }
+
+            return new Refs(orders, reservations);
+        }
+
+        private static NotificationItem ToItem(Notification n, Refs refs)
+        {
+            string target;
+            int? orderId = null;
+            string? refLabel = null, refValue = null;
+
+            switch (n.Type)
+            {
+                case NotificationType.Order:
+                    // Longest match first, so "YR-12" never matches the message of "YR-123".
+                    var order = refs.Orders
+                        .Where(o => n.Message.Contains(o.OrderNo))
+                        .OrderByDescending(o => o.OrderNo.Length)
+                        .Select(o => ((int Id, string OrderNo)?)o)
+                        .FirstOrDefault();
+                    if (order is not null)
+                    {
+                        orderId = order.Value.Id;
+                        refLabel = "Order";
+                        refValue = order.Value.OrderNo;
+                        target = $"/Customer/OrderConfirmation?id={order.Value.Id}";
+                    }
+                    else target = NotificationsPage;   // order not found (e.g. very old): stay on the history page
+                    break;
+
+                case NotificationType.Reservation:
+                    refValue = refs.Reservations
+                        .Where(r => n.Message.Contains(r))
+                        .OrderByDescending(r => r.Length)
+                        .FirstOrDefault();
+                    if (refValue is not null) refLabel = "Reference";
+                    target = "/Customer/Reservations";
+                    break;
+
+                case NotificationType.Payment:
+                    var bill = System.Text.RegularExpressions.Regex.Match(n.Message, @"\bYB-\d+\b");
+                    if (bill.Success) { refLabel = "Bill"; refValue = bill.Value; }
+                    target = "/Customer/Payments";
+                    break;
+
+                case NotificationType.Promotion:
+                    target = "/";
+                    break;
+
+                default:
+                    target = NotificationsPage;
+                    break;
+            }
+
+            return new NotificationItem(n.Id, n.Title, n.Message, n.Type, n.IsRead, n.CreatedAt,
+                target, orderId, refLabel, refValue);
+        }
+
+        private static string Cut(string text, int max) =>
+            string.IsNullOrEmpty(text) || text.Length <= max ? text ?? string.Empty : text[..(max - 1)] + "…";
 
         // ======================= US38 email =======================
 

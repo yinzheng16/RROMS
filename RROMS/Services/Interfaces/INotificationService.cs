@@ -24,7 +24,46 @@ namespace RROMS.Services.Interfaces
         Task<int> CountUnreadAsync(string userId);
 
         Task MarkAsReadAsync(int notificationId, string userId);
+
+        // ======================= US37 in-app notifications =======================
+
+        // Member 3: call AFTER the new order status is saved. Never throws.
+        // The customer, order number and order type are read from the order itself,
+        // so only the order's owner is notified. Title and message are written here.
+        Task NotifyOrderStatusAsync(int orderId, OrderStatus newStatus);
+
+        // Bell dropdown + Notifications page: newest first, with where each one leads.
+        // take = null: all; type = null: every type.
+        Task<List<NotificationItem>> GetItemsAsync(string userId, int? take = null,
+            bool unreadOnly = false, NotificationType? type = null);
+
+        // Returns the ids that were unread, so the customer can put them back (MarkAsUnreadAsync).
+        Task<List<int>> MarkAllAsReadAsync(string userId);
+
+        // "Mark all as unread": puts back the notices that "Mark all as read" just marked.
+        // Only the owner's own notifications are changed.
+        Task MarkAsUnreadAsync(string userId, IEnumerable<int> notificationIds);
+
+        // Marks the notification read and returns the page it leads to
+        // (the order, My Reservations, My Payments ...). Only the owner's own notifications.
+        Task<string> OpenAsync(int notificationId, string userId);
     }
+
+    // US37: one notification as shown in the bell and on the Notifications page.
+    // TargetPath: where "View" leads. OrderId: set for order notifications (used to avoid
+    // a second toast on the order page that already shows the live status).
+    // RefLabel / RefValue: e.g. "Order" / "YR2611...", "Reference" / "RS-0042", "Bill" / "YB-000012".
+    public record NotificationItem(
+        int Id,
+        string Title,
+        string Message,
+        NotificationType Type,
+        bool IsRead,
+        DateTime CreatedAt,
+        string TargetPath,
+        int? OrderId,
+        string? RefLabel,
+        string? RefValue);
 
     // US38 (Member 4): what to put in the email. Uses the shared YORU layout (EmailTemplates.Build).
     // Example (Member 3, takeaway ready):
