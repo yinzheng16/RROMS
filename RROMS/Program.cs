@@ -110,6 +110,7 @@ builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService
 
 // Member 5: Feedback, Reports & Dashboard
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();   // US42
+builder.Services.AddScoped<IAdminFeedbackService, AdminFeedbackService>();   // US43
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<ISalesReportService, SalesReportService>();   // Member 5: US44 Filtered reports
 builder.Services.AddScoped<IDashboardService, DashboardService>();   // Member 5: US46 Dashboard
