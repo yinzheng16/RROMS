@@ -42,6 +42,10 @@ namespace RROMS.Services
             }
             if (categoryId.HasValue)
                 query = query.Where(item => item.CategoryId == categoryId.Value);
+            // Counts for the Available / Unavailable chips ignore the availability
+            // filter itself, so both chips keep their numbers while one is selected.
+            int available = await query.CountAsync(item => item.IsAvailable, cancellationToken);
+            int unavailable = await query.CountAsync(item => !item.IsAvailable, cancellationToken);
             query = MenuItemOptions.Availability(availability) switch
             {
                 "available" => query.Where(item => item.IsAvailable),
@@ -49,7 +53,6 @@ namespace RROMS.Services
                 _ => query
             };
             int total = await query.CountAsync(cancellationToken);
-            int available = await query.CountAsync(item => item.IsAvailable, cancellationToken);
             pageSize = showAll ? Math.Max(1, total) : Math.Clamp(pageSize, 1, 50);
             int pages = total == 0 ? 1 : (total - 1) / pageSize + 1;
             pageNumber = showAll ? 1 : Math.Clamp(pageNumber, 1, pages);
@@ -64,8 +67,11 @@ namespace RROMS.Services
             };
             IQueryable<MenuItem> rows = ordered;
             if (!showAll) rows = rows.Skip((pageNumber - 1) * pageSize).Take(pageSize);
-            return new MenuItemPage(await ItemSummaries(rows).ToListAsync(cancellationToken),
-                total, available, total - available, pageNumber, pageSize);
+            // US29: running promotions are shown read-only on the admin cards
+            // (OriginalPrice = normal price, Price = promotional price).
+            var items = await WithCustomerPricesAsync(
+                await ItemSummaries(rows).ToListAsync(cancellationToken), cancellationToken);
+            return new MenuItemPage(items, total, available, unavailable, pageNumber, pageSize);
         }
 
         public Task<MenuItemSummary?> GetMenuItemAsync(int id, CancellationToken cancellationToken = default)
