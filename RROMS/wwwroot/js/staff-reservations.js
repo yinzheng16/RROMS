@@ -16,7 +16,6 @@
     const modalBox = document.getElementById('srModalBox');
     const dlg = document.getElementById('srDialog');
     const dlgBox = document.getElementById('srDialogBox');
-    const toast = document.getElementById('srToast');
     const search = document.getElementById('srSearch');
     const refreshBtn = document.getElementById('srRefresh');
     const token = () => root.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
@@ -167,13 +166,40 @@
     }
 
     // ---------------------------------------------------------------- messages
-    let toastTimer;
-    function say(msg, bad) {
-        toast.textContent = msg;
-        toast.classList.toggle('is-error', !!bad);
-        toast.hidden = false;
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => { toast.hidden = true; }, bad ? 6500 : 3800);
+    // The same toast as the rest of the site: the markup is the one in _Layout.cshtml and the
+    // styles are in site.css. kind is 'success' (default), 'info', or 'error' (when bad is true).
+    const TOAST_KIND = {
+        success: ['完了', 'All set', 'bi-check-lg'],
+        error: ['注意', 'Oops', 'bi-exclamation-lg'],
+        info: ['お知らせ', 'Notice', 'bi-info-lg']
+    };
+    function say(msg, bad, kind) {
+        kind = bad ? 'error' : (kind || 'success');
+        const [jp, title, icon] = TOAST_KIND[kind];
+
+        document.querySelectorAll('.yoru-toast-wrap').forEach(w => w.remove());
+
+        const wrap = document.createElement('div');
+        wrap.className = 'yoru-toast-wrap';
+        wrap.innerHTML =
+            `<div class="yoru-toast yoru-toast--${kind}" role="${bad ? 'alert' : 'status'}" aria-live="polite">` +
+            `<span class="yoru-toast-seal" aria-hidden="true"><i class="bi ${icon}"></i></span>` +
+            `<div class="yoru-toast-body"><p class="yoru-toast-title"><span class="yoru-toast-jp">${jp}</span>${title}</p>` +
+            `<p class="yoru-toast-msg"></p></div>` +
+            `<button type="button" class="yoru-toast-close" aria-label="Close notification"><i class="bi bi-x-lg"></i></button>` +
+            `<span class="yoru-toast-bar" aria-hidden="true"></span></div>`;
+        wrap.querySelector('.yoru-toast-msg').textContent = msg;
+        document.body.appendChild(wrap);
+
+        // Closes when the gold line runs out (5 s, paused on hover) or when the x is clicked.
+        const box = wrap.firstElementChild;
+        const hide = () => {
+            if (box.classList.contains('is-leaving')) return;
+            box.classList.add('is-leaving');
+            setTimeout(() => wrap.remove(), 400);
+        };
+        box.querySelector('.yoru-toast-bar').addEventListener('animationend', hide);
+        box.querySelector('.yoru-toast-close').addEventListener('click', hide);
     }
 
     // ---------------------------------------------------------------- server calls
@@ -198,7 +224,7 @@
             if (!quiet) {
                 // let the spin be seen, then say it worked
                 await new Promise(r => setTimeout(r, Math.max(0, 700 - (Date.now() - began))));
-                say('Up to date · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }));
+                say('Up to date · ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), false, 'info');
             }
         } catch {
             if (!quiet) say('Could not refresh. Check your connection and try again.', true);
@@ -710,7 +736,7 @@
             try { document.execCommand('copy'); } catch { /* ignored */ }
             t.remove();
         }
-        say(`Copied ${text}`);
+        say(`Copied ${text}`, false, 'info');
         closeMenu();
     }
 

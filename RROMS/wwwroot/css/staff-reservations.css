@@ -1052,25 +1052,7 @@ a.sr-todaybtn:hover { background: #fff3d8; border-color: var(--sr-red); color: v
 
 .sr-legend .l-cancelled i { background: #a39a92 }
 
-/* ---------------------------------------------------------------- menu + toast */
-.sr-toast {
-    position: fixed;
-    left: 50%;
-    bottom: 26px;
-    transform: translateX(-50%);
-    z-index: 1200;
-    max-width: min(560px,92vw);
-    margin: 0;
-    padding: 12px 20px;
-    border-radius: 10px;
-    background: #2c1a12;
-    color: #fbeede;
-    font: 600 15px var(--sr-sans);
-    box-shadow: 0 10px 30px rgba(0,0,0,.35);
-}
-
-    .sr-toast.is-error { background: #8a1d14 }
-
+/* ---------------------------------------------------------------- menu */
 .sr-menu {
     position: absolute;
     z-index: 1100;
@@ -1787,7 +1769,6 @@ button.dk-chip:hover, a.dk-chip:hover { background: rgba(255,255,255,.14) }
 @keyframes sr-slide-next { from { opacity: 0; transform: translateX(14px) } to { opacity: 1; transform: none } }
 @keyframes sr-slide-prev { from { opacity: 0; transform: translateX(-14px) } to { opacity: 1; transform: none } }
 @keyframes sr-modal-in { from { opacity: 0; transform: translateY(18px) scale(.97) } to { opacity: 1; transform: none } }
-@keyframes sr-toast-in { from { opacity: 0; transform: translate(-50%,14px) } to { opacity: 1; transform: translate(-50%,0) } }
 @keyframes sr-menu-in { from { opacity: 0; transform: translateY(-6px) scale(.97) } to { opacity: 1; transform: none } }
 @keyframes sr-row-in { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
 @keyframes sr-bar-in { from { opacity: 0; transform: scaleX(.6) } to { opacity: 1; transform: none } }
@@ -1830,7 +1811,6 @@ button.dk-chip:hover, a.dk-chip:hover { background: rgba(255,255,255,.14) }
 .sr-stat:hover strong { transform: scale(1.1) }
 .tl-bar { transition: transform .15s, box-shadow .2s, filter .2s }
 .tl-bar:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(70,40,15,.2) }
-.sr-toast { animation: sr-toast-in .28s cubic-bezier(.2,.9,.3,1.1) }
 
 @media (prefers-reduced-motion: reduce) {
     .sr *, .sr *::before, .sr *::after, .sr-modal, .sr-modal *, .sr-dialog, .sr-dialog * { animation: none !important; transition: none !important }
