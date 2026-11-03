@@ -29,8 +29,9 @@ namespace RROMS.Pages.Admin.Menu
         [BindProperty] public IFormFile? ItemImage { get; set; }
         [BindProperty] public bool RemoveItemImage { get; set; }
 
+        public const int ItemPageSize = 12;   // dish cards, 12 per page
         public MenuItemPage ItemResults { get; private set; } = new(
-            Array.Empty<MenuItemSummary>(), 0, 0, 0, 1, 5);
+            Array.Empty<MenuItemSummary>(), 0, 0, 0, 1, ItemPageSize);
         public IReadOnlyList<MenuCategorySummary> ItemCategories { get; private set; }
             = Array.Empty<MenuCategorySummary>();
         public string? CurrentItemImage { get; private set; }
@@ -83,8 +84,9 @@ namespace RROMS.Pages.Admin.Menu
                     ItemImage, RemoveItemImage, cancellationToken);
                 if (result == MenuItemOperationStatus.Success)
                 {
+                    string savedName = ItemInput.Name.Trim();
                     TempData["SuccessMessage"] = ItemInput.Id.HasValue
-                        ? "Menu item updated successfully." : "Menu item created successfully.";
+                        ? $"“{savedName}” updated successfully." : $"“{savedName}” created successfully.";
                     return RedirectToItems();
                 }
                 string field = result switch
@@ -124,16 +126,19 @@ namespace RROMS.Pages.Admin.Menu
         {
             NormalizeItemOptions();
             if (id <= 0) return BadRequest();
+            // Read the name first so the toast can say which dish was deleted.
+            string? deletedName = (await _orderService.GetMenuItemAsync(id, cancellationToken))?.Name;
             var result = await _orderService.DeleteMenuItemAsync(id, cancellationToken);
             TempData[result == MenuItemOperationStatus.Success ? "SuccessMessage" : "ErrorMessage"] =
-                result == MenuItemOperationStatus.Success ? "Menu item deleted successfully." : ItemError(result);
+                result != MenuItemOperationStatus.Success ? ItemError(result)
+                : deletedName is null ? "Menu item deleted successfully." : $"“{deletedName}” deleted successfully.";
             return RedirectToItems();
         }
 
         private async Task LoadItemsAsync(CancellationToken cancellationToken)
         {
             ItemCategories = await _orderService.GetCategoriesAsync(cancellationToken);
-            ItemResults = await _orderService.GetMenuItemPageAsync(ItemPage, 5, ItemSearch,
+            ItemResults = await _orderService.GetMenuItemPageAsync(ItemPage, ItemPageSize, ItemSearch,
                 ItemCategory, ItemAvailability, ItemSort, ItemShowAll, cancellationToken);
             ItemPage = ItemResults.PageNumber;
             var savedItem = ItemInput.Id.HasValue
