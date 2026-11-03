@@ -9,7 +9,6 @@
     var history = Model.History;
     var filter = history.Filter;
     string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
-    string Rate(decimal? percent) => percent is decimal p ? $" ({p.ToString("0.##", CultureInfo.InvariantCulture)}%)" : "";
     string Link(int page, int? orderId = null, string? status = null, bool? showAll = null) => Url.Page("/Customer/Orders/Index", new
     {
         search = filter.Search,
@@ -88,8 +87,16 @@
             </select></label>
             <div class="oj-date-range" role="group" aria-label="Order date range"><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-calendar"></use></svg><label data-date-label="@(filter.From?.ToString("dd MMM yyyy", CultureInfo.InvariantCulture) ?? "Start date")"><span class="oj-sr-only">From date</span><input type="date" name="from" value="@filter.From?.ToString("yyyy-MM-dd")" aria-label="From date" /></label><span aria-hidden="true">→</span><label data-date-label="@(filter.To?.ToString("dd MMM yyyy", CultureInfo.InvariantCulture) ?? "End date")"><span class="oj-sr-only">To date</span><input type="date" name="to" value="@filter.To?.ToString("yyyy-MM-dd")" aria-label="To date" /></label></div>
             <label class="oj-tool-field oj-sort-field" data-filter-label="@(filter.Sort == "oldest" ? "Oldest first" : filter.Sort == "total-high" ? "Highest total" : filter.Sort == "total-low" ? "Lowest total" : "Newest first")"><span class="oj-sr-only">Sort</span><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-sort"></use></svg><select name="sort"><option value="newest" selected="@(filter.Sort == "newest")">Newest first</option><option value="oldest" selected="@(filter.Sort == "oldest")">Oldest first</option><option value="total-high" selected="@(filter.Sort == "total-high")">Highest total</option><option value="total-low" selected="@(filter.Sort == "total-low")">Lowest total</option></select></label>
-            <button type="submit" class="oj-apply" aria-label="Apply search and filters"><span>Apply</span></button>
-            <a asp-page="/Customer/Orders/Index" class="oh-clear oj-reset"><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-reset"></use></svg><span>Reset</span></a>
+            @* Results update as soon as a filter changes (JavaScript). This hidden button keeps Enter working without it. *@
+            <button type="submit" class="oj-sr-only" tabindex="-1">Apply filters</button>
+            @if (!string.IsNullOrWhiteSpace(filter.Search) || filter.Dining != "All" || filter.Status != "All" || filter.Sort != "newest" || filter.From.HasValue || filter.To.HasValue)
+            {
+                <a asp-page="/Customer/Orders/Index" class="oh-clear oj-reset is-active" data-history-reset><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-reset"></use></svg><span>Reset</span></a>
+            }
+            else
+            {
+                <span class="oh-clear oj-reset is-idle" aria-disabled="true" title="No filters to reset" data-history-reset><svg class="oj-icon" aria-hidden="true"><use href="#oj-icon-reset"></use></svg><span>Reset</span></span>
+            }
         </div>
         <p id="oj-search-hint" class="oj-search-hint" data-search-hint role="status" hidden>Enter an order reference or dish name, or choose a filter before applying.</p>
     </form>
@@ -115,7 +122,8 @@
             <div class="oj-receipt-grid">
                 @foreach (var order in history.Orders)
                 {
-                    string month = dateSort ? order.CreatedAt.ToString("MMMM yyyy", CultureInfo.InvariantCulture) : "Ordered by saved total";
+                    string month = dateSort ? order.CreatedAt.ToString("MMMM yyyy", CultureInfo.InvariantCulture)
+                        : filter.Sort == "total-high" ? "Highest total first" : "Lowest total first";
                     @if (month != previousMonth)
                     {
                         <h2 class="oj-month"><span>@month</span><img class="oj-gold-mark" src="@Url.Content("~/images/orders/yoru-gold-yoru-mark.webp")" alt="" width="40" height="40" aria-hidden="true" /><i aria-hidden="true"></i></h2>
@@ -139,7 +147,7 @@
                             {
                                 <p class="oh-more">+ @(order.DishCount - 3) more lines · View order for all dishes</p>
                             }
-                            <dl class="oj-charges"><div><dt>Subtotal</dt><dd>@Money(order.Subtotal)</dd></div><div><dt>Service charge@(Rate(order.ServiceChargePercent))</dt><dd>@Money(order.ServiceCharge)</dd></div><div><dt>Tax@(Rate(order.TaxRatePercent))</dt><dd>@Money(order.Tax)</dd></div></dl>
+                            <dl class="oj-charges"><div><dt>Subtotal</dt><dd>@Money(order.Subtotal)</dd></div><div><dt>Service charge</dt><dd>@Money(order.ServiceCharge)</dd></div><div><dt>Tax</dt><dd>@Money(order.Tax)</dd></div></dl>
                             <div class="oj-total"><span>Total</span><strong>@Money(order.Total)</strong></div>
                             <div class="oj-actions"><a href="@Link(history.PageNumber, order.Id)" data-history-details="@order.Id" class="oj-view">View order</a><a asp-page="/Customer/Orders/Reorder" asp-route-id="@order.Id" class="oh-button">Reorder</a></div>
                         </div>

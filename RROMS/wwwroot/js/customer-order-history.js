@@ -25,19 +25,39 @@
       search?.setAttribute('aria-invalid', 'true');
       search?.focus({preventScroll: true});
     }
-    search?.addEventListener('input', hideSearchHint);
+    // No Apply button: a filter change updates the results at once; typing searches after a short pause.
+    // The URL is updated, so Back/Forward, refresh and shared links keep the same results.
+    const defaults = value => ['All', 'newest', 'False', 'false'].includes(value) ? '' : value;
+    function filterUrl() {
+      const url = new URL(page.dataset.historyUrl || window.location.pathname, window.location.origin);
+      new FormData(filters).forEach((value, key) => {
+        const text = String(value).trim();
+        if (defaults(text)) url.searchParams.set(key, text);
+      });
+      return url.href;
+    }
+    let filterTimer = null, lastFilterUrl = null;
+    function applyFilters() {
+      window.clearTimeout(filterTimer);
+      const href = filterUrl();
+      if (href === lastFilterUrl) return;
+      lastFilterUrl = href;
+      hideSearchHint();
+      loadPage(href, true, {scroll: false});
+    }
+    search?.addEventListener('input', () => {
+      hideSearchHint();
+      window.clearTimeout(filterTimer);
+      filterTimer = window.setTimeout(applyFilters, 350);
+    });
     search?.addEventListener('keydown', event => {
-      if (event.key === 'Enter' && !search.value.trim() && !filtersChanged()) {
-        event.preventDefault(); showSearchHint();
-      }
+      if (event.key === 'Enter') { event.preventDefault(); applyFilters(); }
     });
-    filters?.addEventListener('change', hideSearchHint);
-    filters?.addEventListener('submit', event => {
-      const formData = new FormData(filters);
-      const hasFilters = ['InProgress', 'Finished'].includes(formData.get('statusGroup')) || formData.get('dining') !== 'All' || formData.get('status') !== 'All' ||
-        formData.get('sort') !== 'newest' || formData.get('from') || formData.get('to');
-      if (!search.value.trim() && !hasFilters && !filtersChanged()) { event.preventDefault(); showSearchHint(); }
+    filters?.addEventListener('change', event => {
+      if (event.target === search) return;
+      applyFilters();
     });
+    filters?.addEventListener('submit', event => { event.preventDefault(); applyFilters(); });
     filters?.querySelectorAll('.oj-tool-field select').forEach((select, number) => {
       const label = select.closest('.oj-tool-field');
       const wrapper = document.createElement('div');
@@ -382,7 +402,7 @@
     // like the staff order queue. Any failure falls back to a normal page load.
     const workspace = page.querySelector('.oh-workspace');
     let pageRequest = null;
-    async function loadPage(href, push) {
+    async function loadPage(href, push, {scroll = true} = {}) {
       pageRequest?.abort(); pageRequest = new AbortController();
       workspace.setAttribute('aria-busy', 'true');
       try {
@@ -396,12 +416,18 @@
         // The drawer may live inside the details dialog; only insert before it while it is still in the workspace.
         const anchor = drawer.parentElement === workspace ? drawer : null;
         [...nextWorkspace.children].forEach(child => { if (child.id !== 'history-drawer') workspace.insertBefore(document.adoptNode(child), anchor); });
-        const note = page.querySelector('.oj-result-note'), nextNote = doc.querySelector('[data-history-page] .oj-result-note');
-        if (note && nextNote) note.replaceWith(document.adoptNode(nextNote));
+        // The notes, tab links (they carry the filters) and Reset state follow the new results.
+        for (const selector of ['.oj-result-note', '.oj-tabs', '[data-history-reset]']) {
+          const current = page.querySelector(selector), next = doc.querySelector('[data-history-page] ' + selector);
+          if (current && next) current.replaceWith(document.adoptNode(next));
+        }
         if (push) window.history.pushState({historyPage: true}, '', href);
-        const top = page.querySelector('.oj-result-note') || workspace;
-        top.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
-        message.textContent = 'Showing ' + (page.querySelector('.oh-pagination > span')?.textContent || 'the next orders') + '.';
+        if (scroll) {
+          const top = page.querySelector('.oj-result-note') || workspace;
+          top.scrollIntoView({behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start'});
+        }
+        message.textContent = 'Showing ' + (page.querySelector('.oh-pagination > span')?.textContent
+          || page.querySelector('.oj-result-note span')?.textContent || 'your orders') + '.';
       } catch (error) {
         if (error.name !== 'AbortError') window.location.assign(href);
       } finally {
@@ -413,7 +439,14 @@
       if (!pager || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault(); loadPage(pager.href, true);
     });
-    window.addEventListener('popstate', () => loadPage(window.location.href, false));
+    // Back/Forward: if the filters in the address differ from the form, reload so the controls match too.
+    window.addEventListener('popstate', () => {
+      const now = new URL(window.location.href), form = new URL(filterUrl());
+      const keys = ['search', 'dining', 'status', 'statusGroup', 'sort', 'from', 'to'];
+      const same = keys.every(key => defaults(now.searchParams.get(key) || '') === defaults(form.searchParams.get(key) || ''));
+      if (same) loadPage(window.location.href, false);
+      else window.location.reload();
+    });
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && (!drawer.hidden || request)) closeDrawer(); });
   }
 
