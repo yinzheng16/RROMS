@@ -103,12 +103,19 @@ public class PaymentServiceTests : IDisposable
         var first = await _service.RecordPaymentAsync(
             _order.Id, 50.00m, PaymentMethod.Card, "FAILED-001");
 
-        await _service.MarkPaymentFailedAsync(first.Id);
+        // MarkPaymentFailedAsync now uses a conditional database update
+        // (US26 lock), so check the returned payment and the saved row
+        // instead of the object returned by RecordPaymentAsync.
+        var failed = await _service.MarkPaymentFailedAsync(first.Id);
 
         var retry = await _service.RecordPaymentAsync(
             _order.Id, 50.00m, PaymentMethod.Cash, "RETRY-001");
 
-        Assert.Equal(PaymentStatus.Failed, first.Status);
+        var savedFirst = await _db.Payments.AsNoTracking()
+            .SingleAsync(p => p.Id == first.Id);
+
+        Assert.Equal(PaymentStatus.Failed, failed.Status);
+        Assert.Equal(PaymentStatus.Failed, savedFirst.Status);
         Assert.Equal(PaymentStatus.Pending, retry.Status);
         Assert.NotEqual(first.Id, retry.Id);
     }
