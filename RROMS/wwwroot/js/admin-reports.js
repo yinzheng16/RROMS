@@ -310,6 +310,10 @@
         var slow = setTimeout(function () { page.classList.add("is-loading"); }, 350);
 
         var searchFocused = document.activeElement && document.activeElement.hasAttribute("data-rp-search");
+        // What the search box said when this request started. Only text typed AFTER
+        // this point is kept; otherwise the new report's own search wins (e.g. Clear filters).
+        var startInput = page.querySelector("[data-rp-search]");
+        var typedAtStart = startInput ? startInput.value : null;
 
         fetch(url, { credentials: "same-origin" })
             .then(function (response) {
@@ -334,7 +338,7 @@
                 setUp();
 
                 var input = page.querySelector("[data-rp-search]");
-                if (input && typed !== null && input.value !== typed) {
+                if (input && typed !== null && typed !== typedAtStart && input.value !== typed) {
                     input.value = typed;
                     if (!queued) {
                         queued = { url: formUrl(input.form), push: true };

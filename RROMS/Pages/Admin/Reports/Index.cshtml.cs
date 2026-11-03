@@ -77,7 +77,8 @@ public class Index : PageModel
         ("reservations", "予約", "Reservations"),
         ("orders", "注文", "Orders"),
         ("sales", "売上", "Sales"),
-        ("menu", "品目", "Menu items")
+        ("menu", "品目", "Menu items"),
+        ("customers", "顧客", "Customer activity")   // US48
     };
 
     // Quick date ranges (US45). Kept in the address as ?range=week, so a bookmark of
@@ -196,7 +197,7 @@ public class Index : PageModel
 
         q.Groups = Groups.Where(g => !string.IsNullOrWhiteSpace(g)).Select(g => g.Trim()).Distinct().Take(20).ToList();
         q.Customer = string.IsNullOrWhiteSpace(Customer) ? null : Customer.Trim()[..Math.Min(Customer.Trim().Length, 100)];
-        q.Kind = string.IsNullOrWhiteSpace(Kind) || q.Type is ReportType.Reservations or ReportType.Menu ? null : Kind.Trim();
+        q.Kind = string.IsNullOrWhiteSpace(Kind) || q.Type is ReportType.Reservations or ReportType.Menu or ReportType.Customers ? null : Kind.Trim();
 
         var day = ParseDate(DayText);
         q.Day = day.HasValue && day.Value >= from && day.Value <= to ? day : null;
@@ -366,6 +367,17 @@ public class Index : PageModel
         d["sort"] = new() { column.ToString() };
         if (desc) d["dir"] = new() { "desc" }; else d.Remove("dir");
     });
+
+    // US48: "Sort by" drop-down (always biggest / latest first).
+    public string SortByLink(int column) => Link(d =>
+    {
+        d["sort"] = new() { column.ToString() };
+        d["dir"] = new() { "desc" };
+    });
+
+    // True when the table is sorted by this column, biggest first (or by nothing yet and this is the default).
+    public bool IsSortedBy(int column, bool isDefault = false) =>
+        Query.SortColumn == column ? Query.SortDescending : isDefault && Query.SortColumn == null;
 
     public string PageLink(int page) => Link(d =>
     {

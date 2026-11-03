@@ -39,12 +39,10 @@
 /* Same width and top gap as the other admin pages (e.g. Restaurant Settings):
    up to 1536px wide, breaking out of the layout's narrower container. */
 .rp-page {
-    --rp-width: min(1536px, calc(100vw - 48px));
+    /* Same width as Restaurant Settings and the dashboard: the normal page width,
+       and up to 1536px on large screens (see the media query below). */
     position: relative;
-    left: 50%;
-    width: var(--rp-width);
-    max-width: none;
-    margin: -24px 0 0 calc(var(--rp-width) / -2);
+    margin: -24px 0 0;
     padding: 0 0 56px;
     color: var(--rp-ink);
     font-family: var(--rp-sans);
@@ -1791,4 +1789,21 @@
         padding: 0;
         box-shadow: none;
     }
+}
+
+
+/* Large screens: up to 1536px wide, like Restaurant Settings. */
+@media (min-width: 1600px) {
+    .rp-page {
+        --rp-width: min(1536px, calc(100vw - 48px));
+        left: 50%;
+        width: var(--rp-width);
+        max-width: none;
+        margin-left: calc(var(--rp-width) / -2);
+    }
+}
+
+/* Status / type columns: room for the longest badge ("Ready to Serve"). */
+.rp-table th.rp-badgecol {
+    width: 172px;
 }
