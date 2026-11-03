@@ -1,382 +1,247 @@
 // =========================================================
-// US49 Restaurant Settings (Member 5)
-// Live previews, counters, phone check and toast for
-// Pages/Admin/Settings.cshtml. No other page uses this file.
+// US49 Restaurant Settings (Member 5; redesign by Member 1)
+// Live business card, rate controls, example receipt, phone
+// check and the "unsaved changes" bar for Pages/Admin/Settings.cshtml.
 // =========================================================
 (function () {
     "use strict";
 
     var page = document.getElementById("rsPage");
     var form = document.getElementById("rsForm");
-    if (!page || !form) {
-        return;
+    if (!page || !form) { return; }
+
+    function $(id) { return document.getElementById(id); }
+
+    var country = $("RestaurantSetting_PhoneCountry");
+    var phone = $("PhoneInput");
+    var phoneBox = $("phoneBox");
+    var phoneMsg = $("phoneMsg");
+    var phoneServerMsg = $("phoneServerMsg");
+    var email = $("RestaurantSetting_Email");
+    var address = $("RestaurantSetting_Address");
+    var svc = $("RestaurantSetting_ServiceChargePercent");
+    var tax = $("RestaurantSetting_TaxRatePercent");
+    var take = $("RestaurantSetting_ServiceChargeOnTakeaway");
+    var biz = $("RestaurantSetting_BusinessName");   // US49 follow-up
+    var sst = $("RestaurantSetting_SstRegistrationNo");
+    var note = $("RestaurantSetting_ReceiptFooterNote");
+
+    // The fields that are saved. The save bar counts how many differ from when the page opened.
+    var tracked = [country, phone, email, address, svc, tax, take, biz, sst, note];
+    function valueOf(el) { return el.type === "checkbox" ? el.checked : el.value; }
+    var initial = tracked.map(valueOf);
+
+    // ---------- helpers ----------
+    function rate(input) {
+        var v = input.value.trim();
+        if (v === "") { return null; }
+        var n = Number(v);
+        return isNaN(n) || n < 0 || n > 100 ? null : n;
     }
-
-    function byId(id) {
-        return document.getElementById(id);
-    }
-
-    // ---------- Elements ----------
-    var nameInput = byId("RestaurantSetting_RestaurantName");
-    var line2Input = byId("RestaurantSetting_RestaurantNameLine2");
-    var logoFile = byId("LogoFile");
-    var footerFile = byId("FooterFile");
-    var faviconFile = byId("FaviconFile");
-    var footerSame = byId("FooterSameAsNav");
-    var removeFavicon = byId("RemoveFavicon");
-    var country = byId("RestaurantSetting_PhoneCountry");
-    var phone = byId("PhoneInput");
-    var phoneBox = byId("phoneBox");
-    var phoneMsg = byId("phoneMsg");
-    var phoneServerMsg = byId("phoneServerMsg");
-    var email = byId("RestaurantSetting_Email");
-    var address = byId("RestaurantSetting_Address");
-    var tax = byId("RestaurantSetting_TaxRatePercent");
-    var service = byId("RestaurantSetting_ServiceChargePercent");
-    var saveState = byId("rsSaveState");
-    var toast = byId("rsToast");
-
-    // Navbar text sizes for S / M / L (px). Keep in sync with the shared layout.
-    var SIZES = {
-        line1: { S: 18, M: 22, L: 27 },
-        line2: { S: 9, M: 11, L: 13 }
-    };
-
-    // Saved image paths (from the database) and newly picked files (object URLs).
-    var saved = {
-        nav: page.dataset.logo || "",
-        footer: page.dataset.footer || "",
-        favicon: page.dataset.favicon || "",
-        defaultFavicon: page.dataset.defaultFavicon || ""
-    };
-    var picked = { nav: "", footer: "", favicon: "" };
-    var faviconRemoved = false;
-
-    // ---------- Small helpers ----------
-    function radioValue(name) {
-        var checked = form.querySelector('input[name="' + name + '"]:checked');
-        return checked ? checked.value : "";
-    }
-
-    function isFullBrandImage() {
-        return radioValue("RestaurantSetting.BrandingMode") === "FullBrandImage";
-    }
-
-    function showImage(img, placeholder, src) {
-        if (src) {
-            img.src = src;
-            img.hidden = false;
-            if (placeholder) { placeholder.hidden = true; }
-        } else {
-            img.removeAttribute("src");
-            img.hidden = true;
-            if (placeholder) { placeholder.hidden = false; }
-        }
-    }
-
-    function makeImg(src, className) {
-        var img = document.createElement("img");
-        img.src = src;
-        img.alt = "";
-        img.className = className;
-        return img;
-    }
-
-    function makePlaceholder() {
-        var span = document.createElement("span");
-        span.className = "rs-ph";
-        span.setAttribute("aria-hidden", "true");
-        span.textContent = "夜";
-        return span;
-    }
+    function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+    function pct(n) { return n === null ? "—" : String(round2(n)) + "%"; }
+    function money(n) { return n === null ? "—" : n.toFixed(2); }
+    function setText(id, text) { var el = $(id); if (el) { el.textContent = text; } }
 
     function selectedCountry() {
-        var option = country.options[country.selectedIndex];
-        return {
-            iso: country.value,
-            name: option ? option.dataset.name : country.value,
-            dial: option ? option.dataset.dial : ""
-        };
+        var o = country.options[country.selectedIndex];
+        return { iso: country.value, name: o ? o.dataset.name : country.value, dial: o ? o.dataset.dial : "" };
     }
 
-    // ---------- Character counters ----------
-    function updateCounters() {
-        page.querySelectorAll("[data-count-for]").forEach(function (counter) {
-            var input = byId(counter.dataset.countFor);
-            if (!input) { return; }
-            var max = parseInt(counter.dataset.max, 10);
-            var length = input.value.length;
-            counter.textContent = length + " / " + max;
-            counter.classList.toggle("is-over", length > max);
-        });
+    // "03-2142 6688" + MY -> "+60 3-2142 6688" (same as PhoneDisplay.Pretty on the server)
+    function prettyPhone() {
+        var v = phone.value.trim();
+        if (!v) { return "—"; }
+        var c = selectedCountry();
+        try {
+            if (window.libphonenumber) {
+                var p = window.libphonenumber.parsePhoneNumber(v, c.iso);
+                if (p) { return p.formatInternational(); }
+            }
+        } catch (e) { /* show what was typed */ }
+        return c.dial + " " + v.replace(/^0/, "");
     }
 
-    // ---------- Phone check (same rules as the server) ----------
+    // ---------- phone check (same rules as the server) ----------
     function checkPhone() {
         var c = selectedCountry();
-        var value = phone.value.trim();
-        var message = "";
-
-        if (value) {
-            if (!/^[0-9+\-\s()]+$/.test(value)) {
-                message = "Phone number can only contain digits.";
-            } else if (window.libphonenumber &&
-                       !window.libphonenumber.isValidPhoneNumber(value, c.iso)) {
-                message = "This is not a valid " + c.name + " (" + c.dial + ") phone number.";
+        var v = phone.value.trim();
+        var msg = "";
+        if (v) {
+            if (!/^[0-9+\-\s()]+$/.test(v)) {
+                msg = "Phone number can only contain digits.";
+            } else if (window.libphonenumber && !window.libphonenumber.isValidPhoneNumber(v, c.iso)) {
+                msg = "This is not a valid " + c.name + " (" + c.dial + ") phone number.";
             }
         }
-
-        phoneMsg.textContent = message;
-        phoneMsg.hidden = !message;
-        phoneBox.classList.toggle("is-err", !!message);
-        return !message;
+        phoneMsg.textContent = msg;
+        phoneMsg.hidden = !msg;
+        phoneBox.classList.toggle("is-err", !!msg);
+        return !msg;
     }
 
-    // ---------- Live previews ----------
+    // ---------- counters ----------
+    function updateCounters() {
+        page.querySelectorAll("[data-count-for]").forEach(function (c) {
+            var input = $(c.dataset.countFor);
+            if (!input) { return; }
+            var max = parseInt(c.dataset.max, 10), len = input.value.length;
+            c.textContent = len + " / " + max;
+            c.classList.toggle("is-over", len > max);
+        });
+    }
+
+    // ---------- rate tiles: −/+, slider, quick picks ----------
+    page.querySelectorAll("[data-rate]").forEach(function (tile) {
+        var input = tile.querySelector(".rs-big");
+        var range = tile.querySelector(".rs-range");
+        var chips = tile.querySelectorAll(".rs-chip");
+
+        function setValue(n) {
+            input.value = String(round2(Math.min(100, Math.max(0, n))));
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+
+        tile.querySelectorAll(".rs-step").forEach(function (b) {
+            b.addEventListener("click", function () { setValue((rate(input) || 0) + Number(b.dataset.step)); });
+        });
+        chips.forEach(function (c) {
+            c.addEventListener("click", function () { setValue(Number(c.dataset.set)); });
+        });
+        range.addEventListener("input", function () { setValue(Number(range.value)); });
+
+        tile.paint = function () {
+            var n = rate(input);
+            // size the box to the number so "10%" sits in the middle of the tile
+            input.style.width = Math.max(1, input.value.length) * 0.58 + "em";
+            var shown = n === null ? 0 : Math.min(30, n);   // slider shows 0–30%; the box allows up to 100
+            range.value = shown;
+            range.style.setProperty("--p", (shown / 30 * 100) + "%");
+            chips.forEach(function (c) { c.classList.toggle("is-on", n !== null && Number(c.dataset.set) === n); });
+        };
+    });
+
+    // ---------- live previews ----------
+    // Same maths as ReportService.CalculateCharges (keep in sync):
+    //   service = subtotal x service%  (0 for takeaway unless the switch is on)
+    //   tax     = (subtotal + service) x tax%
     function render() {
-        var full = isFullBrandImage();
-        page.classList.toggle("rs-mode-full", full);
+        var s = rate(svc), t = rate(tax);
+        var isTake = (form.querySelector('input[name="pvType"]:checked') || {}).value === "take";
+        var applies = !isTake || take.checked;
+        var service = s === null ? null : (applies ? round2(100 * s / 100) : 0);
+        var taxAmt = t === null || service === null ? null : round2((100 + service) * t / 100);
+        var total = taxAmt === null ? null : 100 + service + taxAmt;
 
-        var line1 = nameInput.value.trim();
-        var line2 = line2Input ? line2Input.value.trim() : "";
+        // hero pills
+        setText("glSvc", pct(s));
+        setText("glTake", take.checked ? "dine-in & takeaway" : "dine-in only");
+        setText("glTax", pct(t));
+        setText("glPhone", prettyPhone());
 
-        // Images
-        var navSrc = picked.nav || saved.nav;
-        showImage(byId("imgNav"), byId("phNav"), navSrc);
+        // business card
+        setText("mcAddr", address.value.trim() || "—");
+        setText("mcPhone", prettyPhone());
+        setText("mcEmail", email.value.trim());
+        $("mcEmailRow").hidden = !email.value.trim();
 
-        var footerSrc = footerSame.checked ? navSrc : (picked.footer || saved.footer || navSrc);
-        showImage(byId("imgFooter"), byId("phFooter"), footerSrc);
-        byId("slotFooter").classList.toggle("is-disabled", footerSame.checked);
+        // takeaway switch text
+        setText("takeHelp", take.checked ? "On: service charge added" : "Off: no service charge");
 
-        var faviconSrc = picked.favicon || (faviconRemoved ? "" : saved.favicon) || saved.defaultFavicon;
-        showImage(byId("imgFavicon"), null, faviconSrc);
+        // equation strip
+        setText("eqTitle", "HOW A RM 100 " + (isTake ? "TAKEAWAY" : "DINE-IN") + " BILL ADDS UP");
+        setText("eqSvcL", applies ? "SERVICE · " + pct(s) : "SERVICE · not on takeaway");
+        setText("eqSvc", service === null ? "—" : "RM " + money(service));
+        setText("eqTaxL", "SST · " + pct(t) + " incl. service");
+        setText("eqTax", taxAmt === null ? "—" : "RM " + money(taxAmt));
+        setText("eqTotal", total === null ? "Check rates" : "RM " + money(total));
 
-        // Navbar preview
-        var brand = byId("pvBrand");
-        brand.textContent = "";
+        // receipt
+        var bizText = biz.value.trim();
+        setText("rcBiz", bizText);
+        $("rcBiz").hidden = !bizText;
+        var sstText = sst.value.trim().toUpperCase();
+        setText("rcSst", "SST No. " + sstText);
+        $("rcSst").hidden = !sstText;
+        setText("rcAddr", address.value.trim().replace(/,?\s*\n\s*/g, ", "));
+        setText("rcKind", isTake ? "Takeaway · #T-012" : "Table 7 · Dine-in");
+        setText("rcSvcL", applies ? "Service charge (" + pct(s) + ")" : "Service charge (not on takeaway)");
+        $("rcSvcRow").classList.toggle("is-off", !applies);
+        setText("rcSvc", money(service));
+        setText("rcTaxL", "SST (" + pct(t) + ")");
+        setText("rcTax", money(taxAmt));
+        setText("rcTotal", total === null ? "—" : "RM " + money(total));
+        setText("rcNote", note.value.trim());
+        $("rcNote").hidden = !note.value.trim();
 
-        if (full) {
-            brand.appendChild(navSrc ? makeImg(navSrc, "rs-pv-full") : makePlaceholder());
-        } else {
-            brand.appendChild(navSrc ? makeImg(navSrc, "rs-pv-logo") : makePlaceholder());
-
-            var names = document.createElement("div");
-            names.className = "rs-pv-name";
-
-            var l1 = document.createElement("span");
-            l1.className = "rs-pv-l1";
-            l1.style.fontSize = SIZES.line1[radioValue("RestaurantSetting.NameLine1Size") || "M"] + "px";
-            l1.textContent = line1 || "Restaurant name";
-            names.appendChild(l1);
-
-            if (line2) {
-                var l2 = document.createElement("span");
-                l2.className = "rs-pv-l2";
-                l2.style.fontSize = SIZES.line2[radioValue("RestaurantSetting.NameLine2Size") || "S"] + "px";
-                l2.textContent = line2;
-                names.appendChild(l2);
-            }
-
-            brand.appendChild(names);
+        // SST check (same text as Settings.SstWarning on the server)
+        var warn = "";
+        if (t !== null && t > 0 && !sstText) {
+            warn = "SST is " + pct(t) + " but there is no SST registration number. Add it, or set the tax rate to 0%.";
+        } else if (sstText && !bizText) {
+            warn = "Add the registered business name too. Receipts with an SST number should show it.";
         }
+        setText("sstWarnText", warn);
+        $("sstWarn").hidden = !warn;
 
-        // Footer preview
-        var footImg = byId("pvFootImg");
-        if (footerSrc) {
-            footImg.src = footerSrc;
-            footImg.hidden = false;
-        } else {
-            footImg.hidden = true;
-        }
-
-        var footName = byId("pvFootName");
-        footName.textContent = [line1, line2].filter(Boolean).join(" · ");
-        footName.hidden = full;
-
-        byId("pvFootAddr").textContent = address.value.trim();
-
-        var c = selectedCountry();
-        var contact = [];
-        if (phone.value.trim()) { contact.push(c.dial + " " + phone.value.trim()); }
-        if (email.value.trim()) { contact.push(email.value.trim()); }
-        byId("pvFootContact").textContent = contact.join("  ·  ");
-
-        // Browser tab preview
-        var tabIcon = byId("pvFavicon");
-        if (faviconSrc) {
-            tabIcon.src = faviconSrc;
-            tabIcon.hidden = false;
-        } else {
-            tabIcon.hidden = true;
-        }
-        byId("pvTabTitle").textContent = "Restaurant Settings - " + (line1 || "RROMS");
-
-        renderReceipt();
+        page.querySelectorAll("[data-rate]").forEach(function (tile) { tile.paint(); });
         updateCounters();
+        updateSaveBar();
     }
 
-    // ---------- Example bill ----------
-    function readRate(input) {
-        var value = input.value.trim();
-        if (value === "") { return null; }
-        var number = Number(value);
-        return isNaN(number) || number < 0 || number > 100 ? null : number;
+    // ---------- save bar: only shown when something changed ----------
+    function changedCount() {
+        return tracked.filter(function (el, i) { return valueOf(el) !== initial[i]; }).length;
     }
 
-    function money(value) {
-        return "RM " + value.toFixed(2);
+    function updateSaveBar() {
+        if (page.classList.contains("has-errors")) { return; }   // after a failed save it stays up
+        var n = changedCount();
+        page.classList.toggle("is-dirty", n > 0);
+        if (n > 0) { setText("rsSaveCount", n + (n === 1 ? " unsaved change" : " unsaved changes")); }
     }
 
-    function renderReceipt() {
-        var subtotal = 100;
-        var serviceRate = readRate(service);
-        var taxRate = readRate(tax);
-
-        byId("rcSvcLabel").textContent = "Service charge (" + (serviceRate === null ? "—" : serviceRate) + "%)";
-        byId("rcTaxLabel").textContent = "Tax (" + (taxRate === null ? "—" : taxRate) + "%)";
-
-        var serviceAmount = serviceRate === null ? null : subtotal * serviceRate / 100;
-        var taxAmount = taxRate === null ? null : subtotal * taxRate / 100;
-
-        byId("rcSvc").textContent = serviceAmount === null ? "—" : money(serviceAmount);
-        byId("rcTax").textContent = taxAmount === null ? "—" : money(taxAmount);
-        byId("rcTotal").textContent = serviceAmount === null || taxAmount === null
-            ? "Fix the rates above"
-            : money(subtotal + serviceAmount + taxAmount);
-
-        // Rate bars under the inputs (0-100%)
-        var taxBar = byId("taxBar");
-        var svcBar = byId("svcBar");
-        if (taxBar) { taxBar.style.width = (taxRate === null ? 0 : taxRate) + "%"; }
-        if (svcBar) { svcBar.style.width = (serviceRate === null ? 0 : serviceRate) + "%"; }
-
-        // Restaurant name at the top of the example bill
-        var receiptName = byId("rcName");
-        if (receiptName) {
-            var l2 = line2Input ? line2Input.value.trim() : "";
-            receiptName.textContent = [nameInput.value.trim() || "Restaurant", l2].filter(Boolean).join(" ");
-        }
-    }
-
-    // ---------- Unsaved-changes indicator ----------
-    function markDirty() {
-        saveState.textContent = "● Unsaved changes";
-        saveState.classList.add("is-dirty");
-    }
-
-    // ---------- Toast ----------
-    var toastTimer;
-
-    function showToast(autohide) {
-        if (!toast) { return; }
-        toast.classList.add("is-show");
-        clearTimeout(toastTimer);
-        if (autohide) {
-            toastTimer = setTimeout(function () { toast.classList.remove("is-show"); }, 3600);
-        }
-    }
-
-    if (toast) {
-        toast.querySelector(".rs-toast-close").addEventListener("click", function () {
-            toast.classList.remove("is-show");
+    $("rsDiscard").addEventListener("click", function () {
+        tracked.forEach(function (el, i) {
+            if (el.type === "checkbox") { el.checked = initial[i]; } else { el.value = initial[i]; }
         });
-        if (toast.classList.contains("is-show") && toast.dataset.autohide === "true") {
-            showToast(true);
-        }
-    }
-
-    // ---------- File inputs ----------
-    function onFilePicked(input, key) {
-        input.addEventListener("change", function () {
-            var file = input.files && input.files[0];
-            if (picked[key]) { URL.revokeObjectURL(picked[key]); }
-            picked[key] = file ? URL.createObjectURL(file) : "";
-            if (key === "favicon" && file) {
-                faviconRemoved = false;
-                removeFavicon.value = "false";
-            }
-            markDirty();
-            render();
-        });
-    }
-
-    onFilePicked(logoFile, "nav");
-    onFilePicked(footerFile, "footer");
-    onFilePicked(faviconFile, "favicon");
-
-    // "Undo" clears a newly picked file; "Use default" removes the saved tab icon.
-    page.querySelectorAll("[data-reset]").forEach(function (button) {
-        button.addEventListener("click", function () {
-            var key = button.dataset.reset;
-            var input = { nav: logoFile, footer: footerFile, favicon: faviconFile }[key];
-
-            if (picked[key]) { URL.revokeObjectURL(picked[key]); }
-            picked[key] = "";
-            input.value = "";
-
-            if (key === "favicon") {
-                faviconRemoved = true;
-                removeFavicon.value = "true";
-            }
-
-            markDirty();
-            render();
-        });
-    });
-
-    footerSame.addEventListener("change", function () {
-        if (footerSame.checked) {
-            if (picked.footer) { URL.revokeObjectURL(picked.footer); }
-            picked.footer = "";
-            footerFile.value = "";
-        }
-    });
-
-    // ---------- Events ----------
-    // Typing in the country search box is not a settings change.
-    function isPickerSearch(event) {
-        return event.target.classList && event.target.classList.contains("cc-input");
-    }
-
-    form.addEventListener("input", function (event) {
-        if (isPickerSearch(event)) { return; }
-        markDirty();
+        page.classList.remove("has-errors");
+        country.dispatchEvent(new Event("change", { bubbles: true }));   // repaints the flag button
+        checkPhone();
         render();
     });
 
-    form.addEventListener("change", function (event) {
-        if (isPickerSearch(event)) { return; }
-        markDirty();
-        render();
+    // Leaving with unsaved changes: the browser asks first.
+    var submitting = false;
+    window.addEventListener("beforeunload", function (e) {
+        if (!submitting && changedCount() > 0) { e.preventDefault(); e.returnValue = ""; }
     });
 
-    phone.addEventListener("input", function () {
-        if (phoneServerMsg) { phoneServerMsg.hidden = true; }
-        checkPhone();
-    });
+    // ---------- events ----------
+    // Any typing or change redraws the previews and recounts unsaved changes.
+    // (The country search box, the sliders and the Dine-in/Takeaway switch are not saved fields,
+    // so they never count as a change: only the fields in "tracked" do.)
+    form.addEventListener("input", render);
+    form.addEventListener("change", render);
 
-    country.addEventListener("change", function () {
-        if (phoneServerMsg) { phoneServerMsg.hidden = true; }
-        checkPhone();
-    });
+    phone.addEventListener("input", function () { if (phoneServerMsg) { phoneServerMsg.hidden = true; } checkPhone(); });
+    country.addEventListener("change", function () { if (phoneServerMsg) { phoneServerMsg.hidden = true; } checkPhone(); });
 
-    form.addEventListener("submit", function (event) {
-        var jqueryValid = !(window.jQuery && window.jQuery(form).valid && !window.jQuery(form).valid());
-        var phoneValid = checkPhone();
-
-        if (!phoneValid || !jqueryValid) {
-            event.preventDefault();
-            showToast(true);
-            var firstError = page.querySelector(".input-validation-error, .rs-phone-row.is-err");
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
+    form.addEventListener("submit", function (e) {
+        var jqOk = !(window.jQuery && window.jQuery(form).valid && !window.jQuery(form).valid());
+        var phoneOk = checkPhone();
+        if (!jqOk || !phoneOk) {
+            e.preventDefault();
+            page.classList.add("has-errors");
+            setText("rsSaveCount", "Not saved yet");
+            var first = page.querySelector(".input-validation-error, .rs-phone-row.is-err");
+            if (first) { first.scrollIntoView({ behavior: "smooth", block: "center" }); }
+            return;
         }
+        submitting = true;
     });
 
-    // ---------- Country picker (same as /Account/Register, Member 1) ----------
-    // Copied from Register.cshtml so Member 1's page is not touched.
-    // Only change: after choosing, focus goes to PhoneInput instead of Input_PhoneNumber.
+    // ---------- country picker (same as /Account/Register, Member 1) ----------
     page.querySelectorAll("[data-cc]").forEach(function (box) {
         var select = box.querySelector(".cc-native");
         var btn = box.querySelector(".cc-btn");
@@ -384,11 +249,10 @@
         var search = box.querySelector(".cc-input");
         var list = box.querySelector(".cc-list");
         var empty = box.querySelector(".cc-empty");
-        var active = -1;   // highlighted row while using the arrow keys
+        var active = -1;
 
-        box.classList.add("cc-ready");   // hides the plain select, shows the button
+        box.classList.add("cc-ready");
 
-        // One row per country: [MY]  Malaysia ............ +60
         var items = Array.prototype.map.call(select.options, function (opt) {
             var li = document.createElement("li");
             li.className = "cc-item";
@@ -406,7 +270,6 @@
         });
 
         function current() { return select.options[select.selectedIndex]; }
-
         function paint() {
             var opt = current();
             btn.querySelector(".cc-flag").className = "cc-flag fi fi-" + opt.value.toLowerCase();
@@ -418,9 +281,7 @@
                 li.setAttribute("aria-selected", on);
             });
         }
-
         function visible() { return items.filter(function (li) { return !li.hidden; }); }
-
         function highlight(i) {
             var rows = visible();
             rows.forEach(function (li) { li.classList.remove("is-active"); });
@@ -429,14 +290,12 @@
             rows[active].classList.add("is-active");
             rows[active].scrollIntoView({ block: "nearest" });
         }
-
         function filter() {
             var q = search.value.trim().toLowerCase().replace(/^\+/, "");
             items.forEach(function (li) { li.hidden = q !== "" && li.dataset.search.indexOf(q) === -1; });
             empty.hidden = visible().length > 0;
             highlight(0);
         }
-
         function open() {
             panel.hidden = false;
             btn.setAttribute("aria-expanded", "true");
@@ -447,117 +306,33 @@
             if (sel) { highlight(visible().indexOf(sel)); }
             search.focus();
         }
-
-        function close(backToButton) {
+        function close(back) {
             panel.hidden = true;
             btn.setAttribute("aria-expanded", "false");
             box.classList.remove("is-open");
-            if (backToButton) { btn.focus(); }
+            if (back) { btn.focus(); }
         }
-
         function choose(value) {
             select.value = value;
             select.dispatchEvent(new Event("change", { bubbles: true }));
-            paint();
             close(false);
-            phone.focus();   // ready to type the number
+            phone.focus();
         }
 
+        select.addEventListener("change", paint);   // also repaints after Discard
         btn.addEventListener("click", function () { panel.hidden ? open() : close(true); });
         search.addEventListener("input", filter);
         search.addEventListener("keydown", function (e) {
             if (e.key === "ArrowDown") { e.preventDefault(); highlight(active + 1); }
             else if (e.key === "ArrowUp") { e.preventDefault(); highlight(active - 1); }
-            else if (e.key === "Enter") {
-                e.preventDefault();   // don't submit the form
-                var rows = visible();
-                if (rows[active]) { choose(rows[active].dataset.value); }
-            }
+            else if (e.key === "Enter") { e.preventDefault(); var r = visible(); if (r[active]) { choose(r[active].dataset.value); } }
             else if (e.key === "Escape") { close(true); }
         });
         document.addEventListener("click", function (e) { if (!box.contains(e.target)) { close(false); } });
-
         paint();
     });
 
-    // ---------- Side index highlight ----------
-    var sections = Array.prototype.slice.call(page.querySelectorAll(".rs-sec"));
-    var links = Array.prototype.slice.call(page.querySelectorAll(".rs-side a"));
-
-    function setActiveLink(id) {
-        links.forEach(function (link) {
-            link.classList.toggle("is-on", link.getAttribute("href") === "#" + id);
-        });
-    }
-
-    // Section chosen by clicking a link. It stays red until the admin
-    // scrolls again by hand AFTER the smooth scroll has finished.
-    var clickedId = "";
-    var autoScrolling = false;   // true while the smooth scroll from a click is still moving
-    var settleTimer;
-
-    // Scroll with JavaScript instead of changing the URL to "#rs-charges".
-    // Otherwise the hash stays in the address bar, and after Save the page
-    // reloads and jumps straight back down to that section.
-    links.forEach(function (link) {
-        link.addEventListener("click", function (event) {
-            event.preventDefault();
-            clickedId = link.getAttribute("href").slice(1);
-            autoScrolling = true;
-            setActiveLink(clickedId);
-            var target = byId(clickedId);
-            if (target) { target.scrollIntoView({ behavior: "smooth", block: "start" }); }
-            // If the page is already at that spot there is no scroll event, so settle anyway.
-            clearTimeout(settleTimer);
-            settleTimer = setTimeout(function () { autoScrolling = false; }, 200);
-        });
-    });
-
-    // Clean up an old "#rs-..." left in the address bar (e.g. from a bookmark or an earlier version).
-    if (/^#rs-/.test(window.location.hash)) {
-        history.replaceState(null, "", window.location.pathname + window.location.search);
-        window.addEventListener("load", function () { window.scrollTo(0, 0); });
-    }
-
-    // A real scroll by the admin (not trackpad momentum during the smooth scroll)
-    // hands control back to the normal "which section is on screen" rule.
-    function userScrolled() {
-        if (!autoScrolling) { clickedId = ""; }
-    }
-
-    window.addEventListener("wheel", userScrolled, { passive: true });
-    window.addEventListener("touchmove", userScrolled, { passive: true });
-    window.addEventListener("keydown", userScrolled);
-
-    function sectionOnScreen() {
-        var current = sections[0] ? sections[0].id : "";
-        sections.forEach(function (section) {
-            if (section.getBoundingClientRect().top < 160) { current = section.id; }
-        });
-
-        // The last section is short and can never reach the top of the screen,
-        // so treat "scrolled to the bottom" as being on the last section.
-        var scrolled = Math.ceil(window.innerHeight + window.scrollY);
-        var atBottom = scrolled >= document.documentElement.scrollHeight - 8;
-        if (atBottom && sections.length) { current = sections[sections.length - 1].id; }
-
-        return current;
-    }
-
-    window.addEventListener("scroll", function () {
-        if (clickedId) {
-            // Still finishing the smooth scroll: wait until it stops moving.
-            clearTimeout(settleTimer);
-            settleTimer = setTimeout(function () { autoScrolling = false; }, 150);
-            return;
-        }
-        setActiveLink(sectionOnScreen());
-    }, { passive: true });
-
-    // ---------- First paint ----------
-    // Show a server-side phone error as-is; only re-check after the admin edits.
-    if (!phoneServerMsg || !phoneServerMsg.textContent.trim()) {
-        checkPhone();
-    }
+    // ---------- first paint ----------
+    if (!phoneServerMsg || !phoneServerMsg.textContent.trim()) { checkPhone(); }
     render();
 })();

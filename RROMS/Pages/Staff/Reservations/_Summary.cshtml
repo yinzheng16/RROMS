@@ -1,0 +1,59 @@
+@using RROMS.Services.Interfaces
+@using static RROMS.Pages.Staff.Reservations.StaffLedgerFormat
+@model StaffDayBoard
+@{
+    var c = Model.Counts;
+    var pendingTotal = Model.PendingDays.Sum(d => d.Count);
+    var otherDays = Model.PendingDays.Where(d => d.Date != Model.Date.Date).ToList();
+    var ci = System.Globalization.CultureInfo.InvariantCulture;
+    string DayUrl(DateTime d) => Url.Page("/Staff/Reservations/Index", new { date = d.ToString("yyyy-MM-dd"), status = "pending" }) ?? "#";
+}
+<div class="sr-part" data-part="summary"
+     data-c-all="@c.All" data-c-pending="@c.Pending" data-c-confirmed="@c.Confirmed" data-c-seated="@c.Seated"
+     data-pending-days="@PendingDaysData(Model)" data-c-late="@c.Late" data-c-completed="@c.Completed" data-c-cancelled="@c.Cancelled">
+
+    <section class="sr-stats" aria-label="Summary for @Model.Date.ToString("d MMMM")">
+        <div class="sr-stat s-guests">@Icon("person")<div><strong>@c.ActiveGuests</strong><span lang="ja">名</span><small>guests</small></div></div>
+        <div class="sr-stat s-active">@Icon("calendar")<div><strong>@c.ActiveBookings</strong><span lang="ja">件</span><small>active bookings</small></div></div>
+        <div class="sr-stat s-pending">@Icon("clock")<div><strong>@c.Pending</strong><span lang="ja">件</span><small>pending</small></div></div>
+        <div class="sr-stat s-seated">@Icon("seat")<div><strong>@c.Seated</strong><span lang="ja">名</span><small>seated</small></div></div>
+        <div class="sr-stat s-late">@Icon("alert")<div><strong>@c.Late</strong><span lang="ja">件</span><small>overdue</small></div></div>
+    </section>
+
+    @if (pendingTotal > 0)
+    {
+        <section class="sr-banner" aria-label="Reservations waiting for confirmation">
+            <div class="sr-banner-main">
+                @Icon("clock")
+                <strong>@Plural(pendingTotal, "reservation", "reservations") awaiting confirmation</strong>
+                <span class="sr-banner-note">Unconfirmed bookings are cancelled automatically 15 minutes after their booking time.</span>
+                @if (Model.NextAutoCancel.HasValue && c.Pending > 0)
+                {
+                    <span class="sr-banner-next">Next auto-cancel <b>@Clock(Model.NextAutoCancel.Value)</b></span>
+                }
+                @if (c.Pending > 0)
+                {
+                    <button type="button" class="sr-banner-btn" data-filter-jump="pending">Review pending @Icon("right")</button>
+                }
+                else
+                {
+                    <a class="sr-banner-btn" href="@DayUrl(otherDays[0].Date)">Go to @otherDays[0].Date.ToString("ddd d MMM", ci) @Icon("right")</a>
+                }
+            </div>
+            @if (otherDays.Count > 0)
+            {
+                <div class="sr-banner-days">
+                    <span>@(c.Pending > 0 ? "Also waiting on" : "Waiting on")</span>
+                    @foreach (var d in otherDays.Take(6))
+                    {
+                        <a class="sr-day-chip@(d.Date < DateTime.Today.AddDays(1) ? " is-soon" : "")" href="@DayUrl(d.Date)">@d.Date.ToString("ddd d MMM", ci)<em>@d.Count</em></a>
+                    }
+                    @if (otherDays.Count > 6)
+                    {
+                        <span class="sr-day-more">+@(otherDays.Count - 6) more days</span>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>

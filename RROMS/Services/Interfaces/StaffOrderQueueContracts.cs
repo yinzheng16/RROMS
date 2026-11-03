@@ -2,33 +2,18 @@ using RROMS.Models;
 
 namespace RROMS.Services.Interfaces;
 
-// Owner: Member 3 / US25. DTOs and partial interface only; no database changes.
+// Owner: Member 3 / US25-US26. Shared order-card and order-detail DTOs for the staff order board.
 public partial interface IOrderService
 {
-    Task<StaffOrderQueue> GetStaffOrderQueueAsync(string? search = null,
-        string? dining = null, int page = 1, CancellationToken cancellationToken = default, string? sort = null, bool showAll = false);
-    Task<StaffQueueSignal> GetStaffQueueSignalAsync(CancellationToken cancellationToken = default);
     Task<StaffOrderDetails?> GetStaffOrderDetailsAsync(int id, CancellationToken cancellationToken = default);
-    Task<StaffAcceptResult> AcceptStaffOrderAsync(int id, string staffUserId,
-        CancellationToken cancellationToken = default);
 }
 
 public sealed record StaffOrderRow(int Id, string OrderNo, string CustomerName,
     OrderType Dining, DateTime CreatedAt, int Portions, decimal Total, DateTime? UpdatedAt,
-    IReadOnlyList<StaffOrderPreview>? DishPreview = null, bool HasNotes = false, int DishLineCount = 0);
+    IReadOnlyList<StaffOrderPreview>? DishPreview = null, bool HasNotes = false, int DishLineCount = 0,
+    int? DiningSessionId = null, string? TableNumber = null);
 
 public sealed record StaffOrderPreview(string Name, int Quantity);
-
-public sealed record StaffQueueSignal(string Stamp, int Pending, int DineIn, int Takeaway, int NewestId);
-
-public sealed record StaffOrderQueue(IReadOnlyList<StaffOrderRow> Rows, StaffQueueSignal Signal,
-    int MatchingCount, int PageNumber, string Search, string Dining, DateTime ServerNow, string Sort = "newest", bool ShowAll = false)
-{
-    public const int PageSize = 6;
-    public int TotalPages => ShowAll ? 1 : Math.Max(1, (int)Math.Ceiling(MatchingCount / (double)PageSize));
-    public int First => MatchingCount == 0 ? 0 : ShowAll ? 1 : (PageNumber - 1) * PageSize + 1;
-    public int Last => ShowAll ? MatchingCount : Math.Min(PageNumber * PageSize, MatchingCount);
-}
 
 public sealed record StaffOrderDish(int Id, int MenuItemId, string Code, string Name,
     string? ImageUrl, int Quantity, decimal UnitPrice, string? Notes);
@@ -37,13 +22,14 @@ public sealed record StaffOrderBooking(string Reference, DateTime ReservedAt, in
 public sealed record StaffOrderDetails(int Id, string OrderNo, string CustomerName,
     OrderType Dining, OrderStatus Status, DateTime CreatedAt, DateTime ServerNow,
     IReadOnlyList<StaffOrderDish> Dishes, string? Notes, StaffOrderBooking? Booking,
-    decimal Subtotal, decimal Tax, decimal ServiceCharge, decimal Total)
+    decimal Subtotal, decimal Tax, decimal ServiceCharge, decimal Total,
+    string? CustomerId = null, string? DiningPreferences = null,
+    int? DiningSessionId = null, string? TableNumber = null)
 {
     public int Portions => Dishes.Sum(dish => dish.Quantity);
+    public decimal? TaxRatePercent { get; init; }
+    public decimal? ServiceChargePercent { get; init; }
 }
-
-public enum StaffAcceptStatus { Success, NotFound, AlreadyChanged, Forbidden }
-public sealed record StaffAcceptResult(StaffAcceptStatus Status, string Message);
 
 public static class StaffQueueRules
 {

@@ -47,6 +47,9 @@ namespace RROMS.Data
             // ---------- Member 3: shared 80-item demo menu ----------
             await MenuDemoSeeder.SeedAsync(services);
 
+            // ---------- Member 1: starter chatbot FAQs (US10), only when there are none ----------
+            ChatFaqSeed.Seed(db);
+
         }
 
         private static async Task CreateUserAsync(UserManager<ApplicationUser> userManager,

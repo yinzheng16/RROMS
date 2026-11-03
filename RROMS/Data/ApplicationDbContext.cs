@@ -21,6 +21,8 @@ namespace RROMS.Data
         public DbSet<OperatingHour> OperatingHours => Set<OperatingHour>();
         public DbSet<SpecialDate> SpecialDates => Set<SpecialDate>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
+        public DbSet<DiningSession> DiningSessions => Set<DiningSession>();
+        public DbSet<ReservationStatusLog> ReservationStatusLogs => Set<ReservationStatusLog>();
 
         // Member 3: Menu & Orders
         public DbSet<MenuCategory> MenuCategories => Set<MenuCategory>();
@@ -28,11 +30,13 @@ namespace RROMS.Data
         public DbSet<MenuCodeSequence> MenuCodeSequences => Set<MenuCodeSequence>();
         public DbSet<Promotion> Promotions => Set<Promotion>();
         public DbSet<Order> Orders => Set<Order>();
+        public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<CustomerCart> CustomerCarts => Set<CustomerCart>();
         public DbSet<CustomerCartLine> CustomerCartLines => Set<CustomerCartLine>();
 
         // Member 4: Payments & Notifications
+        public DbSet<Bill> Bills => Set<Bill>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -43,6 +47,9 @@ namespace RROMS.Data
         // Member 1: Chatbot
         public DbSet<ChatFaq> ChatFaqs => Set<ChatFaq>();
 
+        // Member 1: US05 / US07 user management history
+        public DbSet<UserAdminLog> UserAdminLogs => Set<UserAdminLog>();
+
         // Save every enum as its name (e.g. "Paid") instead of a number,
         // so tables are readable in SSMS. Add a line here for each new enum.
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
@@ -52,10 +59,13 @@ namespace RROMS.Data
             builder.Properties<OrderStatus>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<PaymentMethod>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<PaymentStatus>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<BillStatus>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<NotificationType>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<DayOfWeek>().HaveConversion<string>().HaveMaxLength(10);
             builder.Properties<TableType>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<TableStatus>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<DiningSessionStatus>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<UserAdminAction>().HaveConversion<string>().HaveMaxLength(20);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -67,6 +77,10 @@ namespace RROMS.Data
             builder.Entity<TableTypeDefinition>(e =>
             {
                 e.HasIndex(t => t.Name).IsUnique();
+
+                e.HasIndex(t => t.Code)
+                    .IsUnique()
+                    .HasFilter("[Code] IS NOT NULL");
 
                 e.HasOne(t => t.DefaultDiningArea)
                     .WithMany()
@@ -110,6 +124,18 @@ namespace RROMS.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<ReservationStatusLog>(e =>
+            {
+                e.Property(x => x.ChangedByRole).HasMaxLength(20);
+                e.Property(x => x.Note).HasMaxLength(200);
+                e.HasIndex(x => new { x.ReservationId, x.ChangedAt });
+                // History must never disappear with a reservation, so no cascade delete.
+                e.HasOne(x => x.Reservation)
+                 .WithMany()
+                 .HasForeignKey(x => x.ReservationId)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // ---------- Menu & Orders ----------
             builder.Entity<CustomerCart>(e =>
             {
@@ -146,6 +172,7 @@ namespace RROMS.Data
             builder.Entity<Promotion>(e =>
             {
                 e.Property(p => p.DiscountPercent).HasPrecision(5, 2);
+                e.Property(p => p.PromoPrice).HasPrecision(10, 2);   // US29 fixed promotional price
                 e.HasOne(p => p.MenuItem)
                  .WithMany(m => m.Promotions)
                  .HasForeignKey(p => p.MenuItemId)
@@ -155,6 +182,8 @@ namespace RROMS.Data
             builder.Entity<Order>(e =>
             {
                 e.HasIndex(o => o.OrderNo).IsUnique();
+                // US32: Improve lookup performance for Orders linked to a Bill.
+                e.HasIndex(o => o.BillId);
                 e.Property(o => o.Subtotal).HasPrecision(10, 2);
                 e.Property(o => o.TaxAmount).HasPrecision(10, 2);
                 e.Property(o => o.ServiceCharge).HasPrecision(10, 2);
@@ -167,11 +196,23 @@ namespace RROMS.Data
                  .WithMany(r => r.Orders)
                  .HasForeignKey(o => o.ReservationId)
                  .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(o => o.DiningSession)
+                 .WithMany(s => s.Orders)
+                 .HasForeignKey(o => o.DiningSessionId)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<OrderStatusLog>(e =>
+            {
+                e.HasIndex(x => new { x.OrderId, x.ChangedAt, x.Id });
+                e.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
 
             builder.Entity<OrderItem>(e =>
             {
                 e.Property(i => i.UnitPrice).HasPrecision(10, 2);
+                e.Property(i => i.NormalUnitPrice).HasPrecision(10, 2);   // US29
                 e.HasOne(i => i.Order)
                  .WithMany(o => o.Items)
                  .HasForeignKey(i => i.OrderId)
@@ -182,13 +223,75 @@ namespace RROMS.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<DiningSession>(e =>
+            {
+                e.HasIndex(s => new { s.TableId, s.Status });
+                // A table can have only one open session at a time.
+                e.HasIndex(s => s.TableId)
+                 .IsUnique()
+                 .HasFilter("[Status] = 'Open'");
+                // A reservation opens at most one session.
+                e.HasIndex(s => s.ReservationId)
+                 .IsUnique()
+                 .HasFilter("[ReservationId] IS NOT NULL");
+
+                e.HasOne(s => s.Table)
+                 .WithMany()
+                 .HasForeignKey(s => s.TableId)
+                 .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(s => s.Reservation)
+                 .WithMany()
+                 .HasForeignKey(s => s.ReservationId)
+                 .OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(s => s.Customer)
+                 .WithMany()
+                 .HasForeignKey(s => s.CustomerId)
+                 .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // ---------- Payments & Notifications ----------
+            builder.Entity<Bill>(e =>
+            {
+                e.Property(b => b.Subtotal).HasPrecision(10, 2);
+                e.Property(b => b.TaxAmount).HasPrecision(10, 2);
+                e.Property(b => b.ServiceCharge).HasPrecision(10, 2);
+                e.Property(b => b.TotalAmount).HasPrecision(10, 2);
+
+                e.Property(b => b.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(20);
+
+                e.HasMany(b => b.Orders)
+                    .WithOne(o => o.Bill)
+                    .HasForeignKey(o => o.BillId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                e.HasMany(b => b.Payments)
+                    .WithOne(p => p.Bill)
+                    .HasForeignKey(p => p.BillId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // US32: One combined bill per dining session.
+                // Takeaway bills have no session (NULL), so they are not limited.
+                e.HasIndex(b => b.DiningSessionId)
+                    .IsUnique()
+                    .HasFilter("[DiningSessionId] IS NOT NULL");
+
+                e.HasOne(b => b.DiningSession)
+                    .WithMany()
+                    .HasForeignKey(b => b.DiningSessionId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             builder.Entity<Payment>(e =>
             {
                 e.Property(p => p.Amount).HasPrecision(10, 2);
+                // US32: OrderId is optional. Bill payments have no single order;
+                // older (US31) payments keep their OrderId.
                 e.HasOne(p => p.Order)
                  .WithMany(o => o.Payments)
                  .HasForeignKey(p => p.OrderId)
+                 .IsRequired(false)
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
@@ -215,6 +318,18 @@ namespace RROMS.Data
             {
                 e.Property(s => s.TaxRatePercent).HasPrecision(5, 2);
                 e.Property(s => s.ServiceChargePercent).HasPrecision(5, 2);
+            });
+
+            // ---------- Member 1: US05 / US07 user management history ----------
+            builder.Entity<UserAdminLog>(e =>
+            {
+                e.HasIndex(x => x.DoneAt);
+                e.HasIndex(x => new { x.TargetUserId, x.Action });
+                // History must never disappear with an account, so no cascade delete.
+                e.HasOne<ApplicationUser>()
+                 .WithMany()
+                 .HasForeignKey(x => x.TargetUserId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

@@ -1,74 +1,82 @@
 @page
 @model RROMS.Pages.Staff.Orders.IndexModel
+@using RROMS.Services
+@using RROMS.Services.Interfaces
 @{
-    ViewData["Title"] = "Order queue";
+    ViewData["Title"] = "Kitchen & service";
     ViewData["FullWidth"] = true;
-    ViewData["QueueDetails"] = Model.Details;
 }
-<link rel="stylesheet" href="~/css/staff-order-queue.css" asp-append-version="true" />
-<script>
-    // Run before the queue is painted so browser reload does not flash old results.
-    (() => {
-        const navigation = performance.getEntriesByType('navigation')[0];
-        if (navigation?.type !== 'reload') return;
-        const url = new URL(location.href);
-        const resetKeys = new Set(['search', 'dining', 'pagenumber', 'sort', 'showall']);
-        const viewKeys = [...url.searchParams.keys()].filter(key => resetKeys.has(key.toLowerCase()));
-        if (!viewKeys.length) return;
-        viewKeys.forEach(key => url.searchParams.delete(key));
-        document.documentElement.classList.add('sq-resetting');
-        location.replace(url.href);
-    })();
-</script>
-
-<div class="staff-queue" data-staff-queue data-base-url="@Url.Page("/Staff/Orders/Index")">
-    <header class="sq-masthead sq-masthead--dispenser" aria-labelledby="sq-page-title">
-        <div class="sq-masthead__inner container-xl container-wide">
-            <div class="sq-masthead__title">
-                <span class="sq-masthead__jp" lang="ja" aria-hidden="true">注文受付</span>
-                <div class="sq-masthead__copy">
-                    <p class="eyebrow">YORU IZAKAYA <span aria-hidden="true">/</span> STAFF WORKSPACE</p>
-                    <h1 id="sq-page-title">Order queue</h1>
-                    <p class="sq-masthead__intro">A clear view of every incoming order.</p>
-                    <div class="sq-masthead__rule" aria-hidden="true"></div>
-                </div>
-            </div>
-            <section class="sq-dispenser" aria-label="All pending order totals">
-                <div class="sq-dispenser__caption">
-                    <span>YORU / ORDER DESK</span>
-                    <span class="sq-dispenser__state"><i aria-hidden="true"></i>Awaiting acceptance</span>
-                </div>
-                <div class="sq-dispenser__paper">
-                    <div class="sq-dispenser__metric sq-dispenser__metric--pending">
-                        <div class="sq-dispenser__label"><i class="bi bi-clipboard2-check" aria-hidden="true"></i><p>Pending orders</p><span class="sq-dispenser__stamp" aria-hidden="true">Pending</span></div>
-                        <strong data-sq-count="pending">@Model.Queue.Signal.Pending</strong>
-                    </div>
-                    <div class="sq-dispenser__metric">
-                        <div class="sq-dispenser__label"><i class="bi bi-people" aria-hidden="true"></i><p>Dine-in</p></div>
-                        <strong data-sq-count="dineIn">@Model.Queue.Signal.DineIn</strong>
-                    </div>
-                    <div class="sq-dispenser__metric">
-                        <div class="sq-dispenser__label"><i class="bi bi-bag" aria-hidden="true"></i><p>Takeaway</p></div>
-                        <strong data-sq-count="takeaway">@Model.Queue.Signal.Takeaway</strong>
-                    </div>
-                </div>
-            </section>
+<link rel="stylesheet" href="~/css/staff-order-workflow.css" asp-append-version="true" />
+<div class="us26-workflow layout-tabs layout-creative" data-order-workflow data-base-url="@Url.Page("/Staff/Orders/Index")">
+    <header class="queue-hero" aria-labelledby="workflow-title">
+        <svg class="banner-art" viewBox="0 141 2048 376" preserveAspectRatio="none" aria-hidden="true" focusable="false"><image href="@Url.Content("~/images/staff/yoru-order-queue-banner.webp")" width="2048" height="682" /></svg>
+        <div class="wf-hero-title"><span class="wf-jp" lang="ja" aria-hidden="true">注文受付</span><div><p class="eyebrow">YORU IZAKAYA · STAFF WORKSPACE</p><h1 id="workflow-title">Order queue</h1><p>A clear view of every incoming order.</p><div class="wf-title-rule" aria-hidden="true"><span></span><i class="bi bi-flower1"></i></div></div></div>
+        <div class="banner-caption"><strong class="wf-desk-label">YORU / ORDER DESK</strong><span class="wf-overview"><i aria-hidden="true"></i>Kitchen &amp; service overview</span></div>
+        <div class="banner-metrics" aria-label="Restaurant totals: Pending, Preparing and Ready to Serve">
+            <div><p><i class="bi bi-receipt" aria-hidden="true"></i> Active orders</p><strong data-metric="active">@Model.Board.Signal.Active</strong></div>
+            <div><p><i class="bi bi-cup-hot" aria-hidden="true"></i> Dine-in</p><strong data-metric="dineIn">@Model.Board.Signal.DineIn</strong></div>
+            <div><p><i class="bi bi-bag" aria-hidden="true"></i> Takeaway</p><strong data-metric="takeaway">@Model.Board.Signal.Takeaway</strong></div>
         </div>
     </header>
-
-    <div class="sq-content container-xl container-wide">
-        <div class="sq-connection" data-sq-connection hidden role="status">
-            <i class="bi bi-wifi-off" aria-hidden="true"></i>
-            <span>Live checks paused. Your displayed orders are unchanged.</span>
-            <button type="button" data-sq-retry>Retry</button>
+    <div class="wf-main">
+        <div class="creative-intro"><div><p class="eyebrow">THE SERVICE DESK</p><h2>One clear next step.</h2></div><p>Follow the journey. Watch the waiting time on every order.</p><span class="creative-date">YORU IZAKAYA <b>·</b> STAFF WORKSPACE</span></div>
+        <p data-notice role="status" aria-live="polite" hidden></p>
+        <div data-tabs><partial name="_WorkflowTabs" model="Model.Board" /></div>
+        <form method="get" class="filters" data-filters aria-label="Order filters">
+            <input type="hidden" name="status" value="@Model.Board.Status" />
+            <div class="wf-search-field">
+            <div class="search">
+                <label class="visually-hidden" for="wf-search-input">Search order reference or customer name</label>
+                <input id="wf-search-input" aria-describedby="wf-search-hint" type="search" name="search" value="@Model.Board.Search" maxlength="80" placeholder="Search order number or customer name…" />
+                <button type="button" class="wf-search-submit" data-search-submit aria-label="Search orders" title="Search orders">
+                    <svg viewBox="0 0 20 20" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" /><path d="m13 13 4 4" /></svg>
+                </button>
+            </div>
+                <p id="wf-search-hint" class="wf-search-hint" data-search-hint role="status" aria-live="polite" hidden></p>
+            </div>
+            <div class="wf-picker" data-picker="dining">
+                <select name="dining" aria-label="Dining type"><option value="All" selected="@(Model.Board.Dining == "All")">All dining types</option><option value="DineIn" selected="@(Model.Board.Dining == "DineIn")">Dine-in</option><option value="Takeaway" selected="@(Model.Board.Dining == "Takeaway")">Takeaway</option></select>
+                <div class="wf-picker-custom" data-picker-custom hidden>
+                    <button type="button" class="wf-picker-trigger" data-picker-trigger aria-haspopup="listbox" aria-expanded="false" aria-controls="wf-dining-options" aria-label="Dining type">
+                        <i class="bi bi-cup-hot" aria-hidden="true"></i><span data-picker-label></span>
+                        <svg class="wf-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+                    </button>
+                    <div id="wf-dining-options" class="wf-picker-menu" data-picker-menu role="listbox" aria-label="Dining type" hidden></div>
+                </div>
+            </div>
+            <div class="wf-picker" data-picker="sort">
+                <select name="sort" aria-label="Sort other orders"><option value="newest" selected="@(Model.Board.Sort == "newest")">Newest first</option><option value="oldest" selected="@(Model.Board.Sort == "oldest")">Oldest first</option></select>
+                <div class="wf-picker-custom" data-picker-custom hidden>
+                    <button type="button" class="wf-picker-trigger" data-picker-trigger aria-haspopup="listbox" aria-expanded="false" aria-controls="wf-sort-options" aria-label="Sort other orders">
+                        <i class="bi bi-sort-down" aria-hidden="true"></i><span data-picker-label></span>
+                        <svg class="wf-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+                    </button>
+                    <div id="wf-sort-options" class="wf-picker-menu" data-picker-menu role="listbox" aria-label="Sort other orders" hidden></div>
+                </div>
+            </div>
+            <a class="outline wf-reset" data-reset href="@Url.Page("/Staff/Orders/Index", new { status = Model.Board.Status.ToString() })"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reset</a>
+            <button type="submit" class="outline refresh-button"><i class="bi bi-arrow-clockwise" aria-hidden="true"></i> Refresh</button>
+        </form>
+        <div class="incoming-banner" data-updates hidden role="status"><span data-updates-text>Orders have changed. Your current cards have stayed in place.</span><button type="button" class="outline" data-refresh>Refresh to show →</button></div>
+        <div class="incoming-banner connection" data-connection hidden role="status"><span>Live checks paused. Your displayed orders are unchanged.</span><button type="button" class="outline" data-retry>Retry</button></div>
+        <div class="workspace">
+            <section data-board aria-label="Kitchen and service orders"><partial name="_WorkflowBoard" model="Model.Board" /></section>
+            <aside id="drawer" class="drawer" data-drawer hidden="@(Model.Details is null)" aria-label="Selected order details">
+                @if (Model.Details is not null) { <partial name="_WorkflowDetails" model="Model.Details" /> }
+            </aside>
         </div>
-        <partial name="_Queue" model="Model.Queue" />
-        <button type="button" class="sq-backdrop" data-sq-backdrop aria-label="Close order details" hidden></button>
-        <p class="visually-hidden" data-sq-live role="status" aria-live="polite"></p>
-        <noscript><p class="small text-muted mt-3">Refresh this page to check for incoming orders. Waiting times update when the page reloads.</p></noscript>
+        <p class="footnote">Kitchen status is separate from payment. Completed does not mean paid.</p>
+        <noscript><p>Use Refresh to check for incoming orders. View details to update an order.</p></noscript>
     </div>
+    <dialog data-action-dialog aria-labelledby="wf-action-title" aria-describedby="wf-action-description">
+        <form method="post" asp-page-handler="ChangeStatus" data-action-form>
+            <div class="dialog-top"><p class="eyebrow">ORDER ACTION</p><button type="button" class="icon" data-close-dialog aria-label="Close action">×</button></div>
+            <h2 id="wf-action-title"></h2><p id="wf-action-description"></p>
+            <input type="hidden" name="id" /><input type="hidden" name="expectedStatus" /><input type="hidden" name="targetStatus" />
+            <label data-reason-label>Reason <span data-reason-required></span><textarea name="reason" maxlength="250" rows="3" placeholder="A short explanation for the order history"></textarea></label>
+            <p data-dialog-error role="alert" hidden></p>
+            <div class="dialog-actions"><button type="button" class="outline" data-close-dialog>Go back</button><button type="submit" class="primary" data-confirm>Confirm</button></div>
+        </form>
+    </dialog>
 </div>
-
-@section Scripts {
-    <script src="~/js/staff-order-queue.js" asp-append-version="true" defer></script>
-}
+@section Scripts { <script src="~/js/staff-order-workflow.js" asp-append-version="true" defer></script> }

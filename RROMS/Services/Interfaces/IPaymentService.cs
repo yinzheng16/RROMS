@@ -22,5 +22,18 @@ namespace RROMS.Services.Interfaces
 
         Task<List<Payment>> GetPaymentsByOrderIdAsync(
             int orderId);
+
+        // US32: Staff record a counter payment (Cash or Card) for the
+        // full amount of a Confirmed bill. In one transaction this
+        // creates a Paid payment and moves the bill Confirmed -> Paid.
+        // transactionRef: optional card terminal reference.
+        Task<Payment> RecordCounterPaymentAsync(
+            int billId,
+            PaymentMethod method,
+            string staffUserId,
+            string? transactionRef = null);
+
+        // US32: Payments recorded against a bill, newest first.
+        Task<List<Payment>> GetPaymentsByBillIdAsync(int billId);
     }
 }

@@ -86,12 +86,8 @@
                                     <input asp-for="Input.RememberMe" class="form-check-input" />
                                     <label asp-for="Input.RememberMe" class="form-check-label">Keep me logged in</label>
                                 </div>
-                                @* US52 (later): will open the reset-by-email page once Member 4's email sender (US38) is ready *@
-                                <button type="button" class="auth-forgot" data-bs-toggle="collapse" data-bs-target="#forgotHint"
-                                        aria-expanded="false" aria-controls="forgotHint">Forgot password?</button>
-                            </div>
-                            <div class="collapse" id="forgotHint">
-                                <p class="auth-forgot-hint"><i class="bi bi-info-circle me-1" aria-hidden="true"></i>Please contact the restaurant and our staff will reset your password for you. Reset by email is coming soon.</p>
+                                @* US52: reset link by email *@
+                                <a class="auth-forgot" href="/Identity/Account/ForgotPassword">Forgot password?</a>
                             </div>
 
                             <button id="loginSubmit" type="submit" class="btn btn-primary btn-lg w-100 auth2-submit">

@@ -422,28 +422,18 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 /* Left: welcome panel */
 .auth2-side {
     position: relative;
-    background: var(--yoru-ink);
+    /* Night izakaya scene (same art as the Security pop-ups, flipped so the lantern sits on the right).
+       Darker on the left so the logo and text stay easy to read; clearer on the right edge and the top. */
+    background:
+        linear-gradient(90deg, rgba(15, 10, 8, .88) 0%, rgba(15, 10, 8, .82) 52%, rgba(15, 10, 8, .35) 100%),
+        linear-gradient(180deg, rgba(15, 10, 8, 0) 0%, rgba(15, 10, 8, .25) 100%),
+        var(--yoru-ink) url("../images/auth/auth-night.webp") right top / cover no-repeat;
     color: var(--yoru-cream);
     padding: 3.25rem 3rem 3rem; /* top matches the gold line on the right */
     display: flex;
     flex-direction: column;
     justify-content: flex-start; /* content starts at the top, level with the form */
 }
-
-    .auth2-side::after { /* faint gold waves at the bottom of the panel */
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 9rem;
-        pointer-events: none;
-        background-image: radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.14) 19% 21%, transparent 22% 38%, rgba(183,155,114,.14) 39% 41%, transparent 42% 58%, rgba(183,155,114,.14) 59% 61%, #191919 62%), radial-gradient(circle at 50% 100%, transparent 18%, rgba(183,155,114,.14) 19% 21%, transparent 22% 38%, rgba(183,155,114,.14) 39% 41%, transparent 42% 58%, rgba(183,155,114,.14) 59% 61%, #191919 62%);
-        background-size: 56px 28px;
-        background-position: 0 0, 28px 14px;
-        -webkit-mask-image: linear-gradient(to top, #000, transparent);
-        mask-image: linear-gradient(to top, #000, transparent);
-    }
 
     .auth2-side > * {
         position: relative;
@@ -923,10 +913,30 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 }
 
 /* Decorations */
-/* Page background: warm glow behind the card + fine washi-paper grain */
+/* Page background: the watercolour washi scene (lantern, sakura, torii, Fuji, gold waves),
+   same picture as Admin → Users. It already has a sakura branch and Fuji, so the old separate
+   branch and Fuji pictures are hidden. The falling petals stay (they drift down from the branch). */
 .auth-page {
-    background-color: var(--yoru-cream);
-    background-image: radial-gradient(ellipse 55% 60% at 55% 45%, rgba(255, 253, 248, .85), rgba(255, 253, 248, 0) 70%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .36  0 0 0 0 .22  0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background: #f8e7d3 url("../images/users/users-bg.webp") center / cover no-repeat;
+}
+
+@media (min-width: 992px) {
+    .auth-page { background-attachment: fixed; }
+}
+
+/* fill the whole space between navbar and footer, so there is no plain strip under the picture */
+.site-main:has(> .auth-page) {
+    display: flex;
+    flex-direction: column;
+    background: #f8e7d3;
+}
+
+    .site-main:has(> .auth-page) > .auth-page {
+        flex: 1 0 auto;
+    }
+
+.auth-page .auth-art {
+    display: none;
 }
 /* Loose sakura petals drifting down from the branch */
 .auth-petal {
@@ -3080,16 +3090,71 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
         margin-top: .15rem;
     }
 
+    /* Same badge as the Menu page (Member 3, customer-menu-art.css .menu-promo-seal):
+       red and gold scalloped plaque with a sakura, cream serif text. */
+    .hm-offer-badge {
+        width: 5.4rem;
+        height: 5.4rem;
+        padding-bottom: .15rem;
+        border-radius: 0;
+        box-shadow: none;
+        color: #fbf1dc;
+        line-height: .95;
+        text-shadow: 0 1px 2px rgba(60, 0, 0, .55);
+        background: url("../images/menu/yoru-promo-badge.webp") center / contain no-repeat;
+        filter: drop-shadow(0 .3rem .5rem rgba(0, 0, 0, .35));
+        z-index: 2;
+    }
+
+        .hm-offer-badge b {
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: -.02em;
+        }
+
+        .hm-offer-badge span {
+            margin-top: .15rem;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+        }
+
+    /* the big first card gets the bigger badge, like the dish details on the Menu page */
+    .hm-offer-badge.is-lg {
+        width: 6.6rem;
+        height: 6.6rem;
+    }
+
+        .hm-offer-badge.is-lg b { font-size: 1.6rem; }
+        .hm-offer-badge.is-lg span { font-size: .84rem; }
+
+/* "Ends Sun" chip: dark glass so it can be read on light photos too */
 .hm-ends {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
     align-self: flex-start;
     margin-bottom: auto;
-    padding: .2rem .6rem;
+    padding: .3rem .7rem;
     border-radius: 999px;
-    background: rgba(255,255,255,.12);
-    font-size: .65rem;
-    letter-spacing: .14em;
+    background: rgba(20, 12, 8, .62);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(217, 191, 146, .45);
+    color: #f6ead6;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .12em;
     text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
 }
+
+    .hm-ends .bi { color: var(--yoru-gold); font-size: .75rem; line-height: 1; }
+    .hm-ends .bi::before { vertical-align: 0; }
 
 
 /* ---------- 6. Visit us + quick booking ---------- */
@@ -3155,6 +3220,30 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
 
     .hm-hours .closed td:last-child {
         color: var(--yoru-red-text);
+    }
+
+    /* US50: each opening period on its own line, special dates as "date" + small name */
+    .hm-hours td {
+        vertical-align: top;
+        white-space: nowrap;
+        padding-bottom: .45rem;
+    }
+
+    .hm-hours td span,
+    .hm-hours td small {
+        display: block;
+    }
+
+    .hm-hours td small {
+        font-size: .78rem;
+        color: var(--yoru-muted, #8a7e72);
+        white-space: normal;
+        max-width: 10rem;
+    }
+
+    .hm-hours tr:not(.special) + tr.special td {
+        padding-top: .55rem;
+        border-top: 1px dashed rgba(0, 0, 0, .12);
     }
 
 .hm-book {
@@ -6109,3 +6198,31 @@ h1, h2, h3, .display-1, .display-2, .display-3, .display-4, .display-5, .display
         line-height: 1;
         vertical-align: 0;
     }
+
+
+/* US49: footer contact details from Restaurant Settings */
+.footer-address {
+    white-space: pre-line; /* keeps the admin's line breaks */
+    overflow-wrap: anywhere;
+    max-width: 18rem;
+}
+
+.footer-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+    .footer-link:hover {
+        color: var(--yoru-gold);
+    }
+/* "+2 more deals on the menu" under the Specials button (Home, Limited time) */
+.hm-offers-more {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: .85rem 0 0;
+    color: rgba(246, 234, 214, .7);
+    font-size: .88rem;
+    letter-spacing: .02em;
+}
+.hm-offers-more .bi { color: #d9bf92; line-height: 1; }
