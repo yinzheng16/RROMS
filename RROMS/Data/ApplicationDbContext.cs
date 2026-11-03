@@ -30,6 +30,7 @@ namespace RROMS.Data
         public DbSet<MenuCodeSequence> MenuCodeSequences => Set<MenuCodeSequence>();
         public DbSet<Promotion> Promotions => Set<Promotion>();
         public DbSet<Order> Orders => Set<Order>();
+        public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<CustomerCart> CustomerCarts => Set<CustomerCart>();
         public DbSet<CustomerCartLine> CustomerCartLines => Set<CustomerCartLine>();
@@ -46,6 +47,9 @@ namespace RROMS.Data
         // Member 1: Chatbot
         public DbSet<ChatFaq> ChatFaqs => Set<ChatFaq>();
 
+        // Member 1: US05 / US07 user management history
+        public DbSet<UserAdminLog> UserAdminLogs => Set<UserAdminLog>();
+
         // Save every enum as its name (e.g. "Paid") instead of a number,
         // so tables are readable in SSMS. Add a line here for each new enum.
         protected override void ConfigureConventions(ModelConfigurationBuilder builder)
@@ -61,6 +65,7 @@ namespace RROMS.Data
             builder.Properties<TableType>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<TableStatus>().HaveConversion<string>().HaveMaxLength(20);
             builder.Properties<DiningSessionStatus>().HaveConversion<string>().HaveMaxLength(20);
+            builder.Properties<UserAdminAction>().HaveConversion<string>().HaveMaxLength(20);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -167,6 +172,7 @@ namespace RROMS.Data
             builder.Entity<Promotion>(e =>
             {
                 e.Property(p => p.DiscountPercent).HasPrecision(5, 2);
+                e.Property(p => p.PromoPrice).HasPrecision(10, 2);   // US29 fixed promotional price
                 e.HasOne(p => p.MenuItem)
                  .WithMany(m => m.Promotions)
                  .HasForeignKey(p => p.MenuItemId)
@@ -196,9 +202,17 @@ namespace RROMS.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<OrderStatusLog>(e =>
+            {
+                e.HasIndex(x => new { x.OrderId, x.ChangedAt, x.Id });
+                e.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             builder.Entity<OrderItem>(e =>
             {
                 e.Property(i => i.UnitPrice).HasPrecision(10, 2);
+                e.Property(i => i.NormalUnitPrice).HasPrecision(10, 2);   // US29
                 e.HasOne(i => i.Order)
                  .WithMany(o => o.Items)
                  .HasForeignKey(i => i.OrderId)
@@ -304,6 +318,18 @@ namespace RROMS.Data
             {
                 e.Property(s => s.TaxRatePercent).HasPrecision(5, 2);
                 e.Property(s => s.ServiceChargePercent).HasPrecision(5, 2);
+            });
+
+            // ---------- Member 1: US05 / US07 user management history ----------
+            builder.Entity<UserAdminLog>(e =>
+            {
+                e.HasIndex(x => x.DoneAt);
+                e.HasIndex(x => new { x.TargetUserId, x.Action });
+                // History must never disappear with an account, so no cascade delete.
+                e.HasOne<ApplicationUser>()
+                 .WithMany()
+                 .HasForeignKey(x => x.TargetUserId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }

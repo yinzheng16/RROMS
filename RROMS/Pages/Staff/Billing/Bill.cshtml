@@ -66,6 +66,9 @@
     else
     {
         decimal subtotal, taxAmount, serviceCharge, totalAmount, taxRate, serviceRate;
+        // No % on the charge labels for now: orders do not save their rates yet,
+        // and % worked back from rounded amounts is misleading (e.g. 5.92%).
+        // Use the saved rates once Member 3's rate fields are in develop.
 
         if (Model.IsDineIn)
         {
@@ -203,7 +206,7 @@
                             </ul>
                         }
 
-                        <!-- Bill totals (saved order amounts; SST is charged on subtotal + service) -->
+                        <!-- Bill totals (saved order amounts; tax is charged on subtotal + service) -->
                         <div class="row justify-content-end mt-4">
                             <div class="col-md-8">
 
@@ -213,12 +216,12 @@
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Service Charge (@serviceRate.ToString("0.##")%)</span>
+                                    <span>Service Charge</span>
                                     <span>RM @serviceCharge.ToString("F2")</span>
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>SST (@taxRate.ToString("0.##")%)</span>
+                                    <span>Tax</span>
                                     <span>RM @taxAmount.ToString("F2")</span>
                                 </div>
 

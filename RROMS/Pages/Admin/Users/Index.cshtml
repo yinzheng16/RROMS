@@ -1,0 +1,505 @@
+@page
+@model RROMS.Pages.Admin.Users.IndexModel
+@using RROMS.Models
+@using RROMS.Services
+@using System.Globalization
+
+@{
+    // US05 / US07 Admin → Users (Owner: Member 1)
+    // Styles: wwwroot/css/admin-users.css · Script: wwwroot/js/admin-users.js
+    // Images: wwwroot/images/users/ (artwork only) + the red stamp from images/profile/
+    ViewData["Title"] = "Users";
+    ViewData["FullWidth"] = true;   // the night background goes edge to edge; the page draws its own container
+
+    var d = Model.Data;
+    var s = d.Stats;
+    var inv = CultureInfo.InvariantCulture;
+    var anyFilter = !string.IsNullOrWhiteSpace(Model.Search) || !string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.StatusFilter);
+    var firstNo = d.Matches == 0 ? 0 : (d.Page - 1) * d.PageSize + 1;
+    var lastNo = Math.Min(d.Page * d.PageSize, d.Matches);
+
+    string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "?";
+        var first = char.ToUpperInvariant(parts[0][0]);
+        return parts.Length == 1 ? first.ToString() : $"{first}{char.ToUpperInvariant(parts[^1][0])}";
+    }
+    string RoleClass(string r) => r == Roles.Admin ? "is-admin" : r == Roles.Staff ? "is-staff" : "is-cust";
+    string RoleIcon(string r) => r == Roles.Admin ? "bi-award-fill" : r == Roles.Staff ? "bi-people-fill" : "bi-bag-heart-fill";
+
+    // Filter links keep the other filters; changing a filter goes back to page 1.
+    string? SearchNow() => string.IsNullOrWhiteSpace(Model.Search) ? null : Model.Search.Trim();
+    string? Blank(string? v) => string.IsNullOrEmpty(v) ? null : v;
+    string FilterUrl(string? q, string? role, string? status) => Url.Page("./Index", new { q, role = Blank(role), status = Blank(status) })!;
+    var roleNow = Model.RoleFilter ?? "";
+    var statusNow = (Model.StatusFilter ?? "").ToLowerInvariant();
+
+    var nameErr = Model.ErrorFor("FullName");
+    var emailErr = Model.ErrorFor("Email");
+    var phoneErr = Model.ErrorFor("Phone");
+    var roleErr = Model.ErrorFor("Role");
+    var formErr = ViewData.ModelState[string.Empty]?.Errors.FirstOrDefault()?.ErrorMessage;
+
+    var adminsFull = s.ActiveAdmins >= d.MaxActiveAdmins;
+    var myPwErr = Model.ErrorFor("MyPassword");
+    int RoleCount(string r) => r == Roles.Admin ? s.Admins : r == Roles.Staff ? s.Staff : s.Customers;
+
+    var roleCards = new[]
+    {
+        (Roles.Admin, "Everything, including users and settings."),
+        (Roles.Staff, "Reservations, orders, billing. No admin pages."),
+        (Roles.Customer, "Booking and ordering only.")
+    };
+}
+
+@section Styles {
+    @* In <head>, so the page never shows unstyled while loading (the "flash" when searching or clicking a button). *@
+    <link rel="preload" as="image" href="~/images/users/users-bg.webp" />
+    @* Same flag icons as /Account/Register (emoji flags don't show on Windows) *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7.2.3/css/flag-icons.min.css" />
+    <link rel="stylesheet" href="~/css/admin-users.css" asp-append-version="true" />
+}
+
+<div class="uu-page" id="uuPage">
+    <div class="container-xl container-wide uu-wrap">
+
+        @* ================= HERO ================= *@
+        <section class="uu-hero">
+            <div class="uu-stamp" aria-hidden="true"><span class="jp">人</span></div>
+            <div class="uu-hero-tx">
+                <p class="uu-eyebrow">ADMINISTRATION <span>·</span> <span class="jp" lang="ja">利用者管理</span></p>
+                <h1>Users</h1>
+                <p class="uu-lede">Create staff and customer accounts, set roles, and manage access.</p>
+            </div>
+            <div class="uu-stats">
+                <div class="uu-stat"><i class="bi bi-people-fill" aria-hidden="true"></i><b>@s.All</b><span>All users</span></div>
+                <div class="uu-stat"><i class="bi bi-shield-fill" aria-hidden="true"></i><b>@s.StaffAndAdmins</b><span>Admin · Staff</span></div>
+                <div class="uu-stat"><i class="bi bi-bag-heart-fill" aria-hidden="true"></i><b>@s.Customers</b><span>Customers</span></div>
+                <div class="uu-stat is-warn"><i class="bi bi-person-slash" aria-hidden="true"></i><b>@s.Inactive</b><span>Inactive</span></div>
+            </div>
+            <button type="button" class="uu-add" data-uu-open="uuAdd"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add user</button>
+        </section>
+
+        <div class="uu-grid">
+
+            @* ================= US07: LIST ================= *@
+            <section class="uu-panel uu-list" aria-label="Users">
+                <div class="uu-tools">
+                    <form method="get" class="uu-search-form" role="search" data-uu-filters>
+                        <label class="uu-search">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search" name="q" value="@Model.Search" placeholder="Search name, email or phone…" aria-label="Search name, email or phone" autocomplete="off" maxlength="100" />
+                            @if (SearchNow() is not null)
+                            {
+                                <a class="uu-search-clear" href="@FilterUrl(null, roleNow, statusNow)" aria-label="Clear search"><i class="bi bi-x-lg"></i></a>
+                            }
+                            <button type="submit" class="uu-search-go">Search</button>
+                        </label>
+                        @if (!string.IsNullOrEmpty(Model.RoleFilter))
+                        {
+                            <input type="hidden" name="role" value="@Model.RoleFilter" />
+                        }
+                        @if (!string.IsNullOrEmpty(Model.StatusFilter))
+                        {
+                            <input type="hidden" name="status" value="@Model.StatusFilter" />
+                        }
+                    </form>
+
+                    <div class="uu-filters">
+                        <div class="uu-fgroup">
+                            <span class="uu-flabel" id="uuRoleLbl">Role</span>
+                            <nav class="uu-chips" aria-labelledby="uuRoleLbl">
+                                <a class="uu-chip @(roleNow == "" ? "is-on" : "")" href="@FilterUrl(SearchNow(), null, statusNow)" aria-current="@(roleNow == "" ? "true" : null)">All <span class="n">@s.All</span></a>
+                                @foreach (var r in new[] { Roles.Admin, Roles.Staff, Roles.Customer })
+                                {
+                                    var on = string.Equals(roleNow, r, StringComparison.OrdinalIgnoreCase);
+                                    <a class="uu-chip @(on ? "is-on" : "")" href="@FilterUrl(SearchNow(), r, statusNow)" aria-current="@(on ? "true" : null)"><i class="bi @RoleIcon(r)" aria-hidden="true"></i>@r <span class="n">@RoleCount(r)</span></a>
+                                }
+                            </nav>
+                        </div>
+                        <div class="uu-fgroup">
+                            <span class="uu-flabel" id="uuStatusLbl">Status</span>
+                            <nav class="uu-seg" aria-labelledby="uuStatusLbl">
+                                @foreach (var (val, label, dot) in new[] { ("", "Any", "is-any"), ("active", "Active", "is-on"), ("inactive", "Inactive", "is-off") })
+                                {
+                                    var on = statusNow == val;
+                                    <a class="@(on ? "is-on" : "")" href="@FilterUrl(SearchNow(), roleNow, val)" aria-current="@(on ? "true" : null)"><span class="dot @dot" aria-hidden="true"></span>@label</a>
+                                }
+                            </nav>
+                        </div>
+                        @if (anyFilter)
+                        {
+                            <span class="uu-count"><b>@d.Matches</b> @(d.Matches == 1 ? "user" : "users") found · <a href="@Url.Page("./Index")">Clear all</a></span>
+                        }
+                        else
+                        {
+                            <span class="uu-count"><b>@d.Matches</b> @(d.Matches == 1 ? "user" : "users") in total</span>
+                        }
+                    </div>
+                </div>
+
+                @if (d.Rows.Count == 0)
+                {
+                    <div class="uu-empty">
+                        <i class="bi bi-person-video2" aria-hidden="true"></i>
+                        <h3>@(anyFilter ? "No users match" : "No users yet")</h3>
+                        <p>@(anyFilter ? "Try another name, email or phone, or clear the filters." : "Add the first staff account with Add user.")</p>
+                        @if (anyFilter)
+                        {
+                            <a class="uu-btn ghost" href="@Url.Page("./Index")">Clear filters</a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="uu-table-wrap">
+                        <table class="uu-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">User</th>
+                                    <th scope="col">Role</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Joined</th>
+                                    <th scope="col" class="uu-th-act">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var u in d.Rows)
+                                {
+                                    <tr class="@(u.IsActive ? "" : "is-off") @(u.IsMe ? "is-me" : "") @(u.Id == Model.HighlightId ? "is-new" : "")" data-uu-new="@(u.Id == Model.HighlightId ? "true" : null)">
+                                        <td data-label="User">
+                                            <div class="uu-who">
+                                                <span class="uu-av @RoleClass(u.Role)" aria-hidden="true">@Initials(u.FullName)</span>
+                                                <div class="uu-who-tx">
+                                                    <b>@u.FullName @if (u.IsMe) { <span class="uu-you">You</span> }</b>
+                                                    <span>@u.Email</span>
+                                                    @if (!string.IsNullOrWhiteSpace(u.Phone))
+                                                    {
+                                                        <span>@PhoneDisplay.Pretty(u.Phone)</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td data-label="Role">
+                                            <span class="uu-role @RoleClass(u.Role)"><i class="bi @RoleIcon(u.Role)" aria-hidden="true"></i>@u.Role</span>
+                                        </td>
+                                        <td data-label="Status">
+                                            @if (u.IsActive)
+                                            {
+                                                <span class="uu-st is-on">Active</span>
+                                                @if (!u.HasPassword)
+                                                {
+                                                    <small class="uu-sub" title="The set-password link hasn't been used yet">Password not set</small>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="uu-st is-off">Inactive</span>
+                                                @if (u.InactiveSince is DateTime since)
+                                                {
+                                                    <small class="uu-sub">since @since.ToString("d MMM", inv)</small>
+                                                }
+                                            }
+                                        </td>
+                                        <td data-label="Joined" class="uu-joined">@u.CreatedAt.ToString("MMM yyyy", inv)</td>
+                                        <td class="uu-td-act">
+                                            <div class="uu-acts">
+                                                @if (!u.IsMe)
+                                                {
+                                                    <button type="button" class="uu-ib" data-uu-act="role"
+                                                            data-id="@u.Id" data-name="@u.FullName" data-role="@u.Role">
+                                                        <i class="bi bi-person-gear" aria-hidden="true"></i>Role
+                                                    </button>
+                                                }
+                                                @if (u.IsActive)
+                                                {
+                                                    <button type="button" class="uu-ib" data-uu-act="link"
+                                                            data-id="@u.Id" data-name="@u.FullName" data-email="@EmailTemplates.Mask(u.Email)" data-welcome="@(u.HasPassword ? "false" : "true")">
+                                                        <i class="bi bi-envelope-arrow-up" aria-hidden="true"></i>Send link
+                                                    </button>
+                                                    @if (!u.IsMe)
+                                                    {
+                                                        <button type="button" class="uu-ib is-danger" data-uu-act="deactivate"
+                                                                data-id="@u.Id" data-name="@u.FullName">
+                                                            <i class="bi bi-slash-circle" aria-hidden="true"></i>Deactivate
+                                                        </button>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="uu-ib is-go" data-uu-act="reactivate"
+                                                            data-id="@u.Id" data-name="@u.FullName" data-role="@u.Role">
+                                                        <i class="bi bi-check-lg" aria-hidden="true"></i>Reactivate
+                                                    </button>
+                                                    @if (!u.IsMe && u.Role != Roles.Customer)
+                                                    {
+                                                        @* Only Staff / Admin accounts, and only after they are deactivated *@
+                                                        <button type="button" class="uu-ib is-danger is-icon" data-uu-act="remove"
+                                                                data-id="@u.Id" data-name="@u.FullName" data-role="@u.Role" title="Remove account" aria-label="Remove @u.FullName">
+                                                            <i class="bi bi-trash3" aria-hidden="true"></i>
+                                                        </button>
+                                                    }
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="uu-foot">
+                        <span>Showing @firstNo–@lastNo of @d.Matches</span>
+                        @if (d.PageCount > 1)
+                        {
+                            <nav class="uu-pager" aria-label="Pages">
+                                @if (d.Page > 1)
+                                {
+                                    <a href="@Url.Page("./Index", Model.Filters(d.Page - 1))" aria-label="Previous page"><i class="bi bi-chevron-left"></i></a>
+                                }
+                                else
+                                {
+                                    <span class="is-dim" aria-hidden="true"><i class="bi bi-chevron-left"></i></span>
+                                }
+                                @for (var i = 1; i <= d.PageCount; i++)
+                                {
+                                    // 1 … 4 5 6 … 10
+                                    if (i == 1 || i == d.PageCount || Math.Abs(i - d.Page) <= 1)
+                                    {
+                                        if (i == d.Page)
+                                        {
+                                            <span class="is-on" aria-current="page">@i</span>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.Page("./Index", Model.Filters(i))">@i</a>
+                                        }
+                                    }
+                                    else if (i == 2 || i == d.PageCount - 1)
+                                    {
+                                        <span class="is-gap" aria-hidden="true">…</span>
+                                    }
+                                }
+                                @if (d.Page < d.PageCount)
+                                {
+                                    <a href="@Url.Page("./Index", Model.Filters(d.Page + 1))" aria-label="Next page"><i class="bi bi-chevron-right"></i></a>
+                                }
+                                else
+                                {
+                                    <span class="is-dim" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+                                }
+                            </nav>
+                        }
+                    </div>
+                }
+            </section>
+
+            @* ================= US07: ACTIVITY LOG ================= *@
+            <aside class="uu-panel uu-log" aria-labelledby="uuLogTitle">
+                <h2 id="uuLogTitle"><i class="bi bi-clock-history" aria-hidden="true"></i>Activity log</h2>
+                <p class="uu-log-sub">Every change, with who did it and when.</p>
+                @if (d.Log.Count == 0)
+                {
+                    <p class="uu-log-empty">No changes yet. Adding a user, changing a role or deactivating an account shows up here.</p>
+                }
+                else
+                {
+                    <ol class="uu-events">
+                        @foreach (var e in d.Log)
+                        {
+                            <partial name="_LogItem" model="e" />
+                        }
+                    </ol>
+                }
+                @if (d.LogTotal > 0)
+                {
+                    <a class="uu-log-all" href="@Url.Page("./Activity")">View all activity <span>@d.LogTotal</span><i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                }
+            </aside>
+        </div>
+    </div>
+</div>
+
+@* ================= US05: ADD USER ================= *@
+<div class="uu-modal" id="uuAdd" hidden data-uu-start-open="@(Model.OpenAddUser ? "true" : "false")">
+    <div class="uu-shade" data-uu-close></div>
+    <div class="uu-dialog is-wide" role="dialog" aria-modal="true" aria-labelledby="uuAddTitle">
+        <img class="uu-d-blossom" src="~/images/users/blossom-corner.webp" alt="" aria-hidden="true" />
+        <img class="uu-d-wave" src="~/images/users/wave-corner.webp" alt="" aria-hidden="true" />
+        <button type="button" class="uu-x" data-uu-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
+
+        <header class="uu-dh">
+            <div class="uu-stamp is-sm" aria-hidden="true"><span class="jp">新</span></div>
+            <div>
+                <h2 id="uuAddTitle">Add a user</h2>
+                <p>They'll get an email to choose their own password.</p>
+            </div>
+        </header>
+
+        <form method="post" asp-page-handler="Create" class="uu-form" novalidate autocomplete="off" data-uu-busy>
+            @if (formErr is not null)
+            {
+                <div class="uu-alert" role="alert"><i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>@formErr</div>
+            }
+            <div class="uu-row2">
+                <div class="uu-field @(nameErr is null ? "" : "bad")">
+                    <label for="NewUser_FullName">Full name</label>
+                    <input asp-for="NewUser.FullName" class="uu-in" placeholder="e.g. Lim Mei Ling" maxlength="100" required />
+                    <span class="uu-err">@nameErr</span>
+                </div>
+                <div class="uu-field @(emailErr is null ? "" : "bad")">
+                    <label for="NewUser_Email">Email</label>
+                    <input asp-for="NewUser.Email" type="email" class="uu-in" placeholder="name@example.com" maxlength="100" required />
+                    <span class="uu-err">@emailErr</span>
+                </div>
+            </div>
+
+            <div class="uu-field @(phoneErr is null ? "" : "bad")">
+                <label for="NewUser_Phone">Phone <span>(optional)</span></label>
+                @* Same country picker as /Account/Register (styles in site.css: .cc, .cc-btn, .cc-panel) *@
+                <div class="uu-phone">
+                    <div class="uu-phone-code cc" data-cc>
+                        <select asp-for="NewUser.CountryIso" class="form-select cc-native" aria-label="Country code">
+                            @foreach (var c in Model.Countries)
+                            {
+                                <option value="@c.Iso" data-name="@c.Name" data-dial="@c.DialCode">@c.Iso @c.DialCode</option>
+                            }
+                        </select>
+                        <button type="button" class="cc-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Country code">
+                            <span class="cc-flag fi" aria-hidden="true"></span>
+                            <span class="cc-dial"></span>
+                            <i class="bi bi-chevron-down cc-caret" aria-hidden="true"></i>
+                        </button>
+                        <div class="cc-panel" hidden>
+                            <div class="cc-search">
+                                <i class="bi bi-search" aria-hidden="true"></i>
+                                <input type="text" class="cc-input" placeholder="Search country or code" aria-label="Search country or code" autocomplete="off" />
+                            </div>
+                            <ul class="cc-list" role="listbox" aria-label="Countries"></ul>
+                            <p class="cc-empty" hidden><i class="bi bi-globe2 me-1" aria-hidden="true"></i>No country found</p>
+                        </div>
+                    </div>
+                    <input asp-for="NewUser.Phone" type="tel" inputmode="tel" class="uu-in" placeholder="12-345 6789" maxlength="20" />
+                </div>
+                <span class="uu-err">@phoneErr</span>
+            </div>
+
+            <fieldset class="uu-field @(roleErr is null ? "" : "bad")">
+                <legend>Role</legend>
+                <div class="uu-roles">
+                    @foreach (var (r, text) in roleCards)
+                    {
+                        var full = r == Roles.Admin && adminsFull;
+                        <label class="uu-rc @RoleClass(r) @(full ? "is-full" : "")">
+                            <input type="radio" name="NewUser.Role" value="@r" disabled="@full" checked="@(!full && string.Equals(Model.NewUser.Role, r, StringComparison.OrdinalIgnoreCase))" />
+                            <span class="uu-rc-in">
+                                <span class="uu-rc-top"><span class="uu-rc-ic"><i class="bi @RoleIcon(r)" aria-hidden="true"></i></span><b>@r</b></span>
+                                <small>@(r == Roles.Admin ? (full ? $"Limit reached: {s.ActiveAdmins} of {d.MaxActiveAdmins} active Admins." : $"{text} {s.ActiveAdmins} of {d.MaxActiveAdmins} used.") : text)</small>
+                                <i class="bi bi-check-circle-fill uu-rc-tick" aria-hidden="true"></i>
+                            </span>
+                        </label>
+                    }
+                </div>
+                <span class="uu-err">@roleErr</span>
+            </fieldset>
+
+            @* US05: adding an Admin needs the Admin's own password (shown only when Admin is picked) *@
+            <div class="uu-field uu-mypw @(myPwErr is null ? "" : "bad")" data-uu-admin-only hidden="@(!string.Equals(Model.NewUser.Role, Roles.Admin, StringComparison.OrdinalIgnoreCase) && myPwErr is null)">
+                <label for="NewUser_MyPassword"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i> Your password <span>(to confirm a new Admin)</span></label>
+                <div class="uu-pw">
+                    <input asp-for="NewUser.MyPassword" type="password" class="uu-in" autocomplete="current-password" placeholder="Type your own password" />
+                    <button type="button" class="uu-eye" data-uu-eye aria-label="Show password"><svg class="eye-shut" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.7 8.5 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.5" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /><path d="M3 3l18 18" /></g></svg><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></g></svg></button>
+                </div>
+                <span class="uu-err">@myPwErr</span>
+                <small class="uu-hint">Every Admin gets an email when a new Admin is added.</small>
+            </div>
+
+            <div class="uu-note">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                <span>We'll email a <b>set-your-password link</b> (works once, for 1 hour). You can send it again from the list.</span>
+            </div>
+
+            <div class="uu-btns">
+                <button type="button" class="uu-btn ghost" data-uu-close>Cancel</button>
+                <button type="submit" class="uu-btn main" data-uu-submit><span class="uu-spin" aria-hidden="true"></span>Create account <i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ================= US05: CHANGE ROLE ================= *@
+<div class="uu-modal" id="uuRole" hidden data-admins-full="@(adminsFull ? "true" : "false")">
+    <div class="uu-shade" data-uu-close></div>
+    <div class="uu-dialog" role="dialog" aria-modal="true" aria-labelledby="uuRoleTitle">
+        <img class="uu-d-blossom" src="~/images/users/blossom-corner.webp" alt="" aria-hidden="true" />
+        <button type="button" class="uu-x" data-uu-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        <header class="uu-dh">
+            <span class="uu-dh-ic" aria-hidden="true"><i class="bi bi-person-gear"></i></span>
+            <div>
+                <h2 id="uuRoleTitle">Change role</h2>
+                <p>For <b data-uu-name></b></p>
+            </div>
+        </header>
+        <form method="post" asp-page-handler="Role" class="uu-form" data-uu-busy>
+            <partial name="_UserFilters" model="Model" />
+            <input type="hidden" name="userId" data-uu-id />
+            <div class="uu-roles is-stack">
+                @foreach (var (r, text) in roleCards)
+                {
+                    <label class="uu-rc @RoleClass(r)">
+                        <input type="radio" name="newRole" value="@r" data-full-text="@(r == Roles.Admin ? $"Limit reached: {s.ActiveAdmins} of {d.MaxActiveAdmins} active Admins." : null)" />
+                        <span class="uu-rc-in">
+                            <span class="uu-rc-top"><span class="uu-rc-ic"><i class="bi @RoleIcon(r)" aria-hidden="true"></i></span><b>@r</b></span>
+                            <small>@text</small>
+                            <i class="bi bi-check-circle-fill uu-rc-tick" aria-hidden="true"></i>
+                        </span>
+                    </label>
+                }
+            </div>
+            <div class="uu-note">
+                <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                <span>No need to log out: their menu and pages change within a minute.</span>
+            </div>
+            <div class="uu-field uu-mypw" data-uu-admin-only hidden>
+                <label for="uuRolePw"><i class="bi bi-shield-lock-fill" aria-hidden="true"></i> Your password <span>(to confirm a new Admin)</span></label>
+                <div class="uu-pw">
+                    <input id="uuRolePw" name="myPassword" type="password" class="uu-in" autocomplete="current-password" placeholder="Type your own password" />
+                    <button type="button" class="uu-eye" data-uu-eye aria-label="Show password"><svg class="eye-shut" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.6 3.5M6.6 6.6C3.7 8.5 2 12 2 12s3.5 7 10 7c1.9 0 3.6-.6 5-1.5" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /><path d="M3 3l18 18" /></g></svg><svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></g></svg></button>
+                </div>
+                <small class="uu-hint">Every Admin gets an email when someone becomes an Admin.</small>
+            </div>
+            <div class="uu-btns">
+                <button type="button" class="uu-btn ghost" data-uu-close>Cancel</button>
+                <button type="submit" class="uu-btn main" data-uu-submit disabled><span class="uu-spin" aria-hidden="true"></span>Save role</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ================= US07: DEACTIVATE / REACTIVATE / SEND LINK ================= *@
+<div class="uu-modal" id="uuConfirm" hidden
+     data-url-deactivate="@Url.Page("./Index", "Deactivate")"
+     data-url-reactivate="@Url.Page("./Index", "Reactivate")"
+     data-url-link="@Url.Page("./Index", "SendLink")"
+     data-url-remove="@Url.Page("./Index", "Remove")">
+    <div class="uu-shade" data-uu-close></div>
+    <div class="uu-dialog is-narrow" role="alertdialog" aria-modal="true" aria-labelledby="uuConfirmTitle" aria-describedby="uuConfirmText">
+        <button type="button" class="uu-x" data-uu-close aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        <form method="post" class="uu-form uu-confirm" data-uu-busy>
+            <partial name="_UserFilters" model="Model" />
+            <input type="hidden" name="userId" data-uu-id />
+            <span class="uu-cf-ic" data-uu-icon aria-hidden="true"><i class="bi"></i></span>
+            <h2 id="uuConfirmTitle" data-uu-title></h2>
+            <p id="uuConfirmText" data-uu-text></p>
+            <div class="uu-btns is-center">
+                <button type="button" class="uu-btn ghost" data-uu-close>Cancel</button>
+                <button type="submit" class="uu-btn main" data-uu-submit><span class="uu-spin" aria-hidden="true"></span><span data-uu-ok></span></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-users.js" asp-append-version="true"></script>
+}

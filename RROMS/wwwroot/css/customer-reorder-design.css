@@ -1,0 +1,1384 @@
+/* Reorder selection: washi castle hero and lantern-lit yakitori card. */
+.oh-reorder-art {
+    position: relative;
+    isolation: isolate;
+    padding: 26px 0 42px;
+    background: #f5f0e7 url('../images/orders/yoru-reorder-washi-tile.webp') center top / 640px 640px repeat;
+}
+
+    .oh-reorder-art::before {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        pointer-events: none;
+        background: url('../images/orders/yoru-reorder-background.webp') center top / 100% auto no-repeat;
+        -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 60vw, transparent 75vw);
+        mask-image: linear-gradient(to bottom, #000 0, #000 60vw, transparent 75vw);
+    }
+
+    .oh-reorder-art .oh-wrap {
+        max-width: 1440px;
+        padding: 0 4%;
+    }
+
+    .oh-reorder-art .oh-reorder-heading {
+        padding: 25px 0 26px;
+    }
+
+        .oh-reorder-art .oh-reorder-heading h1 {
+            font: 48px/1.08 Georgia, serif;
+            margin: 12px 0 16px;
+            letter-spacing: -.025em;
+        }
+
+        .oh-reorder-art .oh-reorder-heading > p:last-child {
+            color: #76604b;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+    .oh-reorder-art .oh-reorder-layout {
+        grid-template-columns: minmax(0, 1.9fr) minmax(290px, 1fr);
+        gap: 20px;
+        align-items: stretch;
+    }
+
+    .oh-reorder-art .oh-selection, .oh-reorder-art .oh-review {
+        padding: 25px;
+        border: 1px solid #c7a56e;
+        background: #fffaf2ed;
+        box-shadow: 0 7px 23px #704c2110;
+    }
+
+    .oh-reorder-art .oh-selection-heading h2 {
+        font: 700 26px/1.3 Georgia, serif;
+        padding-left: 15px;
+        border-left: 3px solid #ba3024;
+        margin: 0;
+    }
+
+    .oh-reorder-art .oh-selection-heading {
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .oh-reorder-art .oh-fine-print {
+        color: #7f6c56;
+        line-height: 1.65;
+    }
+
+    .oh-reorder-art .oh-selection > .oh-fine-print {
+        margin-bottom: 20px;
+    }
+
+    .oh-reorder-art .oh-reorder-line {
+        grid-template-columns: 23px 78px minmax(0, 1fr) 122px;
+        gap: 3px 13px;
+        padding: 13px;
+        margin-bottom: 10px;
+        background: #fffdf7a3;
+        border: 1px solid #e2cfac;
+        border-radius: 7px;
+    }
+
+        .oh-reorder-art .oh-reorder-line:has([data-reorder-choice]:checked) {
+            border-color: #c8a875;
+            background: #fffaf0;
+        }
+
+    .oh-reorder-art .oh-choose-line {
+        display: contents;
+    }
+
+    .oh-reorder-art [data-reorder-choice] {
+        grid-column: 1;
+        grid-row: 1/3;
+        align-self: center;
+        width: 21px;
+        height: 21px;
+    }
+
+    .oh-reorder-art .oh-reorder-photo {
+        grid-column: 2;
+        grid-row: 1/3;
+        width: 78px;
+        height: 78px;
+        align-self: center;
+        background: #f1e6d3;
+        border: 1px solid #d8bf96;
+        border-radius: 5px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        color: #a7895c;
+    }
+
+.oh-reorder-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.oh-reorder-photo svg {
+    width: 36px;
+    height: 36px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+}
+
+.oh-reorder-art .oh-reorder-name {
+    grid-column: 3;
+    grid-row: 1;
+    font: 19px/1.3 Georgia, serif;
+    overflow-wrap: anywhere;
+    align-self: end;
+}
+
+.oh-reorder-art .oh-reorder-price {
+    grid-column: 3;
+    grid-row: 2;
+    padding-left: 0;
+}
+
+    .oh-reorder-art .oh-reorder-price > strong {
+        color: #b12820;
+        font: 600 14px/1.4 Georgia, serif;
+    }
+
+    .oh-reorder-art .oh-reorder-price small {
+        font-size: 11px;
+        color: #796b58;
+        line-height: 1.5;
+        margin-top: 3px;
+    }
+
+.oh-reorder-art .oh-quantity-label {
+    grid-column: 4;
+    grid-row: 1/3;
+    font-size: 11px;
+    color: #5e503e;
+}
+
+    .oh-reorder-art .oh-quantity-label > label {
+        display: block;
+        margin: 0 0 6px;
+    }
+
+.oh-quantity-stepper {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) 32px;
+    align-items: stretch;
+    border: 1px solid #d2b78c;
+    border-radius: 5px;
+    overflow: hidden;
+    background: #fffaf4;
+}
+
+.oh-reorder-art .oh-quantity-label input {
+    appearance: textfield;
+    -moz-appearance: textfield;
+    border: 0;
+    border-radius: 0;
+    border-left: 1px solid #e3d3b8;
+    border-right: 1px solid #e3d3b8;
+    margin: 0;
+    padding: 8px 0;
+    text-align: center;
+    min-width: 0;
+    font: 14px/1.4 Georgia, serif;
+    color: #34291e;
+}
+
+.oh-quantity-stepper input::-webkit-inner-spin-button, .oh-quantity-stepper input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.oh-quantity-stepper button {
+    border: 0;
+    background: transparent;
+    color: #b12d22;
+    font: 21px/1 Georgia, serif;
+    cursor: pointer;
+}
+
+    .oh-quantity-stepper button:hover:not(:disabled) {
+        background: #f0dfc4;
+    }
+
+    .oh-quantity-stepper button:disabled {
+        color: #b9ad9a;
+        cursor: default;
+    }
+
+.oh-reorder-art button:focus-visible, .oh-reorder-art input:focus-visible {
+    outline: 2px solid #b79b72;
+    outline-offset: 2px;
+}
+
+.oh-reorder-art .oh-copy-notes {
+    margin-top: 22px;
+    color: #3c3024;
+}
+
+.oh-reorder-art .oh-selection-footer {
+    padding-top: 20px;
+    margin-top: 20px;
+    border-top: 1px solid #e6d6bc;
+    flex-wrap: wrap;
+}
+
+    .oh-reorder-art .oh-selection-footer > span {
+        color: #8a4833;
+        font-size: 12px;
+    }
+
+    .oh-reorder-art .oh-selection-footer .oh-button {
+        background: linear-gradient(#c33327, #ad241e);
+        font: 15px/1.4 Georgia, serif;
+        border-radius: 5px;
+    }
+
+.oh-reorder-art .oh-reorder-explainer {
+    align-self: start;
+    position: relative;
+    padding: 24px 26px 170px;
+    min-height: 540px;
+    background: linear-gradient(90deg,#09090945,transparent), url('../images/orders/yoru-reorder-yakitori.webp') center bottom / cover;
+    border-color: #a88a56;
+    overflow: hidden;
+}
+
+.oh-reorder-art .oh-reorder-gold-mark {
+    display: block;
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.oh-reorder-art .oh-reorder-brand {
+    margin: 5px 0 24px;
+    font: 10px/1.4 Georgia, serif;
+    letter-spacing: .3em;
+    color: #d6b87a;
+}
+
+.oh-reorder-art .oh-reorder-explainer h2 {
+    margin: 0 0 17px;
+    color: #fff5df;
+    font: 30px/1.15 Georgia, serif;
+}
+
+.oh-reorder-art .oh-reorder-explainer p, .oh-reorder-art .oh-reorder-explainer li {
+    color: #f2e7d2;
+    font-size: 12px;
+    line-height: 1.65;
+    text-shadow: 0 1px 3px #000;
+}
+
+.oh-reorder-art .oh-reorder-explainer ul {
+    padding: 0;
+    margin-top: 23px;
+    list-style: none;
+}
+
+.oh-reorder-art .oh-reorder-explainer li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.oh-reorder-explainer li svg {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    fill: none;
+    stroke: #d8b66e;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.oh-reorder-art .oh-review {
+    grid-column: 1/-1;
+}
+
+@media (max-width: 1100px) {
+    .oh-reorder-art .oh-reorder-layout {
+        grid-template-columns: minmax(0,1.7fr) minmax(260px,1fr);
+    }
+
+    .oh-reorder-art .oh-selection {
+        padding: 18px;
+    }
+
+    .oh-reorder-art .oh-reorder-line {
+        grid-template-columns: 20px 60px minmax(0,1fr);
+        gap: 5px 10px;
+    }
+
+    .oh-reorder-art .oh-reorder-photo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .oh-reorder-art .oh-quantity-label {
+        grid-column: 3;
+        grid-row: 3;
+        justify-self: start;
+        width: 122px;
+        margin-top: 7px;
+    }
+
+    .oh-reorder-art .oh-reorder-name {
+        font-size: 17px;
+    }
+}
+
+@media (max-width: 850px) {
+    .oh-reorder-art .oh-reorder-layout {
+        grid-template-columns: minmax(0,1fr);
+    }
+
+    .oh-reorder-art .oh-reorder-explainer {
+        display: block;
+        min-height: 520px;
+        padding-bottom: 170px;
+        background-position: center bottom;
+    }
+
+    .oh-reorder-art .oh-reorder-heading h1 {
+        font-size: 39px;
+    }
+
+    .oh-reorder-art::before {
+        background-size: auto 780px;
+        background-position: 62% top;
+        -webkit-mask-image: linear-gradient(to bottom, #000 0, #000 620px, transparent 780px);
+        mask-image: linear-gradient(to bottom, #000 0, #000 620px, transparent 780px);
+    }
+
+    .oh-reorder-art .oh-reorder-heading {
+        background: linear-gradient(90deg,#fff5e8c9,transparent);
+    }
+}
+
+@media (max-width: 450px) {
+    .oh-reorder-art .oh-wrap {
+        padding: 0 5%;
+    }
+
+    .oh-reorder-art .oh-reorder-heading h1 {
+        font-size: 33px;
+    }
+
+    .oh-reorder-art .oh-selection {
+        padding: 15px;
+    }
+
+    .oh-reorder-art .oh-selection-heading h2 {
+        font-size: 23px;
+    }
+
+    .oh-reorder-art .oh-reorder-line {
+        padding: 10px;
+        grid-template-columns: 20px 52px minmax(0,1fr);
+        gap: 4px 8px;
+    }
+
+    .oh-reorder-art .oh-reorder-photo {
+        width: 52px;
+        height: 52px;
+    }
+
+    .oh-reorder-art .oh-reorder-name {
+        font-size: 16px;
+    }
+
+    .oh-reorder-art .oh-reorder-explainer {
+        padding: 24px 23px 170px;
+    }
+}
+
+/* Left-align the gold character and wordmark as one masthead. */
+.oh-reorder-art .oh-reorder-masthead {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%;
+}
+
+    .oh-reorder-art .oh-reorder-masthead .oh-reorder-brand {
+        text-align: left;
+    }
+    /* Compensate for transparent padding so the gold strokes align with the text. */
+    .oh-reorder-art .oh-reorder-masthead .oh-reorder-gold-mark {
+        transform: translateX(-10px);
+    }
+
+/* Reorder readability and actions; only the dish rows form a scroll region. */
+.oh-reorder-art .oh-back-orders {
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: 9px 16px;
+    border: 1px solid #ad8a4d;
+    border-radius: 6px;
+    background: linear-gradient(#e4d2ac, #d4ba87);
+    color: #47341e;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 5px #70552c14;
+}
+
+    .oh-reorder-art .oh-back-orders:hover {
+        background: #c6a56b;
+        color: #2e2114;
+        border-color: #94713c;
+    }
+
+    .oh-reorder-art .oh-back-orders:focus-visible {
+        outline: 2px solid #92703c;
+        outline-offset: 3px;
+    }
+
+.oh-reorder-art .oh-reorder-heading > p:last-child {
+    font-size: 14px;
+    font-weight: 700;
+    color: #57412b;
+}
+
+.oh-reorder-art .oh-fine-print {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #66533e;
+}
+
+.oh-reorder-art .oh-selection-heading > div {
+    flex-wrap: wrap;
+}
+
+.oh-reorder-art .oh-selection-heading .oh-clear {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid #b99a66;
+    border-radius: 5px;
+    background: #f6ecda;
+    color: #5c4327;
+    font: 600 13px/1.3 'Segoe UI', Arial, sans-serif;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.oh-reorder-art .oh-selection-heading [data-reorder-all] {
+    background: #deca9e;
+}
+
+.oh-reorder-art .oh-selection-heading .oh-clear:hover {
+    background: #d4b986;
+    color: #302214;
+    border-color: #95703d;
+}
+
+.oh-reorder-art .oh-selection-heading [data-reorder-none] {
+    color: #983c2d;
+    background: #fff8ee;
+}
+
+    .oh-reorder-art .oh-selection-heading [data-reorder-none]:hover {
+        color: #7d281f;
+        background: #f4e3cf;
+    }
+
+.oh-reorder-art .oh-reorder-code {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 7px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #eee2cd;
+    color: #6b5333;
+    font: 11px/1.4 'Segoe UI', Arial, sans-serif;
+}
+
+.oh-reorder-art .oh-reorder-price .oh-old-note {
+    display: block;
+    margin-top: 7px;
+    padding: 7px 9px;
+    border-left: 3px solid #ba9454;
+    border-radius: 0 4px 4px 0;
+    background: #f0e4ce;
+    color: #54402a;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.oh-reorder-art .oh-old-note strong {
+    font-weight: 700;
+}
+
+.oh-reorder-art .oh-copy-notes {
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 600;
+}
+
+    .oh-reorder-art .oh-copy-notes input {
+        width: 19px;
+        height: 19px;
+    }
+
+.oh-reorder-art .oh-selection-footer > span {
+    font-size: 14px;
+    font-weight: 700;
+    color: #67442c;
+}
+
+.oh-reorder-art .oh-reorder-dish-scroll {
+    max-height: clamp(260px, 48dvh, 430px);
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #b59662 #f4ead9;
+    padding-right: 10px;
+    margin-bottom: 16px;
+}
+
+    .oh-reorder-art .oh-reorder-dish-scroll:focus-visible {
+        outline: 2px solid #b59662;
+        outline-offset: 3px;
+    }
+
+.oh-reorder-dish-scroll::-webkit-scrollbar {
+    width: 7px;
+}
+
+.oh-reorder-dish-scroll::-webkit-scrollbar-track {
+    background: #f4ead9;
+    border-radius: 10px;
+}
+
+.oh-reorder-dish-scroll::-webkit-scrollbar-thumb {
+    background: #b59662;
+    border-radius: 10px;
+}
+
+@media (max-width: 600px) {
+    .oh-reorder-art .oh-reorder-dish-scroll {
+        max-height: 380px;
+        padding-right: 7px;
+    }
+
+    .oh-reorder-art .oh-selection-heading .oh-clear {
+        min-height: 40px;
+    }
+}
+
+/* A short order should not stretch the selection panel to the promotional card. */
+.oh-reorder-art .oh-selection {
+    align-self: start;
+}
+
+/* Center code badges beside the dish name without relying on text baselines. */
+.oh-reorder-art .oh-reorder-name {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 7px;
+}
+
+.oh-reorder-art .oh-reorder-dish-name {
+    min-width: 0;
+}
+
+.oh-reorder-art .oh-reorder-code {
+    margin-left: 0;
+    flex: 0 0 auto;
+    vertical-align: initial;
+}
+
+/* Server review is enhanced into a modal; native form submission remains usable. */
+html.oh-reorder-js [data-reorder-page]:not(.oh-review-ready) .oh-reorder-layout > [data-reorder-review] {
+    display: none;
+}
+
+html.oh-reorder-js [data-reorder-page]:not(.oh-review-ready) .oh-selection[hidden],
+html.oh-reorder-js [data-reorder-page]:not(.oh-review-ready) .oh-reorder-explainer[hidden] {
+    display: block !important;
+}
+
+html.oh-review-modal-open {
+    overflow: hidden;
+}
+
+    html.oh-review-modal-open body {
+        padding-right: calc(var(--oh-review-body-padding, 0px) + var(--oh-review-scrollbar, 0px));
+    }
+
+.oh-reorder-art .oh-review-header {
+    position: relative;
+}
+
+.oh-reorder-art .oh-review-cart {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #6a553c;
+}
+
+.oh-reorder-art .oh-review-close[hidden] {
+    display: none;
+}
+
+.oh-reorder-art .oh-review-validation {
+    padding: 9px 12px;
+    border-left: 3px solid #b33c2c;
+    background: #f8e5d3;
+    color: #873522;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.oh-reorder-art .oh-review-actions {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    margin-top: 18px;
+}
+
+    .oh-reorder-art .oh-review-actions form {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+    }
+
+    .oh-reorder-art .oh-review-actions button {
+        width: 100%;
+        min-height: 44px;
+        box-sizing: border-box;
+        margin: 0;
+        font: 14px/1.4 Georgia, serif;
+    }
+
+    .oh-reorder-art .oh-review-actions .oh-back-selection {
+        padding: 11px 14px;
+        background: #fff9ee;
+        color: #7e5e32;
+        border: 1px solid #b99a66;
+        border-radius: 5px;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+        .oh-reorder-art .oh-review-actions .oh-back-selection:hover {
+            background: #ecddc0;
+            color: #49321d;
+        }
+
+.oh-reorder-art .oh-reorder-review-dialog {
+    width: min(760px, calc(100% - 32px));
+    max-width: none;
+    max-height: calc(100dvh - 40px);
+    padding: 0;
+    margin: auto;
+    border: 1px solid #bd9b61;
+    border-radius: 12px;
+    background: #fff8ec;
+    color: #2c251c;
+    box-sizing: border-box;
+    overflow: hidden;
+    box-shadow: 0 24px 90px #120d0755;
+}
+
+    .oh-reorder-art .oh-reorder-review-dialog[open] {
+        display: flex;
+        flex-direction: column;
+    }
+
+.oh-reorder-review-dialog::backdrop {
+    background: #191510b8;
+    backdrop-filter: blur(4px);
+}
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-review {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: calc(100dvh - 42px);
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-top: 8px solid #29251c;
+    border-radius: 0;
+    background: linear-gradient(#fffaf3f2, #fffaf3f2), url('../images/orders/yoru-reorder-washi-tile.webp') center / 640px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.oh-reorder-review-dialog .oh-review-header {
+    padding: 22px 62px 12px 28px;
+    flex: 0 0 auto;
+}
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-review-header h2 {
+    margin: 7px 0 10px;
+    font: 700 30px/1.15 Georgia, serif;
+    outline: none;
+}
+
+.oh-reorder-review-dialog .oh-eyebrow {
+    margin: 0;
+    color: #b03628;
+    font-size: 10px;
+    letter-spacing: .18em;
+}
+
+.oh-reorder-review-dialog .oh-review-cart {
+    margin: 0;
+}
+
+.oh-reorder-review-dialog .oh-review-close {
+    position: absolute;
+    right: 18px;
+    top: 16px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid #c7a76e;
+    border-radius: 50%;
+    background: #fff9ed;
+    color: #89572c;
+    font: 27px/1 Georgia, serif;
+    cursor: pointer;
+}
+
+    .oh-reorder-review-dialog .oh-review-close:hover {
+        background: #ead9b8;
+        color: #5d361c;
+    }
+
+.oh-reorder-review-dialog .oh-review-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: min(36dvh, 340px);
+    padding: 0 28px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: #b59662 #f4ead9;
+}
+
+    .oh-reorder-review-dialog .oh-review-scroll:focus-visible {
+        outline: 2px solid #b59662;
+        outline-offset: -3px;
+    }
+
+.oh-reorder-review-dialog .oh-review-lines {
+    margin: 0;
+}
+
+    .oh-reorder-review-dialog .oh-review-lines li {
+        padding: 14px 0;
+        font-size: 14px;
+        align-items: flex-start;
+    }
+
+        .oh-reorder-review-dialog .oh-review-lines li > div {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .oh-reorder-review-dialog .oh-review-lines li > b {
+            flex: 0 0 auto;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+    .oh-reorder-review-dialog .oh-review-lines strong {
+        font: 600 17px/1.35 Georgia, serif;
+    }
+
+    .oh-reorder-review-dialog .oh-review-lines small {
+        font-size: 12px;
+        line-height: 1.5;
+        color: #796246;
+    }
+
+.oh-reorder-review-dialog .oh-review-dish-note {
+    background: #f1e5cf;
+    border-left: 2px solid #b69660;
+    padding: 5px 8px;
+}
+
+    .oh-reorder-review-dialog .oh-review-dish-note b {
+        font-weight: 700;
+    }
+
+.oh-reorder-review-dialog .oh-review-footer {
+    flex: 0 0 auto;
+    padding: 17px 28px 24px;
+    border-top: 1px solid #dcc7a2;
+    background: #fff8edf0;
+}
+
+.oh-reorder-review-dialog .oh-review-total {
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+    gap: 12px;
+    font-size: 20px;
+}
+
+    .oh-reorder-review-dialog .oh-review-total strong {
+        font-size: 23px;
+        color: #b83023;
+        white-space: nowrap;
+    }
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-fine-print {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.oh-reorder-review-dialog .oh-review-actions .oh-button {
+    background: linear-gradient(#c53a2b, #a92c21);
+}
+
+@media (max-width: 560px) {
+    .oh-reorder-art .oh-reorder-review-dialog {
+        width: calc(100% - 20px);
+        max-height: calc(100dvh - 24px);
+    }
+
+        .oh-reorder-art .oh-reorder-review-dialog .oh-review {
+            max-height: calc(100dvh - 26px);
+        }
+
+    .oh-reorder-review-dialog .oh-review-header {
+        padding: 18px 52px 12px 18px;
+    }
+
+    .oh-reorder-art .oh-reorder-review-dialog .oh-review-header h2 {
+        font-size: 25px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-scroll {
+        padding: 0 18px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-footer {
+        padding: 14px 18px 18px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-total {
+        font-size: 17px;
+    }
+
+        .oh-reorder-review-dialog .oh-review-total strong {
+            font-size: 21px;
+        }
+
+    .oh-reorder-review-dialog .oh-review-actions {
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 13px;
+    }
+
+    .oh-reorder-review-dialog [data-reorder-confirm] {
+        order: -1;
+    }
+}
+
+@media (max-height: 520px) {
+    .oh-reorder-review-dialog .oh-review-header {
+        padding-top: 12px;
+        padding-bottom: 8px;
+    }
+
+    .oh-reorder-art .oh-reorder-review-dialog .oh-review-header h2 {
+        margin: 5px 0;
+        font-size: 23px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-cart {
+        font-size: 12px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-footer {
+        padding-top: 10px;
+        padding-bottom: 12px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-actions {
+        margin-top: 10px;
+    }
+}
+
+/* Photo review cards and a clearer subtotal summary. */
+.oh-reorder-art .oh-review-brand-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+    .oh-reorder-art .oh-review-brand-heading > div {
+        min-width: 0;
+    }
+
+.oh-reorder-art .oh-review-brand-mark {
+    display: block;
+    width: 54px;
+    height: 54px;
+    flex: 0 0 54px;
+    object-fit: contain;
+}
+
+.oh-reorder-art .oh-review-cart {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+    .oh-reorder-art .oh-review-cart svg, .oh-reorder-art .oh-review-pricing-note svg {
+        flex: 0 0 17px;
+        width: 17px;
+        height: 17px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+.oh-reorder-art .oh-review-lines .oh-review-dish {
+    display: grid;
+    grid-template-columns: 76px minmax(0,1fr) auto;
+    gap: 10px 15px;
+    align-items: center;
+    padding: 12px;
+    margin: 0 0 10px;
+    border: 1px solid #e1cfad;
+    border-radius: 8px;
+    background: #fffaf1;
+    box-shadow: 0 2px 5px #8c673308;
+}
+
+.oh-reorder-art .oh-review-photo {
+    width: 76px;
+    height: 76px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid #d8bf96;
+    border-radius: 7px;
+    background: #f1e5d0;
+    color: #ab8950;
+}
+
+    .oh-reorder-art .oh-review-photo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .oh-reorder-art .oh-review-photo svg {
+        width: 35px;
+        height: 35px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+.oh-reorder-art .oh-review-dish-copy {
+    min-width: 0;
+}
+
+    .oh-reorder-art .oh-review-dish-copy > strong {
+        display: block;
+    }
+
+.oh-reorder-art .oh-review-lines .oh-review-item-code {
+    display: inline-block;
+    margin: 4px 0 2px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: #eee0c5;
+    color: #765a34;
+    font: 10px/1.4 'Segoe UI', Arial, sans-serif;
+}
+
+.oh-reorder-art .oh-review-lines .oh-review-unit-price {
+    margin-top: 3px;
+}
+
+.oh-reorder-art .oh-review-price-change {
+    display: inline-block;
+    padding-left: 4px;
+    color: #93643d;
+}
+
+.oh-reorder-art .oh-review-lines .oh-review-line-total {
+    align-self: start;
+    padding-top: 2px;
+    font: 600 18px/1.3 Georgia, serif;
+    color: #a53526;
+}
+
+.oh-reorder-art .oh-review-lines .oh-review-unavailable {
+    color: #974832;
+}
+
+.oh-reorder-art .oh-review-summary {
+    padding: 13px 15px;
+    border: 1px solid #d6b883;
+    border-radius: 7px;
+    background: linear-gradient(120deg, #f3e6cc, #fff8e9);
+}
+
+.oh-reorder-art .oh-review-portion-count {
+    margin: 5px 0 0;
+    font-size: 12px;
+    color: #80623a;
+}
+
+.oh-reorder-art .oh-review-skip-notice {
+    margin: 11px 0 0;
+    padding: 8px 11px;
+    border-left: 3px solid #b36a39;
+    background: #f9ead7;
+    color: #834524;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.oh-reorder-art .oh-review-pricing-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #715b40;
+}
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-review {
+    border-top: 0;
+    background: linear-gradient(#fffaf3e8, #fffaf3e8), url('../images/orders/yoru-reorder-washi-tile.webp') center / 640px;
+}
+
+.oh-reorder-review-dialog .oh-review::before {
+    content: '';
+    display: block;
+    height: 10px;
+    flex: 0 0 10px;
+    background: radial-gradient(ellipse at 50% 110%, transparent 10px, #b5966260 11px, transparent 12px) 0 0 / 32px 12px #26241e;
+}
+
+.oh-reorder-review-dialog .oh-review-header {
+    padding: 20px 25px 16px;
+}
+
+.oh-reorder-review-dialog .oh-review-brand-heading {
+    padding-right: 35px;
+}
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-review-header h2 {
+    margin: 6px 0 0;
+    font-size: 29px;
+}
+
+.oh-reorder-review-dialog .oh-review-cart {
+    margin-top: 13px;
+    padding: 9px 11px;
+    border: 1px solid #eadcc3;
+    border-radius: 6px;
+    background: #f4e9d57a;
+    font-size: 12px;
+}
+
+.oh-reorder-review-dialog .oh-review-scroll {
+    padding: 0 25px;
+}
+
+.oh-reorder-review-dialog .oh-review-footer {
+    padding: 16px 25px 22px;
+}
+
+.oh-reorder-review-dialog .oh-review-summary .oh-review-total {
+    margin: 0;
+    align-items: center;
+}
+
+    .oh-reorder-review-dialog .oh-review-summary .oh-review-total > span {
+        font: 19px/1.3 Georgia, serif;
+    }
+
+    .oh-reorder-review-dialog .oh-review-summary .oh-review-total > strong {
+        font: 700 27px/1.2 Georgia, serif;
+    }
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-review-pricing-note {
+    margin-top: 12px;
+}
+
+.oh-reorder-review-dialog .oh-review-actions {
+    margin-top: 15px;
+}
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-review-actions .oh-button {
+    font-weight: 600;
+    box-shadow: 0 3px 8px #9f2c2220;
+}
+
+@media (max-width: 560px) {
+    .oh-reorder-art .oh-review-brand-mark {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+
+    .oh-reorder-art .oh-review-brand-heading {
+        gap: 7px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-header {
+        padding: 17px 16px 13px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-brand-heading {
+        padding-right: 32px;
+    }
+
+        .oh-reorder-review-dialog .oh-review-brand-heading .oh-eyebrow {
+            font-size: 8px;
+            letter-spacing: .1em;
+        }
+
+    .oh-reorder-art .oh-reorder-review-dialog .oh-review-header h2 {
+        font-size: 23px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-cart {
+        margin-top: 12px;
+        font-size: 11px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-scroll {
+        padding: 0 16px;
+    }
+
+    .oh-reorder-art .oh-review-lines .oh-review-dish {
+        grid-template-columns: 64px minmax(0,1fr);
+        gap: 6px 11px;
+        padding: 10px;
+    }
+
+    .oh-reorder-art .oh-review-photo {
+        width: 64px;
+        height: 64px;
+        grid-row: 1/3;
+        align-self: start;
+    }
+
+    .oh-reorder-art .oh-review-dish-copy {
+        grid-column: 2;
+    }
+
+    .oh-reorder-art .oh-review-lines .oh-review-line-total {
+        grid-column: 2;
+        padding-top: 0;
+        font-size: 17px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-lines strong {
+        font-size: 16px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-footer {
+        padding: 12px 16px 16px;
+    }
+
+    .oh-reorder-art .oh-review-summary {
+        padding: 10px 11px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-summary .oh-review-total > span {
+        font-size: 16px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-summary .oh-review-total > strong {
+        font-size: 23px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-actions {
+        margin-top: 12px;
+    }
+}
+
+@media (max-height: 520px) {
+    .oh-reorder-review-dialog .oh-review-header {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-brand-mark {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+
+    .oh-reorder-art .oh-reorder-review-dialog .oh-review-header h2 {
+        font-size: 22px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-cart {
+        margin-top: 8px;
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-footer {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-summary {
+        padding: 8px 10px;
+    }
+
+        .oh-reorder-review-dialog .oh-review-summary .oh-review-total > strong {
+            font-size: 22px;
+        }
+
+    .oh-reorder-art .oh-reorder-review-dialog .oh-review-pricing-note {
+        margin-top: 8px;
+        font-size: 11px;
+    }
+
+    .oh-reorder-review-dialog .oh-review-actions {
+        margin-top: 10px;
+    }
+}
+
+/* Keep the cart-preservation explanation visible as an informational notice. */
+.oh-reorder-art .oh-reorder-notice {
+    display: grid;
+    grid-template-columns: 21px minmax(0, 1fr);
+    gap: 10px;
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    border: 1px solid #dcc6a0;
+    border-left: 3px solid #b39359;
+    border-radius: 7px;
+    background: #f3e8d3;
+    color: #5d4931;
+}
+
+    .oh-reorder-art .oh-reorder-notice > svg {
+        width: 21px;
+        height: 21px;
+        margin-top: 1px;
+        fill: none;
+        stroke: #98743a;
+        stroke-width: 1.6;
+        stroke-linecap: round;
+    }
+
+    .oh-reorder-art .oh-reorder-notice strong {
+        display: block;
+        margin-bottom: 4px;
+        font: 700 13px/1.4 'Segoe UI', Arial, sans-serif;
+        color: #584027;
+    }
+
+    .oh-reorder-art .oh-reorder-notice p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-wrap: anywhere;
+    }
+
+@media (max-width: 450px) {
+    .oh-reorder-art .oh-reorder-notice {
+        padding: 11px 12px;
+        gap: 8px;
+    }
+}
+
+/* Match the receipt gallery's upright, full-height numeric style. */
+.oh-reorder-art,
+.oh-reorder-art .oh-reorder-name,
+.oh-reorder-art .oh-reorder-name *,
+.oh-reorder-art .oh-reorder-price > strong,
+.oh-reorder-art .oh-quantity-label input,
+.oh-reorder-art .oh-selection-footer > span,
+.oh-reorder-art .oh-review-lines strong,
+.oh-reorder-art .oh-review-lines small,
+.oh-reorder-art .oh-review-lines .oh-review-line-total,
+.oh-reorder-art .oh-review-summary .oh-review-total > strong,
+.oh-reorder-art .oh-review-portion-count,
+.oh-reorder-art .oh-review-actions button {
+    font-variant-numeric: lining-nums tabular-nums;
+    font-feature-settings: 'lnum' 1, 'tnum' 1;
+}
+
+    .oh-reorder-art .oh-reorder-price > strong,
+    .oh-reorder-art .oh-quantity-label input,
+    .oh-reorder-art .oh-review-lines .oh-review-unit-price,
+    .oh-reorder-art .oh-review-lines .oh-review-price-change,
+    .oh-reorder-art .oh-review-lines .oh-review-line-total,
+    .oh-reorder-art .oh-review-summary .oh-review-total > strong {
+        font-family: Georgia, 'Times New Roman', serif;
+    }
+
+/* Keep dish borders on the notice/subtotal edges, with the scrollbar in the outer inset. */
+.oh-reorder-review-dialog .oh-review-scroll {
+    overflow-x: hidden;
+}
+
+    .oh-reorder-review-dialog .oh-review-scroll > .oh-review-lines {
+        width: calc(100% + var(--oh-review-list-gutter, 0px));
+        box-sizing: border-box;
+    }
+
+.oh-reorder-art .oh-review-cart > svg {
+    align-self: center;
+    transform: translateY(1px);
+}
+
+/* Cherry blossom washi background for the review popup. */
+.oh-reorder-art .oh-reorder-review-dialog .oh-review {
+    background: #fff9ed url('../images/orders/yoru-reorder-review-sakura.webp') right top / 100% 100% no-repeat;
+}
+
+.oh-reorder-review-dialog .oh-review-header {
+    background: linear-gradient(90deg, #fffaf3f2 0%, #fffaf3e6 65%, #fffaf300 90%);
+}
+
+.oh-reorder-review-dialog .oh-review-cart {
+    background: #f7eddbeb;
+}
+
+.oh-reorder-review-dialog .oh-review-footer {
+    background: #fff8edb8;
+}
+
+.oh-reorder-art .oh-reorder-review-dialog .oh-review-summary {
+    background: linear-gradient(110deg, #f3e6cceb, #fff8e99e);
+}

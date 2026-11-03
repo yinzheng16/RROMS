@@ -1,0 +1,99 @@
+@page
+@model RROMS.Pages.Customer.Notifications.IndexModel
+@using System.Globalization
+@{
+    // US37 (Member 4): notification history. Style borrows the customer pages' evening look
+    // (Reservations / Menu) without copying them; see wwwroot/css/notifications.css.
+    ViewData["Title"] = "Notifications";
+    ViewData["FullWidth"] = true;
+    var en = CultureInfo.InvariantCulture;
+    var show = Model.CurrentShow;
+    var tabs = new (string Key, string Label)[]
+    {
+        ("all", "All"), ("unread", "Unread"), ("orders", "Orders"), ("reservations", "Reservations"), ("payments", "Payments")
+    };
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
+}
+
+<section class="ntf" aria-labelledby="ntfTitle">
+    <header class="ntf-head">
+        <div class="ntf-waves" aria-hidden="true"></div>
+        <div class="ntf-wrap">
+            <p class="ntf-kicker"><span lang="ja">お知らせ</span> · Your notices</p>
+            <h1 id="ntfTitle">Word from <span>YORU.</span></h1>
+            <p class="ntf-sub">Orders, reservations and payments, told the moment they change.</p>
+        </div>
+    </header>
+
+    <div class="ntf-wrap">
+        <div class="ntf-tools">
+            <nav class="ntf-tabs" aria-label="Filter notifications">
+                @foreach (var t in tabs)
+                {
+                    <a class="ntf-tab@(show == t.Key ? " is-on" : "")"
+                       asp-page="/Customer/Notifications/Index" asp-route-show="@(t.Key == "all" ? null : t.Key)"
+                       aria-current="@(show == t.Key ? "page" : null)">
+                        @t.Label
+                        @if (t.Key == "unread" && Model.UnreadCount > 0)
+                        {
+                            <b class="ntf-count">@Model.UnreadCount</b>
+                        }
+                    </a>
+                }
+            </nav>
+            @if (Model.UndoIds.Count > 0)
+            {
+                <form method="post" asp-page-handler="MarkUnread" asp-route-show="@(show == "all" ? null : show)">
+                    <input type="hidden" name="ids" value="@string.Join(",", Model.UndoIds)" />
+                    <button type="submit" class="ntf-markall" title="Puts back the notices you just marked as read"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Mark all as unread</button>
+                </form>
+            }
+            else if (Model.UnreadCount > 0)
+            {
+                <form method="post" asp-page-handler="MarkAll" asp-route-show="@(show == "all" ? null : show)">
+                    <button type="submit" class="ntf-markall"><i class="bi bi-check2-all" aria-hidden="true"></i>Mark all as read</button>
+                </form>
+            }
+        </div>
+
+        @if (Model.Items.Count == 0)
+        {
+            <div class="ntf-empty">
+                <span class="ntf-icon is-plain" aria-hidden="true"><i class="bi bi-bell"></i></span>
+                <h2>@(show == "unread" ? "You're all caught up." : "Nothing here yet.")</h2>
+                <p>Updates about your orders, reservations and payments will appear here.</p>
+            </div>
+        }
+        else
+        {
+            foreach (var day in Model.Items.GroupBy(n => n.CreatedAt.Date))
+            {
+                var small = RROMS.Pages.Customer.Notifications.IndexModel.DayDate(day.Key);
+                <h2 class="ntf-day">@RROMS.Pages.Customer.Notifications.IndexModel.DayHeading(day.Key) <small>@small</small></h2>
+                <ul class="ntf-list">
+                    @foreach (var n in day)
+                    {
+                        <li>
+                            <a class="ntf-row@(n.IsRead ? " is-read" : " is-unread")" href="@Model.OpenLink(n.Id)">
+                                <span class="ntf-icon @RROMS.Pages.Customer.Notifications.IndexModel.Tone(n.Type)" aria-hidden="true"><i class="bi @RROMS.Pages.Customer.Notifications.IndexModel.Icon(n.Type, n.Title)"></i></span>
+                                <span class="ntf-text">
+                                    <strong>@n.Title<span class="visually-hidden">@(n.IsRead ? "" : " (unread)")</span></strong>
+                                    <span>@n.Message</span>
+                                </span>
+                                <span class="ntf-ref">
+                                    @if (n.RefValue is not null)
+                                    {
+                                        <small>@n.RefLabel</small><b>@n.RefValue</b>
+                                    }
+                                </span>
+                                <span class="ntf-go"><time datetime="@n.CreatedAt.ToString("s", en)">@n.CreatedAt.ToString("HH:mm", en)</time> · View<i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </div>
+</section>

@@ -11,6 +11,15 @@ namespace RROMS.Services
     // Owner: Member 3. Pure rules; source order comes from current category DisplayOrder.
     public static class CustomerMenuBrowseRules
     {
+        // US29: CategoryId=-1 shows only dishes with a running promotion ("Specials").
+        public const int SpecialsCategoryId = -1;
+        // CategoryId=-2 shows only dishes added in the last 7 days ("New"), same rule as SelectRecent.
+        public const int NewCategoryId = -2;
+        public const int NewDishDays = 7;
+
+        private static bool IsNew(MenuItemSummary item, DateTime now)
+            => item.CreatedAt >= now.AddDays(-NewDishDays) && item.CreatedAt <= now;
+
         public static IReadOnlyList<MenuItemSummary> SelectRecent(
             IReadOnlyList<MenuItemSummary> source, DateTime now,
             IEnumerable<string> demoNames)
@@ -18,7 +27,7 @@ namespace RROMS.Services
             // Existing CreatedAt values use server-local DateTime.Now.
             // Keep demoNames in the signature so existing service callers still work.
             // A dish's name or import source does not determine whether it is new.
-            DateTime cutoff = now.AddDays(-7);
+            DateTime cutoff = now.AddDays(-NewDishDays);
             return source.Where(item => item.Price >= 0
                     && item.CreatedAt >= cutoff && item.CreatedAt <= now)
                 .OrderByDescending(item => item.CreatedAt)
@@ -62,6 +71,7 @@ namespace RROMS.Services
                     item.Code,
                     item.Description,
                     item.Price,
+                    item.OriginalPrice,
                     item.IsAvailable,
                     item.ImageUrl,
                     item.CategoryId,
@@ -76,8 +86,10 @@ namespace RROMS.Services
         }
 
         public static CustomerMenuPage Build(IReadOnlyList<MenuItemSummary> source,
-            string? search, int? categoryId, string? sortOrder, int limit)
+            string? search, int? categoryId, string? sortOrder, int limit, DateTime? now = null)
         {
+            // Existing CreatedAt values use server-local DateTime.Now (see SelectRecent).
+            DateTime clock = now ?? DateTime.Now;
             // Base-price validation happens in the service. A 100% promotion may be free.
             var all = InMenuOrder(source.Where(item => item.Price >= 0)).ToArray();
             var categories = all.GroupBy(item => item.CategoryId)
@@ -86,7 +98,12 @@ namespace RROMS.Services
                 { ItemCount = group.Count() }).ToArray();
             string term = (search ?? "").Trim();
             if (term.Length > 100) term = term[..100];
-            var matching = all.Where(item => (!categoryId.HasValue || item.CategoryId == categoryId.Value)
+            bool specials = categoryId == SpecialsCategoryId;
+            bool newDishes = categoryId == NewCategoryId;
+            var matching = all.Where(item => (!categoryId.HasValue
+                    || (specials ? item.OriginalPrice.HasValue
+                        : newDishes ? IsNew(item, clock)
+                        : item.CategoryId == categoryId.Value))
                 && (term.Length == 0 || item.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || item.Code.Contains(term, StringComparison.OrdinalIgnoreCase)
                     || item.CategoryName.Contains(term, StringComparison.OrdinalIgnoreCase)
@@ -110,7 +127,9 @@ namespace RROMS.Services
             return new CustomerMenuPage(categories, ordered.Take(limit).ToArray(),
                 matching.Length, all.Length, limit, sort)
             {
-                LiveState = CreateLiveState(all, matching)
+                LiveState = CreateLiveState(all, matching),
+                SpecialsCount = all.Count(item => item.OriginalPrice.HasValue),
+                NewCount = all.Count(item => IsNew(item, clock))
             };
         }
     }
