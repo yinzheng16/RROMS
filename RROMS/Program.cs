@@ -107,6 +107,7 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 builder.Services.AddScoped<IStaffReservationService, StaffReservationService>();   // Member 2: US16 staff reservations
 builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics
+builder.Services.AddScoped<IAdminOverviewService, AdminOverviewService>();   // Member 5: US41
 
 // Member 5: Feedback, Reports & Dashboard
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();   // US42
