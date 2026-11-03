@@ -1,0 +1,83 @@
+@page
+@model RROMS.Pages.Customer.Feedback.Index
+
+@{
+    // US43 "Reply visible to customer" (Member 5) · Letter style, same as the feedback form (US42)
+    // Styles: wwwroot/css/my-reviews.css
+    ViewData["Title"] = "My Reviews";
+
+    var labels = new[] { "", "Poor", "Fair", "Good", "Very good", "Excellent" };
+}
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" />
+<link rel="stylesheet" href="~/css/my-reviews.css" asp-append-version="true" />
+
+<section class="mr-page">
+    <header class="mr-head">
+        <p class="mr-from">From YORU, with thanks</p>
+        <h1 class="mr-title">My reviews</h1>
+        <p class="mr-lede">
+            Your letters to us, and our replies.
+            @if (Model.Reviews.Count > 0)
+            {
+                <span>· @Model.Reviews.Count @(Model.Reviews.Count == 1 ? "review" : "reviews"), @Model.RepliedCount replied</span>
+            }
+        </p>
+    </header>
+
+    @if (Model.Reviews.Count == 0)
+    {
+        <div class="mr-empty">
+            <div class="mr-empty-seal" aria-hidden="true">声</div>
+            <h2>No reviews yet</h2>
+            <p>After a completed order, you can write to us about your night. Our replies will appear here.</p>
+            <a class="mr-btn" href="/Customer/Feedback/Create">Write a review</a>
+        </div>
+    }
+    else
+    {
+        @foreach (var review in Model.Reviews)
+        {
+            var replied = !string.IsNullOrWhiteSpace(review.AdminReply);
+            var typeText = review.Order.OrderType == RROMS.Models.OrderType.DineIn ? "Dine-in" : review.Order.OrderType.ToString();
+
+            <article class="mr-letter">
+                <div class="mr-spine @(review.Rating <= 2 ? "is-low" : "")">
+                    <span class="mr-rating">@review.Rating</span>
+                    <small>/ 5</small>
+                    <span class="mr-label">@labels[review.Rating]</span>
+                </div>
+
+                <div class="mr-body">
+                    <p class="mr-meta">@review.Order.OrderNo · @typeText · @review.CreatedAt.ToString("ddd, d MMM yyyy")</p>
+
+                    @if (string.IsNullOrWhiteSpace(review.Comment))
+                    {
+                        <p class="mr-mine mr-muted">You left a rating without a comment.</p>
+                    }
+                    else
+                    {
+                        <p class="mr-mine">@review.Comment</p>
+                    }
+
+                    @if (replied)
+                    {
+                        <div class="mr-answer">
+                            <span class="mr-answer-seal" aria-hidden="true">夜</span>
+                            <div class="mr-answer-who">REPLY FROM YORU</div>
+                            <p>@review.AdminReply</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="mr-waiting">The restaurant hasn't replied yet.</p>
+                    }
+                </div>
+            </article>
+        }
+
+        <div class="mr-more">
+            <a class="mr-btn" href="/Customer/Feedback/Create">Write another review</a>
+        </div>
+    }
+</section>
