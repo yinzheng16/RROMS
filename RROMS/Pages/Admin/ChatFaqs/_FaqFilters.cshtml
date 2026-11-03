@@ -1,0 +1,14 @@
+@model RROMS.Pages.Admin.ChatFaqs.IndexModel
+@* US10 (Member 1): sent with every button, so the list comes back with the same search, filter and page. *@
+@if (!string.IsNullOrWhiteSpace(Model.Search))
+{
+    <input type="hidden" name="q" value="@Model.Search.Trim()" />
+}
+@if (!string.IsNullOrEmpty(Model.StatusFilter))
+{
+    <input type="hidden" name="status" value="@Model.StatusFilter" />
+}
+@if (Model.PageNo > 1)
+{
+    <input type="hidden" name="p" value="@Model.PageNo" />
+}

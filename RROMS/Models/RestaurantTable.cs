@@ -16,7 +16,7 @@ namespace RROMS.Models
         public string TableNumber { get; set; } = string.Empty;
 
         // Maximum number of guests.
-        [Range(1, 20)]
+        [Range(1, 100)]
         public int Capacity { get; set; }
 
         // Admin switch: an inactive table is never offered for booking.
@@ -28,7 +28,7 @@ namespace RROMS.Models
 
         public TableTypeDefinition? TableTypeDefinition { get; set; }
 
-        [Range(1, 20)]
+        [Range(1, 100)]
         public int MinGuests { get; set; } = 1;
 
         // 0 = no minimum spend. VIP rooms RM 500, VVIP room RM 1,000.
@@ -44,6 +44,10 @@ namespace RROMS.Models
         // Live state shown on the table board (Sprint 2).
         public TableStatus Status { get; set; } = TableStatus.Available;
 
+        // Remembers the status this table had before its dining area was
+        // marked Occupied, so it can be restored when the area opens again.
+        // Null when the area is not Occupied.
+        public TableStatus? StatusBeforeAreaOccupied { get; set; }
         public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 }

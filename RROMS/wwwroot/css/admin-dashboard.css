@@ -1,0 +1,1192 @@
+/* =========================================================
+   US46 Interactive dashboard (Member 5) — Pages/Admin/Dashboard
+   Same family as Restaurant Settings and the Reports page:
+   dark night header, round section icons, serif titles,
+   cream cards and a dark summary band.
+   Every class starts with db- so nothing clashes with
+   Bootstrap, site.css or the reports (rp-).
+   ========================================================= */
+
+.db-page {
+    --db-card: #FFFCF7;
+    --db-line: #EDE2D3;
+    --db-line-2: #DFC3A6;
+    --db-soft: #F5E6D6;
+    --db-ink: #1E1A18;
+    --db-text: #5A4A3E;
+    --db-muted: #86725F;
+    --db-red: #C9392B;
+    --db-red-dark: #A92E22;
+    --db-red-soft: #FBE8E3;
+    --db-green: #3F7A4C;
+    --db-gold: #C9A26A;
+    --db-serif: "Noto Serif JP", Georgia, serif;
+    --db-sans: "Josefin Sans", -apple-system, "Segoe UI", sans-serif;
+
+    /* Same width as Restaurant Settings: the normal page width,
+       and up to 1536px on large screens (see the media query below). */
+    position: relative;
+    margin: -24px 0 0;
+    padding: 0 0 56px;
+    color: var(--db-ink);
+    font-family: var(--db-sans);
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+@media (min-width: 1600px) {
+    .db-page {
+        --db-width: min(1536px, calc(100vw - 48px));
+        left: 50%;
+        width: var(--db-width);
+        margin-left: calc(var(--db-width) / -2);
+    }
+}
+
+.db-page *,
+.db-page *::before,
+.db-page *::after {
+    box-sizing: border-box;
+}
+
+.db-page a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.db-page button,
+.db-page input,
+.db-page select {
+    font: inherit;
+    color: inherit;
+}
+
+.db-page svg {
+    flex: none;
+}
+
+.db-page :focus-visible {
+    outline: 2px solid var(--db-red);
+    outline-offset: 2px;
+}
+
+.db-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.db-page .db-btn {
+    height: 44px;
+    padding: 0 16px;
+    border: 1px solid var(--db-red);
+    border-radius: 12px;
+    background: var(--db-red);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.db-page .db-btn:hover {
+    background: var(--db-red-dark);
+}
+
+/* =========================================================
+   Header
+   ========================================================= */
+
+.db-hero {
+    position: relative;
+    min-height: 330px;
+    padding: 56px 56px 50px;
+    overflow: hidden;
+    border-radius: 24px;
+    color: #fff;
+    background:
+            radial-gradient(60% 90% at 78% 30%, rgba(255, 170, 90, .28), transparent 60%),
+            radial-gradient(40% 60% at 95% 90%, rgba(201, 57, 43, .35), transparent 70%),
+            linear-gradient(120deg, #160F0D 0%, #2A1812 45%, #3B2116 100%);
+    box-shadow: 0 18px 40px rgba(40, 18, 8, .25);
+}
+
+.db-hero::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 46%;
+    height: 60px;
+    opacity: .5;
+    background: radial-gradient(circle at 50% 100%, transparent 12px, var(--db-gold) 13px, var(--db-gold) 14px, transparent 15px, transparent 19px, var(--db-gold) 20px, var(--db-gold) 21px, transparent 22px) 0 0 / 36px 18px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%);
+    mask-image: linear-gradient(90deg, transparent, #000 40%);
+}
+
+.db-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 58%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.db-moon {
+    position: absolute;
+    top: 34px;
+    right: 300px;
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #FFF6E2, #F3D9A8 60%, #E3B877);
+    box-shadow: 0 0 50px 12px rgba(255, 214, 150, .25);
+}
+
+.db-eyebrow {
+    position: relative;
+    color: #E7B98A;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .38em;
+}
+
+.db-eyebrow b {
+    color: #F08B6E;
+    font-family: var(--db-serif);
+    letter-spacing: .2em;
+}
+
+.db-title {
+    position: relative;
+    margin: 16px 0 14px;
+    font-family: var(--db-serif);
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+}
+
+.db-title em {
+    font-style: normal;
+    color: #F0654F;
+}
+
+.db-sub {
+    position: relative;
+    max-width: 500px;
+    margin: 0;
+    color: #E6D6C6;
+    font-size: 15.5px;
+    line-height: 1.7;
+}
+
+.db-chips {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.db-chip {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 9px 16px;
+    border: 1px solid rgba(255, 230, 200, .35);
+    border-radius: 999px;
+    background: rgba(20, 10, 6, .55);
+    color: #F1E6DB;
+    font-size: 13px;
+}
+
+.db-chip b {
+    color: #fff;
+}
+
+/* =========================================================
+   Date range bar
+   ========================================================= */
+
+.db-tools {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding: 8px 8px 8px 18px;
+    border: 1px solid var(--db-line);
+    border-radius: 18px;
+    background: var(--db-card);
+    box-shadow: 0 10px 26px rgba(60, 30, 10, .08);
+}
+
+.db-note {
+    margin: 0;
+    color: var(--db-muted);
+    font-size: 13.5px;
+}
+
+.db-page .db-note a {
+    color: var(--db-red-dark);
+    font-weight: 700;
+}
+
+.db-when {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.db-custom {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: var(--db-muted);
+    font-size: 13px;
+}
+
+.db-custom[hidden] {
+    display: none;
+}
+
+.db-custom {
+    position: relative;
+}
+
+.db-custom input {
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--db-line-2);
+    border-radius: 12px;
+    background: #fff;
+}
+
+/* With JavaScript the two date boxes are replaced by one button + calendar */
+.db-custom.is-enhanced > input[type=date],
+.db-custom.is-enhanced > span,
+.db-custom.is-enhanced > .db-btn {
+    display: none;
+}
+
+.db-page .db-range-btn {
+    height: 44px;
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    padding: 0 16px;
+    border: 1px solid var(--db-red);
+    border-radius: 12px;
+    background: var(--db-red-soft);
+    color: var(--db-red-dark);
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.db-range-btn:hover,
+.db-custom.is-open .db-range-btn {
+    box-shadow: 0 0 0 3px rgba(201, 57, 43, .12);
+}
+
+.db-cal {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 45;
+    display: none;
+    width: 300px;
+    padding: 6px 6px 10px;
+    border: 1px solid var(--db-line);
+    border-radius: 14px;
+    background: var(--db-card);
+    color: var(--db-ink);
+    box-shadow: 0 16px 36px rgba(40, 20, 10, .18);
+}
+
+.db-custom.is-open .db-cal {
+    display: block;
+    animation: db-dd-in .14s ease-out;
+}
+
+.db-cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px 8px;
+    font-family: var(--db-serif);
+    font-weight: 700;
+}
+
+.db-cal-nav button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--db-line-2);
+    border-radius: 50%;
+    background: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.db-cal-nav button:hover {
+    border-color: var(--db-ink);
+}
+
+.db-cal-nav button:disabled {
+    opacity: .35;
+    cursor: default;
+}
+
+.db-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    row-gap: 2px;
+    padding: 0 4px;
+}
+
+.db-cal-grid i {
+    padding: 4px 0 6px;
+    color: var(--db-muted);
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-align: center;
+}
+
+.db-cal-grid button {
+    height: 36px;
+    border: 0;
+    background: none;
+    font-size: 13.5px;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.db-cal-grid button:hover:not(:disabled) {
+    border-radius: 50%;
+    background: #F0DCC6;
+}
+
+.db-cal-grid button.is-out {
+    color: #C4AE99;
+}
+
+.db-cal-grid button:disabled {
+    color: #DCCBB9;
+    cursor: default;
+}
+
+.db-cal-grid button.is-today {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--db-red);
+    text-underline-offset: 3px;
+}
+
+.db-cal-grid button.is-in {
+    background: var(--db-red-soft);
+    color: var(--db-red-dark);
+}
+
+.db-cal-grid button.is-start,
+.db-cal-grid button.is-end,
+.db-cal-grid button.is-start:hover,
+.db-cal-grid button.is-end:hover {
+    border-radius: 50%;
+    background: var(--db-red);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.db-cal-ft {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 8px;
+    padding: 10px 6px 0;
+    border-top: 1px dashed var(--db-line-2);
+    font-size: 12.5px;
+}
+
+.db-cal-ft span {
+    margin-right: auto;
+    color: var(--db-muted);
+    font-weight: 600;
+}
+
+.db-cal-ft button {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--db-line-2);
+    border-radius: 8px;
+    background: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.db-cal-ft .db-cal-apply {
+    border-color: var(--db-red);
+    background: var(--db-red);
+    color: #fff;
+}
+
+.db-cal-ft .db-cal-apply:disabled {
+    opacity: .45;
+    cursor: default;
+}
+
+
+/* Drop-down: the <select> works on its own; admin-dashboard.js draws the styled menu */
+.db-dd {
+    position: relative;
+}
+
+.db-dd-ic {
+    position: absolute;
+    left: 15px;
+    top: 14px;
+    z-index: 1;
+    color: var(--db-red);
+    pointer-events: none;
+}
+
+.db-dd select {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 200px;
+    height: 44px;
+    padding: 0 36px 0 40px;
+    border: 1px solid var(--db-line-2);
+    border-radius: 12px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%231E1A18' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.db-dd select.db-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.db-ddb {
+    min-width: 200px;
+    height: 44px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 0 14px 0 40px;
+    border: 1px solid var(--db-line-2);
+    border-radius: 12px;
+    background: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.db-ddb:hover,
+.db-dd.is-open .db-ddb {
+    border-color: var(--db-ink);
+}
+
+.db-ddb svg {
+    margin-left: auto;
+    transition: transform .18s;
+}
+
+.db-dd.is-open .db-ddb svg {
+    transform: rotate(180deg);
+}
+
+.db-ddm {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 40;
+    display: none;
+    min-width: 230px;
+    padding: 6px;
+    border: 1px solid var(--db-line);
+    border-radius: 14px;
+    background: var(--db-card);
+    box-shadow: 0 16px 36px rgba(40, 20, 10, .18);
+}
+
+.db-dd.is-open .db-ddm {
+    display: block;
+    animation: db-in .14s ease-out;
+}
+
+@keyframes db-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: none; }
+}
+
+.db-ddm-hd {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 8px 10px;
+    border-bottom: 1px dashed var(--db-line-2);
+    color: var(--db-muted);
+    font-size: 11px;
+    letter-spacing: .14em;
+}
+
+.db-ddm-hd b {
+    color: var(--db-red);
+    font-family: var(--db-serif);
+    font-size: 13px;
+    letter-spacing: 0;
+}
+
+.db-ddm button {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+}
+
+.db-ddm button:hover,
+.db-ddm button:focus-visible {
+    background: #F0DCC6;
+    outline: 0;
+}
+
+.db-ddm button.is-on {
+    background: var(--db-red-soft);
+    color: var(--db-red-dark);
+    font-weight: 700;
+}
+
+.db-ddm .db-ck {
+    width: 20px;
+    height: 20px;
+    margin-left: auto;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--db-red);
+    color: #fff;
+    font-size: 11px;
+    visibility: hidden;
+}
+
+.db-ddm button.is-on .db-ck {
+    visibility: visible;
+}
+
+.db-ddm-sep {
+    height: 1px;
+    margin: 4px 6px;
+    background: var(--db-line);
+}
+
+/* =========================================================
+   Section titles
+   ========================================================= */
+
+.db-sec {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    margin: 46px 0 20px;
+}
+
+.db-sec-ic {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(150deg, #D9473A, #B52F23);
+    box-shadow: 0 8px 18px rgba(185, 47, 35, .3);
+}
+
+.db-sec-ic svg {
+    width: 24px;
+    height: 24px;
+}
+
+.db-sec-green {
+    background: linear-gradient(150deg, #3E6B45, #2C5233);
+    box-shadow: 0 8px 18px rgba(44, 82, 51, .3);
+}
+
+.db-sec h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--db-serif);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.db-sec h2 small {
+    color: var(--db-red);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: .2em;
+}
+
+.db-sec p {
+    margin: 4px 0 0;
+    color: var(--db-muted);
+    font-size: 14px;
+}
+
+.db-rule {
+    flex: 1;
+    height: 1px;
+    margin-left: 8px;
+    background: linear-gradient(90deg, var(--db-line-2), transparent);
+}
+
+/* =========================================================
+   Cards
+   ========================================================= */
+
+.db-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.db-kpi,
+.db-card {
+    min-width: 0;
+    border: 1px solid var(--db-line);
+    border-radius: 22px;
+    background: var(--db-card);
+    box-shadow: 0 6px 18px rgba(80, 50, 20, .04);
+}
+
+.db-kpi {
+    padding: 22px 24px 20px;
+}
+
+.db-kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.db-kpi-l {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.db-kpi-jp {
+    color: var(--db-muted);
+    font-family: var(--db-serif);
+    font-size: 11px;
+    letter-spacing: .15em;
+    white-space: nowrap;
+}
+
+.db-kpi-v {
+    margin: 20px 0 6px;
+    font-family: var(--db-serif);
+    font-size: clamp(32px, 3.2vw, 52px);
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.db-kpi-v small {
+    margin-right: 4px;
+    color: var(--db-red);
+    font-size: .42em;
+}
+
+.db-kpi-d {
+    color: var(--db-muted);
+    font-size: 12.5px;
+    text-align: center;
+}
+
+.db-kpi-d b {
+    font-weight: 700;
+}
+
+.db-up {
+    color: var(--db-green);
+}
+
+.db-down {
+    color: var(--db-red-dark);
+}
+
+.db-kpi.is-dark {
+    border-color: #3A2117;
+    background: linear-gradient(160deg, #3A2117, #1C120E);
+    color: #fff;
+}
+
+.db-kpi.is-dark .db-kpi-jp,
+.db-kpi.is-dark .db-kpi-d {
+    color: #D7C3B0;
+}
+
+.db-kpi.is-dark .db-kpi-v small {
+    color: #F0654F;
+}
+
+.db-kpi.is-dark .db-up {
+    color: #8FCB99;
+}
+
+.db-kpi.is-dark .db-down {
+    color: #F6A08F;
+}
+
+/* Dark band, like "How a RM 100 bill adds up" on Restaurant Settings */
+.db-band {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 120px;
+    margin-top: 20px;
+    padding: 22px 26px 26px 300px;
+    overflow: hidden;
+    border-radius: 22px;
+    color: #fff;
+    background:
+            radial-gradient(80% 140% at 10% 100%, rgba(201, 57, 43, .35), transparent 60%),
+            linear-gradient(120deg, #1C120E, #2E1B14 60%, #3A2018);
+}
+
+.db-band::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: .14;
+    pointer-events: none;
+    background: radial-gradient(circle at 50% 100%, transparent 12px, var(--db-gold) 13px, var(--db-gold) 14px, transparent 15px, transparent 19px, var(--db-gold) 20px, var(--db-gold) 21px, transparent 22px) 0 0 / 36px 18px;
+}
+
+.db-band-art {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 200px;
+    height: 100%;
+}
+
+.db-band-lab {
+    position: absolute;
+    left: 200px;
+    top: 50%;
+    width: 90px;
+    transform: translateY(-50%);
+    color: #E7B98A;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .3em;
+    line-height: 1.8;
+}
+
+.db-box {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-width: 0;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 230, 200, .2);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .05);
+}
+
+.db-box small {
+    display: block;
+    color: #CDBAA6;
+    font-size: 11px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.db-box b {
+    display: block;
+    overflow: hidden;
+    font-family: var(--db-serif);
+    font-size: 26px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.db-box-total {
+    border-color: transparent;
+    background: linear-gradient(150deg, #D94A3A, var(--db-red-dark));
+    box-shadow: 0 10px 22px rgba(201, 57, 43, .4);
+}
+
+.db-op {
+    position: relative;
+    z-index: 1;
+    color: var(--db-gold);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.db-band-foot {
+    position: absolute;
+    right: 26px;
+    bottom: 6px;
+    z-index: 1;
+    margin: 0;
+    color: #CDBAA6;
+    font-size: 11px;
+}
+
+/* ---------- Chart cards ---------- */
+
+.db-grid {
+    display: grid;
+    grid-template-columns: 1.85fr 1fr;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.db-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 22px;
+}
+
+.db-card-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.db-card-h h3 {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    font-family: var(--db-serif);
+    font-size: 22px;
+    font-weight: 500;
+}
+
+.db-card-h h3 small {
+    color: var(--db-red);
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: .15em;
+}
+
+.db-card-h p {
+    margin: 2px 0 0;
+    color: var(--db-muted);
+    font-size: 12.5px;
+}
+
+.db-card-r {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.db-toggle {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--db-line);
+    border-radius: 10px;
+    background: var(--db-soft);
+}
+
+.db-toggle button {
+    padding: 6px 11px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--db-text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.db-toggle button.is-on {
+    background: var(--db-ink);
+    color: #fff;
+}
+
+.db-page .db-more {
+    padding: 6px 4px;
+    color: var(--db-red-dark);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.db-page .db-more:hover {
+    text-decoration: underline;
+}
+
+.db-canvas {
+    position: relative;
+    height: 290px;
+}
+
+.db-canvas-sm {
+    height: 240px;
+}
+
+.db-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 10px;
+    color: var(--db-muted);
+    font-size: 12.5px;
+}
+
+.db-legend i {
+    display: inline-block;
+    width: 18px;
+    height: 3px;
+    margin-right: 6px;
+    border-radius: 2px;
+    vertical-align: middle;
+    background: var(--db-red);
+}
+
+.db-legend i.is-dash {
+    background: repeating-linear-gradient(90deg, #B9A491 0 4px, transparent 4px 7px);
+}
+
+.db-empty {
+    margin: auto 0;
+    padding: 40px 0;
+    color: var(--db-muted);
+    text-align: center;
+}
+
+.db-donut {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.db-canvas-donut {
+    flex: none;
+    width: 210px;
+    height: 210px;
+}
+
+.db-donut-c {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    pointer-events: none;
+}
+
+.db-donut-c b {
+    display: block;
+    font-family: var(--db-serif);
+    font-size: 26px;
+}
+
+.db-donut-c small {
+    color: var(--db-muted);
+    font-size: 12px;
+}
+
+.db-dishes {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.db-dishes li {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    font-size: 13.5px;
+}
+
+.db-sw {
+    width: 12px;
+    height: 12px;
+    flex: none;
+    border-radius: 4px;
+}
+
+.db-nm {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.db-q {
+    color: var(--db-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.db-ins {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.db-ins li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px;
+    border: 1px solid var(--db-line);
+    border-radius: 16px;
+    background: var(--db-card);
+}
+
+.db-ins li:first-child {
+    border-color: #F3CBC5;
+    background: #FDF0EC;
+}
+
+.db-ins-ic {
+    width: 42px;
+    height: 42px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    color: #fff;
+    font-family: var(--db-serif);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.db-ins b {
+    display: block;
+    font-size: 14px;
+}
+
+.db-ins li > div > span {
+    color: var(--db-muted);
+    font-size: 12.5px;
+}
+
+/* =========================================================
+   Smaller screens
+   ========================================================= */
+
+@media (max-width: 1100px) {
+    .db-kpis {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .db-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 980px) {
+    .db-art,
+    .db-moon {
+        opacity: .35;
+    }
+
+    .db-band {
+        flex-wrap: wrap;
+        padding-left: 26px;
+    }
+
+    .db-band-art,
+    .db-band-lab {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .db-kpis {
+        grid-template-columns: 1fr;
+    }
+
+    .db-hero {
+        padding: 34px 22px 40px;
+    }
+
+    .db-title {
+        font-size: 36px;
+    }
+
+    .db-sec h2 {
+        font-size: 26px;
+    }
+
+    .db-rule,
+    .db-note,
+    .db-op {
+        display: none;
+    }
+
+    .db-when,
+    .db-dd,
+    .db-ddb,
+    .db-dd select {
+        width: 100%;
+    }
+
+    .db-box {
+        flex: 1 1 45%;
+    }
+
+    .db-donut {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .db-canvas-donut {
+        margin: 0 auto;
+    }
+
+    .db-card {
+        padding: 16px;
+    }
+}
