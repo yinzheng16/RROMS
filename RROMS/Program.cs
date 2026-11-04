@@ -105,6 +105,7 @@ builder.Services.AddScoped<IOrderStatusNotifier, OrderStatusNotifier>(); // Memb
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>(); // Member 4 / US35 PDF receipt
+builder.Services.AddScoped<IReservationConfirmationService, ReservationConfirmationService>(); // Member 4 / US36 reservation confirmation PDF
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 builder.Services.AddScoped<IStaffReservationService, StaffReservationService>();   // Member 2: US16 staff reservations
 builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics
