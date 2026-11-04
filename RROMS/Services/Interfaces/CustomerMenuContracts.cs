@@ -11,7 +11,7 @@ namespace RROMS.Services.Interfaces
 
         Task<CustomerMenuPage> GetCustomerMenuPageAsync(string? search = null,
             int? categoryId = null, string? sortOrder = null, int limit = CustomerMenuBrowsing.PageSize,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default, string? customerId = null);
     }
 
     public sealed record CustomerMenuCategory(int Id, string Name, string Code)
@@ -33,7 +33,15 @@ namespace RROMS.Services.Interfaces
         // Separate discovery section; these items also remain in the full catalogue.
         public IReadOnlyList<MenuItemSummary> RecentItems { get; init; }
             = System.Array.Empty<MenuItemSummary>();
+        // US30: "Popular this week" (everyone) and "Recommended for you" (customers with past orders).
+        public IReadOnlyList<MenuItemSummary> PopularItems { get; init; }
+            = System.Array.Empty<MenuItemSummary>();
+        public IReadOnlyList<MenuItemSummary> ForYouItems { get; init; }
+            = System.Array.Empty<MenuItemSummary>();
         public CustomerMenuLiveState LiveState { get; init; } = CustomerMenuLiveState.Empty;
+        // US29: number of dishes with a running promotion (Specials filter).
+        public int SpecialsCount { get; init; }
+        public int NewCount { get; init; }
         public bool HasMore => Items.Count < TotalCount;
         public int NextLimit => Limit > int.MaxValue - CustomerMenuBrowsing.PageSize
             ? int.MaxValue : Limit + CustomerMenuBrowsing.PageSize;

@@ -23,6 +23,9 @@ namespace RROMS.Pages
 
         public List<HomeDish> Dishes { get; private set; } = new();
         public List<HomeOffer> Offers { get; private set; } = new();
+
+        // All dishes on promotion now; the home page shows 3 and the button says "See all 5 specials".
+        public int OfferTotal { get; private set; }
         public List<HomeHoursRow> Hours { get; private set; } = new();
         public List<OmikujiDish> OmikujiDishes { get; private set; } = new();
         public BookingSetup Booking { get; private set; } = null!;
@@ -38,6 +41,7 @@ namespace RROMS.Pages
         {
             Dishes = await _home.GetSignatureDishesAsync(3);
             Offers = await _home.GetActiveOffersAsync(3);   // empty -> the section is hidden
+            OfferTotal = Offers.Count > 0 ? await _home.CountOfferDishesAsync() : 0;
             Hours = await _home.GetOpeningHoursAsync();
             Info = await _home.GetInfoAsync();
             OmikujiDishes = await _home.GetOmikujiDishesAsync();

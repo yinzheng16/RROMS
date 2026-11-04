@@ -9,6 +9,9 @@ namespace RROMS.Pages
     //   POST /chat?handler=Ask    { question, history: [{ role, text }] }  -> reply
     //   GET  /chat?handler=Faqs   -> shown FAQs (US10)
     //   GET  /chat?handler=Hours  -> opening-hours card
+    //   GET  /chat?handler=Booking                         -> dates + largest party for the form (US09)
+    //   GET  /chat?handler=Times&date=2026-11-08           -> bookable times on that date (US09)
+    //   GET  /chat?handler=Check&date=…&time=20:00&guests=4 -> is there a table? + booking link (US09)
     // POSTs carry the anti-forgery token (header "RequestVerificationToken"), like every form in the site.
     [AllowAnonymous]
     public class ChatModel : PageModel
@@ -40,5 +43,13 @@ namespace RROMS.Pages
         public async Task<IActionResult> OnGetFaqsAsync() => new JsonResult(await _chat.GetFaqsAsync());
 
         public async Task<IActionResult> OnGetHoursAsync() => new JsonResult(await _chat.GetHoursAsync());
+
+        // ---------- US09 ----------
+        public async Task<IActionResult> OnGetBookingAsync() => new JsonResult(await _chat.GetBookingSetupAsync());
+
+        public async Task<IActionResult> OnGetTimesAsync(string? date) => new JsonResult(await _chat.GetTimesAsync(date));
+
+        public async Task<IActionResult> OnGetCheckAsync(string? date, string? time, int guests) =>
+            new JsonResult(await _chat.CheckAsync(date, time, guests));
     }
 }

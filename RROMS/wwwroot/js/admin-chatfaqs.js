@@ -184,7 +184,8 @@
                     used.className = "cf-used";
                     var how = r.source === "ai" ? "Answered by the AI" : r.source === "faq" ? "Matched by FAQ keywords" : "Built-in answer";
                     var secs = typeof r.ms === "number" ? " · " + (r.ms < 100 ? "instant" : (r.ms / 1000).toFixed(1) + " s") : "";
-                    used.textContent = how + secs + (r.faq ? " · used FAQ “" + r.faq.question + "”" : "") + (r.hours ? " · shows the opening-hours card" : "");
+                    used.textContent = how + secs + (r.faq ? " · used FAQ “" + r.faq.question + "”" : "") + (r.hours ? " · shows the opening-hours card" : "") +
+                        (r.check ? " · table check: " + r.check : "") + (r.form ? " · shows the booking form" : "");
                     out.appendChild(used);
                 })
                 .catch(function () {

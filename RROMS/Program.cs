@@ -6,6 +6,7 @@ using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services;
 using RROMS.Services.Interfaces;
+using RROMS.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,15 +98,27 @@ builder.Services.AddScoped<IMyReservationsService, ReservationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICustomerCartService, CustomerCartService>(); // Member 3 / US24
+builder.Services.AddScoped<IPromotionService, PromotionService>(); // Member 3 / US29
+// SignalR (shared, set up by Member 3 for US27; Member 4 adds NotificationHub for US37)
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IOrderStatusNotifier, OrderStatusNotifier>(); // Member 3 / US27
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IReceiptService, ReceiptService>(); // Member 4 / US35 PDF receipt
 builder.Services.AddScoped<IReservationConfirmationService, ReservationConfirmationService>(); // Member 4 / US36 reservation confirmation PDF
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
+builder.Services.AddScoped<IStaffReservationService, StaffReservationService>();   // Member 2: US16 staff reservations
+builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics
+builder.Services.AddScoped<IAdminOverviewService, AdminOverviewService>();   // Member 5: US41
 
-//Member 5
+// Member 5: Feedback, Reports & Dashboard
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();   // US42
+builder.Services.AddScoped<IAdminFeedbackService, AdminFeedbackService>();   // US43
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ISalesReportService, SalesReportService>();   // Member 5: US44 Filtered reports
+builder.Services.AddScoped<IDashboardService, DashboardService>();   // Member 5: US46 Dashboard
 var app = builder.Build();
+
 
 // Apply migrations and create the roles and test accounts.
 using (var scope = app.Services.CreateScope())
@@ -153,5 +166,6 @@ app.Use(async (context, next) =>
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
+app.MapHub<OrderStatusHub>(OrderStatusHub.Path); // Member 3 / US27 live order status
 
 app.Run();

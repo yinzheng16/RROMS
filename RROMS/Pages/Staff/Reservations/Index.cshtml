@@ -1,0 +1,112 @@
+@page
+@model RROMS.Pages.Staff.Reservations.IndexModel
+@using RROMS.Pages.Staff.Reservations
+@using static RROMS.Pages.Staff.Reservations.StaffLedgerFormat
+@{
+    // US16: staff starting page (Today's reservations). Route: /Staff/Reservations
+    ViewData["Title"] = "Today's reservations";
+    ViewData["FullWidth"] = true;
+
+    var b = Model.Board;
+    var hoursText = b.Hours.IsClosed
+        ? (b.Hours.ClosedReason ?? "Closed")
+        : Clock(b.Hours.Open!.Value) + " – " + Clock(b.Hours.Close!.Value);
+    string? breakText = b.Hours.BreakStart.HasValue
+        ? "Break " + Clock(b.Hours.BreakStart.Value).Replace(":00", "") + " – " + Clock(b.Hours.BreakEnd!.Value).Replace(":00", "")
+        : null;
+    string Nav(string d) => Url.Page("/Staff/Reservations/Index", new { date = d, view = Model.ViewMode == "timeline" ? "timeline" : null })!;
+}
+<link rel="stylesheet" href="~/css/staff-reservations.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/staff-reservations-details.css" asp-append-version="true" />
+
+<div class="sr" id="sr" data-view="@Model.ViewMode" data-date="@Model.DateText"
+     data-today="@(b.IsToday ? "true" : "false")" data-today-date="@Model.Today.ToString("yyyy-MM-dd")" data-past="@(b.IsPast ? "true" : "false")"
+     data-page-url="@Url.Page("/Staff/Reservations/Index")">
+    <div class="sr-wrap">
+
+        <header class="sr-head">
+            <div class="sr-head-main">
+                <p class="sr-eyebrow"><i aria-hidden="true"></i>YORU IZAKAYA <span aria-hidden="true">/</span> RESERVATION LEDGER</p>
+                <div class="sr-titlebar">
+                    <span class="sr-hanko" lang="ja" aria-hidden="true">夜</span>
+                    <div class="sr-titletext">
+                        <h1 aria-label="Today's reservations"><span lang="ja">予約台帳</span></h1>
+                        <p class="sr-sub">Daily reservation ledger</p>
+                    </div>
+                </div>
+            </div>
+
+            <p class="sr-hours">@Icon("clock")<span class="sr-hours-text"><span>@hoursText</span>@if (breakText != null){
+                <span>@breakText</span>
+            }
+        </span></p>
+
+        <div class="sr-head-side">
+            <div class="sr-cal">
+                <img src="~/images/staff/yoru-ledger-calendar.webp" asp-append-version="true" alt="" width="700" height="350" decoding="async" />
+                <span class="sr-cal-tag" lang="ja" aria-hidden="true">本日の予約</span>
+                <a class="sr-cal-nav" href="@Nav(Model.PrevDate)" data-nav="@Model.PrevDate" aria-label="Previous day">@Icon("left")</a>
+                <button type="button" class="sr-cal-day" id="srDateBtn" title="Pick a date" aria-haspopup="dialog" aria-expanded="false">
+                    <b>@b.Date.Day</b>
+                    <span>
+                        <strong>@b.Date.ToString("dddd", System.Globalization.CultureInfo.InvariantCulture).ToUpperInvariant()</strong>
+                        <em>@b.Date.ToString("MMMM yyyy", System.Globalization.CultureInfo.InvariantCulture).ToUpperInvariant()</em>
+                    </span>
+                </button>
+                <a class="sr-cal-nav" href="@Nav(Model.NextDate)" data-nav="@Model.NextDate" aria-label="Next day">@Icon("right")</a>
+                <div class="sr-pop" id="srPop" role="dialog" aria-label="Choose a date" hidden></div>
+            </div>
+            @if (b.IsToday)
+            {
+                <span class="sr-todaybtn is-here" aria-current="date">Today</span>
+            }
+            else
+            {
+                <a class="sr-todaybtn" href="@Nav(Model.Today.ToString("yyyy-MM-dd"))" data-nav="@Model.Today.ToString("yyyy-MM-dd")">Today</a>
+            }
+        </div>
+    </header>
+    <div class="sr-rule" aria-hidden="true"><span></span><i></i><span></span></div>
+
+    <partial name="_Summary" model="b" />
+
+    <div class="sr-toolbar" role="toolbar" aria-label="Filter reservations">
+        <div class="sr-tabs" role="group" aria-label="Status">
+            <button type="button" class="sr-tab t-all is-on" data-filter="all" aria-pressed="true"><span><b lang="ja">全て</b><small>All</small></span><em data-count="all">@b.Counts.All</em></button>
+            <button type="button" class="sr-tab t-pending" data-filter="pending" aria-pressed="false"><span><b lang="ja">仮</b><small>Pending</small></span><em data-count="pending">@b.Counts.Pending</em></button>
+            <button type="button" class="sr-tab t-confirmed" data-filter="confirmed" aria-pressed="false"><span><b lang="ja">確認</b><small>Confirmed</small></span><em data-count="confirmed">@b.Counts.Confirmed</em></button>
+            <button type="button" class="sr-tab t-seated" data-filter="seated" aria-pressed="false"><span><b lang="ja">着席</b><small>Seated</small></span><em data-count="seated">@b.Counts.Seated</em></button>
+            <button type="button" class="sr-tab t-late" data-filter="late" aria-pressed="false" title="Pending or Confirmed, and the booking time has passed"><span><b lang="ja">遅れ</b><small>Overdue</small></span><em data-count="late">@b.Counts.Late</em></button>
+            <button type="button" class="sr-tab t-completed" data-filter="completed" aria-pressed="false"><span><b lang="ja">完了</b><small>Completed</small></span><em data-count="completed">@b.Counts.Completed</em></button>
+            <button type="button" class="sr-tab t-cancelled" data-filter="cancelled" aria-pressed="false" title="Cancelled and No-show"><span><b lang="ja">取消</b><small>Cancelled</small></span><em data-count="cancelled">@b.Counts.Cancelled</em></button>
+        </div>
+        <div class="sr-tools">
+            <label class="sr-search">
+                @Icon("search")
+                <input type="search" id="srSearch" placeholder="Guest, table or area" autocomplete="off" aria-label="Search this day's reservations by guest, reference, phone, table or dining area" />
+            </label>
+            <div class="sr-seg" role="group" aria-label="View">
+                <button type="button" data-view="ledger" class="@(Model.ViewMode == "ledger" ? "is-on" : "")" aria-pressed="@(Model.ViewMode == "ledger" ? "true" : "false")">Ledger</button>
+                <button type="button" data-view="timeline" class="@(Model.ViewMode == "timeline" ? "is-on" : "")" aria-pressed="@(Model.ViewMode == "timeline" ? "true" : "false")">Timeline</button>
+            </div>
+            <button type="button" class="sr-iconbtn" id="srRefresh" title="Refresh" aria-label="Refresh">@Icon("refresh")</button>
+        </div>
+    </div>
+
+    <partial name="_Lists" model="b" />
+</div>
+
+<p class="sr-toast" id="srToast" role="status" aria-live="polite" hidden></p>
+<div class="sr-menu" id="srMenu" role="menu" hidden></div>
+<div class="sr-modal" id="srModal" role="dialog" aria-modal="true" aria-label="Reservation details" hidden>
+    <div class="sr-modal-box" id="srModalBox" tabindex="-1"></div>
+</div>
+<div class="sr-dialog" id="srDialog" role="dialog" aria-modal="true" aria-label="Confirm action" hidden>
+    <div class="sr-dialog-box" id="srDialogBox"></div>
+</div>
+@Html.AntiForgeryToken()
+</div>
+
+@section Scripts {
+    <script src="~/js/staff-reservations.js" asp-append-version="true" defer></script>
+}

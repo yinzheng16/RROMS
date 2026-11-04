@@ -142,6 +142,7 @@ public class CreateModel(
                 reason = o.Reason,
                 tablesLeft = o.TablesLeft,
                 areaName = o.AreaName,
+                areaIcon = o.AreaIcon,
                 suggestions = (o.Suggestions ?? new List<TimeSuggestion>())
                     .Select(x => new { date = x.Date, time = x.Time, label = x.Label, kind = x.Kind })
             })
@@ -198,6 +199,7 @@ public class CreateModel(
                 typeName = t.TypeName,
                 typeJapaneseName = t.TypeJapaneseName,
                 area = t.AreaName,
+                areaIcon = t.AreaIcon,
                 special = t.SpecialRequest,
                 minimumSpend = t.MinimumSpend,
                 status = t.Status

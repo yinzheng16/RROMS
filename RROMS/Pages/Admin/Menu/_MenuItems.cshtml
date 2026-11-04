@@ -1,495 +1,232 @@
 @model RROMS.Pages.Admin.Menu.IndexModel
-@using System
 @using System.Globalization
-@using System.Linq
+@using Microsoft.AspNetCore.Routing
+@* Dish cards: live search, category + sort dropdowns, availability chips, 12 per page.
+   Availability is shown with the original badge and changed in Edit ("Available for ordering").
+   Promotion prices are read-only here; they are managed on the Promotions page. *@
 @{
-    bool editingItem = Model.ItemInput.Id.HasValue;
     var results = Model.ItemResults;
-    string matchingDishes = $"{results.TotalCount} matching {(results.TotalCount == 1 ? "dish" : "dishes")}";
-    int firstPage = Math.Max(1, Model.ItemPage - 2);
-    int lastPage = Math.Min(results.TotalPages, Model.ItemPage + 2);
-    bool hasSummaryErrors = ViewData.ModelState.TryGetValue(string.Empty, out var summaryState)
-        && summaryState is not null && summaryState.Errors.Count > 0;
-    var availabilityOptions = new[] { (Value: "all", Label: "All items"),
-        (Value: "available", Label: "Available"), (Value: "unavailable", Label: "Unavailable") };
-    var sortOptions = new[] { (Value: "name", Label: "Name: A to Z"),
-        (Value: "name-desc", Label: "Name: Z to A"), (Value: "price", Label: "Price: low to high"),
-        (Value: "price-desc", Label: "Price: high to low"), (Value: "newest", Label: "Newest added"),
-        (Value: "oldest", Label: "Oldest added") };
-    string categoryLabel = Model.ItemCategories.FirstOrDefault(c => c.Id == Model.ItemCategory)?.Name ?? "All categories";
-    string availabilityLabel = Array.Find(availabilityOptions, o => o.Value == Model.ItemAvailability).Label ?? "All items";
-    string sortLabel = Array.Find(sortOptions, o => o.Value == Model.ItemSort).Label ?? "Name: A to Z";
+    var my = CultureInfo.GetCultureInfo("en-MY");
+    string availability = Model.ItemAvailability is "available" or "unavailable" ? Model.ItemAvailability : "all";
+    string sort = string.IsNullOrEmpty(Model.ItemSort) ? "name" : Model.ItemSort;
+    var sorts = new (string Value, string Label, string Icon)[]
+    {
+        ("name", "Name: A to Z", "bi-sort-alpha-down"), ("name-desc", "Name: Z to A", "bi-sort-alpha-up"),
+        ("price", "Price: low to high", "bi-sort-numeric-down"), ("price-desc", "Price: high to low", "bi-sort-numeric-down-alt"),
+        ("newest", "Newest added", "bi-clock-history"), ("oldest", "Oldest added", "bi-hourglass-bottom")
+    };
+    var currentSort = sorts.FirstOrDefault(s => s.Value == sort);
+    if (currentSort.Value is null) currentSort = sorts[0];
+    var currentCategory = Model.ItemCategories.FirstOrDefault(c => c.Id == Model.ItemCategory);
+    bool filtered = !string.IsNullOrWhiteSpace(Model.ItemSearch) || Model.ItemCategory.HasValue || availability != "all" || currentSort.Value != "name";
+    int allCount = results.AvailableCount + results.UnavailableCount;
+
+    // List links keep the current view and drop default values so the address stays short.
+    string Link(params (string Key, object? Value)[] changes)
+    {
+        var values = new RouteValueDictionary
+        {
+            ["MenuView"] = "items",
+            ["ItemSearch"] = string.IsNullOrWhiteSpace(Model.ItemSearch) ? null : Model.ItemSearch,
+            ["ItemCategory"] = Model.ItemCategory,
+            ["ItemAvailability"] = availability == "all" ? null : availability,
+            ["ItemSort"] = currentSort.Value == "name" ? null : currentSort.Value,
+            ["ItemPage"] = Model.ItemPage > 1 ? (object)Model.ItemPage : null,
+            ["ItemShowAll"] = Model.ItemShowAll ? (object)true : null
+        };
+        foreach (var (key, value) in changes) values[key] = value;
+        return Url.Page("./Index", values) ?? string.Empty;
+    }
 }
-<div class="row g-3 mb-4" aria-label="Summary of matching menu items" data-menu-summary-row>
-    <div class="col-sm-4" data-category-summary>
-        <div class="card section-dark border-0 rounded-4 shadow-sm h-100 position-relative overflow-hidden" data-summary-surface>
-            <svg data-summary-art class="position-absolute bottom-0 end-0 me-3 mb-3 pe-none text-white" width="7em" height="7em"
-                 viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.1" aria-hidden="true">
-                <rect x="10" y="10" width="32" height="32" rx="7" />
-                <rect x="54" y="10" width="32" height="32" rx="7" />
-                <rect x="10" y="54" width="32" height="32" rx="7" />
-                <rect x="54" y="54" width="32" height="32" rx="7" />
-            </svg>
-            <div class="card-body p-4 position-relative">
-                <div class="d-flex align-items-center gap-2 mb-3 text-white opacity-75">
-                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                        <rect x="3" y="3" width="7" height="7" rx="1" />
-                        <rect x="14" y="3" width="7" height="7" rx="1" />
-                        <rect x="3" y="14" width="7" height="7" rx="1" />
-                        <rect x="14" y="14" width="7" height="7" rx="1" />
-                    </svg>
-                    <span class="small text-uppercase">The dish collection</span>
-                </div>
-                <p class="display-5 fw-semibold lh-1 text-white mb-2">@results.TotalCount.ToString("D2")</p>
-                <h2 class="h6 text-white mb-1">Total dishes in view</h2>
-                <p class="small text-white opacity-75 mb-0">A place for every flavour.</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-4" data-category-summary>
-        <div class="card bg-primary text-white border-0 rounded-4 shadow-sm h-100 position-relative overflow-hidden" data-summary-surface>
-            <svg data-summary-art class="position-absolute bottom-0 end-0 me-3 mb-3 pe-none text-white" width="7em" height="7em"
-                 viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.12" aria-hidden="true">
-                <circle cx="50" cy="50" r="37" />
-                <path d="m30 51 13 13 28-29" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <div class="card-body p-4 position-relative">
-                <div class="d-flex align-items-center gap-2 mb-3 text-white opacity-75">
-                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="m7 12 3 3 7-7" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <span class="small text-uppercase">Ready to serve</span>
-                </div>
-                <p class="display-5 fw-semibold lh-1 text-white mb-2">@results.AvailableCount.ToString("D2")</p>
-                <h2 class="h6 text-white mb-1">Available in view</h2>
-                <p class="small text-white opacity-75 mb-0">Available dishes in this view.</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-4" data-category-summary>
-        <div class="card border-0 rounded-4 shadow-sm h-100 position-relative overflow-hidden" data-summary-surface>
-            <svg data-summary-art class="position-absolute bottom-0 end-0 me-3 mb-3 pe-none text-primary" width="7em" height="7em"
-                 viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.09" aria-hidden="true">
-                <circle cx="50" cy="50" r="37" />
-                <path d="M24 76 76 24" stroke-linecap="round" />
-            </svg>
-            <div class="card-body p-4 position-relative">
-                <div class="d-flex align-items-center gap-2 mb-3 text-primary">
-                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M6 18 18 6" stroke-linecap="round" />
-                    </svg>
-                    <span class="small text-uppercase">Taking a pause</span>
-                </div>
-                <p class="display-5 fw-semibold lh-1 mb-2">@results.UnavailableCount.ToString("D2")</p>
-                <h2 class="h6 mb-1">Unavailable in view</h2>
-                <p class="small text-body-secondary mb-0">@(results.UnavailableCount == 0 ? "No paused dishes in this view." : "Dishes taking a pause.")</p>
-            </div>
-        </div>
+<div class="ms-head">
+    <div>
+        <h2>Your dishes</h2>
+        <p>What customers can browse and order.</p>
     </div>
 </div>
-<div class="row g-4 align-items-start" data-menu-content>
-    <div class="col-12">
-        <section id="category-collection" class="card border-0 rounded-4 shadow-sm" data-category-collection aria-labelledby="collection-title">
-            <div class="card-body p-4">
-                <div class="yoru-menu-collection-intro">
-                    <img src="~/images/menu/yoru-menu-cream-dishes.png" asp-append-version="true"
-                         class="yoru-menu-collection-photo" alt="" aria-hidden="true" decoding="async" />
-                    <header class="yoru-menu-collection-heading">
-                        <div>
-                            <p class="eyebrow mb-2">Made for the menu</p>
-                            <h2 id="collection-title" class="h3 mb-2">The dish collection</h2>
-                            <p class="small mb-0 yoru-menu-collection-description">Keep every dish accurate, inviting and ready to order.</p>
-                        </div>
-                        <span class="yoru-menu-collection-signature">YORU IZAKAYA</span>
-                    </header>
-                    <div class="yoru-menu-filters yoru-menu-collection-tools" data-menu-filter-root>
-                        <div class="yoru-menu-toolbar">
-                            <form id="menu-item-search" method="get" asp-page="./Index" class="yoru-menu-search" data-category-keep-scroll data-menu-search-form asp-fragment="category-collection" role="search" aria-label="Search menu items">
-                                <input type="hidden" name="MenuView" value="items" />
-                                <input type="hidden" name="ItemPage" value="1" />
-                                <input type="hidden" name="ItemShowAll" value="@Model.ItemShowAll.ToString().ToLowerInvariant()" />
-                                <input type="hidden" name="ItemCategory" value="@Model.ItemCategory" />
-                                <input type="hidden" name="ItemAvailability" value="@Model.ItemAvailability" />
-                                <input type="hidden" name="ItemSort" value="@Model.ItemSort" />
-                                @if (editingItem)
-                                {
-                                    <input type="hidden" name="itemEditId" value="@Model.ItemInput.Id" />
-                                }
-                                <label asp-for="ItemSearch" class="form-label small fw-semibold">Find a dish</label>
-                                <input asp-for="ItemSearch" type="search" class="form-control" placeholder="Dish name, code or category" maxlength="100" required aria-describedby="menu-item-search-prompt" />
-                            </form>
-                            <button id="menu-search-submit" type="submit" form="menu-item-search" class="btn btn-primary rounded-pill d-inline-flex align-items-center gap-2 flex-shrink-0">
-                                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4 4" stroke-linecap="round" /></svg><span>Search</span>
-                            </button>
-                            <button id="menu-filter-toggle" type="button" class="btn btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-2" aria-expanded="false" aria-controls="menu-filter-options" data-menu-filter-toggle hidden>
-                                <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 6h6m4 0h8M3 12h10m4 0h4M3 18h2m4 0h12" /><circle cx="11" cy="6" r="2" /><circle cx="15" cy="12" r="2" /><circle cx="7" cy="18" r="2" /></svg>
-                                Filter &amp; sort
-                            </button>
-                        </div>
-                        <div class="yoru-menu-search-feedback small text-body-secondary mt-2" data-menu-search-feedback data-search-hint="Enter a dish name, item code or category to search.">
-                            <p id="menu-item-search-prompt" class="mb-0" role="status" aria-live="polite" data-menu-search-prompt hidden></p>
-                        </div>
-                        <div class="yoru-menu-current-view mt-3">
-                            <p class="small fw-semibold mb-2">Current view</p>
-                            <div class="yoru-menu-viewbar">
-                                <div class="yoru-menu-view-copy">
-                                    <div class="yoru-menu-view-chips" aria-label="Applied search and filters">
-                                        @if (!string.IsNullOrWhiteSpace(Model.ItemSearch))
-                                        {
-                                            <span class="yoru-menu-search-chip" title="Search: @Model.ItemSearch">Search: @Model.ItemSearch</span>
-                                        }
-                                        <span>@categoryLabel</span><span>@availabilityLabel</span><span>@sortLabel</span>
-                                    </div>
-                                </div>
-                                <div class="yoru-menu-view-actions">
-                                    <a id="menu-filter-reset" href="@Model.ItemListUrl(page: 1, editId: Model.ItemInput.Id, reset: true)" class="btn btn-outline-secondary rounded-pill d-inline-flex align-items-center justify-content-center gap-2 flex-shrink-0" data-category-keep-scroll>
-                                        <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6" stroke-linecap="round" stroke-linejoin="round" /></svg>Reset filters
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="menu-filter-options" class="border rounded-3 p-3 mt-3 bg-body" data-menu-filter-panel role="region" aria-labelledby="menu-filter-title">
-                            <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                                <h3 id="menu-filter-title" class="h6 mb-0">Filter &amp; sort</h3>
-                                <button type="button" class="btn-close" aria-label="Close filter and sort options" data-menu-filter-close hidden></button>
-                            </div>
-                            <form id="menu-item-filters" method="get" asp-page="./Index" data-category-keep-scroll data-menu-filter-form asp-fragment="category-collection">
-                                <input type="hidden" name="MenuView" value="items" />
-                                <input type="hidden" name="ItemPage" value="1" />
-                                <input type="hidden" name="ItemShowAll" value="@Model.ItemShowAll.ToString().ToLowerInvariant()" />
-                                <input type="hidden" name="ItemSearch" value="@Model.ItemSearch" />
-                                @if (editingItem)
-                                {
-                                    <input type="hidden" name="itemEditId" value="@Model.ItemInput.Id" />
-                                }
-                                <div class="yoru-menu-category" data-menu-category-root>
-                                    <label id="menu-filter-category-label" for="menu-filter-category" class="form-label small fw-semibold">Category</label>
-                                    <select asp-for="ItemCategory" id="menu-filter-category" class="form-select">
-                                        <option value="">All categories</option>
-                                        @foreach (var category in Model.ItemCategories)
-                                        {
-                                            <option value="@category.Id">@category.Name</option>
-                                        }
-                                    </select>
-                                </div>
-                                <fieldset class="mt-3">
-                                    <legend class="small fw-semibold mb-2">Availability</legend>
-                                    <div class="d-flex flex-wrap gap-2 yoru-menu-filter-choices">
-                                        @foreach (var option in availabilityOptions)
-                                        {
-                                            string optionId = $"menu-filter-availability-{option.Value}";
-                                            <input asp-for="ItemAvailability" type="radio" value="@option.Value" id="@optionId" class="btn-check" />
-                                            <label for="@optionId" class="btn btn-outline-secondary rounded-pill">@option.Label</label>
-                                        }
-                                    </div>
-                                </fieldset>
-                                <fieldset class="mt-3">
-                                    <legend class="small fw-semibold mb-2">Arrange by</legend>
-                                    <div class="yoru-menu-sort-choices yoru-menu-filter-choices">
-                                        @foreach (var option in sortOptions)
-                                        {
-                                            string optionId = $"menu-filter-sort-{option.Value}";
-                                            <input asp-for="ItemSort" type="radio" value="@option.Value" id="@optionId" class="btn-check" />
-                                            <label for="@optionId" class="btn btn-outline-secondary rounded-3">@option.Label</label>
-                                        }
-                                    </div>
-                                </fieldset>
-                                <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-3">
-                                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-menu-filter-cancel hidden>Cancel</button>
-                                    <button id="menu-filter-apply" type="submit" class="btn btn-primary rounded-pill px-4">Apply</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
-                    <span class="small text-body-secondary" role="status" aria-live="polite">@(Model.ItemShowAll ? $"All {matchingDishes}" : $"{matchingDishes} · Page {Model.ItemPage} of {results.TotalPages}")</span>
-                    @if (results.TotalPages > 1 || Model.ItemShowAll)
+
+<form class="ms-toolbar" method="get" asp-page="./Index" role="search" aria-label="Find a dish" data-ms-filters>
+    <input type="hidden" name="MenuView" value="items" />
+    <input type="hidden" name="ItemCategory" value="@Model.ItemCategory" />
+    <input type="hidden" name="ItemAvailability" value="@(availability == "all" ? "" : availability)" />
+    <input type="hidden" name="ItemSort" value="@(currentSort.Value == "name" ? "" : currentSort.Value)" />
+    <label class="ms-field ms-field--search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <span class="visually-hidden">Search dishes</span>
+        <input type="search" name="ItemSearch" value="@Model.ItemSearch" maxlength="100" placeholder="Search by dish, code or category" autocomplete="off" data-ms-search />
+        <a class="ms-field__clear" href="@Link(("ItemSearch", null), ("ItemPage", null))" hidden="@string.IsNullOrWhiteSpace(Model.ItemSearch)" aria-label="Clear search" data-ms-nav data-ms-search-clear><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+    </label>
+
+    <details class="ms-pick ms-pick--category" data-ms-pick>
+        <summary aria-label="Filter by category"><i class="bi bi-grid ms-pick__icon" aria-hidden="true"></i><span>@(currentCategory?.Name ?? "All categories")</span><i class="bi bi-chevron-down ms-pick__chev" aria-hidden="true"></i></summary>
+        <div class="ms-pick__menu ms-pick__menu--scroll" role="list">
+            <a role="listitem" class="@(currentCategory is null ? "is-on" : "")" aria-current="@(currentCategory is null ? "true" : null)" href="@Link(("ItemCategory", null), ("ItemPage", null))" data-ms-nav>
+                <span>All categories</span>@if (currentCategory is null) { <i class="bi bi-check-lg" aria-hidden="true"></i> }
+            </a>
+            @foreach (var category in Model.ItemCategories)
+            {
+                bool on = category.Id == Model.ItemCategory;
+                <a role="listitem" class="@(on ? "is-on" : "")" aria-current="@(on ? "true" : null)" href="@Link(("ItemCategory", category.Id), ("ItemPage", null))" data-ms-nav>
+                    <span>@category.Name</span>@if (on) { <i class="bi bi-check-lg" aria-hidden="true"></i> }
+                </a>
+            }
+        </div>
+    </details>
+
+    <details class="ms-pick" data-ms-pick>
+        <summary aria-label="Sort dishes"><i class="bi bi-sort-down ms-pick__icon" aria-hidden="true"></i><span>@currentSort.Label</span><i class="bi bi-chevron-down ms-pick__chev" aria-hidden="true"></i></summary>
+        <div class="ms-pick__menu" role="list">
+            @foreach (var option in sorts)
+            {
+                bool on = option.Value == currentSort.Value;
+                <a role="listitem" class="@(on ? "is-on" : "")" aria-current="@(on ? "true" : null)" href="@Link(("ItemSort", option.Value == "name" ? null : option.Value), ("ItemPage", null))" data-ms-nav>
+                    <span>@option.Label</span>@if (on) { <i class="bi bi-check-lg" aria-hidden="true"></i> }
+                </a>
+            }
+        </div>
+    </details>
+
+    @if (filtered)
+    {
+        <a class="ms-reset" href="@Url.Page("./Index", new { MenuView = "items" })" data-ms-nav><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset</a>
+    }
+    else
+    {
+        <span class="ms-reset is-idle" aria-disabled="true" title="Nothing to reset"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset</span>
+    }
+    <button type="submit" class="visually-hidden" tabindex="-1">Search</button>
+</form>
+
+<nav class="ms-chips" aria-label="Filter by availability">
+    <a class="ms-chip @(availability == "all" ? "is-on" : "")" aria-current="@(availability == "all" ? "true" : null)" href="@Link(("ItemAvailability", null), ("ItemPage", null))" data-ms-nav>All <span>@allCount</span></a>
+    <a class="ms-chip @(availability == "available" ? "is-on" : "")" aria-current="@(availability == "available" ? "true" : null)" href="@Link(("ItemAvailability", "available"), ("ItemPage", null))" data-ms-nav><i class="ms-dot ms-dot--on" aria-hidden="true"></i>Available <span>@results.AvailableCount</span></a>
+    <a class="ms-chip @(availability == "unavailable" ? "is-on" : "")" aria-current="@(availability == "unavailable" ? "true" : null)" href="@Link(("ItemAvailability", "unavailable"), ("ItemPage", null))" data-ms-nav><i class="ms-dot ms-dot--off" aria-hidden="true"></i>Unavailable <span>@results.UnavailableCount</span></a>
+</nav>
+
+@if (results.TotalCount == 0)
+{
+    <div class="ms-empty">
+        <span lang="ja" aria-hidden="true">夜</span>
+        @if (filtered)
+        {
+            <h3>No dishes match this view.</h3>
+            <p>Try another dish name, or reset the filters.</p>
+            <a class="ms-btn ms-btn--line" href="@Url.Page("./Index", new { MenuView = "items" })" data-ms-nav><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset filters</a>
+        }
+        else if (Model.ItemCategories.Count == 0)
+        {
+            <h3>Create a category first.</h3>
+            <p>Every dish belongs to a category on the menu.</p>
+            <a class="ms-btn ms-btn--main" asp-page="./Index" data-ms-nav><i class="bi bi-grid" aria-hidden="true"></i>Go to categories</a>
+        }
+        else
+        {
+            <h3>No dishes yet.</h3>
+            <p>Add the first dish customers can order.</p>
+            <a class="ms-btn ms-btn--main" href="@Url.Page("./Index", new { MenuView = "items", New = true })" data-ms-open data-ms-draft-key="item-new"><i class="bi bi-plus-lg" aria-hidden="true"></i><span data-ms-draft-label>New menu item</span></a>
+        }
+    </div>
+}
+else
+{
+    <div class="ms-dishes">
+        @foreach (var item in results.Items)
+        {
+            bool promo = item.OriginalPrice is decimal normal && normal > item.Price;
+            int percent = promo ? (int)Math.Round((1 - item.Price / item.OriginalPrice!.Value) * 100, MidpointRounding.AwayFromZero) : 0;
+            var categoryShort = item.CategoryName.Split('·', 2, StringSplitOptions.TrimEntries)[0];
+            <article class="ms-dish @(item.IsAvailable ? "" : "is-off")">
+                <div class="ms-dish__photo">
+                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
                     {
-                        <div class="d-flex align-items-center flex-wrap gap-2">
-                            <a href="@Model.ItemListUrl(page: 1, showAll: !Model.ItemShowAll, editId: Model.ItemInput.Id)" class="btn btn-sm btn-outline-secondary rounded-3" data-category-keep-scroll>@(Model.ItemShowAll ? "Show pages" : "Show all")</a>
-                            @if (!Model.ItemShowAll)
-                            {
-                                <nav aria-label="Menu item pages">
-                                    <ul class="pagination pagination-sm flex-wrap gap-1 mb-0">
-                                        <li class="page-item">
-                                            @if (Model.ItemPage == 1)
-                                            {
-                                                <span class="btn btn-sm btn-outline-secondary rounded-3 disabled" aria-disabled="true">Previous</span>
-                                            }
-                                            else
-                                            {
-
-                                                <a href="@Model.ItemListUrl(page: Model.ItemPage - 1, editId: Model.ItemInput.Id)" class="btn btn-sm btn-outline-secondary rounded-3" rel="prev" data-category-keep-scroll>Previous</a>
-                                            }
-                                        </li>
-                                        @if (firstPage > 1)
-                                        {
-                                            <li class="page-item"><a href="@Model.ItemListUrl(page: 1, editId: Model.ItemInput.Id)" class="btn btn-sm btn-outline-secondary rounded-3" data-category-keep-scroll>1</a></li>
-                                            @if (firstPage > 2)
-                                            {
-                                                <li class="page-item"><span class="d-inline-block px-1" aria-hidden="true">…</span></li>
-                                            }
-                                        }
-                                        @for (int pageIndex = firstPage; pageIndex <= lastPage; pageIndex++)
-                                        {
-                                            <li class="page-item">
-                                                @if (pageIndex == Model.ItemPage)
-                                                {
-                                                    <span class="btn btn-sm btn-primary rounded-3" aria-current="page">@pageIndex</span>
-                                                }
-                                                else
-                                                {
-
-                                                    <a href="@Model.ItemListUrl(page: pageIndex, editId: Model.ItemInput.Id)" class="btn btn-sm btn-outline-secondary rounded-3" aria-label="Go to page @pageIndex" data-category-keep-scroll>@pageIndex</a>
-                                                }
-                                            </li>
-                                        }
-                                        @if (lastPage < results.TotalPages)
-                                        {
-                                            @if (lastPage < results.TotalPages - 1)
-                                            {
-                                                <li class="page-item"><span class="d-inline-block px-1" aria-hidden="true">…</span></li>
-                                            }
-                                            <li class="page-item"><a href="@Model.ItemListUrl(page: results.TotalPages, editId: Model.ItemInput.Id)" class="btn btn-sm btn-outline-secondary rounded-3" data-category-keep-scroll>@results.TotalPages</a></li>
-                                        }
-                                        <li class="page-item">
-                                            @if (Model.ItemPage == results.TotalPages)
-                                            {
-                                                <span class="btn btn-sm btn-outline-secondary rounded-3 disabled" aria-disabled="true">Next</span>
-                                            }
-                                            else
-                                            {
-
-                                                <a href="@Model.ItemListUrl(page: Model.ItemPage + 1, editId: Model.ItemInput.Id)" class="btn btn-sm btn-outline-secondary rounded-3" rel="next" data-category-keep-scroll>Next</a>
-                                            }
-                                        </li>
-                                    </ul>
-                                </nav>
-                            }
-                        </div>
+                        <img src="@Url.Content(item.ImageUrl)" alt="" loading="lazy" decoding="async" />
+                    }
+                    else
+                    {
+                        <span class="ms-dish__nophoto" aria-hidden="true"><span lang="ja">夜</span><small>No photo yet</small></span>
+                    }
+                    @if (promo)
+                    {
+                        <span class="ms-dish__tag" title="@(item.PromoEndsOn is DateTime ends ? $"Promotion until {ends:d MMM yyyy}" : "On promotion")">@percent% OFF</span>
+                    }
+                    @if (!item.IsAvailable)
+                    {
+                        <span class="ms-dish__off"><span>UNAVAILABLE</span><span lang="ja">品切れ</span></span>
                     }
                 </div>
-                @if (results.TotalCount == 0)
-                {
-                    <div class="border rounded-4 p-4 text-center">
-                        <h3 class="h5">No dishes found.</h3>
-                        <p class="text-body-secondary mb-0">Try another dish name or adjust your filters.</p>
+                <div class="ms-dish__body">
+                    <div class="ms-dish__meta"><span title="@item.CategoryName">@categoryShort</span><span class="ms-code">@item.Code</span></div>
+                    <h3>@item.Name</h3>
+                    <p class="ms-dish__desc">@(string.IsNullOrWhiteSpace(item.Description) ? "No description yet." : item.Description)</p>
+                    <div class="ms-dish__row">
+                        <span class="ms-price">
+                            @if (promo)
+                            {
+                                <s>RM @item.OriginalPrice!.Value.ToString("N2", my)</s>
+                                <b>RM @item.Price.ToString("N2", my)</b>
+                            }
+                            else
+                            {
+                                <span>RM @item.Price.ToString("N2", my)</span>
+                            }
+                        </span>
+                        <span class="ms-avail @(item.IsAvailable ? "" : "is-off")"><i aria-hidden="true"></i>@(item.IsAvailable ? "Available" : "Unavailable")</span>
                     </div>
+                    @if (promo)
+                    {
+                        <a class="ms-dish__promo" asp-page="/Admin/Promotions/Index" title="Promotion prices are managed on the Promotions page">
+                            <i class="bi bi-tag" aria-hidden="true"></i><span>Promotion price</span><span>@(item.PromoEndsOn is DateTime until ? $"until {until:d MMM}" : "")</span>
+                        </a>
+                    }
+                    <div class="ms-tile__actions">
+                        <a class="ms-btn ms-btn--edit" href="@Link(("itemEditId", item.Id))" data-ms-open data-ms-draft-key="item-edit-@item.Id" aria-label="Edit @item.Name">
+                            <i class="bi bi-pencil" aria-hidden="true"></i><span data-ms-draft-label>Edit</span>
+                        </a>
+                        @if (!item.HasOrders)
+                        {
+                            <form method="post" asp-page="./Index" asp-page-handler="ItemDelete" class="ms-inline" data-ms-delete="@item.Name">
+                                <partial name="_MenuItemViewState" model="Model" />
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="ms-icon-btn" aria-label="Delete @item.Name" title="Delete"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="ms-lock" title="Ordered before, so it can't be deleted. Mark it unavailable in Edit instead."><i class="bi bi-receipt" aria-hidden="true"></i>In orders</span>
+                        }
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+
+    <nav class="ms-pager" aria-label="Dish pages">
+        <span>Showing @Model.FirstItemNumber–@Model.LastItemNumber of @results.TotalCount @(results.TotalCount == 1 ? "dish" : "dishes")</span>
+        <div>
+            @if (!Model.ItemShowAll)
+            {
+                if (Model.ItemPage > 1)
+                {
+                    <a class="ms-btn ms-btn--line" href="@Link(("ItemPage", Model.ItemPage - 1 > 1 ? (object)(Model.ItemPage - 1) : null))" data-ms-nav data-ms-top><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</a>
                 }
                 else
                 {
-                    <div class="table-responsive overflow-y-hidden rounded-3">
-                        <table class="table table-hover align-middle mb-0 yoru-menu-table" aria-label="Menu items in the current filtered view">
-                            <colgroup><col class="yoru-item-code-column" /><col class="yoru-dish-column" /><col class="yoru-category-column" /><col class="yoru-price-column" /><col class="yoru-availability-column" /><col class="yoru-item-actions-column" /></colgroup>
-                            <thead>
-                                <tr>
-                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Code</th>
-                                    <th scope="col" class="small text-body-secondary fw-normal py-3">Dish</th>
-                                    <th scope="col" class="small text-body-secondary fw-normal py-3">Category</th>
-                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Price</th>
-                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Availability</th>
-                                    <th scope="col" class="small text-body-secondary fw-normal py-3 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in results.Items)
-                                {
-                                    <tr class="@(Model.ItemInput.Id == item.Id ? "table-active" : "")" data-menu-item-row="@item.Id">
-                                        <td class="py-3 text-center"><span class="font-monospace small yoru-menu-code">@item.Code</span></td>
-                                        <td class="py-3">
-                                            <div class="d-flex gap-3 align-items-center">
-                                                <div class="yoru-menu-thumb flex-shrink-0">
-                                                    <div class="ratio ratio-1x1 rounded-3 overflow-hidden border bg-body-tertiary">
-                                                        @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
-                                                        {
-                                                            <a href="@Url.Content(item.ImageUrl)" data-menu-photo-zoom data-photo-name="@item.Name" aria-label="View larger photo of @item.Name">
-                                                                <img src="@Url.Content(item.ImageUrl)" alt="" class="w-100 h-100 object-fit-cover" loading="lazy" data-menu-thumbnail />
-                                                            </a>
-                                                        }
-                                                        else
-                                                        {
-
-                                                            <span class="d-flex align-items-center justify-content-center small text-body-secondary text-center">No photo</span>
-                                                        }
-                                                    </div>
-                                                </div>
-                                                <div class="yoru-dish-copy flex-grow-1">
-                                                    <span class="d-block fw-semibold text-break">@item.Name</span>
-                                                    @if (!string.IsNullOrWhiteSpace(item.Description))
-                                                    {
-                                                        if (item.Description.Length > 160)
-                                                        {
-                                                            <details class="yoru-menu-description small text-body-secondary">
-                                                                <summary><span class="yoru-description-preview d-block">@item.Description.Substring(0, 160)…</span><span class="yoru-description-more text-primary">Show more</span><span class="yoru-description-less text-primary">Show less</span></summary>
-                                                                <p class="yoru-description-text mb-0 mt-1">@item.Description</p>
-                                                            </details>
-                                                        }
-                                                        else
-                                                        {
-
-                                                            <span class="yoru-description-text small text-body-secondary d-block">@item.Description</span>
-                                                        }
-                                                    }
-                                                    <span class="small text-primary" data-menu-editing-label hidden="@(Model.ItemInput.Id != item.Id)">Currently editing</span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="py-3 small text-break">@item.CategoryName</td>
-                                        <td class="py-3 text-center text-nowrap">RM @item.Price.ToString("N2", CultureInfo.GetCultureInfo("en-MY"))</td>
-                                        <td class="py-3 text-center">
-                                            <form method="post" asp-page="./Index" asp-page-handler="ItemAvailability" class="mb-0" data-category-keep-scroll>
-                                                <partial name="_MenuItemViewState" model="Model" />
-                                                <input type="hidden" name="id" value="@item.Id" /><input type="hidden" name="available" value="@((!item.IsAvailable).ToString().ToLowerInvariant())" />
-                                                <button type="submit" class="btn btn-sm yoru-menu-availability rounded-pill d-inline-flex align-items-center gap-2 px-2 text-nowrap @(item.IsAvailable ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")"
-                                                        aria-pressed="@item.IsAvailable.ToString().ToLowerInvariant()" aria-label="@(item.IsAvailable ? $"Mark {item.Name} unavailable" : $"Mark {item.Name} available")">
-                                                    <svg width="0.7em" height="0.7em" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="5" /></svg>
-                                                    <span class="yoru-availability-label">
-                                                        <span class="invisible" aria-hidden="true">Unavailable</span>
-                                                        <span>@(item.IsAvailable ? "Available" : "Unavailable")</span>
-                                                    </span>
-                                                </button>
-                                            </form>
-                                        </td>
-                                        <td class="py-3 text-center">
-                                            <div class="yoru-menu-actions">
-                                                <a href="@Model.ItemListUrl(editId: item.Id)" class="btn btn-sm btn-outline-secondary rounded-pill d-inline-flex align-items-center justify-content-center gap-1 text-body px-2" aria-label="Edit @item.Name" data-menu-edit data-category-keep-scroll>
-                                                    <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m16 3 5 5M4 16l12-12a2 2 0 0 1 3 0l1 1a2 2 0 0 1 0 3L8 20l-5 1 1-5Z" stroke-linecap="round" stroke-linejoin="round" /></svg><span class="yoru-action-label">Edit</span>
-                                                </a>
-                                                @if (!item.HasOrders)
-                                                {
-                                                    <form method="post" asp-page="./Index" asp-page-handler="ItemDelete" class="mb-0" data-category-keep-scroll data-menu-delete="item" data-menu-delete-name="@item.Name">
-                                                        <partial name="_MenuItemViewState" model="Model" /><input type="hidden" name="id" value="@item.Id" />
-                                                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-pill text-danger d-inline-flex align-items-center justify-content-center gap-1 px-2" aria-label="Delete @item.Name">
-                                                            <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" stroke-linecap="round" stroke-linejoin="round" /></svg><span class="yoru-action-label">Delete</span>
-                                                        </button>
-                                                    </form>
-                                                }
-                                                else
-                                                {
-
-                                                    <span class="small text-body-secondary" title="Referenced by an order; mark unavailable instead">In orders</span>
-                                                }
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                    <p class="small text-body-secondary mt-3 mb-0">Showing @Model.FirstItemNumber–@Model.LastItemNumber of @results.TotalCount matching dishes</p>
+                    <span class="ms-btn ms-btn--line is-disabled" aria-disabled="true"><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</span>
                 }
-                <p class="small text-body-secondary border-top pt-3 mt-3 mb-0">Click an availability button to change its state. Dishes referenced by orders stay in your records.</p>
-            </div>
-        </section>
-    </div>
-    <div class="col-12" data-menu-drawer-slot>
-        <section id="menu-item-drawer" class="card border-0 rounded-4 shadow-sm yoru-item-drawer" aria-labelledby="item-editor-title"
-                 data-menu-drawer data-saved-code="@Model.ItemEditorCode" data-saved-category-id="@Model.SavedItemCategoryId" data-item-errors="@(!ViewData.ModelState.IsValid ? "true" : "false")">
-            <div class="px-4 py-3 border-bottom" data-menu-drawer-header>
-                <div class="d-flex align-items-start justify-content-between gap-3">
-                    <div>
-                        <p class="eyebrow mb-1">A place on the menu</p>
-                        <h2 id="item-editor-title" class="h4 mb-1">@(editingItem ? "Edit menu item" : "New menu item")</h2>
-                        <p class="small text-body-secondary mb-0">Every dish, thoughtfully presented.</p>
-                    </div>
-                    <button type="button" class="btn-close flex-shrink-0" aria-label="Close menu item editor" data-drawer-hide hidden></button>
-                </div>
-                <div class="d-flex align-items-center gap-2 flex-wrap mt-3" aria-label="Item code">
-                    <span class="small text-body-secondary">Item code</span>
-                    <span class="badge rounded-pill bg-body-tertiary text-body border yoru-menu-code" data-editor-code>@(editingItem ? Model.ItemEditorCode : "Assigned when saved")</span>
-                </div>
-                <p class="small text-body-secondary mt-2 mb-0" data-editor-code-note hidden>A new code will be assigned when you save this category change.</p>
-                <div class="mt-2">
-                    <span class="small text-body-secondary" role="status" aria-live="polite" data-drawer-state>@(editingItem ? "Editing existing details" : "Ready for your next dish")</span>
-                </div>
-            </div>
-            <div class="px-4 py-3 yoru-item-drawer-body">
-                @if (Model.ItemCategories.Count == 0)
+                <span class="ms-pager__label">Page @Model.ItemPage of @results.TotalPages</span>
+                if (Model.ItemPage < results.TotalPages)
                 {
-                    <div class="border rounded-3 p-3 mb-3" data-menu-no-categories>Create a category before adding a dish. <a asp-page="./Index" data-category-keep-scroll>Manage categories</a></div>
+                    <a class="ms-btn ms-btn--line" href="@Link(("ItemPage", Model.ItemPage + 1))" data-ms-nav data-ms-top>Next<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                 }
-                <form id="menu-item-form" method="post" asp-page="./Index" asp-page-handler="ItemSave" enctype="multipart/form-data" data-menu-item-form data-category-keep-scroll asp-fragment="menu-item-drawer">
-                    <partial name="_MenuItemViewState" model="Model" /><input type="hidden" asp-for="ItemInput.Id" />
-                    <div asp-validation-summary="ModelOnly" data-valmsg-summary="false" class="text-danger mb-3" role="alert" aria-label="Menu item validation errors" hidden="@(!hasSummaryErrors)"></div>
-                    @if (Model.PhotoReselectionRequired)
-                    {
-                        <p class="small text-body-secondary border rounded-3 p-3" data-menu-photo-reselect>The item was not saved. Correct the errors above, then select your photo again before saving.</p>
-                    }
-                    <div class="mb-3" data-menu-category-root>
-                        <label id="menu-item-category-label" asp-for="ItemInput.CategoryId" class="form-label fw-semibold"></label>
-                        <select asp-for="ItemInput.CategoryId" class="form-select" required>
-                            <option value="">Select a category</option>
-                            @foreach (var category in Model.ItemCategories)
-                            {
-                                <option value="@category.Id">@category.Name</option>
-                            }
-                        </select><span id="menu-item-category-error" asp-validation-for="ItemInput.CategoryId" class="small text-danger"></span>
-                    </div>
-                    <div class="mb-2">
-                        <label asp-for="ItemInput.Name" class="form-label fw-semibold"></label>
-                        <input asp-for="ItemInput.Name" class="form-control" maxlength="100" required placeholder="e.g. Edamame" data-category-name />
-                        <div class="small text-body-secondary text-end mt-1"><span data-category-name-count>@(Model.ItemInput.Name?.Length ?? 0)</span>/100</div>
-                        <span asp-validation-for="ItemInput.Name" class="small text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="ItemInput.Description" class="form-label fw-semibold"></label>
-                        <textarea asp-for="ItemInput.Description" class="form-control" rows="2" maxlength="500" placeholder="Describe the dish, ingredients and flavour."></textarea>
-                        <span asp-validation-for="ItemInput.Description" class="small text-danger"></span>
-                    </div>
-                    <div class="row g-3 align-items-center mb-3">
-                        <div class="col-sm-6">
-                            <label asp-for="ItemInput.Price" class="form-label fw-semibold"></label>
-                            <input asp-for="ItemInput.Price" type="number" class="form-control" min="0.01" max="10000" step="0.01" required placeholder="0.00" />
-                            <span asp-validation-for="ItemInput.Price" class="small text-danger"></span>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="form-check mt-sm-4">
-                                <input asp-for="ItemInput.IsAvailable" class="form-check-input" />
-                                <label asp-for="ItemInput.IsAvailable" class="form-check-label"></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="ItemImage" class="form-label fw-semibold">Food photo</label>
-                        <input asp-for="ItemImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-menu-image />
-                        <p class="small text-body-secondary mt-1 mb-1">JPG, PNG or WebP, up to 5 MB. Leave empty to keep the current photo.</p>
-                        <span asp-validation-for="ItemImage" class="small text-danger" role="alert" data-menu-image-error></span>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(Model.CurrentItemImage))
-                    {
-                        <div class="form-check mb-3"><input asp-for="RemoveItemImage" class="form-check-input" data-menu-remove-image /><label asp-for="RemoveItemImage" class="form-check-label">Remove current photo</label></div>
-                    }
-                    <div class="mb-3" data-menu-preview-block hidden="@(string.IsNullOrWhiteSpace(Model.CurrentItemImage))">
-                        <p class="small fw-semibold text-body-secondary text-uppercase mb-3">Photo preview</p>
-                        <figure class="yoru-item-paper mx-auto mb-2">
-                            <a href="@(string.IsNullOrWhiteSpace(Model.CurrentItemImage) ? null : Url.Content(Model.CurrentItemImage))"
-                               data-menu-photo-zoom data-photo-name="@Model.ItemInput.Name" aria-label="Enlarge dish photo preview" class="d-block rounded-1">
-                                <img src="@(string.IsNullOrWhiteSpace(Model.CurrentItemImage) ? null : Url.Content(Model.CurrentItemImage))"
-                                     hidden="@(string.IsNullOrWhiteSpace(Model.CurrentItemImage))" data-menu-image-preview
-                                     data-current-image="@(string.IsNullOrWhiteSpace(Model.CurrentItemImage) ? "" : Url.Content(Model.CurrentItemImage))"
-                                     alt="Selected dish photo preview" class="d-block rounded-1 mx-auto yoru-item-photo" />
-                            </a>
-                            <div class="@(string.IsNullOrWhiteSpace(Model.CurrentItemImage) ? "d-flex" : "d-none") align-items-center justify-content-center text-center p-3" data-menu-image-empty>
-                                <p class="small text-body-secondary mb-0">Choose a photo to preview it here.</p>
-                            </div>
-                            <figcaption class="h6 text-break text-center mt-2 mb-0" data-category-preview-name>@(string.IsNullOrWhiteSpace(Model.ItemInput.Name) ? "Your dish name" : Model.ItemInput.Name)</figcaption>
-                        </figure>
-                        <p class="small text-body-secondary text-center mb-0" data-menu-photo-state hidden></p>
-                    </div>
-                    @if (editingItem)
-                    {
-                        <a href="@Model.ItemListUrl()" class="btn btn-outline-secondary rounded-pill" data-category-keep-scroll data-item-native-cancel>Cancel edit</a>
-                    }
-                </form>
-            </div>
-            <div class="d-flex gap-2 p-3 border-top yoru-item-drawer-footer">
-                <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill" data-drawer-hide data-drawer-hide-footer hidden>Hide to view menu</button>
-                <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill" data-drawer-discard hidden>Discard draft</button>
-                <button type="submit" form="menu-item-form" class="btn btn-primary rounded-pill flex-fill" data-item-save disabled="@(Model.ItemCategories.Count == 0)">@(editingItem ? "Save changes" : "Create item")</button>
-            </div>
-        </section>
-    </div>
-</div>
+                else
+                {
+                    <span class="ms-btn ms-btn--line is-disabled" aria-disabled="true">Next<i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                }
+            }
+            @if (results.TotalPages > 1 || Model.ItemShowAll)
+            {
+                <a class="ms-btn ms-btn--main" href="@Link(("ItemShowAll", Model.ItemShowAll ? null : (object)true), ("ItemPage", null))" data-ms-nav>@(Model.ItemShowAll ? $"Show {RROMS.Pages.Admin.Menu.IndexModel.ItemPageSize} per page" : "Show all")</a>
+            }
+        </div>
+    </nav>
+}
