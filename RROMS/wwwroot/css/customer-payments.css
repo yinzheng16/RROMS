@@ -83,7 +83,10 @@
     background: linear-gradient(rgba(255,252,245,.7), rgba(255,252,245,.7)), var(--pay-washi);
     border: 1px solid var(--yoru-line);
     border-radius: .55rem;
-    padding: 1.1rem 1.25rem 1rem;
+    /* Top a little larger than the bottom: the small "Paid this day" text has
+       extra room above it, the last payment line adds its own bottom padding
+       (see .pay-line:last-child), so both edges look the same (~24px). */
+    padding: 1.25rem 1.25rem 1rem;
     margin-bottom: 1.1rem;
 }
 
@@ -161,12 +164,22 @@
     grid-template-columns: 34px minmax(0, 1fr) auto auto;
     gap: 1rem;
     align-items: center;
-    padding: .8rem 0;
+    /* Optical spacing: the title font leaves ~4px of empty space above its
+       capitals and the small receipt link only ~2px below it, so the top
+       padding is a little smaller than the bottom. The visible space above
+       the title and below the last text line is then the same (~19px),
+       matching the card's side padding. */
+    padding: 1rem 0 .95rem;
     border-top: 1px dashed var(--pay-gold-line);
 }
 
     .us34-payments .pay-line:first-child {
         border-top: 0;
+    }
+
+    /* Last line of a day: the card's own bottom padding does the rest */
+    .us34-payments .pay-line:last-child {
+        padding-bottom: .5rem;
     }
 
 .us34-payments .pay-num {
@@ -179,15 +192,42 @@
 .us34-payments .pay-line-info h3 {
     font-family: var(--font-display);
     font-size: 1.02rem;
+    line-height: 1.25;
     margin: 0;
 }
 
 .us34-payments .pay-line-info p {
-    margin: .15rem 0 0;
+    margin: .2rem 0 0;
+    line-height: 1.35;
     font-size: .8rem;
     color: var(--yoru-olive-text);
     overflow-wrap: anywhere;
 }
+
+/* US35: "Receipt (PDF)" text link under a Paid payment.
+   Block-level (flex) with a tight line-height, so it adds no extra line box
+   below it. Title, details and link are spaced evenly (~3-5px apart). */
+.us34-payments .pay-receipt {
+    display: flex;
+    width: fit-content;
+    align-items: center;
+    gap: .3rem;
+    margin-top: .25rem;
+    font-size: .8rem;
+    line-height: 1.1;
+    color: var(--yoru-red-text);
+    text-decoration: none;
+}
+
+    .us34-payments .pay-receipt .bi {
+        font-size: .85em;
+        line-height: 1;
+    }
+
+    .us34-payments .pay-receipt:hover,
+    .us34-payments .pay-receipt:focus-visible {
+        text-decoration: underline;
+    }
 
 .us34-payments .pay-amount {
     min-width: 110px;
