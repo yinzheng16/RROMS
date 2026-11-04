@@ -1,0 +1,289 @@
+@page
+@model RROMS.Pages.Admin.DashboardModel
+@using System.Globalization
+@using System.Text.Json
+@{
+    // US46 Interactive dashboard (Member 5)
+    // Styles: wwwroot/css/admin-dashboard.css · Script: wwwroot/js/admin-dashboard.js
+    // Charts: Chart.js (loaded only on this page).
+    ViewData["Title"] = "Dashboard";
+
+    var R = Model.Result;
+    var my = CultureInfo.GetCultureInfo("en-MY");
+    string Rm(decimal v) => v.ToString("N2", my);
+    var compareText = "vs " + R.Query.CompareLabel;
+    var isCustom = Model.ActiveRange == null;
+
+    // Everything the charts need, in one JSON object for admin-dashboard.js.
+    var chartJson = JsonSerializer.Serialize(new
+    {
+        days = R.Days.Select(d => new
+        {
+            day = d.Day.ToString("yyyy-MM-dd"),
+            label = d.Day.ToString("d MMM"),
+            title = d.Day.ToString("ddd d MMM yyyy"),
+            prevLabel = d.PreviousDay.ToString("d MMM"),
+            net = d.NetSales,
+            orders = d.Orders,
+            prevNet = d.PreviousNetSales,
+            prevOrders = d.PreviousOrders,
+            res = d.Reservations,
+            salesLink = Model.ReportLink("sales", d.Day),
+            resLink = Model.ReportLink("reservations", d.Day)
+        }),
+        statuses = R.ReservationStatuses.Select(s => new { name = s.Name, color = s.Color }),
+        dishes = R.TopDishes.Select(d => new { name = d.Name, portions = d.Portions }),
+        compare = R.Query.CompareLabel
+    });
+    var dishColors = new[] { "#C9392B", "#1E1A18", "#C9A26A", "#3D5A80", "#3F7A4C" };
+    var dishTotal = R.TopDishes.Sum(d => d.Portions);
+}
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700;900&family=Josefin+Sans:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="~/css/admin-dashboard.css" asp-append-version="true" />
+
+<div class="db-page" data-db>
+
+    <!-- Shared drawings: a cherry blossom -->
+    <svg class="db-defs" aria-hidden="true" focusable="false">
+        <symbol id="db-bl" viewBox="-12 -12 24 24">
+            <g fill="#F7C4CB" stroke="#E79AA6" stroke-width=".6">
+                <path d="M0 -1 C -4 -4,-4 -9,-1.2 -10.5 L0 -9.2 L1.2 -10.5 C 4 -9,4 -4,0 -1Z" />
+                <path transform="rotate(72)" d="M0 -1 C -4 -4,-4 -9,-1.2 -10.5 L0 -9.2 L1.2 -10.5 C 4 -9,4 -4,0 -1Z" />
+                <path transform="rotate(144)" d="M0 -1 C -4 -4,-4 -9,-1.2 -10.5 L0 -9.2 L1.2 -10.5 C 4 -9,4 -4,0 -1Z" />
+                <path transform="rotate(216)" d="M0 -1 C -4 -4,-4 -9,-1.2 -10.5 L0 -9.2 L1.2 -10.5 C 4 -9,4 -4,0 -1Z" />
+                <path transform="rotate(288)" d="M0 -1 C -4 -4,-4 -9,-1.2 -10.5 L0 -9.2 L1.2 -10.5 C 4 -9,4 -4,0 -1Z" />
+            </g>
+            <circle r="2.2" fill="#C9392B" />
+        </symbol>
+        <symbol id="db-pt" viewBox="-6 -4 12 8"><path d="M-5 0 C -3 -4,3 -4,5 0 C 3 3,-3 3,-5 0Z" fill="#F4AEB8" /></symbol>
+    </svg>
+
+    <!-- ===== Header: night scene with lanterns ===== -->
+    <header class="db-hero">
+        <div class="db-moon" aria-hidden="true"></div>
+        <svg class="db-art" viewBox="0 0 560 300" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+            <defs>
+                <radialGradient id="db-lg" cx="40%" cy="40%" r="70%"><stop offset="0" stop-color="#FF8A5C" /><stop offset=".55" stop-color="#D93B26" /><stop offset="1" stop-color="#8E1F14" /></radialGradient>
+                <radialGradient id="db-glow"><stop offset="0" stop-color="rgba(255,150,80,.55)" /><stop offset="1" stop-color="rgba(255,150,80,0)" /></radialGradient>
+                <radialGradient id="db-sl" cx="45%" cy="40%" r="70%"><stop offset="0" stop-color="#FFE3A6" /><stop offset=".6" stop-color="#F2A957" /><stop offset="1" stop-color="#B8662B" /></radialGradient>
+            </defs>
+            <g opacity=".9">
+                <line x1="150" y1="0" x2="150" y2="70" stroke="#2A1A12" stroke-width="2" /><circle cx="150" cy="100" r="60" fill="url(#db-glow)" />
+                <rect x="134" y="66" width="32" height="7" rx="2" fill="#1B1210" /><ellipse cx="150" cy="100" rx="22" ry="28" fill="url(#db-sl)" /><rect x="134" y="126" width="32" height="7" rx="2" fill="#1B1210" />
+                <line x1="230" y1="0" x2="230" y2="40" stroke="#2A1A12" stroke-width="2" /><circle cx="230" cy="68" r="50" fill="url(#db-glow)" />
+                <rect x="216" y="36" width="28" height="6" rx="2" fill="#1B1210" /><ellipse cx="230" cy="66" rx="19" ry="24" fill="url(#db-sl)" /><rect x="216" y="88" width="28" height="6" rx="2" fill="#1B1210" />
+            </g>
+            <line x1="430" y1="0" x2="430" y2="40" stroke="#2A1A12" stroke-width="3" /><circle cx="430" cy="140" r="150" fill="url(#db-glow)" />
+            <rect x="392" y="36" width="76" height="16" rx="5" fill="#1B1210" />
+            <path d="M392 52 C 340 80,340 210,392 236 L468 236 C 520 210,520 80,468 52Z" fill="url(#db-lg)" />
+            <g stroke="rgba(60,10,5,.28)" stroke-width="2" fill="none">
+                <path d="M370 80 Q430 92 490 80" /><path d="M360 110 Q430 124 500 110" /><path d="M358 142 Q430 156 502 142" /><path d="M360 174 Q430 188 500 174" /><path d="M370 206 Q430 218 490 206" />
+            </g>
+            <text x="430" y="172" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="900" font-size="86" fill="#1B1210">営</text>
+            <rect x="392" y="236" width="76" height="16" rx="5" fill="#1B1210" />
+            <line x1="430" y1="252" x2="430" y2="290" stroke="#C9A26A" stroke-width="3" /><path d="M422 280 L438 280 L434 300 L426 300Z" fill="#C9392B" />
+            <path d="M560 0 C 520 30,500 40,470 30" stroke="#5A3322" stroke-width="5" fill="none" /><path d="M300 0 C 320 30,350 35,360 20" stroke="#5A3322" stroke-width="4" fill="none" />
+            <use href="#db-bl" x="520" y="5" width="34" height="34" /><use href="#db-bl" x="490" y="22" width="28" height="28" />
+            <use href="#db-bl" x="460" y="12" width="24" height="24" /><use href="#db-bl" x="340" y="10" width="26" height="26" />
+            <use href="#db-bl" x="310" y="-2" width="22" height="22" /><use href="#db-bl" x="530" y="40" width="22" height="22" />
+            <use href="#db-pt" x="300" y="200" width="16" height="10" /><use href="#db-pt" x="520" y="200" width="14" height="9" />
+            <use href="#db-pt" x="270" y="120" width="12" height="8" /><use href="#db-pt" x="540" y="120" width="16" height="10" />
+        </svg>
+
+        <div class="db-eyebrow">ANALYTICS · <b lang="ja">経営分析</b></div>
+        <h1 class="db-title">Business <em>Dashboard</em></h1>
+        <p class="db-sub">Sales, reservations and popular dishes at a glance. Hover a chart for details, click it to open the full report.</p>
+        <div class="db-chips">
+            <span class="db-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18" /></svg>@Model.PeriodText
+            </span>
+            <span class="db-chip">Net sales <b>RM @Rm(R.NetSales)</b></span>
+            <span class="db-chip">Guests <b>@R.Guests</b></span>
+        </div>
+    </header>
+
+    <!-- ===== Date range ===== -->
+    <div class="db-tools">
+        <p class="db-note">Charts update with the date range. <a href="@Model.ReportLink("orders")">Open full reports →</a></p>
+
+        <div class="db-when">
+            <form method="get" action="/Admin/Dashboard" class="db-custom" data-db-custom hidden="@(!isCustom)">
+                <input type="date" name="from" value="@R.Query.From.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" aria-label="From" />
+                <span>to</span>
+                <input type="date" name="to" value="@R.Query.To.ToString("yyyy-MM-dd")" max="@DateTime.Today.ToString("yyyy-MM-dd")" aria-label="To" />
+                <button type="submit" class="db-btn">Apply</button>
+            </form>
+
+            <div class="db-dd">
+                <svg class="db-dd-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+                <select aria-label="Date range" data-db-period>
+                    @foreach (var p in RROMS.Pages.Admin.DashboardModel.Presets)
+                    {
+                        <option value="@Model.PresetLink(p.Key)" selected="@(Model.ActiveRange == p.Key)">@p.Name</option>
+                    }
+                    <option value="custom" selected="@isCustom">Custom range…</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== At a glance ===== -->
+    <div class="db-sec">
+        <div class="db-sec-ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
+        </div>
+        <div>
+            <h2>At a glance <small lang="ja">概要</small></h2>
+            <p>@Model.PeriodName · @Model.PeriodText · Updated @DateTime.Now.ToString("HH:mm")</p>
+        </div>
+        <div class="db-rule"></div>
+    </div>
+
+    <section class="db-kpis" aria-label="Summary">
+        @for (var i = 0; i < R.Kpis.Count; i++)
+        {
+            var k = R.Kpis[i];
+            <div class="db-kpi @(i == 0 ? "is-dark" : "")">
+                <div class="db-kpi-top"><span class="db-kpi-l">@k.Label</span><span class="db-kpi-jp" lang="ja">@k.JpLabel</span></div>
+                <div class="db-kpi-v">
+                    @if (k.IsMoney)
+                    {
+                        <small>RM</small>@Rm(k.Value)
+                    }
+                    else
+                    {
+                        @k.Value.ToString("0")
+                    }
+                </div>
+                <div class="db-kpi-d">
+                    @if (k.Change.HasValue)
+                    {
+                        <b class="@(k.Change > 0 ? "db-up" : k.Change < 0 ? "db-down" : "")">@(k.Change > 0 ? "▲ " : k.Change < 0 ? "▼ " : "")@Math.Abs(k.Change.Value)%</b> @compareText
+                    }
+                    else
+                    {
+                        <text>No earlier data to compare</text>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+
+    <!-- Dark band: how net sales is made (same numbers as the Sales report) -->
+    <section class="db-band" aria-label="How this period adds up">
+        <svg class="db-band-art" viewBox="0 0 200 120" preserveAspectRatio="xMinYMid meet" aria-hidden="true" focusable="false">
+            <circle cx="70" cy="62" r="34" fill="#F3D9A8" opacity=".85" />
+            <g fill="#C9392B"><rect x="22" y="34" width="110" height="9" rx="3" /><rect x="30" y="47" width="94" height="6" rx="2" /><rect x="40" y="43" width="9" height="62" /><rect x="105" y="43" width="9" height="62" /></g>
+            <rect x="18" y="30" width="118" height="5" rx="2" fill="#1B1210" />
+            <g fill="none" stroke="#C9A26A" stroke-width="2"><path d="M0 104 Q 25 92 50 104 T 100 104 T 150 104 T 200 104" /><path d="M0 114 Q 25 102 50 114 T 100 114 T 150 114 T 200 114" opacity=".7" /></g>
+            <use href="#db-bl" x="150" y="8" width="30" height="30" /><use href="#db-bl" x="170" y="34" width="20" height="20" /><use href="#db-bl" x="4" y="6" width="22" height="22" />
+        </svg>
+        <div class="db-band-lab">HOW THIS PERIOD ADDS UP</div>
+        <div class="db-box"><small>Paid</small><b>RM @Rm(R.Paid)</b></div>
+        <span class="db-op" aria-hidden="true">−</span>
+        <div class="db-box"><small>Refunded</small><b>RM @Rm(R.Refunded)</b></div>
+        <span class="db-op" aria-hidden="true">=</span>
+        <div class="db-box db-box-total"><small>Net sales</small><b>RM @Rm(R.NetSales)</b></div>
+        <p class="db-band-foot">Same numbers as the Sales report.</p>
+    </section>
+
+    <!-- ===== Charts ===== -->
+    <div class="db-sec">
+        <div class="db-sec-ic db-sec-green" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 17l6-6 4 4 8-8" /><path d="M14 7h7v7" /></svg>
+        </div>
+        <div>
+            <h2>Charts <small lang="ja">図表</small></h2>
+            <p>Hover for exact numbers. Click a day to open that day's report.</p>
+        </div>
+        <div class="db-rule"></div>
+    </div>
+
+    <div class="db-charts" data-db-charts="@chartJson">
+        <div class="db-grid">
+            <section class="db-card">
+                <div class="db-card-h">
+                    <div>
+                        <h3>Sales <small lang="ja">売上</small></h3>
+                        <p data-db-sales-sub>Net sales per day (RM)</p>
+                    </div>
+                    <div class="db-card-r">
+                        <div class="db-toggle" role="group" aria-label="Show">
+                            <button type="button" class="is-on" data-db-mode="net" aria-pressed="true">Net sales</button>
+                            <button type="button" data-db-mode="orders" aria-pressed="false">Orders</button>
+                        </div>
+                        <a class="db-more" href="@Model.ReportLink("sales")">Sales report →</a>
+                    </div>
+                </div>
+                <div class="db-canvas"><canvas id="dbSales" role="img" aria-label="Line chart of net sales per day, this period and the previous period"></canvas></div>
+                <div class="db-legend">
+                    <span><i></i>This period</span>
+                    <span><i class="is-dash"></i>Previous period (@R.Query.CompareLabel)</span>
+                </div>
+            </section>
+
+            <section class="db-card">
+                <div class="db-card-h">
+                    <div>
+                        <h3>Popular dishes <small lang="ja">人気</small></h3>
+                        <p>Top 5 by portions sold</p>
+                    </div>
+                    <a class="db-more" href="@Model.ReportLink("menu")">Menu report →</a>
+                </div>
+                @if (R.TopDishes.Count == 0)
+                {
+                    <p class="db-empty">No dishes sold in this period yet.</p>
+                }
+                else
+                {
+                    <div class="db-donut">
+                        <div class="db-canvas db-canvas-donut">
+                            <canvas id="dbDishes" role="img" aria-label="Doughnut chart of the top 5 dishes"></canvas>
+                            <div class="db-donut-c"><div><b>@dishTotal</b><small>portions</small></div></div>
+                        </div>
+                        <ul class="db-dishes">
+                            @for (var i = 0; i < R.TopDishes.Count; i++)
+                            {
+                                <li><span class="db-sw" style="background:@dishColors[i]"></span><span class="db-nm" title="@R.TopDishes[i].Name">@R.TopDishes[i].Name</span><span class="db-q">@R.TopDishes[i].Portions</span></li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </section>
+        </div>
+
+        <div class="db-grid">
+            <section class="db-card">
+                <div class="db-card-h">
+                    <div>
+                        <h3>Reservations <small lang="ja">予約</small></h3>
+                        <p>Per day, by status</p>
+                    </div>
+                    <a class="db-more" href="@Model.ReportLink("reservations")">Reservations report →</a>
+                </div>
+                <div class="db-canvas db-canvas-sm"><canvas id="dbReservations" role="img" aria-label="Stacked bar chart of reservations per day by status"></canvas></div>
+            </section>
+
+            <section class="db-card">
+                <div class="db-card-h">
+                    <div>
+                        <h3>Highlights <small lang="ja">注目</small></h3>
+                        <p>Worked out from this period</p>
+                    </div>
+                </div>
+                <ul class="db-ins">
+                    @foreach (var h in R.Highlights)
+                    {
+                        <li><span class="db-ins-ic" style="background:@h.Color" lang="ja">@h.Mark</span><div><b>@h.Title</b><span>@h.Detail</span></div></li>
+                    }
+                </ul>
+            </section>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="~/js/admin-dashboard.js" asp-append-version="true"></script>
+}

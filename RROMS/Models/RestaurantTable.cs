@@ -16,7 +16,7 @@ namespace RROMS.Models
         public string TableNumber { get; set; } = string.Empty;
 
         // Maximum number of guests.
-        [Range(1, 20)]
+        [Range(1, 100)]
         public int Capacity { get; set; }
 
         // Admin switch: an inactive table is never offered for booking.
@@ -28,7 +28,7 @@ namespace RROMS.Models
 
         public TableTypeDefinition? TableTypeDefinition { get; set; }
 
-        [Range(1, 20)]
+        [Range(1, 100)]
         public int MinGuests { get; set; } = 1;
 
         // 0 = no minimum spend. VIP rooms RM 500, VVIP room RM 1,000.

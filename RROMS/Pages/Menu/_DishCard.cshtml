@@ -4,9 +4,16 @@
     var categoryLabel = RROMS.Pages.Menu.IndexModel.CategoryLabel(Model.CategoryName);
     var detailUrl = ViewData["MenuDetailUrl"] as string
         ?? Url.Page("/Menu/Index", new { ItemId = Model.Id })!;
+    decimal? promoPercent = Model.OriginalPrice is decimal normal && normal > 0
+        ? (normal - Model.Price) / normal * 100m : null;
 }
-<article class="tasting-card @(Model.IsAvailable ? "" : "is-unavailable")" data-dish-id="@Model.Id" data-menu-unavailable="@(!Model.IsAvailable ? "true" : "false")">
+<article class="tasting-card @(Model.IsAvailable ? "" : "is-unavailable") @(promoPercent is null ? "" : "is-promo")" data-dish-id="@Model.Id" data-menu-unavailable="@(!Model.IsAvailable ? "true" : "false")">
     <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="tasting-card__photo" data-dish-open="@Model.Id" aria-label="View @Model.Name details">
+        @if (promoPercent is decimal off)
+        {
+            @* Small round seal in the corner, so the photo stays visible. *@
+            <span class="menu-promo-seal" aria-hidden="true"><strong>@off.ToString("0.#", CultureInfo.InvariantCulture)%</strong><small>OFF</small></span>
+        }
         @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
         {
             <img src="@Url.Content(Model.ImageUrl)" alt="@Model.Name" loading="lazy" decoding="async" width="640" height="400" data-dish-photo />
@@ -28,7 +35,20 @@
             <a href="@(Model.IsAvailable ? detailUrl : null)" data-menu-live-href="@detailUrl" aria-disabled="@(Model.IsAvailable ? null : "true")" tabindex="@(Model.IsAvailable ? null : "-1")" class="tasting-card__details-link" data-dish-open="@Model.Id" aria-label="View @Model.Name details">View details <span aria-hidden="true">→</span></a>
         </div>
         <div class="tasting-card__footer">
-            <span class="tasting-card__price">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+            @* Promo: normal price + end date on a small top line, promo price below, so Add to cart stays in place. *@
+            <span class="tasting-card__price menu-price @(promoPercent is null ? "" : "is-promo")">
+                @if (Model.OriginalPrice is decimal wasPrice)
+                {
+                    <span class="menu-price__line">
+                        <s class="menu-price__was"><span class="visually-hidden">Normal price </span>RM @wasPrice.ToString("F2", CultureInfo.InvariantCulture)</s>
+                        @if (Model.PromoEndsOn is DateTime endsOn)
+                        {
+                            <span class="menu-price__ends">· @RROMS.Services.PromotionRules.EndsLabel(endsOn, DateTime.Now)</span>
+                        }
+                    </span>
+                }
+                <span class="menu-price__now">@if (promoPercent is decimal pct) {<span class="visually-hidden">Promotional price, @pct.ToString("0.#", CultureInfo.InvariantCulture)% off: </span>}RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+            </span>
             <div class="tasting-card__actions" data-menu-actions>
                 <form method="get" asp-page="/Menu/Index" data-cart-customize>
                     <input type="hidden" name="ItemId" value="@Model.Id" />

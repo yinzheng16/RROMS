@@ -27,10 +27,10 @@ public class TableTypeDefinition
 
     public DiningArea DefaultDiningArea { get; set; } = null!;
 
-    [Range(1, 20)]
+    [Range(1, 100)]
     public int DefaultMinGuests { get; set; } = 1;
 
-    [Range(1, 20)]
+    [Range(1, 100)]
     public int DefaultMaxGuests { get; set; } = 2;
 
     [Precision(10, 2)]

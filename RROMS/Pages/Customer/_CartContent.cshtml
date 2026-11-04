@@ -123,7 +123,18 @@
                                     }
                                     <div class="cart-line__description">
                                         <p class="cart-line__code">@line.Code</p><h3>@line.Name</h3>
-                                        <p class="cart-line__unit">RM @Money(line.UnitPrice) each</p>
+                                        <p class="cart-line__unit">
+                                            @if (line.Saving > 0 && line.NormalUnitPrice is decimal normalPrice)
+                                            {
+                                                <s class="cart-line__was"><span class="visually-hidden">Was </span>RM @Money(normalPrice)</s>
+                                                <span class="cart-line__now">RM @Money(line.UnitPrice)</span><text> each</text>
+                                                <span class="cart-line__deal">-@Math.Round((normalPrice - line.UnitPrice) / normalPrice * 100, 1)%</span>
+                                            }
+                                            else
+                                            {
+                                                <text>RM @Money(line.UnitPrice) each</text>
+                                            }
+                                        </p>
                                         @if (!line.IsAvailable)
                                         {
                                             <p class="cart-line__warning"><i class="bi bi-info-circle" aria-hidden="true"></i> Unavailable — remove to continue</p>
@@ -152,9 +163,10 @@
                 </div>
                 <div class="cart-summary-column">
                     <aside class="card cart-summary" aria-labelledby="cart-summary-title">
-                        <header class="cart-summary__heading"><div><h2 id="cart-summary-title">Order summary</h2><p>@Model.Quantity @(Model.Quantity == 1 ? "item" : "items")</p></div><i class="bi bi-bag" aria-hidden="true"></i></header>
+                        <header class="cart-summary__heading"><div><h2 id="cart-summary-title">Order summary</h2></div><i class="bi bi-bag" aria-hidden="true"></i></header>
                         <div class="cart-summary__body">
                             <dl class="cart-totals"><div><dt>Subtotal</dt><dd>RM @Money(Model.Totals.Subtotal)</dd></div><div><dt>Service charge (@Rate(Model.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Totals.ServiceCharge)</dd></div><div><dt>Tax (@Rate(Model.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Totals.Tax)</dd></div><div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Totals.Total)</dd></div></dl>
+                            @if (Model.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You save <strong>RM @Money(Model.Savings)</strong> with promotions</p> }
                             <div class="cart-summary__dining">
                                 <p class="cart-summary__type"><i class="bi @(Model.OrderType == OrderType.DineIn ? "bi-shop" : "bi-bag")" aria-hidden="true"></i> @(Model.OrderType == OrderType.DineIn ? "Dine-in · Reservation" : "Takeaway")</p>
                             </div>
