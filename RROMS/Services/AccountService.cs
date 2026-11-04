@@ -138,7 +138,7 @@ namespace RROMS.Services
         // The only place that decides where each role starts. Pages are built by:
         // Admin overview = Member 5 (US41), Staff reservations = Member 2 (US16), Home = Member 1 (US50).
         private const string AdminStartPage = "/Admin";
-        private const string StaffStartPage = "/Staff";
+        private const string StaffStartPage = "/Staff/Reservations";   // US16 page (Member 2); there is no /Staff index
         private const string CustomerStartPage = "/";
 
         public async Task<string> GetStartPageAsync(string email)

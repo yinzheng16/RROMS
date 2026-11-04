@@ -22,11 +22,12 @@
     var svc = $("RestaurantSetting_ServiceChargePercent");
     var tax = $("RestaurantSetting_TaxRatePercent");
     var take = $("RestaurantSetting_ServiceChargeOnTakeaway");
+    var biz = $("RestaurantSetting_BusinessName");   // US49 follow-up
     var sst = $("RestaurantSetting_SstRegistrationNo");
     var note = $("RestaurantSetting_ReceiptFooterNote");
 
     // The fields that are saved. The save bar counts how many differ from when the page opened.
-    var tracked = [country, phone, email, address, svc, tax, take, sst, note];
+    var tracked = [country, phone, email, address, svc, tax, take, biz, sst, note];
     function valueOf(el) { return el.type === "checkbox" ? el.checked : el.value; }
     var initial = tracked.map(valueOf);
 
@@ -156,6 +157,9 @@
         setText("eqTotal", total === null ? "Check rates" : "RM " + money(total));
 
         // receipt
+        var bizText = biz.value.trim();
+        setText("rcBiz", bizText);
+        $("rcBiz").hidden = !bizText;
         var sstText = sst.value.trim().toUpperCase();
         setText("rcSst", "SST No. " + sstText);
         $("rcSst").hidden = !sstText;
@@ -169,6 +173,16 @@
         setText("rcTotal", total === null ? "—" : "RM " + money(total));
         setText("rcNote", note.value.trim());
         $("rcNote").hidden = !note.value.trim();
+
+        // SST check (same text as Settings.SstWarning on the server)
+        var warn = "";
+        if (t !== null && t > 0 && !sstText) {
+            warn = "SST is " + pct(t) + " but there is no SST registration number. Add it, or set the tax rate to 0%.";
+        } else if (sstText && !bizText) {
+            warn = "Add the registered business name too. Receipts with an SST number should show it.";
+        }
+        setText("sstWarnText", warn);
+        $("sstWarn").hidden = !warn;
 
         page.querySelectorAll("[data-rate]").forEach(function (tile) { tile.paint(); });
         updateCounters();

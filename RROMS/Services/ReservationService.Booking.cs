@@ -225,13 +225,14 @@ public partial class ReservationService
             .Select(t => (int?)t.DefaultMaxGuests)
             .MaxAsync();
 
-        return Math.Clamp(max ?? 2, 1, 20);
+        return Math.Clamp(max ?? 2, 1, 100);
     }
 
     // ---------- availability ----------
 
     // Table ids that already have a booking touching [start, end], plus a turnover gap.
-    private async Task<HashSet<int>> BusyTableIdsAsync(DateTime start, DateTime end)
+    private async Task<HashSet<int>> BusyTableIdsAsync(
+        DateTime start, DateTime end, int? excludeReservationId = null)
     {
         var from = start.AddHours(-12);
         var to = end.AddHours(12);
@@ -239,6 +240,7 @@ public partial class ReservationService
         var rows = await _db.Reservations
             .AsNoTracking()
             .Where(r => r.TableId != null &&
+                        (excludeReservationId == null || r.Id != excludeReservationId) &&
                         (r.Status == ReservationStatus.Pending ||
                          r.Status == ReservationStatus.Confirmed ||
                          r.Status == ReservationStatus.Seated) &&
@@ -268,8 +270,8 @@ public partial class ReservationService
     {
         await ReleaseOverdueReservationsAsync();
 
-        if (guests < 1 || guests > 20)
-            return new TypeOptionsResult("Choose between 1 and 20 guests.", new());
+        if (guests < 1 || guests > 100)
+            return new TypeOptionsResult("Choose between 1 and 100 guests.", new());
 
         var (hours, specials) = await LoadScheduleAsync();
         var error = ValidateSlot(start, hours, specials, DateTime.Now);
@@ -342,7 +344,8 @@ public partial class ReservationService
                 status,
                 reason,
                 left,
-                type.DefaultDiningArea?.Name));
+                type.DefaultDiningArea?.Name,
+                AreaIcon: AreaIconOf(type.DefaultDiningArea)));
         }
 
         // A fully booked type gets its own nearest free times, so the customer knows where to go next.
@@ -384,8 +387,8 @@ public partial class ReservationService
     {
         await ReleaseOverdueReservationsAsync();
 
-        if (guests < 1 || guests > 20)
-            return new TimeCheckResult(false, false, "Choose between 1 and 20 guests.", new());
+        if (guests < 1 || guests > 100)
+            return new TimeCheckResult(false, false, "Choose between 1 and 100 guests.", new());
 
         var now = DateTime.Now;
         start = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
@@ -425,11 +428,13 @@ public partial class ReservationService
     //  1. In total at most BookingRules.MaxActiveBookings upcoming bookings.
     //  2. In any BookingTimeRules.RollingWindowDays days in a row, at most BookingTimeRules.MaxPerWindow.
     // Returns the message to show, or null when the new booking is allowed.
-    private async Task<string?> LimitMessageAsync(string userId, DateTime start, DateTime now)
+    private async Task<string?> LimitMessageAsync(
+        string userId, DateTime start, DateTime now, int? excludeReservationId = null)
     {
         var upcoming = await _db.Reservations
             .AsNoTracking()
             .Where(r => r.UserId == userId &&
+                        (excludeReservationId == null || r.Id != excludeReservationId) &&
                         (r.Status == ReservationStatus.Pending ||
                          r.Status == ReservationStatus.Confirmed) &&
                         r.ReservedAt > now)
@@ -562,8 +567,8 @@ public partial class ReservationService
             req.ReservedAt.Hour, req.ReservedAt.Minute, 0);
         var end = start.AddMinutes(BookingRules.DurationMinutes);
 
-        if (req.Guests < 1 || req.Guests > 20)
-            return BookingResult.Fail("guests", "Choose between 1 and 20 guests.");
+        if (req.Guests < 1 || req.Guests > 100)
+            return BookingResult.Fail("guests", "Choose between 1 and 100 guests.");
 
         var special = (req.SpecialRequest ?? "").Trim();
         special = new string(special.Where(c => !char.IsControl(c) || c == '\n').ToArray());
@@ -720,7 +725,8 @@ public partial class ReservationService
                 type.DefaultDiningArea?.Name,
                 reservation.SpecialRequest,
                 spend,
-                reservation.Status.ToString()));
+                reservation.Status.ToString(),
+                AreaIconOf(type.DefaultDiningArea)));
         }
         catch (Exception ex) when (
             ex is DbUpdateException ||
@@ -731,6 +737,10 @@ public partial class ReservationService
                 "Someone just booked that table. Please try again.");
         }
     }
+
+    // The icon of a dining area for the customer pages (null when the table type has no area).
+    private static string? AreaIconOf(DiningArea? area) =>
+        area is null ? null : AreaIconRules.Resolve(area.IconName, area.Name);
 
     private async Task<ReservationTicket?> BuildTicketAsync(int reservationId)
     {
@@ -754,7 +764,8 @@ public partial class ReservationService
             type?.DefaultDiningArea?.Name,
             r.SpecialRequest,
             r.MinimumSpendAccepted ?? 0m,
-            r.Status.ToString());
+            r.Status.ToString(),
+            AreaIconOf(type?.DefaultDiningArea));
     }
 
     // e.g. YR-7K3M9Q (no 0/O/1/I, easy to read out over the phone)

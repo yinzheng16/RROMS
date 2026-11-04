@@ -1,0 +1,137 @@
+@page
+@model RROMS.Pages.Customer.Orders.ReorderModel
+@using System.Globalization
+@using RROMS.Services
+@using RROMS.Services.Interfaces
+@{
+    ViewData["Title"] = "Reorder";
+    ViewData["FullWidth"] = true;
+    var details = Model.Details;
+    var quote = Model.Quote;
+    string Money(decimal value) => "RM " + value.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+}
+<link rel="stylesheet" href="~/css/customer-order-history.css" asp-append-version="true" />
+<link rel="stylesheet" href="@(Url.Content("~/css/customer-reorder-design.css") + "?v=20261030-18")" />
+<script>
+    document.documentElement.classList.add('oh-reorder-js');
+    window.setTimeout(function () {
+        if (!document.querySelector('.oh-review-ready')) document.documentElement.classList.remove('oh-reorder-js');
+    }, 2500);
+</script>
+<section class="oh-page oh-reorder-page oh-reorder-art" data-reorder-page>
+    <div class="oh-wrap">
+        <a asp-page="/Customer/Orders/Index" asp-route-orderId="@details.Id" class="oh-link oh-back-orders">← Back to my orders</a>
+        <header class="oh-reorder-heading"><p class="oh-eyebrow">ANOTHER ROUND OF YOUR FAVOURITES</p><h1>A familiar favourite.<br /><em>A fresh order.</em></h1><p>Reordering from @details.OrderNo · @details.CreatedAt.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)</p></header>
+        <div asp-validation-summary="All" class="oh-error" role="alert" data-reorder-errors tabindex="-1"></div>
+        <div class="oh-reorder-layout">
+            <section class="oh-selection" hidden="@(quote?.Ready == true)">
+                <div class="oh-selection-heading"><h2 id="choose-dishes-title">Choose your dishes</h2><div><button type="button" data-reorder-all class="oh-clear">Select available</button><button type="button" data-reorder-none class="oh-clear">Clear</button></div></div>
+                <p class="oh-fine-print">Current prices and promotions apply. Unavailable dishes cannot be added. Choose 1–100 portions for each selected line.</p>
+                <form method="post" asp-page="/Customer/Orders/Reorder" asp-page-handler="Review" asp-route-id="@details.Id" data-reorder-form>
+                    <div class="oh-reorder-dish-scroll" role="region" aria-labelledby="choose-dishes-title" tabindex="0">
+                @for(int i = 0; i < details.Lines.Count; i++)
+                {
+                    var line = details.Lines[i];
+                    var choice = Model.Selections.FirstOrDefault(row => row.OrderItemId == line.Id);
+                    int quantity = choice?.Quantity ?? Math.Clamp(line.Quantity, 1, 100);
+                    <div class="oh-reorder-line @(line.CanReorder ? "" : "is-unavailable")">
+                        <input type="hidden" name="Selections[@i].OrderItemId" value="@line.Id" />
+                        <label class="oh-choose-line"><input type="checkbox" name="Selections[@i].Selected" value="true" checked="@(choice?.Selected == true && line.CanReorder)" disabled="@(!line.CanReorder)" data-reorder-choice /><span class="oh-reorder-photo">@if(line.ImageUrl is not null){<img src="@Url.Content(line.ImageUrl)" alt="" width="78" height="78" loading="lazy" />}else{<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18c-1 5-4 8-9 8s-8-3-9-8ZM8 22h8M8 9V4M12 9V2M16 9V4" /></svg>}</span><span class="oh-reorder-name"><span class="oh-reorder-dish-name">@line.Name</span>@if(!string.IsNullOrWhiteSpace(line.Code)){<small class="oh-reorder-code">@line.Code</small>}</span></label>
+                        <div class="oh-reorder-price">
+                            @if(line.AvailableNow && line.CurrentUnitPrice.HasValue){<strong>@Money(line.CurrentUnitPrice.Value) now</strong>@if(line.PriceChanged){<small>Previously @Money(line.SavedUnitPrice) <span class="oh-price-change">Price changed</span></small>}}
+                            else{<span class="oh-unavailable-label">Currently unavailable</span>}
+                            @if(line.Quantity <= 0){<small>This line has no remaining portions to copy.</small>}
+                            else{<small>Previously @line.Quantity @(line.Quantity == 1 ? "portion" : "portions")</small>}
+                            @if(!string.IsNullOrWhiteSpace(line.Notes)){<small class="oh-old-note"><strong>Previous dish note:</strong> <span>@line.Notes</span></small>}
+                        </div>
+                        <div class="oh-quantity-label"><label for="reorder-quantity-@i">Quantity</label><div class="oh-quantity-stepper"><button type="button" data-quantity-step="-1" aria-label="Decrease quantity for @line.Name" disabled="@(!line.CanReorder || quantity <= 1)">−</button><input id="reorder-quantity-@i" type="number" name="Selections[@i].Quantity" value="@quantity" min="1" max="100" step="1" inputmode="numeric" disabled="@(!line.CanReorder)" aria-label="Quantity for @line.Name" data-reorder-quantity /><button type="button" data-quantity-step="1" aria-label="Increase quantity for @line.Name" disabled="@(!line.CanReorder || quantity >= 100)">+</button></div></div>
+                    </div>
+                }
+                    </div>
+                    <label class="oh-copy-notes"><input asp-for="CopyDishNotes" /> Copy my previous dish notes</label>
+                    <aside class="oh-reorder-notice" role="note" aria-label="Reordering notice">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></svg>
+                        <div><strong>Please note</strong><p>Your current cart contents, dining option, reservation and remarks stay as they are. The old order's reservation, session and overall remarks are not copied.</p></div>
+                    </aside>
+                    <div class="oh-selection-footer"><span data-reorder-count aria-live="polite">Choose the portions you want.</span><button type="submit" class="oh-button" data-review-button>Review selected dishes →</button></div>
+                </form>
+            </section>
+            @if(quote is not null && quote.Lines.Count > 0)
+            {
+                <section class="oh-review" aria-labelledby="reorder-review-title" data-reorder-review>
+                    <header class="oh-review-header">
+                        <button type="button" class="oh-review-close" data-review-close aria-label="Close reorder review" hidden>×</button>
+                        <div class="oh-review-brand-heading">
+                            <img class="oh-review-brand-mark" src="@Url.Content("~/images/orders/yoru-gold-yoru-mark.webp")" alt="" width="54" height="54" aria-hidden="true" />
+                            <div><p class="oh-eyebrow">YORU IZAKAYA · ONE MORE ROUND</p><h2 id="reorder-review-title" tabindex="-1">Your reorder, reviewed.</h2></div>
+                        </div>
+                        <p class="oh-review-cart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2 11h12l2-8H6M10 20h.01M18 20h.01" /></svg><span>@quote.ExistingCartQuantity @(quote.ExistingCartQuantity == 1 ? "portion is" : "portions are") already in your cart. These dishes will be added to it.</span></p>
+                        @if(!quote.Ready){<p class="oh-review-validation" role="alert">@quote.Message</p>}
+                    </header>
+                    <div class="oh-review-scroll" role="region" aria-label="Selected dishes to add" tabindex="0">
+                        <ul class="oh-review-lines">
+                        @foreach(var line in quote.Lines)
+                        {
+                            var sourceLine = details.Lines.FirstOrDefault(item => item.Id == line.OrderItemId);
+                            <li class="oh-review-dish @(line.Available ? "" : "is-skipped")">
+                                <span class="oh-review-photo">
+                                @if(sourceLine?.ImageUrl is string imageUrl)
+                                {
+                                    <img src="@Url.Content(imageUrl)" alt="" width="76" height="76" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18c-1 5-4 8-9 8s-8-3-9-8ZM8 22h8M8 9V4M12 9V2M16 9V4" /></svg>
+                                }
+                                </span>
+                                <div class="oh-review-dish-copy"><strong>@line.Quantity × @line.Name</strong>
+                                @if(!string.IsNullOrWhiteSpace(sourceLine?.Code)){<small class="oh-review-item-code">@sourceLine?.Code</small>}
+                                @if(line.Available)
+                                {
+                                    <small class="oh-review-unit-price">@Money(line.CurrentUnitPrice) each now @if(line.PriceChanged){<span class="oh-review-price-change">Previously @Money(line.SavedUnitPrice)</span>}</small>
+                                    @if(line.Notes is not null){<small class="oh-review-dish-note"><b>Dish note:</b> @line.Notes</small>}
+                                }
+                                else{<small class="oh-review-unavailable">Not added · @line.SkipReason</small>}
+                                </div>
+                                <b class="oh-review-line-total">@(line.Available ? Money(line.NewLineTotal) : "Not added")</b>
+                            </li>
+                        }
+                        </ul>
+                    </div>
+                    <footer class="oh-review-footer">
+                        <div class="oh-review-summary">
+                            <div class="oh-review-total"><span>Selected items subtotal</span><strong>@Money(quote.ItemsSubtotal)</strong></div>
+                            @if(quote.AddQuantity > 0){<p class="oh-review-portion-count">@quote.AddQuantity @(quote.AddQuantity == 1 ? "portion" : "portions") selected for your cart</p>}
+                        </div>
+                        @if(quote.SkipQuantity > 0)
+                        {
+                            <p class="oh-review-skip-notice" role="status">@quote.SkipQuantity selected @(quote.SkipQuantity == 1 ? "portion cannot" : "portions cannot") be added. See the reason beside the dish above.</p>
+                        }
+                        <p class="oh-fine-print oh-review-pricing-note"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></svg><span>Tax and service charge are calculated in Cart for your current dining option. Final prices are checked again at checkout.</span></p>
+                        <div class="oh-review-actions">
+                            <form method="post" asp-page="/Customer/Orders/Reorder" asp-page-handler="Edit" asp-route-id="@details.Id" data-reorder-edit>
+                                @for(int i = 0; i < Model.Selections.Count; i++)
+                                {
+                                    <input type="hidden" name="Selections[@i].OrderItemId" value="@Model.Selections[i].OrderItemId" />
+                                    <input type="hidden" name="Selections[@i].Quantity" value="@Model.Selections[i].Quantity" />
+                                    <input type="hidden" name="Selections[@i].Selected" value="@Model.Selections[i].Selected.ToString().ToLowerInvariant()" />
+                                }
+                                <input type="hidden" name="CopyDishNotes" value="@Model.CopyDishNotes.ToString().ToLowerInvariant()" />
+                                <button type="submit" class="oh-back-selection">← Edit my selection</button>
+                            </form>
+                            @if(quote.Ready)
+                            {
+                                <form method="post" asp-page="/Customer/Orders/Reorder" asp-page-handler="Confirm" asp-route-id="@details.Id" data-reorder-confirm>
+                                    <input type="hidden" name="token" value="@quote.Token" />
+                                    <button type="submit" class="oh-button oh-wide">Add @quote.AddQuantity @(quote.AddQuantity == 1 ? "portion" : "portions") to cart →</button>
+                                </form>
+                            }
+                        </div>
+                    </footer>
+                </section>
+            }
+            <aside class="oh-reorder-explainer" hidden="@(quote?.Ready == true)"><div class="oh-reorder-masthead"><img class="oh-reorder-gold-mark" src="@Url.Content("~/images/orders/yoru-gold-yoru-mark.webp")" alt="" width="72" height="72" aria-hidden="true" /><p class="oh-reorder-brand">YORU IZAKAYA</p></div><h2>Old favourites.<br />Today's menu.</h2><p>Pick the dishes you would like again, then review the current prices before adding them.</p><ul><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18c-1 5-4 8-9 8s-8-3-9-8ZM8 9V4M12 9V2M16 9V4" /></svg><span>Your existing cart is preserved.</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20C2 6 12 2 21 3c0 12-5 17-15 15M4 20 17 7" /></svg><span>Unavailable dishes are explained.</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5zM14 3v5h5M8 12h8M8 16h6" /></svg><span>No order is placed until you check out.</span></li></ul></aside>
+        </div>
+    </div>
+</section>
+@section Scripts {<script src="~/js/customer-order-history.js" asp-append-version="true"></script>}

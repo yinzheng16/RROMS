@@ -8,6 +8,7 @@
     var ordersUrl = Url.Page("/Customer/Orders/Index");
     var quantity = receipt.Lines.Sum(line => line.Quantity);
     string Money(decimal value) => value.ToString("F2", CultureInfo.InvariantCulture);
+    string Rate(decimal? percent) => percent is decimal p ? $" ({p.ToString("0.##", CultureInfo.InvariantCulture)}%)" : "";
 }
 <link rel="stylesheet" href="~/css/customer-cart.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/customer-order-status.css" asp-append-version="true" />
@@ -24,14 +25,35 @@
             </header>
             <div class="cart-confirmation__status" data-customer-order-status
                  data-status-url="@Url.Page("/Customer/OrderConfirmation", "Status", new { id = receipt.Id })"
-                 data-order-id="@receipt.Id" data-current-status="@receipt.Status">
+                 data-order-id="@receipt.Id" data-current-status="@receipt.Status"
+                 data-hub-url="@Url.Content("~" + RROMS.Hubs.OrderStatusHub.Path)">
                 <div class="order-status-heading">
-                    <span class="status-badge status-@receipt.Status" data-order-status-badge>@RROMS.Pages.Customer.OrderConfirmationModel.StatusLabel(receipt.Status)</span>
+                    <span class="status-badge status-@receipt.Status" data-order-status-badge><span data-order-status-icon>@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(receipt.Status, "yoru-status-icon", 15, 3.4))</span><span data-order-status-label>@RROMS.Pages.Customer.OrderConfirmationModel.StatusLabel(receipt.Status)</span></span>
+                    @foreach (var s in RROMS.Services.OrderStatusRules.Stages) { <template data-order-status-icon-template="@s">@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(s, "yoru-status-icon", 15, 3.4))</template> }
                     <button type="button" class="order-status-update" data-order-status-update hidden>
                         <i class="bi bi-arrow-clockwise" aria-hidden="true"></i><span>Update status</span>
                     </button>
                 </div>
                 <p data-order-status-message>@RROMS.Pages.Customer.OrderConfirmationModel.StatusMessage(receipt.Status)</p>
+                @{
+                    var progressSteps = new (OrderStatus Status, string Label)[] {
+                        (OrderStatus.Pending, "Pending"), (OrderStatus.Preparing, "Preparing"),
+                        (OrderStatus.ReadyToServe, "Ready"), (OrderStatus.Served, "Served"),
+                        (OrderStatus.Completed, "Completed") };
+                    int progressIndex = Array.FindIndex(progressSteps, step => step.Status == receipt.Status);
+                }
+                <ol class="order-progress" data-order-progress data-state="@receipt.Status" aria-label="Order progress">
+                    @for (int i = 0; i < progressSteps.Length; i++)
+                    {
+                        var step = progressSteps[i];
+                        bool done = progressIndex >= 0 && i < progressIndex, current = i == progressIndex;
+                        <li class="order-progress__step@(done ? " is-done" : "")@(current ? " is-current" : "")"
+                            data-step="@step.Status" aria-current="@(current ? "step" : null)">
+                            <span class="order-progress__dot" aria-hidden="true">@Html.Raw(RROMS.Services.OrderStatusRules.IconSvg(step.Status, "yoru-status-icon", 14, 3.2))</span>
+                            <span class="order-progress__label">@step.Label<span class="visually-hidden" data-step-state>@(done ? " (done)" : current ? " (current)" : "")</span></span>
+                        </li>
+                    }
+                </ol>
                 <p class="order-status-feedback" data-order-status-feedback role="status" hidden></p>
                 <span class="visually-hidden" data-order-status-live role="status" aria-live="polite" aria-atomic="true"></span>
                 <noscript><p>Refresh this page to check the latest order status.</p></noscript>
@@ -84,21 +106,29 @@
                                 <p class="cart-receipt__note">@line.Notes</p>
                             }
                         </div>
-                        <strong class="cart-receipt__price">RM @Money(line.LineTotal)</strong>
+                        <strong class="cart-receipt__price">
+                            @if (line.Saving > 0 && line.NormalUnitPrice is decimal normalPrice)
+                            {
+                                <s class="cart-receipt__was"><span class="visually-hidden">Was </span>RM @Money(normalPrice * line.Quantity)</s>
+                            }
+                            RM @Money(line.LineTotal)
+                        </strong>
                     </li>
                 }
             </ol>
             <dl class="cart-totals cart-receipt__totals">
                 <div><dt>Subtotal</dt><dd>RM @Money(receipt.Subtotal)</dd></div>
-                <div><dt>Service charge</dt><dd>RM @Money(receipt.ServiceCharge)</dd></div>
-                <div><dt>Tax</dt><dd>RM @Money(receipt.Tax)</dd></div>
+                <div><dt>Service charge@(Rate(receipt.ServiceChargePercent))</dt><dd>RM @Money(receipt.ServiceCharge)</dd></div>
+                <div><dt>Tax@(Rate(receipt.TaxRatePercent))</dt><dd>RM @Money(receipt.Tax)</dd></div>
                 <div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(receipt.Total)</dd></div>
             </dl>
+            @if (receipt.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You saved <strong>RM @Money(receipt.Savings)</strong> with promotions</p> }
         </section>
     </div>
     <p class="cart-confirmation__hint">Your order is saved. This confirmation is not a payment receipt.</p>
 </div>
 
 @section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/customer-order-status.js" asp-append-version="true"></script>
 }

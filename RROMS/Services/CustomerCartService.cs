@@ -13,7 +13,7 @@ using RROMS.Services.Interfaces;
 namespace RROMS.Services;
 
 // Owner: Member 3 / US24. Prices, ownership, roles and checkout are server-validated.
-public sealed class CustomerCartService : ICustomerCartService
+public sealed partial class CustomerCartService : ICustomerCartService
 {
     private readonly ApplicationDbContext _db;
     private readonly IDataProtector _protector;
@@ -23,11 +23,13 @@ public sealed class CustomerCartService : ICustomerCartService
     private readonly IReservationService _reservations;
     private readonly IDiningSessionService _sessions;
     private readonly IReportService _reportService;
+    private readonly INotificationService _notifications;   // US37 (Member 4): "Order received" notice
     private const int MaxLines = 100;
 
     public CustomerCartService(ApplicationDbContext db, IDataProtectionProvider protection,
         ILogger<CustomerCartService> logger, IProfileService profiles, IReportService reportService,
-        IReservationService reservations, IDiningSessionService sessions, TimeProvider? clock = null)
+        IReservationService reservations, IDiningSessionService sessions,
+        INotificationService notifications, TimeProvider? clock = null)
     {
         _db = db;
         _protector = protection.CreateProtector("RROMS.US24.Checkout.v1");
@@ -36,6 +38,7 @@ public sealed class CustomerCartService : ICustomerCartService
         _reservations = reservations;
         _sessions = sessions;
         _reportService = reportService;
+        _notifications = notifications;
         _clock = clock ?? TimeProvider.System;
     }
 
@@ -186,21 +189,25 @@ public sealed class CustomerCartService : ICustomerCartService
             _protector.Protect(JsonSerializer.Serialize(quote)));
     }
 
-    public Task<CartOperation> PlaceAsync(string userId, string? token,
+    public async Task<CartOperation> PlaceAsync(string userId, string? token,
         CancellationToken cancellationToken = default)
     {
         QuotePayload? quote;
         try
         {
-            if (string.IsNullOrWhiteSpace(token) || token.Length > 8000) return Task.FromResult(Expired());
+            if (string.IsNullOrWhiteSpace(token) || token.Length > 8000) return Expired();
             quote = JsonSerializer.Deserialize<QuotePayload>(_protector.Unprotect(token));
         }
         catch (Exception error) when (error is CryptographicException or JsonException or FormatException)
-        { return Task.FromResult(Expired()); }
-        if (quote is null || quote.UserId != userId) return Task.FromResult(Expired());
+        { return Expired(); }
+        if (quote is null || quote.UserId != userId) return Expired();
 
-        return WriteAsync(userId, async (cart, now, ct) =>
+        // US37: set only when THIS request creates the order (not for a retry of the same
+        // confirmation), and reset on every retry attempt of the save transaction.
+        int? createdOrderId = null;
+        var result = await WriteAsync(userId, async (cart, now, ct) =>
         {
+            createdOrderId = null;
             // A retry of the SAME confirmation returns the existing order, even if
             // the customer has since added new dishes. It never clears that new cart.
             var existing = await _db.Orders.AsNoTracking()
@@ -248,6 +255,8 @@ public sealed class CustomerCartService : ICustomerCartService
                 TaxAmount = view.Totals.Tax,
                 ServiceCharge = view.Totals.ServiceCharge,
                 TotalAmount = view.Totals.Total,
+                TaxRatePercent = view.Totals.TaxRate,
+                ServiceChargePercent = view.Totals.ServiceRate,
                 Notes = view.Notes,
                 CreatedAt = now
             };
@@ -257,6 +266,7 @@ public sealed class CustomerCartService : ICustomerCartService
                     MenuItemId = line.MenuItemId,
                     Quantity = line.Quantity,
                     UnitPrice = line.UnitPrice,
+                    NormalUnitPrice = line.NormalUnitPrice ?? line.UnitPrice,   // US29
                     Notes = line.Notes
                 });
             _db.Orders.Add(order);
@@ -267,8 +277,16 @@ public sealed class CustomerCartService : ICustomerCartService
             Touch(cart, now);
             // Save together so a failure leaves BOTH the cart and order unchanged.
             await _db.SaveChangesAsync(ct);
+            createdOrderId = order.Id;
             return new(CartResult.Success, "Your order has been received.", order.Id);
         }, cancellationToken);
+
+        // US37 / US38 (Member 4): bell notification, plus the "order received" email for takeaway.
+        // Sent only after WriteAsync has committed the order. NotifyOrderStatusAsync never throws,
+        // so the customer's order is never affected by a notification problem.
+        if (result.Succeeded && createdOrderId is int newOrderId)
+            await _notifications.NotifyOrderStatusAsync(newOrderId, OrderStatus.Pending);
+        return result;
     }
 
     // Lightweight, read-only status check. Never expose another customer's order.
@@ -294,8 +312,9 @@ public sealed class CustomerCartService : ICustomerCartService
             order.Reservation?.ReferenceNo, order.Reservation?.ReservedAt, order.Reservation?.Guests,
             order.Items.OrderBy(line => line.Id).Select(line => new CartLineView(Guid.Empty,
                 line.MenuItemId, line.MenuItem.Code, line.MenuItem.Name, line.MenuItem.ImageUrl,
-                line.Quantity, line.Notes, line.UnitPrice, true)).ToArray(),
-            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount);
+                line.Quantity, line.Notes, line.UnitPrice, true, line.NormalUnitPrice)).ToArray(),
+            order.Subtotal, order.TaxAmount, order.ServiceCharge, order.TotalAmount)
+        { TaxRatePercent = order.TaxRatePercent, ServiceChargePercent = order.ServiceChargePercent };
     }
 
     private IQueryable<Reservation> EligibleReservations(string userId, DateTime now)
@@ -322,7 +341,7 @@ public sealed class CustomerCartService : ICustomerCartService
                 return new CartLineView(line.Id, line.MenuItemId, item?.Code ?? "—",
                     item?.Name ?? "Dish no longer on the menu", item?.ImageUrl, line.Quantity, line.Notes,
                     item is null ? 0 : OrderPricingRules.DiscountedPrice(item.Price, discounts.GetValueOrDefault(line.MenuItemId)),
-                    item?.IsAvailable == true && item.Price > 0);
+                    item?.IsAvailable == true && item.Price > 0, item?.Price);
             }).ToArray() ?? Array.Empty<CartLineView>();
         var orderType = cart?.OrderType ?? OrderType.DineIn;
         // US49 owns the charge formula. Use its loaded-settings overload so this
@@ -400,11 +419,12 @@ public sealed class CustomerCartService : ICustomerCartService
             : "Online ordering is currently closed. You can still browse the menu and keep items in your cart. Please try again during ordering hours.";
     }
 
-    private Task<Dictionary<int, decimal>> ActiveDiscounts(int[] ids, DateTime now, CancellationToken ct)
-        => _db.Promotions.AsNoTracking().Where(p => ids.Contains(p.MenuItemId) && p.IsActive &&
-            p.StartDate <= now && p.EndDate >= now.Date)
-            .GroupBy(p => p.MenuItemId).Select(group => new { Id = group.Key, Percent = group.Max(p => p.DiscountPercent) })
-            .ToDictionaryAsync(row => row.Id, row => row.Percent, ct);
+        // US29: same rule as the menu and Home; works for percentage and fixed-price promotions.
+    private async Task<Dictionary<int, decimal>> ActiveDiscounts(int[] ids, DateTime now, CancellationToken ct)
+        => PromotionRules.BestPercents(await PromotionRules.Running(_db.Promotions.AsNoTracking(), now)
+            .Where(p => ids.Contains(p.MenuItemId))
+            .Select(p => new PromotionPriceRow(p.MenuItemId, p.MenuItem.Price, p.DiscountPercent, p.PromoPrice))
+            .ToListAsync(ct));
 
     private Task<CustomerCart?> LoadCart(string userId, bool tracking, CancellationToken ct)
     {

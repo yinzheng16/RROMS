@@ -16,6 +16,9 @@
     string Pct(decimal v) => v.ToString("0.##", CultureInfo.InvariantCulture) + "%";
     var phoneShown = string.IsNullOrWhiteSpace(s.Phone) ? "—" : PhoneDisplay.Pretty(s.Phone);
     var addressOneLine = System.Text.RegularExpressions.Regex.Replace(s.Address ?? "", @",?\s*\r?\n\s*", ", ");   // 2 lines -> "line 1, line 2"
+
+    // US49 follow-up: SST is charged but the receipt is missing the details SST receipts need.
+    var sstWarning = RROMS.Pages.Admin.Settings.SstWarning(s);
 }
 
 @* Same flag icons as /Account/Register (emoji flags don't show on Windows) *@
@@ -229,9 +232,15 @@
         <div class="rs-row">
             <div class="rs-tile rs-c5 rs-rcpt">
                 <div class="rs-field">
+                    <label asp-for="RestaurantSetting.BusinessName" class="rs-lb">Registered business name <span class="rs-count" data-count-for="RestaurantSetting_BusinessName" data-max="100"></span></label>
+                    <input asp-for="RestaurantSetting.BusinessName" class="rs-in" maxlength="100" autocomplete="organization" placeholder="e.g. Yoru Izakaya Sdn. Bhd." />
+                    <p class="rs-hint">As on your SSM / SST registration. Printed under @Brand.FullName. Optional.</p>
+                    <span asp-validation-for="RestaurantSetting.BusinessName"></span>
+                </div>
+                <div class="rs-field">
                     <label asp-for="RestaurantSetting.SstRegistrationNo" class="rs-lb">SST registration no. <span>Optional</span></label>
                     <input asp-for="RestaurantSetting.SstRegistrationNo" class="rs-in rs-caps" maxlength="30" autocomplete="off" placeholder="e.g. W10-1808-31000123" />
-                    <p class="rs-hint">Printed under the restaurant name.</p>
+                    <p class="rs-hint">Printed under the business name.</p>
                     <span asp-validation-for="RestaurantSetting.SstRegistrationNo"></span>
                 </div>
                 <div class="rs-field">
@@ -240,9 +249,13 @@
                     <p class="rs-hint">One short line under the total.</p>
                     <span asp-validation-for="RestaurantSetting.ReceiptFooterNote"></span>
                 </div>
+                <div class="rs-tip rs-tip-warn" id="sstWarn" role="status" hidden="@(sstWarning == null)">
+                    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                    <span><b>Check ·</b> <span id="sstWarnText">@sstWarning</span></span>
+                </div>
                 <div class="rs-tip">
                     <i class="bi bi-lightbulb-fill" aria-hidden="true"></i>
-                    <span><b>Tip ·</b> the yellow marks on the receipt show the two lines this section controls. Everything else comes from the order itself.</span>
+                    <span><b>Tip ·</b> the yellow marks on the receipt show the lines this section controls. Everything else comes from the order itself.</span>
                 </div>
             </div>
 
@@ -258,6 +271,7 @@
                     <div class="rs-slot" aria-hidden="true"></div>
                     <div class="rs-paper" aria-live="polite">
                         <div class="rs-paper-brand"><i aria-hidden="true">夜</i><b>@Brand.FullName</b></div>
+                        <p class="rs-c rs-paper-biz"><span class="rs-hl" id="rcBiz" hidden="@string.IsNullOrWhiteSpace(s.BusinessName)">@s.BusinessName</span></p>
                         <p class="rs-c"><span class="rs-hl rs-paper-sst" id="rcSst" hidden="@string.IsNullOrWhiteSpace(s.SstRegistrationNo)">SST No. @s.SstRegistrationNo</span></p>
                         <p class="rs-c rs-paper-addr" id="rcAddr">@addressOneLine</p>
                         <div class="rs-sec"><div class="rs-r rs-small"><span id="rcKind">Table 7 · Dine-in</span><span>@DateTime.Now.ToString("d MMM · h:mm tt", CultureInfo.InvariantCulture)</span></div></div>

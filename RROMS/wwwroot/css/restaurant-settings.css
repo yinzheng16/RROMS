@@ -985,3 +985,29 @@ label.rs-opt { cursor: pointer; }
 @media (max-width: 1399.98px) {
     .rs-deco-right { display: none; }
 }
+
+/* ---------- US49 follow-up (Member 5): business name on the receipt + SST check ---------- */
+.rs-paper-biz {
+    margin: 2px 0 0;
+    font-size: .78rem;
+    letter-spacing: .02em;
+}
+.rs-tip.rs-tip-warn {
+    background: #fbefe2;
+    border-color: #e7b98a;
+    color: #7a3f12;
+}
+.rs-tip.rs-tip-warn > i {
+    color: #c0661c;
+}
+.rs-tip[hidden] {
+    display: none !important;
+}
+
+.rs-tip + .rs-tip {
+    margin-top: 12px;
+}
+
+.rs-tip.rs-tip-warn {
+    margin-top: 16px;
+}

@@ -20,6 +20,10 @@ namespace RROMS.Models
         // Price at the time of ordering, so later price changes do not alter past bills.
         public decimal UnitPrice { get; set; }
 
+        // US29: the dish's normal price when ordered (before promotions), for "You saved"
+        // and promotion results. Null for orders placed before US29.
+        public decimal? NormalUnitPrice { get; set; }
+
         [StringLength(200)]
         public string? Notes { get; set; }
     }

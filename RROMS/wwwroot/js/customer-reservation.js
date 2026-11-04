@@ -123,11 +123,30 @@
         if (row) { row.classList.remove('is-flash'); void row.offsetWidth; row.classList.add('is-flash'); }
     }
 
+    // The dining area icon is one of the symbols in _AreaIcons.cshtml (the same icons the admin picks from).
+    function areaIconHref(name) {
+        return '#area-' + (/^[a-z-]+$/.test(name || '') ? name : 'map-pin');
+    }
+
+    function areaIcon(name) {
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('class', 'area-ico');
+        svg.setAttribute('aria-hidden', 'true');
+        const use = document.createElementNS(NS, 'use');
+        use.setAttribute('href', areaIconHref(name));
+        svg.appendChild(use);
+        return svg;
+    }
+
     function updateSummary() {
         setSum('sumType', state.type ? state.type.name : 'Not chosen yet');
         const jp = $('sumTypeJp');
         jp.textContent = state.type && state.type.japaneseName ? state.type.japaneseName : '';
-        $('sumTypeArea').textContent = state.type && state.type.areaName ? state.type.areaName : '';
+        const areaName = state.type && state.type.areaName ? state.type.areaName : '';
+        $('sumTypeArea').textContent = areaName;
+        $('sumTypeAreaLine').hidden = !areaName;
+        $('sumTypeAreaIco').setAttribute('href', areaIconHref(state.type && state.type.areaIcon));
         setSum('sumDate', state.date ? fmtDate(state.date) : '-');
         setSum('sumTime', state.timeLabel || '-');
         setSum('sumGuests', plural(state.guests, 'guest', 'guests'));
@@ -560,7 +579,12 @@
             item.append(ic, document.createTextNode(text));
             return item;
         };
-        if (o.areaName) meta.appendChild(metaItem('geo-alt', o.areaName, 'Dining area'));
+        if (o.areaName) {
+            const areaItem = el('span', 'rsv-type-meta-item');
+            areaItem.title = 'Dining area';
+            areaItem.append(areaIcon(o.areaIcon), document.createTextNode(o.areaName));
+            meta.appendChild(areaItem);
+        }
         meta.appendChild(metaItem('people', o.minGuests === o.maxGuests
             ? plural(o.maxGuests, 'guest', 'guests')
             : `${o.minGuests}\u2013${o.maxGuests} guests`, 'Seats'));
@@ -795,19 +819,30 @@
         rv.appendChild(hero);
 
         const grid = el('div', 'rsv-rv-grid');
-        const tile = (icon, label, value, sub, wide) => {
+        const tile = (icon, label, value, sub, wide, area) => {
             const box = el('div', 'rsv-rv-tile' + (wide ? ' is-wide' : ''));
             const ic = document.createElement('i');
             ic.className = 'bi bi-' + icon; ic.setAttribute('aria-hidden', 'true');
             const strong = el('strong', '', value);
             strong.title = value;
             box.append(ic, el('small', '', label), strong);
-            if (sub) { const j = el('span', '', sub); j.lang = 'ja'; box.appendChild(j); }
+            if (sub || area) {
+                // the Japanese name and the dining area share one line under the value
+                const line = el('span', 'rsv-rv-sub');
+                if (sub) { const j = el('span', '', sub); j.lang = 'ja'; line.appendChild(j); }
+                if (area) {
+                    const a = el('span', 'rsv-area-line');
+                    a.append(areaIcon(area.icon), document.createTextNode(area.name));
+                    line.appendChild(a);
+                }
+                box.appendChild(line);
+            }
             box.dataset.label = label;
             box.dataset.full = value;
             grid.appendChild(box);
         };
-        tile('grid-3x3-gap', 'Table type', state.type.name, state.type.japaneseName, false);
+        tile('grid-3x3-gap', 'Table type', state.type.name, state.type.japaneseName, false,
+            state.type.areaName ? { name: state.type.areaName, icon: state.type.areaIcon } : null);
         tile('card-text', 'Special requests', state.special.trim() || 'None added', '', false);
         tile('person', 'Name', cfg.name || '-', '', false);
         tile('telephone', 'Phone', cfg.phone || 'Not on file', '', false);
@@ -932,6 +967,8 @@
         $('tkType').textContent = t.typeName || '-';
         $('tkTypeJp').textContent = t.typeJapaneseName || '';
         $('tkArea').textContent = t.area || '';
+        $('tkAreaLine').hidden = !t.area;
+        $('tkAreaIco').setAttribute('href', areaIconHref(t.areaIcon));
         $('tkSpecial').textContent = t.special || '';
         $('tkSpecial').title = t.special || '';
         $('tkSpecialRow').hidden = !t.special;
