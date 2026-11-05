@@ -159,60 +159,6 @@ namespace RROMS.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("RROMS.Models.Announcement", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Link")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<int>("RecipientCount")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("SentAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("StartDate", "EndDate");
-
-                    b.ToTable("Announcements");
-                });
-
             modelBuilder.Entity("RROMS.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -341,7 +287,7 @@ namespace RROMS.Migrations
                         .IsUnique()
                         .HasFilter("[DiningSessionId] IS NOT NULL");
 
-                    b.ToTable("Bills");
+                    b.ToTable("Bills", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.ChatFaq", b =>
@@ -371,7 +317,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ChatFaqs");
+                    b.ToTable("ChatFaqs", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
@@ -401,7 +347,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("CustomerCarts");
+                    b.ToTable("CustomerCarts", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.CustomerCartLine", b =>
@@ -433,7 +379,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CustomerCartLines");
+                    b.ToTable("CustomerCartLines", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.DiningArea", b =>
@@ -466,7 +412,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiningAreas");
+                    b.ToTable("DiningAreas", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.DiningSession", b =>
@@ -511,7 +457,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TableId", "Status");
 
-                    b.ToTable("DiningSessions");
+                    b.ToTable("DiningSessions", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Feedback", b =>
@@ -544,7 +490,7 @@ namespace RROMS.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Feedbacks");
+                    b.ToTable("Feedbacks", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuCategory", b =>
@@ -576,7 +522,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("MenuCategories");
+                    b.ToTable("MenuCategories", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuCodeSequence", b =>
@@ -590,7 +536,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Prefix");
 
-                    b.ToTable("MenuCodeSequences");
+                    b.ToTable("MenuCodeSequences", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuItem", b =>
@@ -639,7 +585,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("MenuItems");
+                    b.ToTable("MenuItems", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Notification", b =>
@@ -679,7 +625,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.OperatingHour", b =>
@@ -715,7 +661,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Day")
                         .IsUnique();
 
-                    b.ToTable("OperatingHours");
+                    b.ToTable("OperatingHours", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Order", b =>
@@ -801,7 +747,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.OrderItem", b =>
@@ -839,7 +785,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.OrderStatusLog", b =>
@@ -889,7 +835,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("OrderId", "ChangedAt", "Id");
 
-                    b.ToTable("OrderStatusLogs");
+                    b.ToTable("OrderStatusLogs", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Payment", b =>
@@ -940,7 +886,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Promotion", b =>
@@ -980,7 +926,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("MenuItemId");
 
-                    b.ToTable("Promotions");
+                    b.ToTable("Promotions", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Reservation", b =>
@@ -1043,7 +989,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TableId", "ReservedAt");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.ReservationStatusLog", b =>
@@ -1086,7 +1032,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("ReservationId", "ChangedAt");
 
-                    b.ToTable("ReservationStatusLogs");
+                    b.ToTable("ReservationStatusLogs", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.RestaurantSetting", b =>
@@ -1135,7 +1081,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RestaurantSettings");
+                    b.ToTable("RestaurantSettings", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.RestaurantTable", b =>
@@ -1201,7 +1147,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TableTypeDefinitionId");
 
-                    b.ToTable("RestaurantTables");
+                    b.ToTable("RestaurantTables", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.SpecialDate", b =>
@@ -1237,7 +1183,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Date")
                         .IsUnique();
 
-                    b.ToTable("SpecialDates");
+                    b.ToTable("SpecialDates", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.TableTypeDefinition", b =>
@@ -1310,7 +1256,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("TableTypeDefinitions");
+                    b.ToTable("TableTypeDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.UserAdminLog", b =>
@@ -1356,7 +1302,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TargetUserId", "Action");
 
-                    b.ToTable("UserAdminLogs");
+                    b.ToTable("UserAdminLogs", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1407,15 +1353,6 @@ namespace RROMS.Migrations
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("RROMS.Models.Announcement", b =>
-                {
-                    b.HasOne("RROMS.Models.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
