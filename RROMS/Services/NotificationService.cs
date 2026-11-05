@@ -312,14 +312,14 @@ namespace RROMS.Services
 
             var footer = await FooterAsync();
 
+            // Reservation: a detailed email for received / confirmed / updated / cancelled only;
+            // other moments (seated, completed, no-show) stay in-app.
             if (email is null && type == NotificationType.Reservation)
             {
-                var reservationEmail = await BuildReservationEmailAsync(user, message, footer);
+                var reservationEmail = await BuildReservationEmailAsync(user, title, message, footer);
                 if (reservationEmail is not null)
-                {
                     await _email.SendEmailAsync(user.Email, reservationEmail.Value.Subject, reservationEmail.Value.Html);
-                    return;
-                }
+                return;
             }
 
             // Order: a detailed email for the important moments only; other status changes stay in-app.
@@ -352,10 +352,14 @@ namespace RROMS.Services
             await _email.SendEmailAsync(user.Email, email.Subject, html);
         }
 
-        // Reservation emails show the booking itself. The callers (Member 2's pages) put the reference number
-        // in the message, so the booking is found from it; the status decides which email is sent.
+        // Reservation emails show the booking itself. The callers (Member 2's pages and StaffReservationService)
+        // put the reference number in the message, so the booking is found from it. The booking's CURRENT
+        // status (and the title, for a change of date/time/guests) decides the email:
+        //   Pending -> received, Confirmed -> confirmed, Cancelled -> cancelled,
+        //   title "Reservation modified" / "Reservation updated" (still Pending/Confirmed) -> updated,
+        //   Seated / Completed / NoShow -> no email (in-app only).
         private async Task<(string Subject, string Html)?> BuildReservationEmailAsync(
-            ApplicationUser user, string message, string footer)
+            ApplicationUser user, string notificationTitle, string message, string footer)
         {
             var recent = await _reservations.Query()
                 .AsNoTracking()
@@ -368,6 +372,14 @@ namespace RROMS.Services
 
             var r = recent.FirstOrDefault(x => !string.IsNullOrEmpty(x.ReferenceNo) && message.Contains(x.ReferenceNo));
             if (r is null) return null;
+
+            // Seated, completed and no-show are only shown in-app (the guest is at the restaurant or the visit is over).
+            if (r.Status is not (ReservationStatus.Pending or ReservationStatus.Confirmed or ReservationStatus.Cancelled))
+                return null;
+
+            bool changed = r.Status != ReservationStatus.Cancelled &&
+                (notificationTitle.Contains("modified", StringComparison.OrdinalIgnoreCase) ||
+                 notificationTitle.Contains("updated", StringComparison.OrdinalIgnoreCase));
 
             var rows = new List<EmailTemplates.Row>
             {
@@ -397,6 +409,16 @@ namespace RROMS.Services
 
             switch (r.Status)
             {
+                case not ReservationStatus.Cancelled when changed:
+                    subject = $"Your YORU booking {r.ReferenceNo} was updated";
+                    kicker = "Reservation updated";
+                    title = "Your booking was updated";
+                    intro = r.Status == ReservationStatus.Confirmed
+                        ? "Your booking has been changed and your table stays confirmed. Here are the new details."
+                        : "Your booking has been changed. Here are the new details. It is waiting for the restaurant to confirm.";
+                    small = "Need to change plans again? You can manage your booking from My Reservations.";
+                    break;
+
                 case ReservationStatus.Cancelled:
                     subject = $"Your YORU booking {r.ReferenceNo} was cancelled";
                     kicker = "Reservation cancelled";
