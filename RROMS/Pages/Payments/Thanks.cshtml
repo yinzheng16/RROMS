@@ -1,0 +1,35 @@
+@page
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using RROMS.Models
+@{
+    // Owner: Member 4 — US33 QR payment at the counter.
+    // Stripe sends the customer's PHONE here after paying with the staff QR code.
+    // No login and no database access: the staff bill page records the payment
+    // (it checks Stripe every 5 seconds). On localhost the phone cannot open
+    // this page; once the site is hosted on a real address it can.
+    ViewData["Title"] = "Payment";
+    ViewData["FullWidth"] = true;
+
+    bool cancelled = string.Equals(Request.Query["cancelled"], "true", StringComparison.OrdinalIgnoreCase);
+}
+
+<link rel="stylesheet" href="~/css/customer-pay.css" asp-append-version="true" />
+
+<div class="us33-pay">
+    <div class="container-xl pay-body">
+        <div class="pay-result" role="status">
+            @if (cancelled)
+            {
+                <div class="pay-seal is-no" aria-hidden="true">&times;</div>
+                <h1>Payment not completed</h1>
+                <p class="pay-note">Nothing was charged. Please let our staff know, or pay at the counter.</p>
+            }
+            else
+            {
+                <div class="pay-seal is-ok" aria-hidden="true">&#10003;</div>
+                <h1>Thank you</h1>
+                <p class="pay-note">Your payment to @Brand.FullName was sent. Our staff will see it on their screen in a moment. You can close this page.</p>
+            }
+        </div>
+    </div>
+</div>

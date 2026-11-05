@@ -32,6 +32,9 @@ namespace RROMS.Pages.Staff.Billing
 
         private readonly UserManager<ApplicationUser> _userManager;
 
+        // US33: online payments (Stripe) of the bill shown on this page.
+        private readonly IOnlinePaymentService _onlinePayments;
+
         // US35: the same PDF receipt the customer downloads.
         private readonly IReceiptService _receiptService;
 
@@ -40,12 +43,14 @@ namespace RROMS.Pages.Staff.Billing
             IPaymentService paymentService,
             IReportService reportService,
             UserManager<ApplicationUser> userManager,
+            IOnlinePaymentService onlinePayments,
             IReceiptService receiptService)
         {
             _billingService = billingService;
             _paymentService = paymentService;
             _reportService = reportService;
             _userManager = userManager;
+            _onlinePayments = onlinePayments;
             _receiptService = receiptService;
         }
 
@@ -85,6 +90,22 @@ namespace RROMS.Pages.Staff.Billing
             = Array.Empty<string>();
 
         public string? ConfirmedByName { get; private set; }
+
+        // US33: online payment running for this bill, and whether a takeaway
+        // bill was confirmed by its customer when choosing to pay online.
+        public OnlineBillInfo? OnlineInfo { get; private set; }
+        public bool OnlinePaymentInProgress => OnlineInfo?.InProgress == true;
+        public bool ConfirmedForOnlinePayment => OnlineInfo?.ConfirmedByCustomer == true;
+        public bool OnlinePaymentAvailable => _onlinePayments.IsOnlinePaymentAvailable;
+
+        // US33: QR code (PNG data URI) of the open Stripe page, when staff
+        // started the online payment at the counter.
+        public string? QrImageDataUri { get; private set; }
+
+        // US33: short fingerprint of the bill / payment state. The page asks
+        // OnGetStatusAsync every 5 seconds and reloads when it changes (e.g.
+        // the customer paid online while staff had this page open).
+        public string? StatusStamp { get; private set; }
         public string? LatestPaymentRecordedByName { get; private set; }
 
         public string? ErrorMessage { get; private set; }
@@ -371,6 +392,31 @@ namespace RROMS.Pages.Staff.Billing
             if (string.IsNullOrEmpty(staffUserId))
                 return Forbid();
 
+            // US33: Online = show a Stripe QR code for the customer's phone.
+            if (method == PaymentMethod.Online)
+            {
+                try
+                {
+                    await _onlinePayments.StartStaffQrCheckoutAsync(billId, staffUserId, QrCheckoutUrls());
+
+                    return sessionId.HasValue
+                        ? RedirectToPage(ThisPage, null, new { sessionId }, ActionsFragment)
+                        : RedirectToPage(ThisPage, null, new { orderNo }, ActionsFragment);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ErrorMessage = ex.Message;
+                }
+                catch (Exception ex) when (ex is Stripe.StripeException or HttpRequestException)
+                {
+                    ErrorMessage = "Could not open a Stripe payment page. Nothing was charged. " +
+                                   "Please try again, or take Cash or Card.";
+                }
+
+                await ReloadAsync(sessionId, orderNo);
+                return Page();
+            }
+
             try
             {
                 var payment = await _paymentService.RecordCounterPaymentAsync(
@@ -400,7 +446,126 @@ namespace RROMS.Pages.Staff.Billing
             return Page();
         }
 
+        // ---------- POST: cancel the customer's online payment (US33) ----------
+        // The customer pays at the counter instead. Stripe is checked first.
+
+        public async Task<IActionResult> OnPostCancelOnlineAsync(
+            int billId,
+            int? sessionId,
+            string? orderNo)
+        {
+            if (string.IsNullOrEmpty(_userManager.GetUserId(User)))
+                return Forbid();
+
+            try
+            {
+                var state = await _onlinePayments.CancelForCounterPaymentAsync(billId);
+
+                TempData["BillingSuccess"] = state switch
+                {
+                    OnlinePaymentState.Paid =>
+                        $"The customer had already paid online. Bill {BillNo(billId)} is now Paid.",
+                    OnlinePaymentState.StillPending =>
+                        "Stripe has not finished this payment yet. Check again in a moment.",
+                    _ =>
+                        "Online payment cancelled. Nothing was charged. You can record the counter payment now."
+                };
+
+                return sessionId.HasValue
+                    ? RedirectToPage(ThisPage, new { sessionId })
+                    : RedirectToPage(ThisPage, new { orderNo });
+            }
+            catch (InvalidOperationException ex)
+            {
+                ErrorMessage = ex.Message;
+            }
+            catch (Exception ex) when (ex is Stripe.StripeException or HttpRequestException)
+            {
+                ErrorMessage = "Could not reach Stripe. Nothing was changed. Please try again.";
+            }
+
+            await ReloadAsync(sessionId, orderNo);
+            return Page();
+        }
+
+        // ---------- GET: status check for the open page (US33) ----------
+        // /Staff/Billing/Bill?handler=Status&orderNo=..  or  &sessionId=..
+        // Checks unfinished online payments with Stripe, then returns the stamp.
+
+        public async Task<IActionResult> OnGetStatusAsync(int? sessionId, string? orderNo)
+        {
+            string stamp = await GetStatusStampAsync(sessionId, orderNo, checkStripe: true);
+            return new JsonResult(new { stamp });
+        }
+
+        private async Task<string> GetStatusStampAsync(
+            int? sessionId, string? orderNo, bool checkStripe)
+        {
+            try
+            {
+                int? billId = null;
+
+                if (sessionId is int sid)
+                    billId = (await _billingService.GetBillForSessionAsync(sid))?.Id;
+                else if (!string.IsNullOrWhiteSpace(orderNo))
+                    billId = (await _billingService.GetOrderBillingInfoAsync(orderNo))?.BillId;
+
+                if (billId is not int id)
+                    return "none";
+
+                if (checkStripe)
+                    await _onlinePayments.ReconcileBillAsync(id);
+
+                var bill = await _billingService.GetBillByIdAsync(id);
+                var online = await _onlinePayments.GetOnlineBillInfoAsync(id);
+
+                return $"{id}|{bill?.Status}|{online.PendingPaymentId}";
+            }
+            catch (ArgumentException)
+            {
+                return "none";
+            }
+            catch (InvalidOperationException)
+            {
+                return "none";
+            }
+        }
+
         // ---------- Loading ----------
+
+        // US33: ask Stripe about unfinished online payments of this bill
+        // (the customer may have paid and closed the browser), then read
+        // what staff need to see. A Stripe problem never breaks the page.
+        private async Task SyncOnlinePaymentAsync(int billId)
+        {
+            await _onlinePayments.ReconcileBillAsync(billId);
+            OnlineInfo = await _onlinePayments.GetOnlineBillInfoAsync(billId);
+
+            if (OnlineInfo.InProgress && OnlineInfo.StartedByStaff &&
+                await _onlinePayments.GetOpenCheckoutUrlAsync(billId) is string stripeUrl)
+            {
+                QrImageDataUri = MakeQrDataUri(stripeUrl);
+            }
+        }
+
+        // QR code as a PNG data URI (QRCoder), so no image file or CDN is needed.
+        private static string MakeQrDataUri(string text)
+        {
+            using var generator = new QRCoder.QRCodeGenerator();
+            using var data = generator.CreateQrCode(text, QRCoder.QRCodeGenerator.ECCLevel.M);
+            byte[] png = new QRCoder.PngByteQRCode(data).GetGraphic(6);
+            return "data:image/png;base64," + Convert.ToBase64String(png);
+        }
+
+        // Where Stripe sends the customer's PHONE after a QR payment: a public
+        // page (no login). Stripe fills in the session id.
+        private OnlineCheckoutUrls QrCheckoutUrls()
+        {
+            string thanks = Url.Page("/Payments/Thanks", null, null, Request.Scheme)!;
+            return new OnlineCheckoutUrls(
+                thanks + "?session_id=" + OnlineCheckoutUrls.SessionIdToken,
+                thanks + "?cancelled=true&payment=" + OnlineCheckoutUrls.PaymentIdToken);
+        }
 
         private async Task ReloadAsync(int? sessionId, string? orderNo)
         {
@@ -428,11 +593,13 @@ namespace RROMS.Pages.Staff.Billing
 
                 if (SessionBill.ExistingBillId is int billId)
                 {
+                    await SyncOnlinePaymentAsync(billId);
                     CurrentBill = await _billingService.GetBillByIdAsync(billId);
                     Payments = await _paymentService.GetPaymentsByBillIdAsync(billId);
                 }
 
                 await LoadStaffNamesAsync();
+                StatusStamp = await GetStatusStampAsync(sessionId, null, checkStripe: false);
             }
             catch (ArgumentException ex)
             {
@@ -456,6 +623,7 @@ namespace RROMS.Pages.Staff.Billing
 
                 if (info.BillId is int billId)
                 {
+                    await SyncOnlinePaymentAsync(billId);
                     CurrentBill = await _billingService.GetBillByIdAsync(billId);
                     TakeawaySummary = await _billingService.GetBillAsync(info.OrderId);
                     payments.AddRange(await _paymentService.GetPaymentsByBillIdAsync(billId));
@@ -476,6 +644,7 @@ namespace RROMS.Pages.Staff.Billing
                     .ToList();
 
                 await LoadStaffNamesAsync();
+                StatusStamp = await GetStatusStampAsync(null, info.OrderNo, checkStripe: false);
             }
             catch (ArgumentException ex)
             {

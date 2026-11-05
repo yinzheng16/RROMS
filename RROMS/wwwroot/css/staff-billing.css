@@ -1808,6 +1808,63 @@
     }
 
 /* =====================================================
+   US33: customer paying online (Bill page, step 2)
+   ===================================================== */
+.us32-billing .online-progress strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+/* Same layout as Print Bill / Back to list: two buttons sharing the full width. */
+.us32-billing .online-progress-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+    .us32-billing .online-progress-actions > .btn,
+    .us32-billing .online-progress-actions > form {
+        flex: 1 1 0;
+        min-width: 9rem;
+    }
+
+.us32-billing .online-progress-note {
+    display: block;
+    margin-top: 8px;
+    opacity: .85;
+}
+
+.us32-billing .payment-record-form.is-locked {
+    opacity: .45;
+    pointer-events: none;
+}
+
+/* US33: QR code shown while the customer pays on their phone */
+.us32-billing .online-qr {
+    margin-top: 12px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 6px;
+    text-align: center;
+    color: #191919;
+}
+
+    .us32-billing .online-qr img {
+        display: block;
+        width: 200px;
+        max-width: 100%;
+        height: auto;
+        margin: 0 auto 6px;
+        image-rendering: pixelated;
+    }
+
+    .us32-billing .online-qr span {
+        font-weight: 600;
+    }
+
+/* =====================================================
    LIST GROUPS: Today / Earlier · still unpaid
    ===================================================== */
 

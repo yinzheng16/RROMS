@@ -13,9 +13,12 @@ namespace RROMS.Pages.Customer.Payments;
 // the attribute repeats it so the page stays protected if moved.
 [Authorize(Policy = "CustomerOnly")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class IndexModel(IPaymentService payments, IReceiptService receipts) : PageModel
+public class IndexModel(IPaymentService payments, IReceiptService receipts, IOnlinePaymentService onlinePayments) : PageModel
 {
     private readonly IPaymentService _payments = payments;
+
+    // US33: bills still waiting for payment, shown as one line above the records.
+    private readonly IOnlinePaymentService _onlinePayments = onlinePayments;
 
     // US35: PDF receipt for a Paid payment.
     private readonly IReceiptService _receipts = receipts;
@@ -32,6 +35,10 @@ public class IndexModel(IPaymentService payments, IReceiptService receipts) : Pa
 
     public CustomerPaymentHistory History { get; private set; } = new();
 
+    // US33: "You have N bills to pay" line (0 = line hidden).
+    public int BillsToPay { get; private set; }
+    public decimal BillsToPayTotal { get; private set; }
+
     public bool IsFiltered => From.HasValue || To.HasValue;
 
     // Latest date the date pickers allow (today, server time).
@@ -42,6 +49,17 @@ public class IndexModel(IPaymentService payments, IReceiptService receipts) : Pa
         // The customer always comes from the login, never from the query string.
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
+
+        // US33: confirmed bills (dine-in) and takeaway orders the customer can pay online.
+        // Shown only when online payment is set up; "pay at counter" items are left out.
+        if (_onlinePayments.IsOnlinePaymentAvailable)
+        {
+            var due = (await _onlinePayments.GetPayableItemsAsync(userId))
+                .Where(i => i.PayStatus is TakeawayPayStatus.CanPay or TakeawayPayStatus.InProgress)
+                .ToList();
+            BillsToPay = due.Count;
+            BillsToPayTotal = due.Sum(i => i.Amount);
+        }
 
         // A date that cannot be read (e.g. ?from=abc) is a model binding error.
         if (!ModelState.IsValid)

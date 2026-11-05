@@ -1,0 +1,76 @@
+@page
+@model RROMS.Pages.Customer.Payments.PayResultModel
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@using RROMS.Pages.Customer.Payments
+@{
+    // Owner: Member 4 — US33 Online payment result (Stripe sends the customer here).
+    ViewData["Title"] = "Payment";
+    ViewData["FullWidth"] = true;
+
+    var en = PayResultModel.DisplayCulture;
+    var o = Model.Outcome;
+    string Rm(decimal v) => "RM " + v.ToString("N2", en);
+
+    var state = Model.CheckFailed ? OnlinePaymentState.StillPending
+              : o?.State ?? OnlinePaymentState.NotFound;
+
+    // "Order YR26… " for takeaway, "Bill YB-000012" for dine-in.
+    string what = o?.TakeawayOrderNo is string no ? $"Order {no}" : o?.BillNo is string b ? $"Bill {b}" : "";
+    string failedText = $"Nothing was charged{(what.Length > 0 ? " for " + what : "")}. You can try again, or pay at the counter.";
+}
+
+<link rel="stylesheet" href="~/css/customer-pay.css" asp-append-version="true" />
+
+<div class="us33-pay">
+    <div class="container-xl pay-body">
+        <div class="pay-result" role="status">
+
+            @switch (state)
+            {
+                case OnlinePaymentState.Paid:
+                    <div class="pay-seal is-ok" aria-hidden="true">&#10003;</div>
+                    <h1>Payment received</h1>
+                    <p class="pay-note">
+                        @Rm(o!.Amount ?? 0) · @what
+                        @if (o.PaidAt is DateTime at) { <text> · @at.ToString("d MMM yyyy, h:mm tt", en)</text> }
+                    </p>
+                    break;
+
+                case OnlinePaymentState.StillPending:
+                    <div class="pay-seal" aria-hidden="true">&hellip;</div>
+                    <h1>Payment being checked</h1>
+                    <p class="pay-note">We haven't had the result from Stripe yet. Refresh this page in a moment.</p>
+                    break;
+
+                case OnlinePaymentState.Failed:
+                    <div class="pay-seal is-no" aria-hidden="true">&times;</div>
+                    <h1>Payment not completed</h1>
+                    <p class="pay-note">@failedText</p>
+                    break;
+
+                default:
+                    <div class="pay-seal is-no" aria-hidden="true">?</div>
+                    <h1>We couldn't find this payment</h1>
+                    <p class="pay-note">If you were charged, it will show in My Payments shortly.</p>
+                    break;
+            }
+
+            <div class="pay-result-actions">
+                @if (state == OnlinePaymentState.StillPending)
+                {
+                    <a class="pay-btn" href="@(Request.Path + Request.QueryString)">Refresh</a>
+                }
+                @if (state == OnlinePaymentState.Failed)
+                {
+                    <a class="pay-btn" asp-page="/Customer/Payments/Pay" asp-route-orderId="@o?.TakeawayOrderId">Try again</a>
+                }
+                @if (o?.TakeawayOrderId is int orderId)
+                {
+                    <a class="pay-btn @(state == OnlinePaymentState.Paid ? "" : "is-outline")" href="/Customer/OrderConfirmation?id=@orderId">Back to your order</a>
+                }
+                <a class="pay-btn is-outline" href="/Customer/Payments">View my payments</a>
+            </div>
+        </div>
+    </div>
+</div>
