@@ -171,5 +171,6 @@ app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
 app.MapHub<OrderStatusHub>(OrderStatusHub.Path); // Member 3 / US27 live order status
+app.MapHub<NotificationHub>(NotificationHub.Path); // Member 4 / US37 live notification bell
 
 app.Run();
