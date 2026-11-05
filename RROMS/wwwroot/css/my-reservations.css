@@ -427,9 +427,10 @@
     margin: 0 0 23px
 }
 /* Native dialogs: focus containment, Escape handling and inert background are native. */
-/* While a dialog animates in or out, never show its scrollbar (the sliding content briefly overflows). */
+/* While a dialog animates in or out, never show its scrollbar (the sliding content briefly overflows).
+   Only the start is written, so once the animation ends the dialog scrolls again on small screens. */
 @keyframes myr-no-scroll {
-    from, to {
+    from {
         overflow: hidden
     }
 }
@@ -777,6 +778,11 @@ html.myr-has-dialog {
     .myr-pdf-button:hover { background: #1f3340; color: #c4e6f4 }
 
     .myr-pdf-button[hidden] { display: none }
+
+/* The other buttons here take the dialog's own font (font: inherit); the link does the same so all four match. */
+.myr-detail-dialog a.myr-pdf-button {
+    font: inherit
+}
 
 .myr-close-button {
     background: #171716b8;
