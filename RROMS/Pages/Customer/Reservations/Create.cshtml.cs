@@ -202,7 +202,8 @@ public class CreateModel(
                 areaIcon = t.AreaIcon,
                 special = t.SpecialRequest,
                 minimumSpend = t.MinimumSpend,
-                status = t.Status
+                status = t.Status,
+                reservationId = t.ReservationId
             }
         });
     }

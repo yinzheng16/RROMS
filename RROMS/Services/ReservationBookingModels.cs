@@ -56,7 +56,8 @@ public record ReservationTicket(
     string? SpecialRequest,
     decimal MinimumSpend,
     string Status,
-    string? AreaIcon = null);
+    string? AreaIcon = null,
+    int ReservationId = 0);
 
 // Code lets the page decide where to send the customer back to:
 // slot / guests -> step 1, type / full / spend -> step 2, others stay on the review step.

@@ -957,6 +957,10 @@
 
         $('tkName').textContent = (cfg.name || '').split(' ')[0] || 'guest';
         $('tkRef').textContent = t.reference || '-';
+        // The PDF page only accepts upcoming Pending / Confirmed bookings, which a new booking always is.
+        const pdf = $('tkPdf');
+        pdf.hidden = !(t.reservationId > 0 && ['Pending', 'Confirmed'].includes(t.status));
+        if (!pdf.hidden) pdf.href = '/Customer/ReservationConfirmation?id=' + encodeURIComponent(t.reservationId);
         $('tkRefBox').classList.toggle('is-long', String(t.reference || '').length > 11);   // a long reference stays on one line
         $('tkStatus').textContent = t.status || 'Pending';
         $('tkDay').textContent = d ? String(d.getDate()) : '-';

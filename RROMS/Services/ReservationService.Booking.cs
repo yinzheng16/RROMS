@@ -726,7 +726,8 @@ public partial class ReservationService
                 reservation.SpecialRequest,
                 spend,
                 reservation.Status.ToString(),
-                AreaIconOf(type.DefaultDiningArea)));
+                AreaIconOf(type.DefaultDiningArea),
+                reservation.Id));
         }
         catch (Exception ex) when (
             ex is DbUpdateException ||
@@ -765,7 +766,8 @@ public partial class ReservationService
             r.SpecialRequest,
             r.MinimumSpendAccepted ?? 0m,
             r.Status.ToString(),
-            AreaIconOf(type?.DefaultDiningArea));
+            AreaIconOf(type?.DefaultDiningArea),
+            r.Id);
     }
 
     // e.g. YR-7K3M9Q (no 0/O/1/I, easy to read out over the phone)
