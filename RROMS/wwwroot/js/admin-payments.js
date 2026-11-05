@@ -2,7 +2,7 @@
 // 1) Keep the scroll position when a filter, search or quick date is used
 //    (the page reloads with the new filters but stays where the admin was).
 // 2) Receipt button: preview the PDF in a pop-up; the admin decides to download.
-// 3) US55 refunds: "⋯" menu, refund pop-up, message after a refund.
+// 3) US54 refunds: "⋯" menu, refund pop-up, message after a refund.
 (() => {
     'use strict';
 
@@ -93,7 +93,7 @@
     dialog.addEventListener('close', () => { frame.src = 'about:blank'; });
 })();
 
-// ---------- 3) US55 refunds (Member 4) ----------
+// ---------- 3) US54 refunds (Member 4) ----------
 (() => {
     'use strict';
 

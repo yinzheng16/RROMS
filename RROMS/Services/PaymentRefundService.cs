@@ -5,7 +5,7 @@ using RROMS.Services.Interfaces;
 
 namespace RROMS.Services
 {
-    // Owner: Member 4 (US55 - Refund a payment)
+    // Owner: Member 4 (US54 - Refund a payment)
     // Full refunds only (partial refunds are future work).
     // - Only a Paid payment can be refunded; a conditional update
     //   (Status = Paid -> Refunded) inside the bill payment lock means two
@@ -162,13 +162,13 @@ namespace RROMS.Services
             }
             catch (Stripe.StripeException ex)
             {
-                _logger.LogWarning(ex, "US55: Stripe refund failed for payment {PaymentId}", paymentId);
+                _logger.LogWarning(ex, "US54: Stripe refund failed for payment {PaymentId}", paymentId);
                 throw new InvalidOperationException(
                     $"Stripe could not refund this payment: {ex.StripeError?.Message ?? ex.Message} Nothing was changed.");
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogWarning(ex, "US55: Stripe not reachable for payment {PaymentId}", paymentId);
+                _logger.LogWarning(ex, "US54: Stripe not reachable for payment {PaymentId}", paymentId);
                 throw new InvalidOperationException(
                     "Stripe could not be reached. Check the connection and try again. Nothing was changed.");
             }
@@ -210,7 +210,7 @@ namespace RROMS.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "US55: refund notification failed for payment {PaymentId}", paymentId);
+                _logger.LogWarning(ex, "US54: refund notification failed for payment {PaymentId}", paymentId);
             }
         }
     }

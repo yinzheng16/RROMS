@@ -64,7 +64,7 @@
         return "all dates";
     }
 
-    // US55: the "Refund payment…" button and the "Refund this one" link open the same pop-up.
+    // US54: the "Refund payment…" button and the "Refund this one" link open the same pop-up.
     Dictionary<string, object?> RefundData(AdminPaymentRecord p, string? reason = null) => new()
     {
         ["data-ap-refund"] = p.PaymentId,
@@ -351,7 +351,7 @@
                                                 <span class="ap-flag is-bad" title="This bill has @p.PaidOnSameBill Paid payments. Please check."><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Paid @p.PaidOnSameBill times</span>
                                                 @if (p.IsLaterDuplicate)
                                                 {
-                                                    @* US55: shortcut on the later (extra) payment only, reason already picked *@
+                                                    @* US54: shortcut on the later (extra) payment only, reason already picked *@
                                                     <button type="button" class="ap-flag-link" @RefundAttrs(RefundData(p, RefundReasons.ChargedTwice))>Refund this one</button>
                                                 }
                                             }
@@ -361,7 +361,7 @@
                                             }
                                             @if (p.RefundedAt is DateTime refundedAt)
                                             {
-                                                @* US55: when, who and why, next to the Refunded status *@
+                                                @* US54: when, who and why, next to the Refunded status *@
                                                 var sameDay = refundedAt.Date == p.ShownAt.Date;
                                                 var refundedWhen = refundedAt.ToString(sameDay ? "HH:mm" : "d MMM, HH:mm", en);
                                                 var refundedBy = p.RefundedByName ?? "Admin";
@@ -418,7 +418,7 @@
                                         }
                                         @if (p.CanRefund)
                                         {
-                                            @* US55: refund sits behind "⋯" so it is never clicked by accident *@
+                                            @* US54: refund sits behind "⋯" so it is never clicked by accident *@
                                             <div class="ap-more">
                                                 <button type="button" class="ap-ab ap-ab-more" aria-haspopup="menu" aria-expanded="false"
                                                         aria-label="More actions for @p.PaymentNo" title="More actions"><i class="bi bi-three-dots" aria-hidden="true"></i></button>
@@ -473,7 +473,7 @@
         </div>
     </dialog>
 
-    @* ================= REFUND DETAILS (US55): full reason and note ================= *@
+    @* ================= REFUND DETAILS (US54): full reason and note ================= *@
     <dialog class="ap-rf ap-rfi" id="apRefundInfo" aria-labelledby="apRfiTitle">
         <header class="ap-pdf-head">
             <div>
@@ -493,7 +493,7 @@
         </div>
     </dialog>
 
-    @* ================= REFUND POP-UP (US55) ================= *@
+    @* ================= REFUND POP-UP (US54) ================= *@
     <dialog class="ap-rf" id="apRefund" aria-labelledby="apRfTitle">
         <form method="post" asp-page-handler="Refund" class="ap-rf-box" id="apRfForm" novalidate>
             <header class="ap-pdf-head">

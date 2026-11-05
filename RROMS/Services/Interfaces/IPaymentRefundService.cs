@@ -2,7 +2,7 @@ using RROMS.Models;
 
 namespace RROMS.Services.Interfaces
 {
-    // US55 (Member 4): Admin refunds a Paid payment in full.
+    // US54 (Member 4): Admin refunds a Paid payment in full.
     // Only the Admin → Payments page (AdminOnly) calls this.
     public interface IPaymentRefundService
     {

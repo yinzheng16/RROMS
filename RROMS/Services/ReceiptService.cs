@@ -76,7 +76,7 @@ namespace RROMS.Services
                 .Include(p => p.Order!).ThenInclude(o => o.Items).ThenInclude(i => i.MenuItem)
                 .Include(p => p.Order!).ThenInclude(o => o.DiningSession!).ThenInclude(s => s.Table)
                 .Where(p => p.Id == paymentId &&
-                            (p.Status == PaymentStatus.Paid || p.Status == PaymentStatus.Refunded));   // US55: refunded keeps its receipt
+                            (p.Status == PaymentStatus.Paid || p.Status == PaymentStatus.Refunded));   // US54: refunded keeps its receipt
 
         private async Task<PaymentReceipt> BuildAsync(Payment payment)
         {

@@ -20,7 +20,7 @@ public class PaymentsModel(
 {
     private readonly IAdminPaymentService _adminPayments = adminPayments;
     private readonly IReceiptService _receipts = receipts;
-    private readonly IPaymentRefundService _refunds = refunds;   // US55
+    private readonly IPaymentRefundService _refunds = refunds;   // US54
 
     // ---------- Query string (GET form, so the URL can be bookmarked) ----------
 
@@ -114,7 +114,7 @@ public class PaymentsModel(
         return File(pdf, "application/pdf");
     }
 
-    // US55: Refund pop-up (POST). Back to the same list (filters kept)
+    // US54: Refund pop-up (POST). Back to the same list (filters kept)
     // with a message on top; the scroll position is kept by admin-payments.js.
     public async Task<IActionResult> OnPostRefundAsync(
         int id, string? reason, string? note, bool returned = false, string? returnUrl = null)

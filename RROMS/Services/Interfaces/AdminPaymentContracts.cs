@@ -86,7 +86,7 @@ namespace RROMS.Services.Interfaces
 
         public bool NeedsCheck => IsDuplicatePaid || IsAmountMismatch;
 
-        // ---------- US55 refunds ----------
+        // ---------- US54 refunds ----------
 
         // Paid payments on the same bill (older payments: same order) with a lower ID.
         public int PaidEarlierOnSameBill { get; init; }

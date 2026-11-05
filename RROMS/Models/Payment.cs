@@ -43,7 +43,7 @@ namespace RROMS.Models
         [StringLength(450)]
         public string? RecordedByUserId { get; set; }
 
-        // US55 (Member 4): Full refund by an Admin. All null until refunded;
+        // US54 (Member 4): Full refund by an Admin. All null until refunded;
         // Status then becomes Refunded. The bill keeps its own status.
         public DateTime? RefundedAt { get; set; }
 

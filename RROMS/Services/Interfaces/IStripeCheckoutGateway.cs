@@ -18,12 +18,12 @@ namespace RROMS.Services.Interfaces
         // If it was completed in the meantime, the completed session is returned.
         Task<StripeCheckoutSession> ExpireSessionAsync(string sessionId);
 
-        // US55: Refund a paid Checkout payment (full amount) back to the customer's card.
+        // US54: Refund a paid Checkout payment (full amount) back to the customer's card.
         // The same payment can never be refunded twice (idempotency key per payment).
         Task<StripeRefundResult> RefundAsync(StripeRefundRequest request);
     }
 
-    // US55: What we ask Stripe to refund. Amount is in sen (RM 12.50 = 1250).
+    // US54: What we ask Stripe to refund. Amount is in sen (RM 12.50 = 1250).
     public sealed record StripeRefundRequest(
         int PaymentId,
         string PaymentIntentId,

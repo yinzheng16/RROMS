@@ -10,7 +10,7 @@ namespace RROMS.Services
     {
         private readonly Stripe.Checkout.SessionService? _sessions;
 
-        // US55: refunds of paid Checkout payments.
+        // US54: refunds of paid Checkout payments.
         private readonly Stripe.RefundService? _refunds;
 
         public StripeCheckoutGateway(IOptions<StripeSettings> options)

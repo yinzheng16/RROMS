@@ -174,7 +174,7 @@ namespace RROMS.Services
                         ? p.Bill.Payments.Count(x => x.Status == PaymentStatus.Paid)
                         : p.Order!.Payments.Count(x => x.BillId == null && x.Status == PaymentStatus.Paid),
 
-                    // US55 refunds
+                    // US54 refunds
                     PaidEarlierOnSameBill = p.Bill != null
                         ? p.Bill.Payments.Count(x => x.Status == PaymentStatus.Paid && x.Id < p.Id)
                         : p.Order!.Payments.Count(x => x.BillId == null && x.Status == PaymentStatus.Paid && x.Id < p.Id),
