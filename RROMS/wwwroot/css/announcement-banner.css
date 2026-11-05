@@ -1,30 +1,81 @@
 /* =====================================================
-   YORU IZAKAYA — US39 home page announcement banner (Member 4)
+   YORU IZAKAYA — US39 home page announcement banner (Member 4; restyle Member 1)
    Used by Pages/Shared/Components/AnnouncementBanner/Default.cshtml.
-   One centred line between the navbar and the home hero.
-   Borrowed from those two (no new colours): charcoal background and
-   the navbar's thin gold line, gold small capitals like the nav links
-   and the hero eyebrow, the hero's serif for the title, and the
-   hero's "Our story" outline pill for the button.
-   2 or more: they slide left in turn; plain ‹ › at both ends.
+   A dark strip between the navbar and the home hero, with painted corners
+   (sakura branch on the left, torii + Mt Fuji + red moon on the right,
+   images/home/news-sakura.webp and news-fuji.webp) and a clean middle:
+   gold sakura + NEWS 新着, serif title, message, UNTIL date and a gold
+   outline pill button. 2 or more: they slide left in turn, with ‹ ›,
+   a "1 / 2" counter and a thin gold progress line.
+   Everything sits centred on one line (align-items: center) and the icons
+   are inline SVG, so the button text and arrow always line up.
    Every class starts with ab-.
    ===================================================== */
 
 .ab-bar {
+    --ab-gold: var(--yoru-gold, #B79B72);
+    --ab-gold-hi: #d8b97f;
+    --ab-red: var(--yoru-red, #C83E2D);
+    --ab-cream: var(--yoru-cream, #F5F0E7);
+    --ab-art: min(19vw, 300px);    /* width of each painted corner */
     position: relative;
-    background: #120f0d;
-    border-bottom: 1px solid rgba(183, 155, 114, .25);
-    color: var(--yoru-cream, #F5F0E7);
+    overflow: hidden;
+    color: var(--ab-cream);
+    background: linear-gradient(180deg, #171310, #110e0c);
+    border-top: 1px solid rgba(183, 155, 114, .18);
+    border-bottom: 1px solid rgba(183, 155, 114, .4);
 }
 
-    .ab-bar .bi { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
-        .ab-bar .bi::before { display: block; vertical-align: 0; line-height: 1; }
+/* ---------- painted corners (decoration only) ---------- */
+.ab-art {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    z-index: 0;
+}
+
+.ab-art-l {
+    left: 0;
+    width: var(--ab-art);
+    background-image: url("../images/home/news-sakura.webp");
+    background-size: auto 150%;
+    background-position: left -10px top 10%;
+    /* fades out towards the text */
+    -webkit-mask-image: linear-gradient(90deg, #000 70%, transparent);
+    mask-image: linear-gradient(90deg, #000 70%, transparent);
+}
+
+.ab-art-r {
+    right: 0;
+    width: var(--ab-art);
+    background-image: url("../images/home/news-fuji.webp");
+    background-size: auto 125%;
+    background-position: right -6px bottom -4px;
+    -webkit-mask-image: linear-gradient(270deg, #000 72%, transparent);
+    mask-image: linear-gradient(270deg, #000 72%, transparent);
+}
+
+/* a soft dark wash behind the text so the words stay readable over the art */
+.ab-bar::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(60% 140% at 50% 50%, rgba(17, 14, 12, .85), rgba(17, 14, 12, 0) 75%);
+}
 
 .ab-in {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    height: 3.2rem;
+    gap: .75rem;
+    height: 4.6rem;
+    /* the text and ‹ › stay between the two paintings (a little overlap into their faded edge) */
+    max-width: calc(100% - 2 * var(--ab-art) + 5rem);
 }
 
 /* the moving part: one slide = the full width between the arrows */
@@ -33,131 +84,217 @@
 .ab-track {
     display: flex;
     height: 100%;
-    transition: transform .6s cubic-bezier(.4, .1, .2, 1);
+    transition: transform .7s cubic-bezier(.4, .1, .2, 1);
 }
 
 .ab-slide {
     flex: 0 0 100%;
     min-width: 0;
     display: flex;
-    align-items: center;          /* the line sits in the middle of the bar */
+    align-items: center;
     justify-content: center;
 }
 
-/* Words of different sizes (small capitals, serif title, message) line up on ONE baseline,
-   so the line reads straight; the dot and the button are centred on that line. */
+/* one line, everything centred vertically */
 .ab-line {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: center;
-    gap: 1rem;
+    gap: 1.1rem;
     min-width: 0;
     max-width: 100%;
-    line-height: 1.2;
+    line-height: 1;
 }
 
-    /* The button also sits on the baseline (its own text lines up with the words), but its
-       negative top/bottom margins keep it out of the line's height: the line is as tall as the
-       words only, so the title is centred in the bar with or without a button. */
-    .ab-line > .ab-go { margin-top: -1rem; margin-bottom: -1rem; transform: translateY(-2.5px); }   /* button 2.5px higher, nothing else moves */
-
+/* ---------- gold sakura + NEWS 新着 (gold underline) ---------- */
 .ab-tag {
-    position: relative;
     flex: none;
-    display: inline-block;        /* inline-block keeps the text baseline (the dot is placed absolutely) */
-    padding-left: 1rem;
-    color: var(--yoru-gold, #B79B72);
-    font-size: .72rem;
-    font-weight: 600;
-    letter-spacing: .24em;
-    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
     white-space: nowrap;
 }
 
-    /* small brand-red dot */
-    .ab-tag::before {
+.ab-flower { width: 1.15rem; height: 1.15rem; flex: none; color: var(--ab-gold-hi); filter: drop-shadow(0 0 6px rgba(216, 185, 127, .45)); }
+
+.ab-word {
+    position: relative;
+    padding: .35rem 0;
+    color: var(--ab-gold-hi);
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+}
+
+    /* gold underline, fading at both ends */
+    .ab-word::after {
         content: "";
         position: absolute;
-        left: 0;
-        top: 50%;
-        width: 6px;
-        height: 6px;
-        margin-top: -3px;
-        border-radius: 50%;
-        background: var(--yoru-red, #C83E2D);
-        box-shadow: 0 0 0 3px rgba(200, 62, 45, .18);
+        left: -.2rem;
+        right: .1rem;
+        bottom: 0;
+        height: 2px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, transparent, var(--ab-gold-hi) 25%, var(--ab-gold-hi) 75%, transparent);
     }
 
-.ab-jp { margin-left: .4rem; font-family: var(--font-display); letter-spacing: .2em; text-transform: none; color: rgba(183, 155, 114, .75); }
+.ab-jp { color: rgba(216, 185, 127, .75); font-family: var(--font-display); font-size: .8rem; letter-spacing: .12em; }
 
+/* thin gold divider */
+.ab-sep { flex: none; width: 1px; height: 1.5rem; background: linear-gradient(transparent, rgba(183, 155, 114, .65), transparent); }
+
+/* ---------- title + message ---------- */
 .ab-tx {
     flex: 0 1 auto;
     min-width: 0;
-    max-width: 46rem;
+    max-width: 40rem;
     margin: 0;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    color: rgba(245, 240, 231, .72);
-    font-size: .95rem;
+    color: rgba(245, 240, 231, .78);
+    font-size: .9rem;
+    line-height: 1.3;
 }
 
-    .ab-tx b { margin-right: .75rem; font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; color: var(--yoru-cream, #F5F0E7); }
+    .ab-tx b {
+        font-family: var(--font-display);
+        font-size: 1.12rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        color: var(--ab-cream);
+    }
 
+    /* the divider between title and message sits inside the text, so the "..." still works */
+    .ab-tx i {
+        display: inline-block;
+        width: 1px;
+        height: 1.1em;
+        margin: 0 .9rem;
+        vertical-align: -.2em;
+        background: rgba(183, 155, 114, .55);
+    }
+
+/* ---------- UNTIL date ---------- */
 .ab-until {
     flex: none;
-    color: rgba(245, 240, 231, .5);
+    color: var(--ab-cream);
     font-size: .72rem;
-    letter-spacing: .16em;
+    font-weight: 600;
+    letter-spacing: .2em;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
-/* same outline pill as the hero's "Our story" */
+/* ---------- button: gold outline pill; text and arrow centred on one line ---------- */
 .ab-go {
     flex: none;
     display: inline-flex;
     align-items: center;
-    gap: .4rem;
-    height: 1.85rem;
-    /* the words have no descenders, so centred text looks low: 3px more room at the bottom
-       lifts them until the space above and below the letters looks the same */
-    padding: 0 .95rem 3px;
-    border: 1px solid rgba(183, 155, 114, .45);
+    justify-content: center;
+    gap: .5rem;
+    height: 2.1rem;
+    padding: 0 1rem 0 1.15rem;
+    border: 1px solid rgba(216, 185, 127, .75);
     border-radius: 999px;
-    background: rgba(20, 16, 14, .45);
-    color: var(--yoru-cream, #F5F0E7);
-    font-size: .76rem;
+    background: rgba(17, 14, 12, .55);
+    color: var(--ab-cream);
+    font-size: .8rem;
+    font-weight: 600;
     letter-spacing: .06em;
+    line-height: 1;
+    white-space: nowrap;
     text-decoration: none;
-    transition: border-color .15s ease, color .15s ease;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
 }
 
-    .ab-go:hover, .ab-go:focus-visible { border-color: var(--yoru-gold, #B79B72); color: var(--yoru-gold, #B79B72); }
+    .ab-go svg { width: .9rem; height: .9rem; flex: none; display: block; transition: transform .2s ease; }
 
-/* plain ‹ › at the far left and far right (no circles) */
+    .ab-go:hover, .ab-go:focus-visible {
+        color: #1a1410;
+        background: var(--ab-gold-hi);
+        border-color: var(--ab-gold-hi);
+    }
+
+        .ab-go:hover svg, .ab-go:focus-visible svg { transform: translateX(3px); }
+
+/* ---------- ‹ › and the "1 / 2" counter (only with 2 or more) ---------- */
 .ab-arrow {
     flex: none;
     display: grid;
     place-items: center;
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 2rem;
+    height: 2rem;
     padding: 0;
-    border: 0;
-    background: none;
-    color: rgba(183, 155, 114, .7);
-    font-size: .9rem;
-    transition: color .15s ease;
+    border: 1px solid rgba(183, 155, 114, .35);
+    border-radius: 50%;
+    background: rgba(17, 14, 12, .6);
+    color: var(--ab-gold-hi);
+    transition: border-color .15s ease, background .15s ease, color .15s ease;
 }
 
-    .ab-arrow:hover, .ab-arrow:focus-visible { color: var(--yoru-gold, #B79B72); }
+    .ab-arrow svg { width: .85rem; height: .85rem; display: block; }
+
+    .ab-arrow:hover, .ab-arrow:focus-visible { border-color: var(--ab-gold-hi); background: rgba(216, 185, 127, .15); color: var(--ab-cream); }
+
+.ab-count {
+    flex: none;
+    min-width: 2.6rem;
+    text-align: center;
+    color: rgba(216, 185, 127, .75);
+    font-family: var(--font-display);
+    font-size: .78rem;
+    letter-spacing: .12em;
+    font-variant-numeric: tabular-nums;
+}
+
+    .ab-count b { color: var(--ab-cream); font-weight: 700; }
+
+/* thin gold line that fills while a slide is shown */
+.ab-progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 2;
+    height: 2px;
+    width: 100%;
+    transform-origin: left center;
+    transform: scaleX(0);
+    background: linear-gradient(90deg, rgba(216, 185, 127, .2), var(--ab-gold-hi));
+}
+
+    .ab-progress.is-run { animation: ab-fill var(--ab-ms, 6000ms) linear forwards; }
+
+.ab-bar.is-held .ab-progress { animation-play-state: paused; }
+
+@keyframes ab-fill { to { transform: scaleX(1); } }
 
 @media (prefers-reduced-motion: reduce) {
     .ab-track { transition: none; }
+    .ab-progress { display: none; }
+}
+
+@media (max-width: 1399.98px) {
+    .ab-until, .ab-tx + .ab-sep { display: none; }
+    .ab-tx { max-width: 30rem; }
+}
+
+@media (max-width: 1199.98px) {
+    .ab-art { opacity: .5; }
+    .ab-in { max-width: none; }
+}
+
+@media (max-width: 991.98px) {
+    .ab-until, .ab-sep, .ab-jp { display: none; }
 }
 
 @media (max-width: 767.98px) {
-    .ab-in { gap: .5rem; }
-    .ab-tag, .ab-until { display: none; }
+    .ab-art { display: none; }
+    .ab-in { gap: .5rem; height: 3.3rem; }
+    .ab-count { display: none; }
     .ab-tx { font-size: .8rem; }
-    .ab-tx span { display: none; }
+    .ab-tx i, .ab-tx span { display: none; }
+    .ab-arrow { width: 1.7rem; height: 1.7rem; }
+    .ab-go { height: 1.9rem; padding: 0 .8rem; }
 }
