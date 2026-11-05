@@ -23,6 +23,7 @@ namespace RROMS.Services
         private readonly IHomeService _home;
         private readonly IHttpContextAccessor _http;
         private readonly ILogger<AnnouncementService> _logger;
+        private readonly IServiceScopeFactory _scopes;   // emails are sent in the background
 
         public AnnouncementService(
             IRepository<Announcement> announcements,
@@ -31,7 +32,8 @@ namespace RROMS.Services
             IEmailSender email,
             IHomeService home,
             IHttpContextAccessor http,
-            ILogger<AnnouncementService> logger)
+            ILogger<AnnouncementService> logger,
+            IServiceScopeFactory scopes)
         {
             _announcements = announcements;
             _users = users;
@@ -40,6 +42,7 @@ namespace RROMS.Services
             _home = home;
             _http = http;
             _logger = logger;
+            _scopes = scopes;
         }
 
         // ======================= Admin list / form =======================
@@ -168,23 +171,39 @@ namespace RROMS.Services
             var footer = await FooterAsync();
             var subject = $"YORU · {a.Title}";
 
-            // One at a time (shared DbContext). Each step only logs on failure.
+            // In-app first, one at a time (shared DbContext); each one only logs on failure.
+            // Emails are built now (the request data is still here) and sent afterwards.
+            var emails = new List<(string UserId, string To, string Html)>();
             foreach (var customer in customers)
             {
                 // In-app: Promotion without an email, so NotificationService sends no email of its own.
                 await _notifications.SendAsync(customer.Id, a.Title, a.Message, NotificationType.Promotion);
 
                 if (string.IsNullOrWhiteSpace(customer.Email)) continue;
-                try
+                emails.Add((customer.Id, customer.Email, AnnouncementEmail.Build(a.Title, a.Message, dates,
+                    customer.FullName, buttonText, buttonUrl, footer)));
+            }
+
+            // Emails in the background, so the admin does not wait for Gmail (2-5 s per email).
+            // A fresh scope gives the sender its own services, because the request's ones are gone by then.
+            if (emails.Count > 0)
+            {
+                _ = Task.Run(async () =>
                 {
-                    var html = AnnouncementEmail.Build(a.Title, a.Message, dates, customer.FullName,
-                        buttonText, buttonUrl, footer);
-                    await _email.SendEmailAsync(customer.Email, subject, html);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Announcement {Id} email to customer {UserId} was not sent.", id, customer.Id);
-                }
+                    using var scope = _scopes.CreateScope();
+                    var sender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
+                    foreach (var mail in emails)
+                    {
+                        try
+                        {
+                            await sender.SendEmailAsync(mail.To, subject, mail.Html);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Announcement {Id} email to customer {UserId} was not sent.", id, mail.UserId);
+                        }
+                    }
+                });
             }
 
             await _announcements.Query()
@@ -194,7 +213,7 @@ namespace RROMS.Services
             _logger.LogInformation("Announcement {Id} sent to {Count} customers.", id, customers.Count);
             return new(true, customers.Count == 0
                 ? "Sent, but there are no active customer accounts yet."
-                : $"Sent to {customers.Count} customer{(customers.Count == 1 ? "" : "s")} (in-app and email).");
+                : $"Sent to {customers.Count} customer{(customers.Count == 1 ? "" : "s")}: in-app now, emails on their way.");
         }
 
         public async Task<int> CountRecipientsAsync() => (await RecipientsAsync()).Count;
