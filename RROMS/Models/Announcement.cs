@@ -46,6 +46,7 @@ namespace RROMS.Models
     {
         None,
         Menu,
+        Specials,   // Menu's Specials list (same as Home's "See all specials")
         BookTable,
         SignUp      // visitors only: hidden on the banner for logged-in users, not used in emails
     }

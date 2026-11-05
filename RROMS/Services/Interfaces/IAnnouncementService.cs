@@ -108,6 +108,7 @@ namespace RROMS.Services.Interfaces
         public static string? Text(AnnouncementLink link) => link switch
         {
             AnnouncementLink.Menu => "View menu",
+            AnnouncementLink.Specials => "See specials",
             AnnouncementLink.BookTable => "Book a table",
             AnnouncementLink.SignUp => "Join YORU",
             _ => null
@@ -116,6 +117,7 @@ namespace RROMS.Services.Interfaces
         public static string? Path(AnnouncementLink link) => link switch
         {
             AnnouncementLink.Menu => "/Menu",
+            AnnouncementLink.Specials => $"/Menu?CategoryId={RROMS.Services.CustomerMenuBrowseRules.SpecialsCategoryId}#menu-browser",
             AnnouncementLink.BookTable => "/Customer/Reservations/Create",
             AnnouncementLink.SignUp => "/Identity/Account/Register",
             _ => null
@@ -125,6 +127,7 @@ namespace RROMS.Services.Interfaces
         public static string Option(AnnouncementLink link) => link switch
         {
             AnnouncementLink.Menu => "Menu · “View menu”",
+            AnnouncementLink.Specials => "Specials · “See specials”",
             AnnouncementLink.BookTable => "Book a table · “Book a table”",
             AnnouncementLink.SignUp => "Sign up, visitors only · “Join YORU”",
             _ => "No button"
