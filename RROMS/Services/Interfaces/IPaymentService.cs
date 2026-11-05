@@ -35,5 +35,14 @@ namespace RROMS.Services.Interfaces
 
         // US32: Payments recorded against a bill, newest first.
         Task<List<Payment>> GetPaymentsByBillIdAsync(int billId);
+
+        // US34: The logged-in customer's own payments, newest first.
+        // customerId comes from the login (claims), never from the URL.
+        // from / to are optional and inclusive (to = the whole day).
+        // Throws ArgumentException if from is after to.
+        Task<CustomerPaymentHistory> GetCustomerPaymentsAsync(
+            string customerId,
+            DateOnly? from = null,
+            DateOnly? to = null);
     }
 }

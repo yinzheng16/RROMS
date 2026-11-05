@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using RROMS.Models;
 using RROMS.Services;
 using RROMS.Services.Interfaces;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace RROMS.Pages.Admin;
@@ -41,6 +42,7 @@ public class Settings : PageModel
     {
         RestaurantSetting.Email = NullIfBlank(RestaurantSetting.Email);
         RestaurantSetting.Address = NullIfBlank(RestaurantSetting.Address);
+        RestaurantSetting.BusinessName = NullIfBlank(RestaurantSetting.BusinessName);
         RestaurantSetting.SstRegistrationNo = NullIfBlank(RestaurantSetting.SstRegistrationNo)?.ToUpperInvariant();
         RestaurantSetting.ReceiptFooterNote = NullIfBlank(RestaurantSetting.ReceiptFooterNote);
 
@@ -55,6 +57,23 @@ public class Settings : PageModel
 
         TempData["SuccessMessage"] = "Settings saved";
         return RedirectToPage();
+    }
+
+    // US49 follow-up: a reminder (not an error, saving still works) when the receipt would be
+    // missing what an SST receipt needs. restaurant-settings.js shows the same text while typing.
+    public static string? SstWarning(RestaurantSetting s)
+    {
+        var hasSstNo = !string.IsNullOrWhiteSpace(s.SstRegistrationNo);
+        if (s.TaxRatePercent > 0 && !hasSstNo)
+        {
+            var rate = s.TaxRatePercent.ToString("0.##", CultureInfo.InvariantCulture) + "%";
+            return $"SST is {rate} but there is no SST registration number. Add it, or set the tax rate to 0%.";
+        }
+        if (hasSstNo && string.IsNullOrWhiteSpace(s.BusinessName))
+        {
+            return "Add the registered business name too. Receipts with an SST number should show it.";
+        }
+        return null;
     }
 
     // Same rules as /Account/Register: a real number for the selected country.

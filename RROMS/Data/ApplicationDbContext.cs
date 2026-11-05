@@ -30,6 +30,7 @@ namespace RROMS.Data
         public DbSet<MenuCodeSequence> MenuCodeSequences => Set<MenuCodeSequence>();
         public DbSet<Promotion> Promotions => Set<Promotion>();
         public DbSet<Order> Orders => Set<Order>();
+        public DbSet<OrderStatusLog> OrderStatusLogs => Set<OrderStatusLog>();
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
         public DbSet<CustomerCart> CustomerCarts => Set<CustomerCart>();
         public DbSet<CustomerCartLine> CustomerCartLines => Set<CustomerCartLine>();
@@ -171,6 +172,7 @@ namespace RROMS.Data
             builder.Entity<Promotion>(e =>
             {
                 e.Property(p => p.DiscountPercent).HasPrecision(5, 2);
+                e.Property(p => p.PromoPrice).HasPrecision(10, 2);   // US29 fixed promotional price
                 e.HasOne(p => p.MenuItem)
                  .WithMany(m => m.Promotions)
                  .HasForeignKey(p => p.MenuItemId)
@@ -200,9 +202,17 @@ namespace RROMS.Data
                  .OnDelete(DeleteBehavior.Restrict);
             });
 
+            builder.Entity<OrderStatusLog>(e =>
+            {
+                e.HasIndex(x => new { x.OrderId, x.ChangedAt, x.Id });
+                e.HasOne(x => x.Order).WithMany().HasForeignKey(x => x.OrderId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
             builder.Entity<OrderItem>(e =>
             {
                 e.Property(i => i.UnitPrice).HasPrecision(10, 2);
+                e.Property(i => i.NormalUnitPrice).HasPrecision(10, 2);   // US29
                 e.HasOne(i => i.Order)
                  .WithMany(o => o.Items)
                  .HasForeignKey(i => i.OrderId)

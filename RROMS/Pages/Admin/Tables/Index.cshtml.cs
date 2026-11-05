@@ -53,24 +53,17 @@ public class IndexModel : PageModel
         [StringLength(50)]
         public string? JapaneseName { get; set; }
 
-        // Legacy fields: no longer entered by Admin.
-        public string? Prefix { get; set; }
-
-        public int StartingNumber { get; set; } = 1;
-
-        // New numbering rule.
+        // Numbering rule.
         [Range(1, 4, ErrorMessage = "Number padding must be between 1 and 4.")]
         public int NumberPadding { get; set; } = 3;
-
-        [Range(1, int.MaxValue)]
 
         [Required(ErrorMessage = "Choose a dining area.")]
         public int? DefaultDiningAreaId { get; set; }
 
-        [Range(1, 20)]
+        [Range(1, 100, ErrorMessage = "Minimum guests must be between 1 and 100.")]
         public int DefaultMinGuests { get; set; } = 1;
 
-        [Range(1, 20)]
+        [Range(1, 100, ErrorMessage = "Maximum guests must be between 1 and 100.")]
         public int DefaultMaxGuests { get; set; } = 2;
 
         [Range(0, 100000)]
@@ -90,10 +83,6 @@ public class IndexModel : PageModel
 
         public bool CreateFirstTable { get; set; }
 
-        [StringLength(10)]
-        public string? FirstTableName { get; set; }
-
-        public bool ApplyToExistingTables { get; set; }
         public IFormFile? Photo { get; set; }
     }
 
@@ -110,6 +99,10 @@ public class IndexModel : PageModel
 
         [StringLength(40)]
         public string IconName { get; set; } = "layout-grid";
+
+        [StringLength(20)]
+        public string? ThemeKey { get; set; }
+
         // Occupied area: all its tables become Out of service.
         public bool IsOccupied { get; set; }
     }
@@ -129,8 +122,8 @@ public class IndexModel : PageModel
         // Editable on existing tables
         public TableStatus Status { get; set; } = TableStatus.Available;
 
-        // Legacy fields retained temporarily for existing UI compatibility.
-        // They are no longer used by SaveTableAsync().
+        // Hidden form fields the table drawer still posts.
+        // SaveTableAsync() ignores them: shared settings come from the table type.
         public TableType Type { get; set; }
         public int? DiningAreaId { get; set; }
         public int MinGuests { get; set; } = 1;
@@ -176,7 +169,6 @@ public class IndexModel : PageModel
             Name = TableTypeForm.Name,
             JapaneseName = TableTypeForm.JapaneseName,
 
-            // Legacy model compatibility.
             // The service generates Code and Prefix on creation.
             Prefix = string.Empty,
             StartingNumber = 1,
@@ -244,32 +236,6 @@ public class IndexModel : PageModel
         await _service.DeleteTableTypeAsync(id),
         "Table type deleted.");
 
-    public async Task<IActionResult> OnPostTableTypePhotoAsync(
-        int id,
-        IFormFile? photo) =>
-        Done(
-            await _service.SetTableTypePhotoAsync(id, photo!),
-            "Table type photo updated.");
-
-    public async Task<IActionResult> OnGetNextTableNameAsync(int id)
-    {
-        try
-        {
-            var name = await _service.GetNextTableNameAsync(id);
-            return new JsonResult(new { success = true, name });
-        }
-        catch (Exception ex) when (
-            ex is ArgumentException ||
-            ex is InvalidOperationException)
-        {
-            return new JsonResult(new
-            {
-                success = false,
-                error = ex.Message
-            });
-        }
-    }
-
     public async Task<IActionResult> OnPostSaveAreaAsync()
     {
         KeepOnly(nameof(AreaForm));
@@ -292,6 +258,22 @@ public class IndexModel : PageModel
                 "Please select a valid area icon.");
         }
 
+        var allowedThemes = new HashSet<string>
+        {
+            "wine", "gold", "plum", "sage", "midnight", "terracotta"
+        };
+
+        if (string.IsNullOrWhiteSpace(AreaForm.ThemeKey))
+        {
+            AreaForm.ThemeKey = null;
+        }
+        else if (!allowedThemes.Contains(AreaForm.ThemeKey))
+        {
+            ModelState.AddModelError(
+                "AreaForm.ThemeKey",
+                "Please select a valid card theme.");
+        }
+
         if (!ModelState.IsValid)
             return InvalidInput();
 
@@ -301,6 +283,7 @@ public class IndexModel : PageModel
             Name = AreaForm.Name,
             Description = AreaForm.Description,
             IconName = AreaForm.IconName,
+            ThemeKey = AreaForm.ThemeKey,
             IsOccupied = AreaForm.IsOccupied
         };
 
@@ -394,7 +377,7 @@ public class IndexModel : PageModel
         try
         {
             fullNumber = TableNumberHelper.Build(
-                type.Code, suffix, type.NumberPadding);
+                type.Code, suffix, type.NumberPadding, legacyOk: true);
         }
         catch (ArgumentException ex)
         {
@@ -472,15 +455,6 @@ public class IndexModel : PageModel
 
         return Done(RROMS.Services.ReservationResult.Ok(), message);
     }
-
-    public async Task<IActionResult> OnPostTypePhotoAsync(TableType type, IFormFile? photo) =>
-        Done(await _service.SetTypePhotoAsync(type, photo!), "Table type photo updated on this computer.");
-
-    public async Task<IActionResult> OnPostStatusAsync(int id, TableStatus status) =>
-        Done(await _service.SetTableStatusAsync(id, status), "Table status updated.");
-
-    public async Task<IActionResult> OnPostPhotoAsync(int id, IFormFile? photo) =>
-        Done(await _service.SetTablePhotoAsync(id, photo!), "Photo updated.");
 
     public async Task<IActionResult> OnPostSaveHoursAsync()
     {

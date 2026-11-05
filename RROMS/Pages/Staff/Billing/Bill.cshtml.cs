@@ -35,18 +35,23 @@ namespace RROMS.Pages.Staff.Billing
         // US33: online payments (Stripe) of the bill shown on this page.
         private readonly IOnlinePaymentService _onlinePayments;
 
+        // US35: the same PDF receipt the customer downloads.
+        private readonly IReceiptService _receiptService;
+
         public BillModel(
             IBillingService billingService,
             IPaymentService paymentService,
             IReportService reportService,
             UserManager<ApplicationUser> userManager,
-            IOnlinePaymentService onlinePayments)
+            IOnlinePaymentService onlinePayments,
+            IReceiptService receiptService)
         {
             _billingService = billingService;
             _paymentService = paymentService;
             _reportService = reportService;
             _userManager = userManager;
             _onlinePayments = onlinePayments;
+            _receiptService = receiptService;
         }
 
         // ---------- Query string ----------
@@ -234,6 +239,28 @@ namespace RROMS.Pages.Staff.Billing
 
             await LoadTakeawayAsync(info);
             return Page();
+        }
+
+        // ---------- GET: receipt PDF (US35) ----------
+
+        // /Staff/Billing/Bill?handler=Receipt&paymentId=12
+        // Opens the customer's receipt PDF in the browser (inline) so staff
+        // can preview it and print it from the PDF viewer.
+        // Not found or not Paid: 404.
+        public async Task<IActionResult> OnGetReceiptAsync(int paymentId)
+        {
+            var receipt = await _receiptService.GetReceiptAsync(paymentId);
+
+            if (receipt == null)
+                return NotFound();
+
+            byte[] pdf = _receiptService.CreatePdf(receipt);
+
+            // No download name -> the browser shows it instead of saving it.
+            Response.Headers.ContentDisposition =
+                $"inline; filename=\"YORU-receipt-{receipt.ReceiptNo}.pdf\"";
+
+            return File(pdf, "application/pdf");
         }
 
         // A bill number opens the bill through its table or takeaway order.

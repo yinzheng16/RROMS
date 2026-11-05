@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services.Interfaces;
@@ -12,16 +14,27 @@ namespace RROMS.Services
         private readonly IRepository<Bill> _bills;
         private readonly IBillingTransactionRepository _billingTransaction;
 
+        // US38: optional, so existing tests that build PaymentService by hand still compile.
+        private readonly INotificationService? _notifications;
+        private readonly UserManager<ApplicationUser>? _users;
+        private readonly ILogger<PaymentService>? _logger;
+
         public PaymentService(
             IRepository<Payment> payments,
             IRepository<Order> orders,
             IRepository<Bill> bills,
-            IBillingTransactionRepository billingTransaction)
+            IBillingTransactionRepository billingTransaction,
+            INotificationService? notifications = null,
+            UserManager<ApplicationUser>? users = null,
+            ILogger<PaymentService>? logger = null)
         {
             _payments = payments;
             _orders = orders;
             _bills = bills;
             _billingTransaction = billingTransaction;
+            _notifications = notifications;
+            _users = users;
+            _logger = logger;
         }
 
         // US32: Counter payment against a Confirmed bill (one step).
@@ -60,7 +73,7 @@ namespace RROMS.Services
                 throw new ArgumentException(
                     "Transaction reference cannot exceed 100 characters.");
 
-            return await _billingTransaction.ExecuteForBillPaymentAsync(
+            var paid = await _billingTransaction.ExecuteForBillPaymentAsync(
                 billId,
                 async () =>
                 {
@@ -157,6 +170,114 @@ namespace RROMS.Services
 
                     return payment;
                 });
+
+            // US38: notify the customer only after the payment is saved
+            // (outside the transaction, so an email can never undo it).
+            await NotifyPaymentReceivedAsync(paid);
+
+            return paid;
+        }
+
+        // ================= US38: payment received notification =================
+
+        private static readonly CultureInfo En = CultureInfo.InvariantCulture;
+
+        private static string Money(decimal amount) => $"RM {amount.ToString("N2", En)}";
+
+        // In-app notification + email (NotificationService, US38) to the bill's customer.
+        // Never throws: the payment is already saved.
+        private async Task NotifyPaymentReceivedAsync(Payment payment)
+        {
+            if (_notifications is null || payment.BillId is not int billId)
+                return;
+
+            try
+            {
+                var bill = await _bills.Query()
+                    .AsNoTracking()
+                    .Include(b => b.DiningSession!)
+                        .ThenInclude(s => s.Reservation)
+                    .Include(b => b.Orders)
+                    .FirstOrDefaultAsync(b => b.Id == billId);
+
+                if (bill == null)
+                    return;
+
+                string? customerId = await FindCustomerAsync(bill);
+                if (customerId == null)
+                    return;
+
+                bool takeaway = bill.DiningSessionId == null;
+                string billNo = $"YB-{billId:D6}";   // same format as Staff/Billing (IndexModel.FormatBillNo)
+                string amount = Money(payment.Amount);
+
+                var orderNos = bill.Orders
+                    .Where(o => o.Status != OrderStatus.Cancelled)
+                    .OrderBy(o => o.Id)
+                    .Select(o => o.OrderNo)
+                    .ToList();
+
+                var rows = new List<EmailTemplates.Row>
+                {
+                    new("Bill", billNo)
+                };
+
+                if (orderNos.Count > 0)
+                    rows.Add(new(orderNos.Count == 1 ? "Order" : "Orders", string.Join(", ", orderNos)));
+
+                rows.Add(new("Paid on", (payment.PaidAt ?? DateTime.Now).ToString("ddd, d MMM yyyy · h:mm tt", En)));
+                rows.Add(new("Payment method", payment.Method.ToString()));
+                rows.Add(new("Subtotal", Money(bill.Subtotal)));
+                rows.Add(new("Service charge", Money(bill.ServiceCharge)));
+                rows.Add(new("Tax", Money(bill.TaxAmount)));
+                rows.Add(new("Total paid", amount));
+
+                if (!string.IsNullOrEmpty(payment.TransactionRef))
+                    rows.Add(new("Reference", payment.TransactionRef));
+
+                await _notifications.SendAsync(
+                    customerId,
+                    "Payment received",
+                    $"We received your {payment.Method} payment of {amount} for bill {billNo}. Thank you!",
+                    NotificationType.Payment,
+                    new NotificationEmail(
+                        Subject: $"Payment received · {billNo}",
+                        Kicker: "Payment received",
+                        Title: takeaway ? "Thank you for your order" : "Thank you for dining with us",
+                        IntroText: $"We received your payment of {amount}. Here is a summary of your bill.",
+                        Rows: rows,
+                        SmallText: "Keep this email as a record of your payment."));
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex,
+                    "Payment {PaymentId}: the payment-received notification was not sent.", payment.Id);
+            }
+        }
+
+        // The customer of a bill: the dining session's customer, then the reservation's
+        // customer, then whoever placed the orders. Only Customer accounts count, so a
+        // staff member who ordered for a guest never gets the email.
+        private async Task<string?> FindCustomerAsync(Bill bill)
+        {
+            var candidates = new List<string?>
+            {
+                bill.DiningSession?.CustomerId,
+                bill.DiningSession?.Reservation?.UserId
+            };
+            candidates.AddRange(bill.Orders.OrderBy(o => o.Id).Select(o => o.UserId));
+
+            foreach (var id in candidates.Where(x => !string.IsNullOrEmpty(x)).Distinct())
+            {
+                if (_users == null)
+                    return id;
+
+                var user = await _users.FindByIdAsync(id!);
+                if (user != null && await _users.IsInRoleAsync(user, Roles.Customer))
+                    return id;
+            }
+
+            return null;
         }
 
         public Task<List<Payment>> GetPaymentsByBillIdAsync(int billId)
@@ -169,7 +290,141 @@ namespace RROMS.Services
                 .ToListAsync();
         }
 
-        public async Task<Payment> RecordPaymentAsync(
+        // US34: The logged-in customer's own payments, newest first.
+        // Which payments belong to the customer:
+        //  - dine-in combined bill: the customer of the dining session
+        //  - takeaway bill: the customer who placed the order
+        //  - older order-based payment (US31): the customer of that order
+        // Dates are local server time (team rule), filtered on PaidAt,
+        // or CreatedAt for attempts that were never paid.
+        public async Task<CustomerPaymentHistory> GetCustomerPaymentsAsync(
+            string customerId,
+            DateOnly? from = null,
+            DateOnly? to = null)
+        {
+            if (string.IsNullOrWhiteSpace(customerId))
+                throw new ArgumentException("Customer ID is required.");
+
+            if (from is DateOnly f && to is DateOnly t && f > t)
+                throw new ArgumentException(
+                    "The From date cannot be after the To date.");
+
+            string id = customerId.Trim();
+
+            var query = _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    (p.Bill != null &&
+                     p.Bill.DiningSessionId != null &&
+                     p.Bill.DiningSession!.CustomerId == id) ||
+                    (p.Bill != null &&
+                     p.Bill.DiningSessionId == null &&
+                     p.Bill.Orders.Any(o => o.UserId == id)) ||
+                    (p.BillId == null &&
+                     p.Order != null &&
+                     p.Order.UserId == id));
+
+            if (from is DateOnly fromDate)
+            {
+                DateTime start = fromDate.ToDateTime(TimeOnly.MinValue);
+                query = query.Where(p => (p.PaidAt ?? p.CreatedAt) >= start);
+            }
+
+            if (to is DateOnly toDate)
+            {
+                // Up to the end of the To day: before midnight of the next day.
+                DateTime end = toDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
+                query = query.Where(p => (p.PaidAt ?? p.CreatedAt) < end);
+            }
+
+            var payments = await query
+                .OrderByDescending(p => p.PaidAt ?? p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .Select(p => new CustomerPaymentRecord
+                {
+                    PaymentId = p.Id,
+                    BillId = p.BillId,
+
+                    OrderType = p.Bill != null
+                        ? (p.Bill.DiningSessionId != null
+                            ? OrderType.DineIn
+                            : OrderType.Takeaway)
+                        : p.Order!.OrderType,
+
+                    TableNumber = p.Bill != null
+                        ? (p.Bill.DiningSession != null
+                            ? p.Bill.DiningSession.Table.TableNumber
+                            : null)
+                        : (p.Order != null && p.Order.DiningSession != null
+                            ? p.Order.DiningSession.Table.TableNumber
+                            : null),
+
+                    OrderNo = p.Bill != null
+                        ? p.Bill.Orders
+                            .OrderBy(o => o.Id)
+                            .Select(o => o.OrderNo)
+                            .FirstOrDefault()
+                        : p.Order!.OrderNo,
+
+                    OrderCount = p.Bill != null
+                        ? p.Bill.Orders.Count(o => o.Status != OrderStatus.Cancelled)
+                        : 1,
+
+                    Amount = p.Amount,
+                    Method = p.Method,
+                    Status = p.Status,
+                    TransactionRef = p.TransactionRef,
+                    CreatedAt = p.CreatedAt,
+                    PaidAt = p.PaidAt
+                })
+                .ToListAsync();
+
+            var paid = payments
+                .Where(p => p.Status == PaymentStatus.Paid)
+                .ToList();
+
+            return new CustomerPaymentHistory
+            {
+                Payments = payments,
+                TotalPaid = paid.Sum(p => p.Amount),
+                PaidCount = paid.Count
+            };
+        }
+
+        // US26 integration: a legacy payment attempt and order cancellation must not both succeed.
+        // Counter payments already require a Confirmed bill, which locks cancellation.
+        private async Task<Payment> WithLegacyOrderLockAsync(int orderId, Func<Task<Payment>> operation)
+        {
+            if (orderId <= 0) throw new ArgumentException("Invalid order ID.");
+            var before = await _orders.Query().AsNoTracking().Where(o => o.Id == orderId)
+                .Select(o => new { o.DiningSessionId }).SingleOrDefaultAsync();
+            if (before == null) throw new InvalidOperationException("Order does not exist.");
+            async Task<Payment> CheckAndRun()
+            {
+                var current = await _orders.Query().AsNoTracking().Where(o => o.Id == orderId)
+                    .Select(o => new { o.DiningSessionId }).SingleOrDefaultAsync();
+                if (current == null || current.DiningSessionId != before.DiningSessionId)
+                    throw new InvalidOperationException("The order's dining session changed. Refresh before recording payment.");
+                return await operation();
+            }
+            return before.DiningSessionId is int sessionId
+                ? await _billingTransaction.ExecuteForSessionBillAsync(sessionId, CheckAndRun)
+                : await _billingTransaction.ExecuteForTakeawayOrderAsync(orderId, CheckAndRun);
+        }
+
+        public Task<Payment> RecordPaymentAsync(int orderId, decimal amount, PaymentMethod method, string? transactionRef = null)
+            => WithLegacyOrderLockAsync(orderId, () => RecordOrderPaymentCoreAsync(orderId, amount, method, transactionRef));
+
+        public async Task<Payment> ConfirmPaymentAsync(int paymentId)
+        {
+            var payment = await _payments.Query().AsNoTracking().SingleOrDefaultAsync(p => p.Id == paymentId);
+            if (payment == null) throw new InvalidOperationException("Payment does not exist.");
+            if (payment.OrderId is not int orderId)
+                throw new InvalidOperationException("This payment belongs to a bill. Use the bill payment workflow.");
+            return await WithLegacyOrderLockAsync(orderId, () => ConfirmOrderPaymentCoreAsync(paymentId));
+        }
+
+        private async Task<Payment> RecordOrderPaymentCoreAsync(
             int orderId,
             decimal amount,
             PaymentMethod method,
@@ -185,7 +440,7 @@ namespace RROMS.Services
             if (!Enum.IsDefined(method))
                 throw new ArgumentException("Invalid payment method.");
 
-            var order = await _orders.GetByIdAsync(orderId);
+            var order = await _orders.Query().AsNoTracking().SingleOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null)
                 throw new InvalidOperationException(
@@ -255,9 +510,9 @@ namespace RROMS.Services
             return payment;
         }
 
-        public async Task<Payment> ConfirmPaymentAsync(int paymentId)
+        private async Task<Payment> ConfirmOrderPaymentCoreAsync(int paymentId)
         {
-            var payment = await _payments.GetByIdAsync(paymentId);
+            var payment = await _payments.Query().AsNoTracking().SingleOrDefaultAsync(p => p.Id == paymentId);
 
             if (payment == null)
                 throw new InvalidOperationException(
@@ -273,7 +528,7 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "This payment belongs to a bill. Use the bill payment workflow.");
 
-            var order = await _orders.GetByIdAsync(orderId);
+            var order = await _orders.Query().AsNoTracking().SingleOrDefaultAsync(o => o.Id == orderId);
 
             if (order == null || order.Status == OrderStatus.Cancelled)
                 throw new InvalidOperationException(
@@ -293,32 +548,37 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "This order already has a successful payment.");
 
+            DateTime now = DateTime.Now;
+            int changed = await _payments.Query().Where(p => p.Id == paymentId && p.Status == PaymentStatus.Pending)
+                .ExecuteUpdateAsync(set => set.SetProperty(p => p.Status, PaymentStatus.Paid)
+                    .SetProperty(p => p.PaidAt, (DateTime?)now));
+            if (changed != 1) throw new InvalidOperationException("This payment is no longer pending.");
             payment.Status = PaymentStatus.Paid;
-            payment.PaidAt = DateTime.Now;   // team rule: local server time
-
-            await _payments.SaveChangesAsync();
+            payment.PaidAt = now;
 
             return payment;
         }
 
         public async Task<Payment> MarkPaymentFailedAsync(int paymentId)
         {
-            var payment = await _payments.GetByIdAsync(paymentId);
-
-            if (payment == null)
-                throw new InvalidOperationException(
-                    "Payment does not exist.");
-
-            if (payment.Status != PaymentStatus.Pending)
-                throw new InvalidOperationException(
-                    "Only pending payments can be marked as failed.");
-
-            payment.Status = PaymentStatus.Failed;
-            payment.PaidAt = null;
-
-            await _payments.SaveChangesAsync();
-
-            return payment;
+            var snapshot = await _payments.Query().AsNoTracking().SingleOrDefaultAsync(p => p.Id == paymentId);
+            if (snapshot == null) throw new InvalidOperationException("Payment does not exist.");
+            async Task<Payment> FailPending()
+            {
+                // Never overwrite a payment another request has already confirmed.
+                int changed = await _payments.Query().Where(p => p.Id == paymentId && p.Status == PaymentStatus.Pending)
+                    .ExecuteUpdateAsync(set => set.SetProperty(p => p.Status, PaymentStatus.Failed)
+                        .SetProperty(p => p.PaidAt, (DateTime?)null));
+                if (changed != 1) throw new InvalidOperationException("Only pending payments can be marked as failed.");
+                snapshot.Status = PaymentStatus.Failed;
+                snapshot.PaidAt = null;
+                return snapshot;
+            }
+            if (snapshot.OrderId is int orderId)
+                return await WithLegacyOrderLockAsync(orderId, FailPending);
+            if (snapshot.BillId is int billId)
+                return await _billingTransaction.ExecuteForBillPaymentAsync(billId, FailPending);
+            throw new InvalidOperationException("This payment is not linked to an order or bill.");
         }
 
         public Task<Payment?> GetPaymentByIdAsync(int paymentId)

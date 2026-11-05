@@ -1,55 +1,72 @@
 @model RROMS.Pages.Admin.Menu.IndexModel
+@* Category editor: one-column paper pop-up (same look as the draft/delete pop-ups) with a live strip preview. Same form contract as before:
+   handler "Save", Input.Id, Input.Name and the list state (SearchTerm, SortOrder, PageNumber, ShowAll). *@
 @{
     bool editing = Model.Input.Id.HasValue;
-    string preview = string.IsNullOrWhiteSpace(Model.Input.Name) ? "Your category name" : Model.Input.Name.Trim();
-    int separator = preview.IndexOf('·');
-    bool hasEnglish = separator > 0 && !string.IsNullOrWhiteSpace(preview[(separator + 1)..]);
-    string previewPrimary = hasEnglish ? preview[..separator].Trim() : preview;
-    string previewEnglish = hasEnglish ? preview[(separator + 1)..].Trim() : string.Empty;
+    bool open = editing || Model.CategoryEditorHasErrors || Context.Request.Query.ContainsKey("New");
+    string name = Model.Input.Name?.Trim() ?? string.Empty;
+    var parts = name.Split('·', 2, StringSplitOptions.TrimEntries);
+    string primary = string.IsNullOrEmpty(parts[0]) ? "Your category" : parts[0];
+    string english = parts.Length > 1 ? parts[1] : string.Empty;
+    var current = editing ? Model.Categories.FirstOrDefault(c => c.Id == Model.Input.Id) : null;
+    string number = (current?.DisplayOrder ?? Model.TotalCategories + 1).ToString("D2");
+    int dishes = current?.ItemCount ?? 0;
     bool summaryErrors = ViewData.ModelState.TryGetValue(string.Empty, out var summary) && summary is not null && summary.Errors.Count > 0;
 }
-<div data-category-drawer-slot>
-    <section id="category-editor" class="card border-0 rounded-4 shadow-sm yoru-item-drawer yoru-category-drawer" aria-labelledby="editor-title" data-category-drawer data-saved-code="@Model.CategoryEditorCode" data-category-errors="@Model.CategoryEditorHasErrors.ToString().ToLowerInvariant()">
-        <header class="px-4 py-3 border-bottom" data-menu-drawer-header>
-            <div class="d-flex align-items-start justify-content-between gap-3">
-                <div><p class="eyebrow mb-1">Shape your menu</p><h2 id="editor-title" class="h4 mb-1">@(editing ? "Edit category" : "New category")</h2><p class="small text-body-secondary mb-0" data-category-drawer-description>@(editing ? "Update the name of this menu section." : "Name the next section of your menu.")</p></div>
-                <button type="button" class="btn-close flex-shrink-0" aria-label="Close category editor" data-category-drawer-close hidden></button>
+<dialog class="ms-dialog ms-dialog--compact" data-ms-dialog data-ms-kind="category" data-ms-draft="@(editing ? $"cat-edit-{Model.Input.Id}" : "cat-new")"
+        data-open="@(open ? "true" : "false")" aria-labelledby="ms-cat-title" open="@open">
+    <form id="category-form" class="ms-dialog__form" method="post" asp-page="./Index" asp-page-handler="Save" data-ms-form novalidate>
+        <input type="hidden" asp-for="Input.Id" />
+        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" /><input type="hidden" name="SortOrder" value="@Model.SortOrder" />
+        <input type="hidden" name="PageNumber" value="@Model.PageNumber" /><input type="hidden" name="ShowAll" value="@Model.ShowAll.ToString().ToLowerInvariant()" />
+
+        <p class="ms-confirm__eyebrow">Shape your menu</p>
+        <button type="button" class="ms-confirm__close" aria-label="Close" data-ms-close><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        <h2 id="ms-cat-title">@(editing ? "Edit category" : "New category")</h2>
+        <p class="ms-draft-note" data-ms-draft-note hidden><i class="bi bi-journal-text" aria-hidden="true"></i>Draft restored. Save to keep it, or discard it.</p>
+
+        <div asp-validation-summary="ModelOnly" data-valmsg-summary="false" class="ms-alert" role="alert" hidden="@(!summaryErrors)"></div>
+
+        <label class="ms-label" for="Input_Name">Category name</label>
+        <input asp-for="Input.Name" class="ms-input" maxlength="50" placeholder="e.g. Sarada · Salads" required autocomplete="off" data-ms-name />
+        <div class="ms-hint"><span>Use “Japanese · English” for a two-line name.</span><span><span data-ms-count>@name.Length</span>/50</span></div>
+        <span asp-validation-for="Input.Name" class="ms-error"></span>
+
+        <p class="ms-dialog__preview-label">Live preview</p>
+        <article class="ms-tile ms-strip ms-tile--preview" aria-label="Live preview">
+            <div class="ms-strip__num">
+                <span class="ms-tile__num">@number</span>
+                <span class="ms-code">@(editing ? Model.CategoryEditorCode : "NEW")</span>
             </div>
-            <div class="d-flex align-items-center gap-2 flex-wrap mt-3" aria-label="Category code">
-                <span class="small text-body-secondary">Category code</span>
-                <span class="badge rounded-pill bg-body-tertiary text-body border yoru-menu-code" data-editor-code>@(editing ? Model.CategoryEditorCode : "Assigned when saved")</span>
+            <div class="ms-strip__main">
+                <h3 data-ms-preview-name>@primary</h3>
+                <p class="ms-tile__sub" data-ms-preview-sub>@(string.IsNullOrEmpty(english) ? "\u00a0" : english)</p>
+                @if (dishes == 0)
+                {
+                    <span class="ms-count is-empty"><i class="bi bi-inbox" aria-hidden="true"></i>No dishes yet</span>
+                }
+                else
+                {
+                    <span class="ms-count"><i class="bi bi-cup-hot" aria-hidden="true"></i>@dishes @(dishes == 1 ? "dish" : "dishes")</span>
+                }
             </div>
-            <p class="small text-body-secondary mt-2 mb-0" role="status" aria-live="polite" data-category-drawer-state></p>
-        </header>
-        <div class="px-4 py-4 yoru-item-drawer-body">
-            <form id="category-form" method="post" asp-page="./Index" asp-page-handler="Save" data-category-editor data-category-keep-scroll asp-fragment="category-editor">
-                <input type="hidden" asp-for="Input.Id" />
-                <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" /><input type="hidden" name="SortOrder" value="@Model.SortOrder" />
-                <input type="hidden" name="PageNumber" value="@Model.PageNumber" /><input type="hidden" name="ShowAll" value="@Model.ShowAll.ToString().ToLowerInvariant()" />
-                <div asp-validation-summary="ModelOnly" data-valmsg-summary="false" class="text-danger mb-3" role="alert" hidden="@(!summaryErrors)"></div>
-                <div class="mb-4">
-                    <label asp-for="Input.Name" class="form-label fw-semibold"></label>
-                    <input asp-for="Input.Name" class="form-control form-control-lg" maxlength="50" placeholder="e.g. Sarada · Salads" required data-category-name aria-describedby="category-name-error category-name-help" />
-                    <div class="d-flex justify-content-between gap-2 mt-2"><span id="category-name-help" class="small text-body-secondary">Keep it clear and memorable.</span><span class="small text-body-secondary"><span data-category-name-count>@(Model.Input.Name?.Length ?? 0)</span>/50</span></div>
-                    <span asp-validation-for="Input.Name" id="category-name-error" class="text-danger small"></span>
-                </div>
-                <section class="yoru-category-preview rounded-4 p-3 p-md-4 mb-4" aria-label="Category title preview">
-                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap border-bottom pb-3 mb-3">
-                        <span class="small text-body-secondary text-uppercase">YORU / Menu</span>
-                        <span class="yoru-category-preview-label rounded-pill">Live preview</span>
-                    </div>
-                    <div class="yoru-category-preview-copy border-start border-3 border-primary ps-3">
-                        <h3 class="h4 fw-normal text-break mb-1" data-category-preview-name>@previewPrimary</h3>
-                        <p class="small text-body-secondary text-break mb-0" data-category-preview-english hidden="@(!hasEnglish)">@previewEnglish</p>
-                    </div>
-                </section>
-                <p class="small text-body-secondary border rounded-3 p-3 mb-4">Display order is assigned automatically. Use Reorder to change the sequence.</p>
-                <p class="small text-body-secondary mb-0">A category is the start. Add its dishes next in menu-item management.</p>
-            </form>
+            <div class="ms-strip__acts" aria-hidden="true">
+                <span class="ms-btn ms-btn--edit ms-strip__edit"><i class="bi bi-pencil"></i></span>
+                @if (dishes == 0)
+                {
+                    <span class="ms-icon-btn"><i class="bi bi-trash3"></i></span>
+                }
+                else
+                {
+                    <span class="ms-lock ms-lock--icon"><i class="bi bi-lock"></i></span>
+                }
+            </div>
+        </article>
+        <p class="ms-dialog__preview-note">@(editing ? "Dishes in this category keep their place." : "Next: add dishes to it in Menu items.")</p>
+
+        <div class="ms-confirm__actions ms-dialog__actions">
+            <button type="button" class="ms-confirm__back" data-ms-close>Cancel</button>
+            <button type="submit" class="ms-confirm__ok" data-ms-save>@(editing ? "Save changes" : "Create category")</button>
         </div>
-        <footer class="d-flex gap-2 p-3 border-top yoru-item-drawer-footer">
-            <button type="button" class="btn btn-outline-secondary rounded-pill flex-fill" data-category-drawer-discard hidden>Discard draft</button>
-            <button type="submit" form="category-form" class="btn btn-primary rounded-pill flex-fill" data-category-save>@(editing ? "Save changes" : "Create category")</button>
-        </footer>
-    </section>
-</div>
+    </form>
+</dialog>
