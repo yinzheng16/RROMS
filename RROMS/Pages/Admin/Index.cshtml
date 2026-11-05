@@ -17,10 +17,10 @@
     // ---------- Links to other members' pages ----------
     // null = that page is not on develop yet, so the link is shown as disabled.
     // When the page is merged, replace null with the address in the comment.
-    string? reservationsUrl = "/Staff";         // US16, Member 2
+    string? reservationsUrl = "/Staff/Reservations";         // US16, Member 2
     string? ordersUrl = "/Staff/Orders";        // US25, Member 3
     string? paymentsUrl = "/Admin/Payments";    // US40, Member 4
-    string? reportsUrl = null;      // "/Admin/Reports"  (US44, Member 5)
+    string? reportsUrl = "/Admin/Payments";      // "/Admin/Reports"  (US44, Member 5)
 
     // ---------- Greeting ----------
     var me = await UserManager.GetUserAsync(User);
