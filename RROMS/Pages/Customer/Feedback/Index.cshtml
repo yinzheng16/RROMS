@@ -2,9 +2,11 @@
 @model RROMS.Pages.Customer.Feedback.Index
 
 @{
-    // US43 "Reply visible to customer" (Member 5) · Letter style, same as the feedback form (US42)
+    // US43 "Reply visible to customer" (Member 5)
+    // Letter style in the YORU night design, same family as the feedback form (US42).
     // Styles: wwwroot/css/my-reviews.css
     ViewData["Title"] = "My Reviews";
+    ViewData["FullWidth"] = true;   // the banner goes edge to edge; the page draws its own container
 
     var labels = new[] { "", "Poor", "Fair", "Good", "Very good", "Excellent" };
 }
@@ -12,72 +14,102 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" />
 <link rel="stylesheet" href="~/css/my-reviews.css" asp-append-version="true" />
 
-<section class="mr-page">
-    <header class="mr-head">
-        <p class="mr-from">From YORU, with thanks</p>
-        <h1 class="mr-title">My reviews</h1>
-        <p class="mr-lede">
-            Your letters to us, and our replies.
+<div class="mr-page">
+
+    @* ================= Night banner ================= *@
+    <section class="mr-banner">
+        <div class="mr-banner-in">
+            <span class="mr-banner-vert" lang="ja" aria-hidden="true">お返事</span>
+            <p class="mr-eyebrow"><b lang="ja">ご感想</b> · MY REVIEWS</p>
+            <h1 class="mr-title">Your letters, <em>our replies.</em></h1>
+            <p class="mr-banner-lede">Every review you sent us, and what the YORU team wrote back.</p>
+        </div>
+    </section>
+
+    <div class="mr-wrap">
+        <header class="mr-head">
+            <div>
+                <p class="mr-sec-eyebrow">MY REVIEWS · <span lang="ja">手紙</span></p>
+                <h2 class="mr-sec-title">Letters to YORU</h2>
+            </div>
             @if (Model.Reviews.Count > 0)
             {
-                <span>· @Model.Reviews.Count @(Model.Reviews.Count == 1 ? "review" : "reviews"), @Model.RepliedCount replied</span>
+                <div class="mr-stats">
+                    <div><b>@Model.Reviews.Count</b><small>@(Model.Reviews.Count == 1 ? "review" : "reviews")</small></div>
+                    <div><b>@Model.RepliedCount</b><small>replied</small></div>
+                </div>
             }
-        </p>
-    </header>
+        </header>
 
-    @if (Model.Reviews.Count == 0)
-    {
-        <div class="mr-empty">
-            <div class="mr-empty-seal" aria-hidden="true">声</div>
-            <h2>No reviews yet</h2>
-            <p>After a completed order, you can write to us about your night. Our replies will appear here.</p>
-            <a class="mr-btn" href="/Customer/Feedback/Create">Write a review</a>
-        </div>
-    }
-    else
-    {
-        @foreach (var review in Model.Reviews)
+        @if (Model.Reviews.Count == 0)
         {
-            var replied = !string.IsNullOrWhiteSpace(review.AdminReply);
-            var typeText = review.Order.OrderType == RROMS.Models.OrderType.DineIn ? "Dine-in" : review.Order.OrderType.ToString();
-
-            <article class="mr-letter">
-                <div class="mr-spine @(review.Rating <= 2 ? "is-low" : "")">
-                    <span class="mr-rating">@review.Rating</span>
-                    <small>/ 5</small>
-                    <span class="mr-label">@labels[review.Rating]</span>
-                </div>
-
-                <div class="mr-body">
-                    <p class="mr-meta">@review.Order.OrderNo · @typeText · @review.CreatedAt.ToString("ddd, d MMM yyyy")</p>
-
-                    @if (string.IsNullOrWhiteSpace(review.Comment))
-                    {
-                        <p class="mr-mine mr-muted">You left a rating without a comment.</p>
-                    }
-                    else
-                    {
-                        <p class="mr-mine">@review.Comment</p>
-                    }
-
-                    @if (replied)
-                    {
-                        <div class="mr-answer">
-                            <span class="mr-answer-seal" aria-hidden="true">夜</span>
-                            <div class="mr-answer-who">REPLY FROM YORU</div>
-                            <p>@review.AdminReply</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="mr-waiting">The restaurant hasn't replied yet.</p>
-                    }
-                </div>
-            </article>
+            <div class="mr-empty">
+                <div class="mr-empty-seal" lang="ja" aria-hidden="true">声</div>
+                <h3>No reviews yet</h3>
+                <p>After a completed order, you can write to us about your night. Our replies will appear here.</p>
+                <a class="mr-btn" href="/Customer/Feedback/Create">Write a review <span aria-hidden="true">→</span></a>
+            </div>
         }
+        else
+        {
+            <div class="mr-timeline">
+                @foreach (var review in Model.Reviews)
+                {
+                    var replied = !string.IsNullOrWhiteSpace(review.AdminReply);
+                    var typeText = review.Order.OrderType == RROMS.Models.OrderType.DineIn ? "Dine-in" : review.Order.OrderType.ToString();
 
-        <div class="mr-more">
-            <a class="mr-btn" href="/Customer/Feedback/Create">Write another review</a>
-        </div>
-    }
-</section>
+                    <div class="mr-item">
+                        <div class="mr-when @(replied ? "is-replied" : "")" aria-hidden="true">
+                            <span class="mr-dot" lang="ja">@(replied ? "返" : "待")</span>
+                            <b>@review.CreatedAt.ToString("d MMM")</b>
+                            <small>@review.CreatedAt.ToString("yyyy")</small>
+                        </div>
+
+                        <article class="mr-letter @(review.Rating <= 2 ? "is-low" : "")">
+                            <div class="mr-mine-col">
+                                <p class="mr-meta">
+                                    @typeText.ToUpperInvariant()
+                                    <span class="mr-code">@review.Order.OrderNo</span>
+                                    <span class="mr-date">@review.CreatedAt.ToString("ddd, d MMM yyyy")</span>
+                                </p>
+
+                                <div class="mr-stamps" aria-label="@review.Rating of 5, @labels[review.Rating]">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <i class="@(i <= review.Rating ? "is-on" : "")" aria-hidden="true"></i>
+                                    }
+                                    <b>@labels[review.Rating]</b>
+                                </div>
+
+                                @if (string.IsNullOrWhiteSpace(review.Comment))
+                                {
+                                    <p class="mr-mine mr-muted">You left a rating without a comment.</p>
+                                }
+                                else
+                                {
+                                    <p class="mr-mine">@review.Comment</p>
+                                }
+                            </div>
+
+                            @if (replied)
+                            {
+                                <div class="mr-answer">
+                                    <div class="mr-answer-who"><span class="mr-answer-seal" lang="ja" aria-hidden="true">夜</span>REPLY FROM YORU</div>
+                                    <p>@review.AdminReply</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="mr-waiting"><i aria-hidden="true"></i>The restaurant hasn't replied yet.</p>
+                            }
+                        </article>
+                    </div>
+                }
+            </div>
+
+            <div class="mr-more">
+                <a class="mr-btn" href="/Customer/Feedback/Create">Write another review <span aria-hidden="true">→</span></a>
+            </div>
+        }
+    </div>
+</div>
