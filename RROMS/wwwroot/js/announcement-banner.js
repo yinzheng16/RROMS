@@ -29,6 +29,16 @@
     track.insertBefore(copy(real[n - 1]), real[0]);
     track.appendChild(copy(real[0]));
 
+    // Member 1 restyle: "1 / 2" counter and a thin progress line that fills while a slide is shown.
+    const now = bar.querySelector('[data-ab-now]');
+    const progress = bar.querySelector('[data-ab-progress]');
+    function restartProgress() {
+        if (!progress || still) return;
+        progress.classList.remove('is-run');
+        void progress.offsetWidth;              // restart the CSS animation
+        if (!held) progress.classList.add('is-run');
+    }
+
     let pos = 1;            // position in the track: 0 = copy of last, 1..n = real, n + 1 = copy of first
     let moving = false, timer = null, held = false;
 
@@ -38,6 +48,8 @@
         if (!animate) void track.offsetWidth;   // apply the jump before the transition comes back
         pos = p;
         const shown = ((p - 1) % n + n) % n;    // which real slide is visible
+        if (now) now.textContent = String(shown + 1);   // "1 / 2" counter (Member 1 restyle)
+        restartProgress();
         real.forEach((s, x) => {
             s.setAttribute('aria-hidden', x === shown ? 'false' : 'true');
             s.querySelectorAll('a').forEach(a => x === shown ? a.removeAttribute('tabindex') : a.setAttribute('tabindex', '-1'));
@@ -71,7 +83,13 @@
     bar.querySelector('[data-ab-prev]')?.addEventListener('click', () => { move(-1); start(); });
     bar.querySelector('[data-ab-next]')?.addEventListener('click', () => { move(1); start(); });
 
-    const hold = on => { held = on; on ? clearInterval(timer) : start(); };
+    const hold = on => {
+        held = on;
+        bar.classList.toggle('is-held', on);   // pauses the progress line
+        if (on) { clearInterval(timer); return; }
+        start();
+        restartProgress();                     // the timer starts again, so the line does too
+    };
     bar.addEventListener('mouseenter', () => hold(true));
     bar.addEventListener('mouseleave', () => hold(false));
     bar.addEventListener('focusin', () => hold(true));
