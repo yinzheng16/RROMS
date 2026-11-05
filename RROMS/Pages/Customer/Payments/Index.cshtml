@@ -67,6 +67,18 @@
             <!-- ================= Payment records, one card per day ================= -->
             <div class="pay-list" aria-label="Payment records">
 
+                @* US33: bills still to pay -> /Customer/Payments/Pay (hidden when there are none) *@
+                @if (Model.BillsToPay > 0)
+                {
+                    <div class="pay-due" role="status">
+                        <p>
+                            <b>You have @Model.BillsToPay @(Model.BillsToPay == 1 ? "bill" : "bills") to pay</b>
+                            <span>· @IndexModel.Money(Model.BillsToPayTotal) in total</span>
+                        </p>
+                        <a class="pay-due-btn" asp-page="./Pay">Pay now <span aria-hidden="true">→</span></a>
+                    </div>
+                }
+
                 @if (hasError)
                 {
                     <div class="pay-empty pay-empty-error" role="alert">
