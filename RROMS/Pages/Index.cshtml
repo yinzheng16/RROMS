@@ -37,14 +37,12 @@
     }
     string[] colours = { "#E07A5F", "#C2553A", "#A8763E", "#7C8F5A" };
 
+    // Same rounding as the menu and the cart (Member 3's OrderPricingRules).
     string Price(decimal price, decimal? off) =>
-        off is decimal p ? (price * (100 - p) / 100).ToString("0.00") : price.ToString("0.00");
+        (off is decimal p ? RROMS.Services.OrderPricingRules.DiscountedPrice(price, p) : price).ToString("0.00");
 
-    string EndsText(DateTime end)
-    {
-        var days = (end.Date - DateTime.Today).Days;
-        return days <= 0 ? "Last day today" : days == 1 ? "Ends tomorrow" : $"Until {end:d MMM}";
-    }
+    // Same wording as the Menu page (Member 3's PromotionRules): "Ends today", "Ends Sun", "Until 20 Nov".
+    string EndsText(DateTime end) => RROMS.Services.PromotionRules.EndsLabel(end, DateTime.Now);
 
     // Hero words for each mood (the mood comes from today's opening hours).
     var (eyebrow, title) = Model.Info.Mood switch
@@ -66,6 +64,9 @@
 }
 
 <div class="hm">
+
+@* US39 (Member 4): one-line announcement banner; shows nothing when there is no live announcement. *@
+@await Component.InvokeAsync("AnnouncementBanner")
 
 @* ---------- 1. Hero (the mood follows today's opening hours) ---------- *@
 <section class="hm-hero" data-mood="@Model.Info.Mood">
@@ -247,7 +248,13 @@
                 <span class="hm-eyebrow">Right now at YORU · 今だけ</span>
                 <h2 class="hm-h2">Limited time<br /><em>only.</em></h2>
                 <p class="hm-text mb-4">Our current deals, straight from the kitchen. Catch them before they're gone.</p>
-                <a class="btn btn-outline-gold px-4" href="/Menu">Explore the menu <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+                @* Opens the Menu on Member 3's "Specials" list (all dishes on promotion now). *@
+                @{ var moreOffers = Model.OfferTotal - Model.Offers.Count; }
+                <a class="btn btn-outline-gold px-4" href="@Url.Page("/Menu/Index", null, new { area = "", CategoryId = RROMS.Services.CustomerMenuBrowseRules.SpecialsCategoryId }, null, null, "menu-browser")">@(moreOffers > 0 ? $"See all {Model.OfferTotal} specials" : "See all specials") <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
+                @if (moreOffers > 0)
+                {
+                    <p class="hm-offers-more"><i class="bi bi-plus-circle" aria-hidden="true"></i> @moreOffers more @(moreOffers == 1 ? "deal" : "deals") on the menu</p>
+                }
             </div>
             <div class="hm-offers count-@Model.Offers.Count">
                 @for (var i = 0; i < Model.Offers.Count; i++)
@@ -260,14 +267,12 @@
                         {
                             <img class="hm-card-img" src="@Url.Content(o.ImageUrl)" alt="@o.DishName" loading="lazy" onerror="this.remove()" />
                         }
-                        @if (i == 0)
-                        {
-                            <span class="hm-offer-badge"><b>@o.DiscountPercent.ToString("0.#")%</b><span>OFF</span></span>
-                        }
-                        <span class="hm-ends">@EndsText(o.EndDate)</span>
+                        @* every card shows its discount, with the same badge as the Menu page (Member 3) *@
+                        <span class="hm-offer-badge @(i == 0 ? "is-lg" : "")" aria-hidden="true"><b>@o.DiscountPercent.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%</b><span>OFF</span></span>
+                        <span class="hm-ends"><i class="bi bi-clock" aria-hidden="true"></i>@EndsText(o.EndDate)</span>
                         <div class="hm-card-foot">
                             <div><h3>@o.Title</h3><small>@o.DishName</small></div>
-                            <span class="hm-price"><s>RM @o.Price.ToString("0.00")</s>RM @Price(o.Price, o.DiscountPercent)</span>
+                            <span class="hm-price"><s>RM @o.Price.ToString("0.00")</s>RM @((o.FinalPrice ?? RROMS.Services.OrderPricingRules.DiscountedPrice(o.Price, o.DiscountPercent)).ToString("0.00"))</span>
                         </div>
                     </a>
                 }

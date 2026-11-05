@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Globalization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services.Interfaces;
@@ -12,16 +14,27 @@ namespace RROMS.Services
         private readonly IRepository<Bill> _bills;
         private readonly IBillingTransactionRepository _billingTransaction;
 
+        // US38: optional, so existing tests that build PaymentService by hand still compile.
+        private readonly INotificationService? _notifications;
+        private readonly UserManager<ApplicationUser>? _users;
+        private readonly ILogger<PaymentService>? _logger;
+
         public PaymentService(
             IRepository<Payment> payments,
             IRepository<Order> orders,
             IRepository<Bill> bills,
-            IBillingTransactionRepository billingTransaction)
+            IBillingTransactionRepository billingTransaction,
+            INotificationService? notifications = null,
+            UserManager<ApplicationUser>? users = null,
+            ILogger<PaymentService>? logger = null)
         {
             _payments = payments;
             _orders = orders;
             _bills = bills;
             _billingTransaction = billingTransaction;
+            _notifications = notifications;
+            _users = users;
+            _logger = logger;
         }
 
         // US32: Counter payment against a Confirmed bill (one step).
@@ -60,7 +73,7 @@ namespace RROMS.Services
                 throw new ArgumentException(
                     "Transaction reference cannot exceed 100 characters.");
 
-            return await _billingTransaction.ExecuteForBillPaymentAsync(
+            var paid = await _billingTransaction.ExecuteForBillPaymentAsync(
                 billId,
                 async () =>
                 {
@@ -157,6 +170,114 @@ namespace RROMS.Services
 
                     return payment;
                 });
+
+            // US38: notify the customer only after the payment is saved
+            // (outside the transaction, so an email can never undo it).
+            await NotifyPaymentReceivedAsync(paid);
+
+            return paid;
+        }
+
+        // ================= US38: payment received notification =================
+
+        private static readonly CultureInfo En = CultureInfo.InvariantCulture;
+
+        private static string Money(decimal amount) => $"RM {amount.ToString("N2", En)}";
+
+        // In-app notification + email (NotificationService, US38) to the bill's customer.
+        // Never throws: the payment is already saved.
+        private async Task NotifyPaymentReceivedAsync(Payment payment)
+        {
+            if (_notifications is null || payment.BillId is not int billId)
+                return;
+
+            try
+            {
+                var bill = await _bills.Query()
+                    .AsNoTracking()
+                    .Include(b => b.DiningSession!)
+                        .ThenInclude(s => s.Reservation)
+                    .Include(b => b.Orders)
+                    .FirstOrDefaultAsync(b => b.Id == billId);
+
+                if (bill == null)
+                    return;
+
+                string? customerId = await FindCustomerAsync(bill);
+                if (customerId == null)
+                    return;
+
+                bool takeaway = bill.DiningSessionId == null;
+                string billNo = $"YB-{billId:D6}";   // same format as Staff/Billing (IndexModel.FormatBillNo)
+                string amount = Money(payment.Amount);
+
+                var orderNos = bill.Orders
+                    .Where(o => o.Status != OrderStatus.Cancelled)
+                    .OrderBy(o => o.Id)
+                    .Select(o => o.OrderNo)
+                    .ToList();
+
+                var rows = new List<EmailTemplates.Row>
+                {
+                    new("Bill", billNo)
+                };
+
+                if (orderNos.Count > 0)
+                    rows.Add(new(orderNos.Count == 1 ? "Order" : "Orders", string.Join(", ", orderNos)));
+
+                rows.Add(new("Paid on", (payment.PaidAt ?? DateTime.Now).ToString("ddd, d MMM yyyy · h:mm tt", En)));
+                rows.Add(new("Payment method", payment.Method.ToString()));
+                rows.Add(new("Subtotal", Money(bill.Subtotal)));
+                rows.Add(new("Service charge", Money(bill.ServiceCharge)));
+                rows.Add(new("Tax", Money(bill.TaxAmount)));
+                rows.Add(new("Total paid", amount));
+
+                if (!string.IsNullOrEmpty(payment.TransactionRef))
+                    rows.Add(new("Reference", payment.TransactionRef));
+
+                await _notifications.SendAsync(
+                    customerId,
+                    "Payment received",
+                    $"We received your {payment.Method} payment of {amount} for bill {billNo}. Thank you!",
+                    NotificationType.Payment,
+                    new NotificationEmail(
+                        Subject: $"Payment received · {billNo}",
+                        Kicker: "Payment received",
+                        Title: takeaway ? "Thank you for your order" : "Thank you for dining with us",
+                        IntroText: $"We received your payment of {amount}. Here is a summary of your bill.",
+                        Rows: rows,
+                        SmallText: "Keep this email as a record of your payment."));
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex,
+                    "Payment {PaymentId}: the payment-received notification was not sent.", payment.Id);
+            }
+        }
+
+        // The customer of a bill: the dining session's customer, then the reservation's
+        // customer, then whoever placed the orders. Only Customer accounts count, so a
+        // staff member who ordered for a guest never gets the email.
+        private async Task<string?> FindCustomerAsync(Bill bill)
+        {
+            var candidates = new List<string?>
+            {
+                bill.DiningSession?.CustomerId,
+                bill.DiningSession?.Reservation?.UserId
+            };
+            candidates.AddRange(bill.Orders.OrderBy(o => o.Id).Select(o => o.UserId));
+
+            foreach (var id in candidates.Where(x => !string.IsNullOrEmpty(x)).Distinct())
+            {
+                if (_users == null)
+                    return id;
+
+                var user = await _users.FindByIdAsync(id!);
+                if (user != null && await _users.IsInRoleAsync(user, Roles.Customer))
+                    return id;
+            }
+
+            return null;
         }
 
         public Task<List<Payment>> GetPaymentsByBillIdAsync(int billId)

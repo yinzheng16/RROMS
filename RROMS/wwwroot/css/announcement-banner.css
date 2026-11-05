@@ -1,0 +1,163 @@
+/* =====================================================
+   YORU IZAKAYA — US39 home page announcement banner (Member 4)
+   Used by Pages/Shared/Components/AnnouncementBanner/Default.cshtml.
+   One centred line between the navbar and the home hero.
+   Borrowed from those two (no new colours): charcoal background and
+   the navbar's thin gold line, gold small capitals like the nav links
+   and the hero eyebrow, the hero's serif for the title, and the
+   hero's "Our story" outline pill for the button.
+   2 or more: they slide left in turn; plain ‹ › at both ends.
+   Every class starts with ab-.
+   ===================================================== */
+
+.ab-bar {
+    position: relative;
+    background: #120f0d;
+    border-bottom: 1px solid rgba(183, 155, 114, .25);
+    color: var(--yoru-cream, #F5F0E7);
+}
+
+    .ab-bar .bi { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+        .ab-bar .bi::before { display: block; vertical-align: 0; line-height: 1; }
+
+.ab-in {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 3.2rem;
+}
+
+/* the moving part: one slide = the full width between the arrows */
+.ab-view { flex: 1; min-width: 0; height: 100%; overflow: hidden; }
+
+.ab-track {
+    display: flex;
+    height: 100%;
+    transition: transform .6s cubic-bezier(.4, .1, .2, 1);
+}
+
+.ab-slide {
+    flex: 0 0 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;          /* the line sits in the middle of the bar */
+    justify-content: center;
+}
+
+/* Words of different sizes (small capitals, serif title, message) line up on ONE baseline,
+   so the line reads straight; the dot and the button are centred on that line. */
+.ab-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 1rem;
+    min-width: 0;
+    max-width: 100%;
+    line-height: 1.2;
+}
+
+    /* The button also sits on the baseline (its own text lines up with the words), but its
+       negative top/bottom margins keep it out of the line's height: the line is as tall as the
+       words only, so the title is centred in the bar with or without a button. */
+    .ab-line > .ab-go { margin-top: -1rem; margin-bottom: -1rem; transform: translateY(-2.5px); }   /* button 2.5px higher, nothing else moves */
+
+.ab-tag {
+    position: relative;
+    flex: none;
+    display: inline-block;        /* inline-block keeps the text baseline (the dot is placed absolutely) */
+    padding-left: 1rem;
+    color: var(--yoru-gold, #B79B72);
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+    /* small brand-red dot */
+    .ab-tag::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 6px;
+        height: 6px;
+        margin-top: -3px;
+        border-radius: 50%;
+        background: var(--yoru-red, #C83E2D);
+        box-shadow: 0 0 0 3px rgba(200, 62, 45, .18);
+    }
+
+.ab-jp { margin-left: .4rem; font-family: var(--font-display); letter-spacing: .2em; text-transform: none; color: rgba(183, 155, 114, .75); }
+
+.ab-tx {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 46rem;
+    margin: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: rgba(245, 240, 231, .72);
+    font-size: .95rem;
+}
+
+    .ab-tx b { margin-right: .75rem; font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; color: var(--yoru-cream, #F5F0E7); }
+
+.ab-until {
+    flex: none;
+    color: rgba(245, 240, 231, .5);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+/* same outline pill as the hero's "Our story" */
+.ab-go {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    height: 1.85rem;
+    /* the words have no descenders, so centred text looks low: 3px more room at the bottom
+       lifts them until the space above and below the letters looks the same */
+    padding: 0 .95rem 3px;
+    border: 1px solid rgba(183, 155, 114, .45);
+    border-radius: 999px;
+    background: rgba(20, 16, 14, .45);
+    color: var(--yoru-cream, #F5F0E7);
+    font-size: .76rem;
+    letter-spacing: .06em;
+    text-decoration: none;
+    transition: border-color .15s ease, color .15s ease;
+}
+
+    .ab-go:hover, .ab-go:focus-visible { border-color: var(--yoru-gold, #B79B72); color: var(--yoru-gold, #B79B72); }
+
+/* plain ‹ › at the far left and far right (no circles) */
+.ab-arrow {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: rgba(183, 155, 114, .7);
+    font-size: .9rem;
+    transition: color .15s ease;
+}
+
+    .ab-arrow:hover, .ab-arrow:focus-visible { color: var(--yoru-gold, #B79B72); }
+
+@media (prefers-reduced-motion: reduce) {
+    .ab-track { transition: none; }
+}
+
+@media (max-width: 767.98px) {
+    .ab-in { gap: .5rem; }
+    .ab-tag, .ab-until { display: none; }
+    .ab-tx { font-size: .8rem; }
+    .ab-tx span { display: none; }
+}

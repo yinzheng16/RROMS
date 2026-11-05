@@ -1646,3 +1646,23 @@
     .menu-dish-dialog .dish-detail__content {
         padding-block-end: 1.75rem;
     }
+
+
+/* 3 Nov: dish card meta row matches the admin Menu studio cards:
+   bold vermilion category on the left, item code capsule pushed to the right. */
+.customer-menu .tasting-card__meta {
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+    .customer-menu .tasting-card__meta .tasting-card__category {
+        color: #c83e2d;
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .14em;
+    }
+
+    .customer-menu .tasting-card__meta .tasting-card__code {
+        flex: none;
+        margin-inline-start: auto;
+    }

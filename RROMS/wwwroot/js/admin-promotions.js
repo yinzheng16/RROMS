@@ -481,7 +481,14 @@
             const response = await fetch(form.action || location.href, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
             if (response.redirected) {                       // saved: show the updated list and the toast
                 storage.remove(draftKey());
-                try { sessionStorage.setItem(SCROLL_KEY, String(scrollY)); } catch { }
+                // fetch already followed the redirect and used up the TempData message,
+                // so keep the toast text and show it after the reload.
+                const savedPage = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const saved = savedPage.querySelector('.yoru-toast-msg')?.textContent.trim();
+                try {
+                    sessionStorage.setItem(SCROLL_KEY, String(scrollY));
+                    if (saved) sessionStorage.setItem(TOAST_KEY, saved);
+                } catch { }
                 location.href = response.url; return;
             }
             const next = new DOMParser().parseFromString(await response.text(), 'text/html');
@@ -500,18 +507,27 @@
     });
 
     // Same look as the team toast in the shared layout (gold "info" style).
-    function showToast(message) {
+    // Same look as the team toast in the shared layout (gold "info" or green "success").
+    const TOAST_KEY = 'yoru-promo-toast';
+    function showToast(message, success = false) {
         document.querySelector('[data-promo-toast]')?.remove();
         const wrap = document.createElement('div');
         wrap.className = 'yoru-toast-wrap'; wrap.dataset.promoToast = '';
-        wrap.innerHTML = '<div class="yoru-toast yoru-toast--info" role="status" aria-live="polite"><span class="yoru-toast-seal" aria-hidden="true"><i class="bi bi-info-lg"></i></span>'
-            + '<div class="yoru-toast-body"><p class="yoru-toast-title"><span class="yoru-toast-jp">お知らせ</span>Notice</p><p class="yoru-toast-msg"></p></div>'
+        wrap.innerHTML = '<div class="yoru-toast yoru-toast--' + (success ? 'success' : 'info') + '" role="status" aria-live="polite"><span class="yoru-toast-seal" aria-hidden="true"><i class="bi ' + (success ? 'bi-check-lg' : 'bi-info-lg') + '"></i></span>'
+            + '<div class="yoru-toast-body"><p class="yoru-toast-title"><span class="yoru-toast-jp">' + (success ? '完了' : 'お知らせ') + '</span>' + (success ? 'All set' : 'Notice') + '</p><p class="yoru-toast-msg"></p></div>'
             + '<button type="button" class="yoru-toast-close" aria-label="Close notification"><i class="bi bi-x-lg"></i></button></div>';
         wrap.querySelector('.yoru-toast-msg').textContent = message;
         wrap.querySelector('.yoru-toast-close').addEventListener('click', () => wrap.remove());
         document.body.append(wrap);
         setTimeout(() => wrap.remove(), 5000);
     }
+    try {
+        const pending = sessionStorage.getItem(TOAST_KEY);
+        if (pending) {
+            sessionStorage.removeItem(TOAST_KEY);
+            if (!document.querySelector('.yoru-toast-wrap')) showToast(pending, true);
+        }
+    } catch { }
 
     // "New promotion" becomes "Resume draft" while a new-promotion draft is saved.
     // New / Edit / Run again links show "Resume draft" while that form has a saved draft.

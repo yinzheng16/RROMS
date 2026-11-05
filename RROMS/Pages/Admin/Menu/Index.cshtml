@@ -1,67 +1,76 @@
 @page
 @model RROMS.Pages.Admin.Menu.IndexModel
-@using System
 @{
     ViewData["Title"] = "Menu management";
-
+    ViewData["FullWidth"] = true;   // the hero photo runs edge to edge, like Promotions; content sits in .ms-body
+    bool items = Model.MenuView == "items";
 }
+@* Owner: Member 3. Menu studio redesign: categories (small tiles) and dishes (cards),
+   live search, styled filters, pop-up editors with live preview and drafts.
+   The admin Promotions page shares the same button language. *@
+<link rel="stylesheet" href="~/css/admin-menu-studio.css" asp-append-version="true" />
 
-<link rel="stylesheet" href="~/css/menu-item-drawer.css" asp-append-version="true" />
-<link rel="stylesheet" href="~/css/admin-menu-studio-art.css" asp-append-version="true" />
+<div class="ms-page" data-ms-page data-ms-view="@(items ? "items" : "categories")">
+    <header class="ms-hero" aria-labelledby="ms-title">
+        <img class="ms-hero__art" src="~/images/menu/yoru-night-counter.png" asp-append-version="true" alt="" aria-hidden="true" decoding="async" fetchpriority="high" />
+        <div class="container-xl container-wide"><div class="ms-hero__inner">
+            <p class="ms-eyebrow">MENU STUDIO <span aria-hidden="true">·</span> <span lang="ja">お品書き</span></p>
+            <h1 id="ms-title">Every dish has<br /><span>its place.</span></h1>
+            <p class="ms-hero__sub" data-ms-swap="hero-sub">@(items ? "Keep every dish accurate, inviting and ready to order." : "Organise categories, then fill them with dishes.")</p>
+            <div class="ms-hero__row" data-ms-swap="hero-row">
+                <nav class="ms-seg" aria-label="Menu management sections">
+                    <a asp-page="./Index" class="@(items ? "" : "is-on")" aria-current="@(items ? null : "page")" data-ms-nav>Categories</a>
+                    <a asp-page="./Index" asp-route-MenuView="items" class="@(items ? "is-on" : "")" aria-current="@(items ? "page" : null)" data-ms-nav>Menu items</a>
+                </nav>
+                @if (items)
+                {
+                    <a class="ms-btn ms-btn--main" href="@Url.Page("./Index", new { MenuView = "items", New = true })" data-ms-open data-ms-draft-key="item-new"
+                       aria-disabled="@(Model.ItemCategories.Count == 0 ? "true" : null)">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span data-ms-draft-label>New menu item</span>
+                    </a>
+                }
+                else
+                {
+                    <a class="ms-btn ms-btn--main" href="@Url.Page("./Index", new { New = true })" data-ms-open data-ms-draft-key="cat-new">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span data-ms-draft-label>New category</span>
+                    </a>
+                }
+            </div>
+        </div></div>
+    </header>
 
-<div data-menu-studio>
-    <section class="section-dark rounded-4 p-4 p-md-5 mb-4 position-relative overflow-hidden" aria-labelledby="categories-title" data-category-hero>
-        <img src="~/images/menu/yoru-night-counter.png" asp-append-version="true"
-             class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover pe-none"
-             alt="" aria-hidden="true" decoding="async" fetchpriority="high" data-hero-backdrop />
-        <div class="position-absolute top-0 start-0 w-100 h-100 bg-black opacity-25 pe-none" aria-hidden="true"></div>
-        <div class="row g-3 g-md-4 align-items-center position-relative z-1">
-            <div class="col-8 col-md-9">
-                <div class="d-flex align-items-center gap-3 mb-4 flex-wrap" data-menu-hero-brandline>
-                    <span class="small fw-semibold text-white text-uppercase" data-menu-brand-label>YORU IZAKAYA</span>
-                    <span class="small text-white opacity-75 text-uppercase border-start border-primary ps-3">Menu studio</span>
-                </div>
-                <p class="eyebrow text-white opacity-75 mb-2" data-menu-hero-eyebrow>The art of a well-curated menu</p>
-                <h1 id="categories-title" class="display-5 fw-semibold text-white text-break mb-3">Menu studio.</h1>
-                <p class="text-white opacity-75 mb-4" data-menu-hero-description>Every category, every dish. Curate the YORU experience.</p>
-            </div>
-            <div class="col-4 col-md-3">
-                <div class="text-center">
-                    <svg viewBox="0 0 160 145" class="yoru-studio-night-mark" role="img" aria-labelledby="yoru-emblem-title">
-                        <title id="yoru-emblem-title">Yoru — night</title>
-                        <path d="M68 8q7-7 15-2m-4-1q5-3 10-1" stroke="#d52b1d" stroke-width="1.5" fill="none" aria-hidden="true" />
-                        <text x="80" y="91" text-anchor="middle" font-size="82" lang="ja" fill="#fffaf0" font-family="KaiTi,STKaiti,serif" aria-hidden="true">夜</text>
-                        <text x="80" y="124" text-anchor="middle" font-size="9" letter-spacing="4" fill="#e1d9ca" aria-hidden="true">YORU</text>
-                    </svg>
-                    <span class="small text-white opacity-75 text-uppercase text-break d-block" data-menu-hero-caption>Crafted for the night</span>
-                </div>
-            </div>
+    <div class="ms-body"><div class="container-xl container-wide ms-wrap" id="ms-collection">
+        <span class="visually-hidden" role="status" aria-live="polite" data-ms-live></span>
+        <div data-ms-swap="workspace">
+            @if (items)
+            {
+                <partial name="_MenuItems" model="Model" />
+            }
+            else if (Model.Reorder)
+            {
+                <partial name="_MenuCategoryReorder" model="Model" />
+            }
+            else
+            {
+                <partial name="_MenuCategories" model="Model" />
+            }
         </div>
-        <partial name="_MenuHeroControls" model="Model" />
-    </section>
+    </div></div>
 
-    <div data-category-workspace data-menu-view="@Model.MenuView" role="region" aria-label="Menu management">
-        <span class="visually-hidden" role="status" aria-live="polite" data-category-live-status></span>
-
-        @if (Model.MenuView == "items")
+    @* Editors are pop-ups. The server opens one after Edit/New links or a failed save. *@
+    <div data-ms-swap="dialog">
+        @if (items)
         {
-            <partial name="_MenuItems" model="Model" />
+            <partial name="_MenuItemDialog" model="Model" />
         }
         else
         {
-            <partial name="_MenuCategories" model="Model" />
-
+            <partial name="_MenuCategoryDrawer" model="Model" />
         }
     </div>
 
-    <!-- Persistent host shares only the lower collection row, outside the replaceable workspace. -->
-    <div data-menu-editor-host></div>
 </div>
 
-<script src="~/js/menu-drawer-layout.js" asp-append-version="true" defer></script>
-<script src="~/js/menu-category-drawer.js" asp-append-version="true" defer></script>
-<script src="~/js/menu-category-order.js" asp-append-version="true" defer></script>
-<script src="~/js/menu-item-drawer.js" asp-append-version="true" defer></script>
-<script src="~/js/menu-categories.js" asp-append-version="true" defer></script>
-
-<script src="~/js/menu-items.js" asp-append-version="true" defer></script>
+@section Scripts {
+    <script src="~/js/admin-menu-studio.js" asp-append-version="true"></script>
+}

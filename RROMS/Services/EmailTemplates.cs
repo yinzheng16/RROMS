@@ -23,7 +23,8 @@ namespace RROMS.Services
             string? buttonText = null,
             string? buttonUrl = null,
             string? smallText = null,      // grey line under the button
-            string? footerLine = null)     // address · phone
+            string? footerLine = null,     // address · phone
+            bool buttonFullWidth = false)  // US38 (Member 4): button as wide as the facts box
         {
             var sb = new StringBuilder();
             sb.Append("<!doctype html><html><body style=\"margin:0;padding:0;background:#ece6dc\">");
@@ -72,7 +73,10 @@ namespace RROMS.Services
             if (!string.IsNullOrEmpty(buttonText) && !string.IsNullOrEmpty(buttonUrl))
             {
                 sb.Append("<tr><td style=\"padding:18px 30px 4px\">");
-                sb.Append($"<a href=\"{Encode(buttonUrl)}\" style=\"display:inline-block;background:#C83E2D;color:#ffffff;text-decoration:none;font:700 14.5px Arial,sans-serif;padding:12px 24px;border-radius:8px\">{Encode(buttonText)}</a>");
+                var buttonLayout = buttonFullWidth
+                    ? "display:block;text-align:center;padding:13px 24px;border-radius:10px"
+                    : "display:inline-block;padding:12px 24px;border-radius:8px";
+                sb.Append($"<a href=\"{Encode(buttonUrl)}\" style=\"{buttonLayout};background:#C83E2D;color:#ffffff;text-decoration:none;font:700 14.5px Arial,sans-serif\">{Encode(buttonText)}</a>");
                 sb.Append("</td></tr>");
             }
 

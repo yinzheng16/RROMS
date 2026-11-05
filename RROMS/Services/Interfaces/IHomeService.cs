@@ -2,7 +2,8 @@ namespace RROMS.Services.Interfaces
 {
     // Small read-only shapes the Home page shows (no database entities leave the service).
     public record HomeDish(string Name, string? Description, decimal Price, decimal? DiscountPercent, string? ImageUrl, string CategoryName, bool IsPopular, int? Id = null);
-    public record HomeOffer(string Title, string DishName, decimal Price, decimal DiscountPercent, string? ImageUrl, string CategoryName, DateTime EndDate, int? MenuItemId = null);
+    // FinalPrice: the price under this promotion (US29: a % off or a fixed promo price), already rounded.
+    public record HomeOffer(string Title, string DishName, decimal Price, decimal DiscountPercent, string? ImageUrl, string CategoryName, DateTime EndDate, int? MenuItemId = null, decimal? FinalPrice = null);
     public record HomeHoursRow(string Days, string Hours, bool IsClosed);
     public record OmikujiDish(string Name, string Category, decimal Price, int? Id = null);
     // Everything the quick booking box needs (sent to the browser as JSON).
@@ -35,6 +36,9 @@ namespace RROMS.Services.Interfaces
         // Up to `count` active promotions (started, not ended), the one ending soonest first.
         // Later (US39) Member 4's announcements can be added here too.
         Task<List<HomeOffer>> GetActiveOffersAsync(int count = 3);
+
+        // How many dishes are on promotion now (same number as the Menu's "Specials"), for "See all 5 specials".
+        Task<int> CountOfferDishesAsync();
 
         // Opening hours with days that have the same hours grouped: "Tuesday – Sunday  5:00 PM – 12:00 AM",
         // breaks shown as "10:00 AM – 3:00 PM · 5:00 PM – 10:00 PM", then the next few special dates.

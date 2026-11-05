@@ -1,0 +1,468 @@
+/* =========================================================
+   US43 My reviews (Member 5) — customer sees the restaurant's replies.
+   Letter style in the YORU night design, same family as the
+   feedback form (US42): night banner, cream page, letters on a timeline.
+   Used by Pages/Customer/Feedback/Index only. Classes start with mr-.
+   ========================================================= */
+
+.mr-page {
+    --mr-ink: #231C18;
+    --mr-text: #3A2E27;
+    --mr-muted: #8A7A6E;
+    --mr-cream: #F4ECE0;
+    --mr-paper: #FFFAF2;
+    --mr-line: #E6D6C2;
+    --mr-line-2: #D4B9A6;
+    --mr-red: #C9392B;
+    --mr-red-dark: #A92E22;
+    --mr-gold: #E0B46A;
+    --mr-amber: #C9A24A;
+    --mr-serif: "Shippori Mincho", "Noto Serif JP", Georgia, serif;
+    --mr-brush: "Yuji Syuku", "Shippori Mincho", Georgia, serif;
+
+    background: var(--mr-cream);
+    color: var(--mr-text);
+}
+
+.mr-page *,
+.mr-page *::before,
+.mr-page *::after {
+    box-sizing: border-box;
+}
+
+/* ---------- Night banner (same as the feedback form) ---------- */
+
+.mr-banner {
+    position: relative;
+    overflow: hidden;
+    padding: 46px 24px 78px;
+    color: #fff;
+    background:
+            radial-gradient(circle at 84% 42%, rgba(206, 62, 40, .9) 0 56px, transparent 58px),
+            radial-gradient(ellipse at 84% 42%, rgba(230, 110, 60, .35), transparent 28%),
+            radial-gradient(ellipse at 20% 120%, rgba(120, 20, 12, .6), transparent 50%),
+            linear-gradient(180deg, #1A100D, #0F0907);
+}
+
+.mr-banner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(circle, #F3A5AE 0 2px, transparent 3px) 0 0 / 110px 80px;
+    opacity: .16;
+}
+
+.mr-banner::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 34px;
+    background: radial-gradient(ellipse 26px 16px at 50% 100%, var(--mr-cream) 60%, transparent 62%) 0 0 / 52px 34px repeat-x;
+}
+
+.mr-banner-in {
+    position: relative;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.mr-banner-vert {
+    position: absolute;
+    right: 0;
+    top: -6px;
+    writing-mode: vertical-rl;
+    font-family: var(--mr-serif);
+    font-size: 12px;
+    letter-spacing: .5em;
+    color: #C7B4A6;
+    opacity: .7;
+}
+
+.mr-eyebrow {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .24em;
+    color: var(--mr-gold);
+}
+
+.mr-eyebrow b {
+    font-family: var(--mr-serif);
+    font-weight: 500;
+    letter-spacing: .1em;
+}
+
+.mr-title {
+    margin: 10px 0 8px;
+    font-family: var(--mr-serif);
+    font-weight: 600;
+    font-size: clamp(34px, 4.2vw, 52px);
+    line-height: 1.1;
+    color: #fff;
+}
+
+.mr-title em {
+    font-style: normal;
+    color: var(--mr-red);
+}
+
+.mr-banner-lede {
+    max-width: 480px;
+    margin: 0;
+    color: #E8DCD2;
+}
+
+/* ---------- Page ---------- */
+
+.mr-wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 34px 24px 70px;
+}
+
+.mr-head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.mr-sec-eyebrow {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .24em;
+    color: var(--mr-red);
+}
+
+.mr-sec-title {
+    margin: 6px 0 0;
+    font-family: var(--mr-serif);
+    font-weight: 600;
+    font-size: 32px;
+    color: var(--mr-ink);
+}
+
+.mr-stats {
+    display: flex;
+    gap: 22px;
+}
+
+.mr-stats div {
+    text-align: right;
+}
+
+.mr-stats b {
+    display: block;
+    font-family: var(--mr-serif);
+    font-size: 28px;
+    line-height: 1;
+    color: var(--mr-red);
+}
+
+.mr-stats small {
+    font-size: 12px;
+    color: var(--mr-muted);
+}
+
+/* ---------- Timeline ---------- */
+
+.mr-timeline {
+    position: relative;
+    padding-left: 120px;
+}
+
+.mr-timeline::before {
+    content: "";
+    position: absolute;
+    left: 51px;
+    top: 10px;
+    bottom: 30px;
+    border-left: 1px dashed var(--mr-line-2);
+}
+
+.mr-item {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.mr-when {
+    position: absolute;
+    left: -120px;
+    top: 4px;
+    width: 104px;
+    text-align: center;
+}
+
+.mr-dot {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 6px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--mr-red);
+    border-radius: 50%;
+    background: var(--mr-cream);
+    color: var(--mr-red);
+    font-family: var(--mr-serif);
+    font-size: 16px;
+}
+
+.mr-when.is-replied .mr-dot {
+    background: var(--mr-red);
+    color: #fff;
+}
+
+.mr-when b {
+    display: block;
+    font-family: var(--mr-serif);
+    font-size: 15px;
+    color: var(--mr-ink);
+}
+
+.mr-when small {
+    font-size: 11.5px;
+    color: var(--mr-muted);
+}
+
+/* ---------- One letter ---------- */
+
+.mr-letter {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 22px;
+    padding: 20px 24px;
+    border: 1px solid var(--mr-line);
+    border-radius: 4px;
+    background: var(--mr-paper);
+    box-shadow: 0 10px 24px rgba(80, 50, 30, .08);
+}
+
+.mr-letter.is-low {
+    border-left: 3px solid var(--mr-red);
+}
+
+.mr-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    color: var(--mr-red);
+}
+
+.mr-code {
+    padding: 2px 8px;
+    border: 1px solid #D9C6B1;
+    border-radius: 4px;
+    background: var(--mr-paper);
+    font-size: 12px;
+    letter-spacing: .06em;
+    color: var(--mr-text);
+}
+
+.mr-date {
+    font-weight: 400;
+    letter-spacing: .02em;
+    color: var(--mr-muted);
+}
+
+.mr-stamps {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mr-stamps i {
+    width: 20px;
+    height: 20px;
+    border: 1.3px solid #E0C9B8;
+    border-radius: 3px;
+}
+
+.mr-stamps i.is-on {
+    border-color: var(--mr-red);
+    background: var(--mr-red);
+}
+
+.mr-stamps b {
+    margin-left: 8px;
+    font-family: var(--mr-serif);
+    font-size: 16px;
+    color: var(--mr-ink);
+}
+
+.mr-mine {
+    margin: 10px 0 0;
+    font-family: var(--mr-serif);
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: var(--mr-text);
+    overflow-wrap: anywhere;
+}
+
+.mr-muted {
+    font-family: inherit;
+    font-size: 14px;
+    font-style: italic;
+    color: #A8968A;
+}
+
+/* The restaurant's reply */
+.mr-answer {
+    align-self: start;
+    padding: 14px 16px;
+    border: 1px solid #EFD6CC;
+    border-left: 3px solid var(--mr-red);
+    border-radius: 4px;
+    background: #fff;
+}
+
+.mr-answer-who {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .2em;
+    color: var(--mr-red);
+}
+
+.mr-answer-seal {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: 1.3px solid var(--mr-red);
+    font-family: var(--mr-serif);
+    font-size: 12px;
+    letter-spacing: 0;
+    transform: rotate(-6deg);
+}
+
+.mr-answer p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--mr-text);
+    overflow-wrap: anywhere;
+}
+
+.mr-waiting {
+    align-self: start;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0;
+    padding: 14px 16px;
+    border: 1px dashed #D4BFA9;
+    border-radius: 4px;
+    font-size: 13.5px;
+    color: var(--mr-muted);
+}
+
+.mr-waiting i {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: var(--mr-amber);
+}
+
+/* ---------- Buttons / empty ---------- */
+
+.mr-more {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.mr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 26px;
+    border-radius: 3px;
+    background: var(--mr-red);
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .15s;
+}
+
+.mr-btn:hover {
+    background: var(--mr-red-dark);
+    color: #fff;
+}
+
+.mr-empty {
+    padding: 40px 20px;
+    border: 1px solid var(--mr-line);
+    border-radius: 4px;
+    background: var(--mr-paper);
+    box-shadow: 0 10px 24px rgba(80, 50, 30, .08);
+    text-align: center;
+}
+
+.mr-empty-seal {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--mr-red);
+    color: var(--mr-red);
+    font-family: var(--mr-serif);
+    font-size: 34px;
+    transform: rotate(-6deg);
+}
+
+.mr-empty h3 {
+    margin: 0 0 6px;
+    font-family: var(--mr-serif);
+    font-size: 24px;
+    color: var(--mr-ink);
+}
+
+.mr-empty p {
+    max-width: 420px;
+    margin: 0 auto 20px;
+    color: var(--mr-muted);
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 900px) {
+    .mr-letter {
+        grid-template-columns: 1fr;
+    }
+
+    .mr-timeline {
+        padding-left: 0;
+    }
+
+    .mr-timeline::before,
+    .mr-when,
+    .mr-banner-vert {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    .mr-letter {
+        padding: 16px;
+    }
+
+    .mr-sec-title {
+        font-size: 26px;
+    }
+}

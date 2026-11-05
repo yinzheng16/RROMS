@@ -1,0 +1,183 @@
+@page
+@model RROMS.Pages.Customer.Feedback.Create
+
+@{
+    // US42 Customer Feedback & Rating (Member 5)
+    // Design: 手紙 "Letter" in the YORU night style (short night banner + cream page).
+    // Styles: wwwroot/css/feedback.css · Script: wwwroot/js/feedback.js
+    ViewData["Title"] = "Customer Feedback";
+    ViewData["FullWidth"] = true;   // the banner goes edge to edge; the page draws its own container
+
+    var ratingLabels = new[] { "Poor", "Fair", "Good", "Very good", "Excellent" };
+    var quickPhrases = new[] { "Great food", "Friendly staff", "Nice atmosphere", "Worth the price", "Slow service" };
+}
+
+@* Brush font for the handwritten parts of the letter *@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&display=swap" />
+<link rel="stylesheet" href="~/css/feedback.css" asp-append-version="true" />
+
+<div class="fb-page">
+
+    @* ================= Night banner ================= *@
+    <section class="fb-banner">
+        <div class="fb-banner-in">
+            <span class="fb-banner-vert" aria-hidden="true">お客様の声</span>
+            <p class="fb-eyebrow"><b lang="ja">ご感想</b> · FEEDBACK</p>
+            <h1 class="fb-title">A note about <em>your night.</em></h1>
+            <p class="fb-banner-lede">Write to us like a letter: choose the visit, stamp a rating and tell us what you remember most.</p>
+        </div>
+    </section>
+
+    <div class="fb-wrap">
+        <div class="fb-layout">
+
+            @* ================= How it works ================= *@
+            <aside class="fb-guide" aria-label="How it works">
+                <p class="fb-guide-eyebrow">HOW IT WORKS · <span lang="ja">手順</span></p>
+                <h2 class="fb-guide-title">Three small steps.</h2>
+
+                <div class="fb-step is-on" id="fbStep1">
+                    <span class="fb-step-k" lang="ja" aria-hidden="true">選</span>
+                    <div><small>STEP ONE</small><b>Choose the visit</b><span>Any completed order.</span></div>
+                </div>
+                <div class="fb-step" id="fbStep2">
+                    <span class="fb-step-k" lang="ja" aria-hidden="true">印</span>
+                    <div><small>STEP TWO</small><b>Stamp a rating</b><span>From 1 to 5.</span></div>
+                </div>
+                <div class="fb-step" id="fbStep3">
+                    <span class="fb-step-k" lang="ja" aria-hidden="true">書</span>
+                    <div><small>STEP THREE</small><b>Add your words</b><span>Optional, up to 500 characters.</span></div>
+                </div>
+
+                <p class="fb-guide-tip">Our team reads every review and replies in <a href="/Customer/Feedback">My reviews →</a></p>
+            </aside>
+
+            @* ================= The letter ================= *@
+            <div class="fb-letter">
+                <aside class="fb-spine" aria-hidden="true">
+                    <span class="fb-seal" lang="ja">夜</span>
+                    <span class="fb-spine-text" lang="ja">お客様の声</span>
+                </aside>
+
+                <div class="fb-body">
+                    <p class="fb-to">Dear YORU,</p>
+                    <h2 class="fb-letter-title">About my evening</h2>
+                    <p class="fb-lede">One review per completed order.</p>
+
+                    @if (Model.EligibleOrders.Count == 0)
+                    {
+                        <div class="fb-empty">
+                            <div class="fb-empty-seal" lang="ja" aria-hidden="true">声</div>
+                            <h3>Nothing to review yet</h3>
+                            <p>Once one of your orders is completed, come back here and tell us about your night.</p>
+                            <a class="fb-submit" href="/">Back to home</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <form method="post" id="fbForm">
+
+                            <div asp-validation-summary="ModelOnly" class="fb-summary"></div>
+
+                            <!-- 1. Which visit? -->
+                            <fieldset class="fb-field">
+                                <legend class="fb-label"><i aria-hidden="true">1</i>WHICH VISIT? <small>Completed orders</small></legend>
+
+                                <div class="fb-orders">
+                                    @foreach (var order in Model.EligibleOrders)
+                                    {
+                                        var isDineIn = order.OrderType == RROMS.Models.OrderType.DineIn;
+                                        var typeText = isDineIn ? "Dine-in" : order.OrderType.ToString();
+                                        var itemCount = order.Items.Count;
+
+                                        <label class="fb-order">
+                                            <input type="radio"
+                                                   asp-for="OrderId"
+                                                   value="@order.Id"
+                                                   id="order-@order.Id"
+                                                   class="fb-hidden-input" />
+                                            <span class="fb-order-code">@order.OrderNo</span>
+                                            <span class="fb-order-text">
+                                                <b>
+                                                    @typeText
+                                                    @if (itemCount > 0)
+                                                    {
+                                                        <text> · @itemCount @(itemCount == 1 ? "item" : "items")</text>
+                                                    }
+                                                </b>
+                                                <small>@order.CreatedAt.ToString("ddd, d MMM · h:mm tt")</small>
+                                            </span>
+                                            <span class="fb-order-amount">RM @order.TotalAmount.ToString("N2")</span>
+                                            <span class="fb-order-tick" aria-hidden="true"></span>
+                                        </label>
+                                    }
+                                </div>
+
+                                <span asp-validation-for="OrderId" class="fb-error"></span>
+                            </fieldset>
+
+                            <!-- 2. Stamp your rating -->
+                            <fieldset class="fb-field">
+                                <legend class="fb-label"><i aria-hidden="true">2</i>STAMP YOUR RATING <small>Tap a stamp</small></legend>
+
+                                <div class="fb-stamps" id="fbStamps">
+                                    @for (var i = 1; i <= 5; i++)
+                                    {
+                                        <label class="fb-stamp" title="@ratingLabels[i - 1]">
+                                            <input type="radio"
+                                                   asp-for="Rating"
+                                                   value="@i"
+                                                   id="rating-@i"
+                                                   class="fb-hidden-input" />
+                                            <span class="fb-stamp-face">@i<small>@ratingLabels[i - 1]</small></span>
+                                            <span class="fb-visually-hidden">@i of 5, @ratingLabels[i - 1]</span>
+                                        </label>
+                                    }
+                                </div>
+
+                                <div class="fb-rating-text" id="fbRatingText" aria-live="polite">Tap a stamp to rate your night</div>
+                                <span asp-validation-for="Rating" class="fb-error"></span>
+                            </fieldset>
+
+                            <!-- 3. Your words -->
+                            <div class="fb-field">
+                                <label class="fb-label" asp-for="Comment"><i aria-hidden="true">3</i>YOUR WORDS <small>Optional</small></label>
+
+                                <textarea asp-for="Comment"
+                                          id="fbComment"
+                                          class="fb-comment"
+                                          maxlength="500"
+                                          rows="5"
+                                          placeholder="What did you enjoy? Is there anything we can do better?"></textarea>
+
+                                <div class="fb-under">
+                                    <span>Tap a phrase to add it</span>
+                                    <span><span id="fbCount">0</span> / 500</span>
+                                </div>
+
+                                <div class="fb-phrases">
+                                    @foreach (var phrase in quickPhrases)
+                                    {
+                                        <button type="button" class="fb-phrase">@phrase</button>
+                                    }
+                                </div>
+
+                                <span asp-validation-for="Comment" class="fb-error"></span>
+                            </div>
+
+                            <div class="fb-actions">
+                                <p class="fb-sign"><span lang="ja">ありがとう</span><small>Thank you for dining with us.</small></p>
+                                <button type="submit" class="fb-submit">Send my letter <span aria-hidden="true">→</span></button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/feedback.js" asp-append-version="true"></script>
+}

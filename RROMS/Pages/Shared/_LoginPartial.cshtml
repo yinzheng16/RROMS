@@ -24,16 +24,8 @@
                 <i class="bi bi-bag"></i>
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link nav-icon" href="/Customer/Notifications" title="Notifications"
-               aria-label="Notifications, @unread unread">
-                <i class="bi bi-bell"></i>
-                @if (unread > 0)
-                {
-                    <span class="nav-badge">@(unread > 9 ? "9+" : unread.ToString())</span>
-                }
-            </a>
-        </li>
+        @* US37 (Member 4): bell with dropdown, live badge and toasts *@
+        <partial name="_NotificationBell" model="unread" />
     }
 
     <li class="nav-item dropdown">

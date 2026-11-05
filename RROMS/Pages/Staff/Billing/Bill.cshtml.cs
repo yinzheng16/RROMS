@@ -32,26 +32,26 @@ namespace RROMS.Pages.Staff.Billing
 
         private readonly UserManager<ApplicationUser> _userManager;
 
-        // US35: the same PDF receipt the customer downloads.
-        private readonly IReceiptService _receiptService;
-
         // US33: online payments (Stripe) of the bill shown on this page.
         private readonly IOnlinePaymentService _onlinePayments;
+
+        // US35: the same PDF receipt the customer downloads.
+        private readonly IReceiptService _receiptService;
 
         public BillModel(
             IBillingService billingService,
             IPaymentService paymentService,
             IReportService reportService,
             UserManager<ApplicationUser> userManager,
-            IReceiptService receiptService,
-            IOnlinePaymentService onlinePayments)
+            IOnlinePaymentService onlinePayments,
+            IReceiptService receiptService)
         {
             _billingService = billingService;
             _paymentService = paymentService;
             _reportService = reportService;
             _userManager = userManager;
-            _receiptService = receiptService;
             _onlinePayments = onlinePayments;
+            _receiptService = receiptService;
         }
 
         // ---------- Query string ----------

@@ -1,0 +1,379 @@
+@page
+@model RROMS.Pages.Admin.Announcements.IndexModel
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services
+@using RROMS.Services.Interfaces
+@{
+    // US39 Admin → Announcements (Owner: Member 4)
+    // Styles: wwwroot/css/admin-announcements.css (every class starts with an-)
+    // Script: wwwroot/js/admin-announcements.js (pop-ups, character counts, send confirm)
+    // Banner borrowed from the other Admin pages (night izakaya, gold line, seigaiha waves),
+    // drawn in CSS: tanzaku paper strips on a bamboo rod. Pop-up header: asanoha pattern.
+    ViewData["Title"] = "Announcements";
+    ViewData["FullWidth"] = true;   // the banner runs edge to edge; the page draws its own container
+
+    var inv = CultureInfo.InvariantCulture;
+    var input = Model.Input;
+    bool editing = input.Id != 0;
+    var filtered = Model.SearchText is not null || Model.StatusFilter is not null;
+
+    string StateLabel(AnnouncementState s) => s == AnnouncementState.Running ? "Live" : s.ToString();
+    string StateClass(AnnouncementState s) => s switch
+    {
+        AnnouncementState.Running => "is-live",
+        AnnouncementState.Scheduled => "is-sch",
+        AnnouncementState.Stopped => "is-stop",
+        _ => "is-end"
+    };
+
+    var chips = new (string? Value, string Label, int Count, string Css)[]
+    {
+        (null, "All", Model.All.Count, ""),
+        ("live", "Live", Model.Count(AnnouncementState.Running), "is-live"),
+        ("scheduled", "Scheduled", Model.Count(AnnouncementState.Scheduled), "is-sch"),
+        ("stopped", "Stopped", Model.Count(AnnouncementState.Stopped), "is-stop"),
+        ("ended", "Ended", Model.Count(AnnouncementState.Ended), "is-end")
+    };
+    var currentStatus = Model.StatusFilter is null ? null : Model.Status!.ToLowerInvariant();
+
+    string Plural(int n, string one, string many) => n == 1 ? $"{n} {one}" : $"{n} {many}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-announcements.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/admin-announcements.js" asp-append-version="true"></script>
+}
+
+<div class="an-page">
+
+    @* ================= BANNER (edge to edge) ================= *@
+    <section class="an-hero">
+        <div class="container-xl container-wide an-hero-in">
+            <div class="an-art" aria-hidden="true">
+                <span class="an-rod"></span>
+                <span class="an-strip s1"></span><span class="an-strip s2"></span>
+                <span class="an-strip s3"></span><span class="an-strip s4"></span>
+            </div>
+            <div class="an-hero-tx">
+                <p class="an-eyebrow">ADMINISTRATION <span>·</span> <span class="jp" lang="ja">お知らせ</span></p>
+                <h1>Announcements <em>&amp; Campaigns</em></h1>
+                <p class="an-lede">Share news and offers with every guest: a banner on the home page while it runs, and one message to each customer in-app and by email.</p>
+            </div>
+            <a class="an-add" href="@Url.Page("./Index", new { New = true, q = Model.SearchText, status = currentStatus })" data-an-new>
+                <i class="bi bi-plus-lg" aria-hidden="true"></i>New announcement
+            </a>
+        </div>
+    </section>
+
+    <div class="container-xl container-wide an-body">
+        <div class="an-grid">
+
+            @* ================= LIST ================= *@
+            <section class="an-panel" aria-labelledby="an-list-title">
+                <header class="an-panel-head">
+                    <h2 id="an-list-title">All announcements</h2>
+                    <form method="get" class="an-search" role="search">
+                        @if (currentStatus is not null)
+                        {
+                            <input type="hidden" name="status" value="@currentStatus" />
+                        }
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <label for="an-q" class="visually-hidden">Search announcements</label>
+                        <input id="an-q" type="search" name="q" value="@Model.SearchText" maxlength="100"
+                               placeholder="Search title or message…" autocomplete="off" />
+                        @if (Model.SearchText is not null)
+                        {
+                            <a class="an-search-clear" href="@Model.ListUrl(keepSearch: false)" aria-label="Clear search"><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+                        }
+                    </form>
+                </header>
+
+                <nav class="an-chips" aria-label="Filter by status">
+                    @foreach (var chip in chips)
+                    {
+                        var on = chip.Value == currentStatus;
+                        <a class="an-chip @chip.Css @(on ? "is-on" : "")" href="@Model.ListUrl(chip.Value, keepStatus: false)"
+                           aria-current="@(on ? "true" : null)">
+                            @if (chip.Value is not null) { <span class="an-dot" aria-hidden="true"></span> }
+                            @chip.Label <span class="an-n">@chip.Count</span>
+                        </a>
+                    }
+                </nav>
+
+                @if (Model.Rows.Count == 0)
+                {
+                    <div class="an-empty">
+                        <i class="bi bi-megaphone" aria-hidden="true"></i>
+                        <h3>@(filtered ? "No announcements match" : "No announcements yet")</h3>
+                        <p>@(filtered ? "Try another word or status." : "Write your first one: it shows on the home page on its dates and you can send it to every customer.")</p>
+                        @if (filtered)
+                        {
+                            <a href="@Url.Page("./Index")">Show all announcements</a>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <ol class="an-list">
+                        @foreach (var row in Model.Rows)
+                        {
+                            var linkText = AnnouncementLinks.Text(row.Link);
+                            <li class="an-row @StateClass(row.State)">
+                                <div class="an-date" aria-hidden="true">
+                                    <small>@row.StartDate.ToString("MMM", inv).ToUpperInvariant()</small>
+                                    <b>@row.StartDate.Day</b>
+                                    <span>@(row.StartDate.Date == row.EndDate.Date ? "1 day" : "to " + row.EndDate.ToString("d MMM", inv))</span>
+                                </div>
+
+                                <div class="an-row-main">
+                                    <h3>@row.Title</h3>
+                                    <p class="an-msg">@row.Message</p>
+                                    <div class="an-meta">
+                                        <span class="an-pill @StateClass(row.State)">@StateLabel(row.State)</span>
+                                        <span><i class="bi bi-calendar3" aria-hidden="true"></i>@AnnouncementService.Dates(row.StartDate, row.EndDate)</span>
+                                        @if (linkText is not null)
+                                        {
+                                            <span><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>@linkText</span>
+                                        }
+                                        @if (row.IsSent)
+                                        {
+                                            <span class="an-sent"><i class="bi bi-envelope-check" aria-hidden="true"></i>Sent @row.SentAt!.Value.ToString("d MMM, h:mm tt", inv) to @Plural(row.RecipientCount, "customer", "customers")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="an-unsent"><i class="bi bi-send" aria-hidden="true"></i>Not sent yet</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="an-acts">
+                                    @if (row.CanSend)
+                                    {
+                                        <form method="post" asp-page-handler="Send" asp-route-id="@row.Id" asp-route-q="@Model.SearchText" asp-route-status="@currentStatus"
+                                              data-an-send data-title="@row.Title">
+                                            <button type="submit" class="an-send"><i class="bi bi-send" aria-hidden="true"></i>Send</button>
+                                        </form>
+                                    }
+
+                                    @if (row.State != AnnouncementState.Ended)
+                                    {
+                                        <a class="an-ib" href="@Url.Page("./Index", new { Edit = row.Id, q = Model.SearchText, status = currentStatus })"
+                                           title="Edit" aria-label="Edit: @row.Title"
+                                           data-an-edit data-id="@row.Id" data-title="@row.Title" data-message="@row.Message"
+                                           data-start="@row.StartDate.ToString("yyyy-MM-ddTHH:mm", inv)" data-end="@row.EndDate.ToString("yyyy-MM-ddTHH:mm", inv)"
+                                           data-link="@row.Link" data-sent="@(row.IsSent ? "true" : "false")">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                                        </a>
+                                    }
+
+                                    <a class="an-ib" href="@Url.Page("./Index", new { Copy = row.Id, q = Model.SearchText, status = currentStatus })"
+                                       title="Copy as a new announcement" aria-label="Copy: @row.Title"
+                                       data-an-copy data-title="@row.Title" data-message="@row.Message"
+                                       data-minutes="@((int)(row.EndDate - row.StartDate).TotalMinutes)"
+                                       data-start="@row.StartDate.ToString("yyyy-MM-ddTHH:mm", inv)" data-end="@row.EndDate.ToString("yyyy-MM-ddTHH:mm", inv)"
+                                       data-link="@row.Link">
+                                        <i class="bi bi-copy" aria-hidden="true"></i>
+                                    </a>
+
+                                    @if (row.State == AnnouncementState.Stopped)
+                                    {
+                                        <form method="post" asp-page-handler="Resume" asp-route-id="@row.Id" asp-route-q="@Model.SearchText" asp-route-status="@currentStatus">
+                                            <button type="submit" class="an-ib" title="Show the banner again" aria-label="Resume: @row.Title"><i class="bi bi-play-fill" aria-hidden="true"></i></button>
+                                        </form>
+                                    }
+                                    else if (row.State != AnnouncementState.Ended)
+                                    {
+                                        <form method="post" asp-page-handler="Stop" asp-route-id="@row.Id" asp-route-q="@Model.SearchText" asp-route-status="@currentStatus">
+                                            <button type="submit" class="an-ib" title="Stop the banner" aria-label="Stop: @row.Title"><i class="bi bi-pause-fill" aria-hidden="true"></i></button>
+                                        </form>
+                                    }
+
+                                    @if (!row.IsSent)
+                                    {
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@row.Id" asp-route-q="@Model.SearchText" asp-route-status="@currentStatus"
+                                              data-an-delete data-title="@row.Title">
+                                            <button type="submit" class="an-ib is-del" title="Delete" aria-label="Delete: @row.Title"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                                        </form>
+                                    }
+                                </div>
+                            </li>
+                        }
+                    </ol>
+                    <footer class="an-foot">
+                        <span>@Plural(Model.Rows.Count, "announcement", "announcements")@(filtered ? $" of {Model.All.Count}" : "")</span>
+                        <span>Newest first</span>
+                    </footer>
+                }
+            </section>
+
+            @* ================= SIDE ================= *@
+            <aside class="an-side">
+                <section class="an-panel an-side-card" aria-labelledby="an-home-title" data-an-mini>
+                    <h2 id="an-home-title">On the home page now
+                        @if (Model.OnHomePage.Count > 0) { <span class="an-live-n">@Model.Count(AnnouncementState.Running)</span> }
+                    </h2>
+                    @if (Model.OnHomePage.Count == 0)
+                    {
+                        <p class="an-hint">Nothing today. A live announcement shows here and at the top of the home page.</p>
+                        <div class="an-mini is-empty" aria-hidden="true"><span class="an-mini-hero"></span></div>
+                    }
+                    else
+                    {
+                        var first = Model.OnHomePage[0];
+                        var firstLink = AnnouncementLinks.Text(first.Link);
+                        var waiting = Model.Count(AnnouncementState.Running) - Model.OnHomePage.Count;
+                        <p class="an-hint">@(Model.OnHomePage.Count == 1
+                            ? "Shown at the top of the home page."
+                            : $"They take turns at the top of the home page, newest first, {AnnouncementBanner.SlideSeconds} seconds each.")</p>
+                        <a class="an-mini" href="/" target="_blank" rel="noopener" title="Open the home page in a new tab">
+                            <span class="an-mini-bar">
+                                @if (Model.OnHomePage.Count > 1) { <i class="bi bi-chevron-left an-mini-arrow" aria-hidden="true"></i> }
+                                <span class="an-mini-tag">NEWS</span>
+                                <span class="an-mini-t" data-an-mini-title>@first.Title</span>
+                                <span class="an-mini-btn" data-an-mini-btn hidden="@(firstLink is null)">@firstLink</span>
+                                @if (Model.OnHomePage.Count > 1) { <i class="bi bi-chevron-right an-mini-arrow" aria-hidden="true"></i> }
+                            </span>
+                            <span class="an-mini-hero" aria-hidden="true"></span>
+                        </a>
+
+                        @if (Model.OnHomePage.Count > 1)
+                        {
+                            <div class="an-rot-h"><span>TAKING TURNS</span><span>UNTIL</span></div>
+                            <ol class="an-rot" data-seconds="@AnnouncementBanner.SlideSeconds">
+                                @for (var i = 0; i < Model.OnHomePage.Count; i++)
+                                {
+                                    var item = Model.OnHomePage[i];
+                                    var text = AnnouncementLinks.Text(item.Link);
+                                    <li class="@(i == 0 ? "is-on" : "")">
+                                        <button type="button" data-an-mini-item data-title="@item.Title" data-button="@text">
+                                            <span class="an-rot-no">@(i + 1)</span>
+                                            <span class="an-rot-tx"><b>@item.Title</b><span>@(text ?? "No button")</span></span>
+                                            <span class="an-rot-end">@AnnouncementTimes.Until(item.EndDate)</span>
+                                        </button>
+                                    </li>
+                                }
+                            </ol>
+                            @if (waiting > 0)
+                            {
+                                <p class="an-rot-more">+@waiting more live, waiting for a turn (only the newest @AnnouncementBanner.MaxSlides take turns).</p>
+                            }
+                        }
+                    }
+                </section>
+            </aside>
+        </div>
+    </div>
+
+    @* ================= POP-UP: new / edit ================= *@
+    <div class="an-modal-wrap" id="anForm" hidden="@(!Model.OpenForm)">
+        <div class="an-modal" role="dialog" aria-modal="true" aria-labelledby="anFormTitle">
+            <header class="an-modal-head">
+                <small data-an-form-kicker>@(editing ? "EDIT ANNOUNCEMENT · 編集" : "NEW ANNOUNCEMENT · 新しいお知らせ")</small>
+                <h3 id="anFormTitle" data-an-form-title>@(editing ? "Edit announcement" : "Tell your guests")</h3>
+                <a class="an-x" href="@Model.ListUrl()" aria-label="Close" data-an-close><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+            </header>
+
+            <form method="post" asp-page-handler="Save" asp-route-q="@Model.SearchText" asp-route-status="@currentStatus" novalidate data-an-form>
+                <div class="an-modal-body">
+                    <input type="hidden" asp-for="Input.Id" data-an-field="id" />
+                    <input type="hidden" asp-for="Input.IsSent" data-an-field="sent" />
+
+                    <p class="an-locked" data-an-locked hidden="@(!input.IsSent)">
+                        <i class="bi bi-envelope-check" aria-hidden="true"></i>
+                        <span>Already sent. Changes update the home page banner only; customers keep the version they received. To tell them again, use <b>Copy</b> and send the copy.</span>
+                    </p>
+                    @if (Model.GeneralError is not null)
+                    {
+                        <p class="an-alert" role="alert"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>@Model.GeneralError</p>
+                    }
+
+                    <div class="an-f">
+                        <label for="Input_Title">TITLE</label>
+                        <input asp-for="Input.Title" class="an-in @(Model.FieldError("Title") is null ? "" : "is-bad")" maxlength="80"
+                               placeholder="e.g. Sakura week: free dessert with every set" autocomplete="off" data-an-field="title" data-an-count="80" />
+                        @if (Model.FieldError("Title") is string tErr) { <p class="an-err"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>@tErr</p> }
+                        <p class="an-cnt"><span></span><span data-an-counter>@((input.Title ?? "").Length) / 80</span></p>
+                    </div>
+
+                    <div class="an-f">
+                        <label for="Input_Message">MESSAGE</label>
+                        <textarea asp-for="Input.Message" rows="4" maxlength="500" class="an-in @(Model.FieldError("Message") is null ? "" : "is-bad")"
+                                  data-an-field="message" data-an-count="500"></textarea>
+                        @if (Model.FieldError("Message") is string mErr) { <p class="an-err"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>@mErr</p> }
+                        <p class="an-cnt"><span></span><span data-an-counter>@((input.Message ?? "").Length) / 500</span></p>
+                    </div>
+
+                    <div class="an-2">
+                        <div class="an-f">
+                            <label for="Input_StartDate">SHOW FROM</label>
+                            <input asp-for="Input.StartDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" step="60" class="an-in" data-an-field="start" />
+                        </div>
+                        <div class="an-f">
+                            <label for="Input_EndDate">UNTIL</label>
+                            <input asp-for="Input.EndDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" step="60" class="an-in @(Model.FieldError("EndDate") is null ? "" : "is-bad")" data-an-field="end" />
+                            @if (Model.FieldError("EndDate") is string eErr) { <p class="an-err"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>@eErr</p> }
+                        </div>
+                    </div>
+
+                    <div class="an-f">
+                        <label for="Input_Link">BANNER BUTTON GOES TO</label>
+                        <select asp-for="Input.Link" asp-items="Model.LinkOptions" class="an-in" data-an-field="link"></select>
+                    </div>
+
+                    <p class="an-note"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Saving does not send it. Use <b>Send</b> in the list when you are ready.</span></p>
+                </div>
+
+                <footer class="an-modal-foot">
+                    <a class="an-btn-ghost" href="@Model.ListUrl()" data-an-close>Cancel</a>
+                    <button type="submit" class="an-btn" data-an-submit>@(editing ? "Save changes" : "Save announcement")</button>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    @* ================= POP-UP: send confirm (opened by the script; without it the form posts directly) ================= *@
+    <div class="an-modal-wrap" id="anSend" hidden>
+        <div class="an-modal is-sm" role="dialog" aria-modal="true" aria-labelledby="anSendTitle">
+            <header class="an-modal-head">
+                <small>SEND · 送信</small>
+                <h3 id="anSendTitle">Send to every customer?</h3>
+                <button type="button" class="an-x" aria-label="Close" data-an-close><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </header>
+            <div class="an-modal-body">
+                <p class="an-confirm-title">“<span data-an-send-title></span>”</p>
+                <ul class="an-confirm-list">
+                    <li>@Plural(Model.RecipientCount, "active customer gets", "active customers get") it in the bell and by email.</li>
+                    <li>It can be sent only once.</li>
+                    <li>You can still edit it later, but that only changes the home page banner.</li>
+                </ul>
+            </div>
+            <footer class="an-modal-foot">
+                <button type="button" class="an-btn-ghost" data-an-close>Not yet</button>
+                <button type="button" class="an-btn" data-an-send-go><i class="bi bi-send" aria-hidden="true"></i>Send now</button>
+            </footer>
+        </div>
+    </div>
+
+    @* ================= POP-UP: delete confirm ================= *@
+    <div class="an-modal-wrap" id="anDelete" hidden>
+        <div class="an-modal is-sm" role="dialog" aria-modal="true" aria-labelledby="anDeleteTitle">
+            <header class="an-modal-head">
+                <small>DELETE · 削除</small>
+                <h3 id="anDeleteTitle">Delete this announcement?</h3>
+                <button type="button" class="an-x" aria-label="Close" data-an-close><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </header>
+            <div class="an-modal-body">
+                <p class="an-confirm-title">“<span data-an-delete-title></span>”</p>
+                <p class="an-hint mb-0">It was never sent, so nothing reaches customers. This cannot be undone.</p>
+            </div>
+            <footer class="an-modal-foot">
+                <button type="button" class="an-btn-ghost" data-an-close>Keep it</button>
+                <button type="button" class="an-btn" data-an-delete-go><i class="bi bi-trash3" aria-hidden="true"></i>Delete</button>
+            </footer>
+        </div>
+    </div>
+</div>
