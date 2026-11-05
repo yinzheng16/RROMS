@@ -287,7 +287,7 @@ namespace RROMS.Migrations
                         .IsUnique()
                         .HasFilter("[DiningSessionId] IS NOT NULL");
 
-                    b.ToTable("Bills");
+                    b.ToTable("Bills", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.ChatFaq", b =>
@@ -317,7 +317,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ChatFaqs");
+                    b.ToTable("ChatFaqs", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.CustomerCart", b =>
@@ -347,7 +347,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("CustomerCarts");
+                    b.ToTable("CustomerCarts", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.CustomerCartLine", b =>
@@ -379,7 +379,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("CustomerCartLines");
+                    b.ToTable("CustomerCartLines", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.DiningArea", b =>
@@ -412,7 +412,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DiningAreas");
+                    b.ToTable("DiningAreas", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.DiningSession", b =>
@@ -457,7 +457,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TableId", "Status");
 
-                    b.ToTable("DiningSessions");
+                    b.ToTable("DiningSessions", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Feedback", b =>
@@ -490,7 +490,7 @@ namespace RROMS.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Feedbacks");
+                    b.ToTable("Feedbacks", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuCategory", b =>
@@ -522,7 +522,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("MenuCategories");
+                    b.ToTable("MenuCategories", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuCodeSequence", b =>
@@ -536,7 +536,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Prefix");
 
-                    b.ToTable("MenuCodeSequences");
+                    b.ToTable("MenuCodeSequences", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.MenuItem", b =>
@@ -585,7 +585,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("MenuItems");
+                    b.ToTable("MenuItems", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Notification", b =>
@@ -625,7 +625,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("UserId", "IsRead");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.OperatingHour", b =>
@@ -661,7 +661,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Day")
                         .IsUnique();
 
-                    b.ToTable("OperatingHours");
+                    b.ToTable("OperatingHours", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Order", b =>
@@ -747,7 +747,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.OrderItem", b =>
@@ -785,7 +785,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems");
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.OrderStatusLog", b =>
@@ -835,7 +835,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("OrderId", "ChangedAt", "Id");
 
-                    b.ToTable("OrderStatusLogs");
+                    b.ToTable("OrderStatusLogs", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Payment", b =>
@@ -871,17 +871,6 @@ namespace RROMS.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("RefundReason")
-                        .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
-
-                    b.Property<DateTime?>("RefundedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RefundedByUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -897,7 +886,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Promotion", b =>
@@ -937,7 +926,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("MenuItemId");
 
-                    b.ToTable("Promotions");
+                    b.ToTable("Promotions", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.Reservation", b =>
@@ -1000,7 +989,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TableId", "ReservedAt");
 
-                    b.ToTable("Reservations");
+                    b.ToTable("Reservations", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.ReservationStatusLog", b =>
@@ -1043,7 +1032,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("ReservationId", "ChangedAt");
 
-                    b.ToTable("ReservationStatusLogs");
+                    b.ToTable("ReservationStatusLogs", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.RestaurantSetting", b =>
@@ -1092,7 +1081,7 @@ namespace RROMS.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("RestaurantSettings");
+                    b.ToTable("RestaurantSettings", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.RestaurantTable", b =>
@@ -1158,7 +1147,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TableTypeDefinitionId");
 
-                    b.ToTable("RestaurantTables");
+                    b.ToTable("RestaurantTables", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.SpecialDate", b =>
@@ -1194,7 +1183,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Date")
                         .IsUnique();
 
-                    b.ToTable("SpecialDates");
+                    b.ToTable("SpecialDates", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.TableTypeDefinition", b =>
@@ -1267,7 +1256,7 @@ namespace RROMS.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("TableTypeDefinitions");
+                    b.ToTable("TableTypeDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("RROMS.Models.UserAdminLog", b =>
@@ -1313,7 +1302,7 @@ namespace RROMS.Migrations
 
                     b.HasIndex("TargetUserId", "Action");
 
-                    b.ToTable("UserAdminLogs");
+                    b.ToTable("UserAdminLogs", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
