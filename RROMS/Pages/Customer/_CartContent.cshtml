@@ -163,7 +163,7 @@
                 </div>
                 <div class="cart-summary-column">
                     <aside class="card cart-summary" aria-labelledby="cart-summary-title">
-                        <header class="cart-summary__heading"><div><h2 id="cart-summary-title">Order summary</h2><p>@Model.Quantity @(Model.Quantity == 1 ? "item" : "items")</p></div><i class="bi bi-bag" aria-hidden="true"></i></header>
+                        <header class="cart-summary__heading"><div><h2 id="cart-summary-title">Order summary</h2></div><i class="bi bi-bag" aria-hidden="true"></i></header>
                         <div class="cart-summary__body">
                             <dl class="cart-totals"><div><dt>Subtotal</dt><dd>RM @Money(Model.Totals.Subtotal)</dd></div><div><dt>Service charge (@Rate(Model.Totals.ServiceRate)%)</dt><dd>RM @Money(Model.Totals.ServiceCharge)</dd></div><div><dt>Tax (@Rate(Model.Totals.TaxRate)%)</dt><dd>RM @Money(Model.Totals.Tax)</dd></div><div class="cart-totals__total"><dt>Total</dt><dd>RM @Money(Model.Totals.Total)</dd></div></dl>
                             @if (Model.Savings > 0) { <p class="promo-savings"><i class="bi bi-tag" aria-hidden="true"></i>You save <strong>RM @Money(Model.Savings)</strong> with promotions</p> }

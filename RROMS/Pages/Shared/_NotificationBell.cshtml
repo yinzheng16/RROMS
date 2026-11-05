@@ -2,10 +2,13 @@
 @*
     US37 (Member 4): navbar bell for customers (used in _LoginPartial).
     Model = unread count when the page was drawn. notifications.js fills the dropdown,
-    polls every 30 s, updates the badge and shows the shared YORU toast for new notices.
+    gets a live SignalR signal (NotificationHub) for new notices, keeps a 30 s check as a fallback,
+    updates the badge and shows the shared YORU toast.
 *@
 <li class="nav-item dropdown ntf-bell" data-ntf-bell
-    data-summary-url="/Customer/Notifications?handler=Summary">
+    data-summary-url="/Customer/Notifications?handler=Summary"
+    data-hub-url="/hubs/notifications"
+    data-signalr-src="/lib/microsoft/signalr/dist/browser/signalr.min.js">
     <a class="nav-link nav-icon" href="/Customer/Notifications" role="button"
        data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
        title="Notifications" aria-label="Notifications, @Model unread">

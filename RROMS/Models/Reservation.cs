@@ -24,7 +24,7 @@ namespace RROMS.Models
         // Used by the availability check to detect overlapping bookings.
         public int DurationMinutes { get; set; } = 90;
 
-        [Range(1, 20)]
+        [Range(1, 100)]
         public int Guests { get; set; }
 
         [StringLength(500)]

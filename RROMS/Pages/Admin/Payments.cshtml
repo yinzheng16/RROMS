@@ -1,0 +1,385 @@
+@page
+@model RROMS.Pages.Admin.PaymentsModel
+@using RROMS.Models
+@using System.Globalization
+
+@{
+    // US40 Admin → Payments (Owner: Member 4)
+    // Styles: wwwroot/css/admin-payments.css (every class starts with ap-)
+    // The banner art is drawn in CSS (no image files).
+    ViewData["Title"] = "Payments";
+
+    var d = Model.Data;
+    var inv = CultureInfo.InvariantCulture;
+    var en = CultureInfo.GetCultureInfo("en-MY");
+
+    string Money(decimal v) => v.ToString("N2", inv);
+    string Iso(DateOnly? v) => v?.ToString("yyyy-MM-dd", inv) ?? "";
+
+    var paid = d.Total(PaymentStatus.Paid);
+    var pending = d.Total(PaymentStatus.Pending);
+    var failed = d.Total(PaymentStatus.Failed);
+    var refunded = d.Total(PaymentStatus.Refunded);
+
+    string Plural(int n, string one, string many) => n == 1 ? $"{n} {one}" : $"{n} {many}";
+
+    string StatusClass(PaymentStatus s) => s switch
+    {
+        PaymentStatus.Paid => "is-paid",
+        PaymentStatus.Pending => "is-pend",
+        PaymentStatus.Failed => "is-fail",
+        _ => "is-ref"
+    };
+
+    var statusChips = new (PaymentStatus? Value, string Label)[]
+    {
+        (null, "All"),
+        (PaymentStatus.Paid, "Paid"),
+        (PaymentStatus.Pending, "Pending"),
+        (PaymentStatus.Failed, "Failed"),
+        (PaymentStatus.Refunded, "Refunded")
+    };
+
+    var quick = new (string Value, string Label)[]
+    {
+        ("today", "Today"),
+        ("7d", "Last 7 days"),
+        ("month", "This month")
+    };
+
+    var dayTotals = d.Days.ToDictionary(x => x.Date);
+    var groups = d.Payments.GroupBy(p => DateOnly.FromDateTime(p.ShownAt));
+
+    var anyFilter = !string.IsNullOrWhiteSpace(Model.Search) || Model.Status.HasValue || Model.Method.HasValue;
+    var firstNo = d.Matches == 0 ? 0 : (d.Page - 1) * d.PageSize + 1;
+    var lastNo = Math.Min(d.Page * d.PageSize, d.Matches);
+
+    string RangeText()
+    {
+        if (Model.From is DateOnly f && Model.To is DateOnly t)
+            return f == t ? f.ToString("d MMM yyyy", en) : $"{f.ToString("d MMM", en)} – {t.ToString("d MMM yyyy", en)}";
+        if (Model.From is DateOnly f2) return $"from {f2.ToString("d MMM yyyy", en)}";
+        if (Model.To is DateOnly t2) return $"up to {t2.ToString("d MMM yyyy", en)}";
+        return "all dates";
+    }
+
+    string? Sub(string? a, string? b) =>
+        string.Join(" · ", new[] { a, b }.Where(x => !string.IsNullOrWhiteSpace(x))) is { Length: > 0 } s ? s : null;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin-payments.css" asp-append-version="true" />
+    @* Coming back from a filter / search: hide the page until it has scrolled
+       back to where the admin was (admin-payments.js), so it does not jump. *@
+    <script>
+        try { if (sessionStorage.getItem('apScrollY')) { document.documentElement.classList.add('ap-restoring'); setTimeout(() => document.documentElement.classList.remove('ap-restoring'), 1500); } } catch (e) { }
+    </script>
+}
+
+@section Scripts {
+    <script src="~/js/admin-payments.js" asp-append-version="true"></script>
+}
+
+<div class="ap-page">
+
+    @* ================= HERO ================= *@
+    <section class="ap-hero">
+        <div class="ap-hero-art" aria-hidden="true">
+            <span class="ap-lantern"><span class="jp" lang="ja">銭</span></span>
+            <span class="ap-coin"></span>
+        </div>
+        <div class="ap-hero-tx">
+            <p class="ap-eyebrow">ADMINISTRATION <span>·</span> <span class="jp" lang="ja">決済モニター</span></p>
+            <h1>Payment <em>Transactions</em></h1>
+            <p class="ap-lede">Every payment taken at the counter or online. Spot failed, pending or refunded payments and check each day's takings.</p>
+        </div>
+    </section>
+
+    @* ================= KPI CARDS (search, date and method applied) ================= *@
+    <section class="ap-kpis" aria-label="Totals for @RangeText()">
+        <div class="ap-kpi is-paid">
+            <span class="ap-kpi-ic"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
+            <div class="ap-kpi-tx">
+                <small>PAID</small>
+                <b><em>RM</em>@Money(paid.Amount)</b>
+                <span>@Plural(paid.Count, "payment", "payments")</span>
+            </div>
+        </div>
+        <div class="ap-kpi is-pend">
+            <span class="ap-kpi-ic"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
+            <div class="ap-kpi-tx">
+                <small>PENDING</small>
+                <b><em>RM</em>@Money(pending.Amount)</b>
+                <span>@Plural(pending.Count, "payment", "payments") · online, not finished</span>
+            </div>
+        </div>
+        <div class="ap-kpi is-fail">
+            <span class="ap-kpi-ic"><i class="bi bi-x-circle" aria-hidden="true"></i></span>
+            <div class="ap-kpi-tx">
+                <small>FAILED</small>
+                <b><em>RM</em>@Money(failed.Amount)</b>
+                <span>@Plural(failed.Count, "attempt", "attempts")</span>
+            </div>
+        </div>
+        <div class="ap-kpi is-ref">
+            <span class="ap-kpi-ic"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i></span>
+            <div class="ap-kpi-tx">
+                <small>REFUNDED</small>
+                <b><em>RM</em>@Money(refunded.Amount)</b>
+                <span>@Plural(refunded.Count, "payment", "payments")</span>
+            </div>
+        </div>
+    </section>
+
+    @* ================= FILTERS ================= *@
+    <form method="get" class="ap-filters" role="search" novalidate>
+        <div class="ap-field">
+            <label for="apSearch">SEARCH</label>
+            <div class="ap-search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input id="apSearch" type="search" name="q" value="@Model.Search" maxlength="100" autocomplete="off"
+                       class="ap-input" placeholder="Payment no., bill no., order no., table, customer or reference" />
+            </div>
+        </div>
+        <div class="ap-field">
+            <label for="apFrom">DATE</label>
+            <div class="ap-dates">
+                <input id="apFrom" type="date" name="from" value="@Iso(Model.From)" max="@Model.TodayIso" class="ap-input" aria-label="From date" />
+                <span aria-hidden="true">–</span>
+                <input id="apTo" type="date" name="to" value="@Iso(Model.To)" max="@Model.TodayIso" class="ap-input" aria-label="To date" />
+            </div>
+        </div>
+        <div class="ap-field">
+            <label for="apMethod">METHOD</label>
+            <select id="apMethod" name="method" class="ap-input">
+                <option value="">All methods</option>
+                @foreach (var m in Enum.GetValues<PaymentMethod>())
+                {
+                    <option value="@m" selected="@(Model.Method == m)">@m</option>
+                }
+            </select>
+        </div>
+        @if (Model.Status is PaymentStatus keep)
+        {
+            <input type="hidden" name="status" value="@keep" />
+        }
+        <div class="ap-field ap-field-btn">
+            @if (anyFilter || Model.Range != "today")
+            {
+                <a class="ap-clear" href="@Url.Page("/Admin/Payments")">Clear all</a>
+            }
+            <button type="submit" class="ap-btn"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        </div>
+    </form>
+
+    @* Browser-side date check (admin-payments.js); the server checks again. *@
+    <div class="ap-alert" id="apDateError" role="alert" hidden>
+        <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+        The To date cannot be before the From date.
+    </div>
+
+    @if (Model.HasError)
+    {
+        <div class="ap-alert" role="alert">
+            <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+            @(ViewData.ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage)
+        </div>
+    }
+
+    <div class="ap-subrow">
+        <nav class="ap-chips" aria-label="Payment status">
+            @foreach (var (value, label) in statusChips)
+            {
+                var on = Model.Status == value;
+                var n = value is PaymentStatus sv ? d.Total(sv).Count : d.AllCount;
+                <a class="ap-chip @(value is PaymentStatus cs ? StatusClass(cs) : "") @(on ? "is-on" : "")"
+                   href="@Model.FilterUrl(status: value?.ToString(), keepStatus: false)"
+                   aria-current="@(on ? "true" : null)">
+                    @if (value.HasValue)
+                    {
+                        <span class="ap-dot" aria-hidden="true"></span>
+                    }
+                    @label <span class="ap-n">@n</span>
+                </a>
+            }
+        </nav>
+        <nav class="ap-quick" aria-label="Date range">
+            @foreach (var (value, label) in quick)
+            {
+                var on = Model.Range == value;
+                <a class="@(on ? "is-on" : "")" href="@Model.FilterUrl(range: value)" aria-current="@(on ? "true" : null)">@label</a>
+            }
+        </nav>
+    </div>
+
+    @* ================= LIST, ONE TABLE PER DAY ================= *@
+    @if (!Model.HasError && d.Payments.Count == 0)
+    {
+        <div class="ap-empty">
+            <i class="bi bi-receipt" aria-hidden="true"></i>
+            <h3>No payments found</h3>
+            <p>Try another date range, status or search.</p>
+        </div>
+    }
+
+    @foreach (var g in groups)
+    {
+        dayTotals.TryGetValue(g.Key, out var day);
+        var isToday = g.Key == Model.Today;
+
+        <section class="ap-day" aria-label="@g.Key.ToString("dddd, d MMMM yyyy", en)">
+            <header class="ap-dh">
+                <h2>
+                    @g.Key.ToString("dddd, d MMMM yyyy", en)
+                    <small>@(isToday ? "Today · " : "")@Plural(day?.PaymentCount ?? g.Count(), "payment", "payments")</small>
+                </h2>
+                <div class="ap-dtot">@(isToday ? "PAID TODAY" : "PAID THIS DAY")<b>RM @Money(day?.PaidAmount ?? 0m)</b></div>
+            </header>
+
+            <div class="ap-table-wrap">
+                <table class="ap-table">
+                    <colgroup>
+                        <col class="c-pay" /><col class="c-bill" /><col class="c-cust" /><col class="c-meth" />
+                        <col class="c-stat" /><col class="c-amt" /><col class="c-act" />
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th scope="col">Payment</th>
+                            <th scope="col">Bill / order</th>
+                            <th scope="col">Customer</th>
+                            <th scope="col">Method</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="ap-r">Amount</th>
+                            <th scope="col" class="ap-r">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in g)
+                        {
+                            var dineIn = p.OrderType == OrderType.DineIn;
+                            var isPaid = p.Status == PaymentStatus.Paid;
+                            // Second line under the bill no.: table and rounds (dine-in) or the order no. (takeaway).
+                            // Older payments without a bill (US31) show the order no. itself, so only the table.
+                            string? tableText = p.TableNumber is null ? null : $"Table {p.TableNumber}";
+                            string? where = p.BillNo != null
+                                ? (dineIn ? Sub(tableText, Plural(p.OrderCount, "round", "rounds"))
+                                          : (p.OrderNo is null ? null : $"Order {p.OrderNo}"))
+                                : (dineIn ? tableText : null);
+                            string? methodSub = Sub(p.RecordedByName is null ? null : $"by {p.RecordedByName}",
+                                                    p.TransactionRef is null ? null : $"Ref {p.TransactionRef}");
+                            <tr class="@(p.NeedsCheck ? "is-check" : null)">
+                                <td>
+                                    <span class="ap-no">@p.PaymentNo</span>
+                                    <span class="ap-sub">@p.ShownAt.ToString("HH:mm", inv)</span>
+                                </td>
+                                <td>
+                                    <span class="ap-tag @(dineIn ? "" : "is-tk")">@(dineIn ? "Dine-in" : "Takeaway")</span>@(p.BillNo ?? p.OrderNo ?? "—")
+                                    @if (where != null)
+                                    {
+                                        <span class="ap-sub">@where</span>
+                                    }
+                                </td>
+                                <td class="ap-cust">@(p.CustomerName ?? "—")</td>
+                                <td>
+                                    @p.Method
+                                    @if (methodSub != null)
+                                    {
+                                        <span class="ap-sub" title="@methodSub">@methodSub</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="ap-stcell">
+                                        <span class="ap-st @StatusClass(p.Status)">@p.Status</span>
+                                        @if (p.FailedButPaidLater.HasValue || p.NeedsCheck)
+                                        {
+                                            <div class="ap-flags">
+                                            @if (p.FailedButPaidLater == true)
+                                            {
+                                                <span class="ap-flag is-ok" title="The bill was paid afterwards. Nothing to do."><i class="bi bi-check2" aria-hidden="true"></i>Bill settled</span>
+                                            }
+                                            else if (p.FailedButPaidLater == false)
+                                            {
+                                                <span class="ap-flag is-wait" title="This bill has not been paid yet."><i class="bi bi-clock" aria-hidden="true"></i>Bill still unpaid</span>
+                                            }
+                                            @if (p.IsDuplicatePaid)
+                                            {
+                                                <span class="ap-flag is-bad" title="This bill has @p.PaidOnSameBill Paid payments. Please check."><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Paid @p.PaidOnSameBill times</span>
+                                            }
+                                            @if (p.IsAmountMismatch)
+                                            {
+                                                <span class="ap-flag is-bad" title="The bill total is RM @Money(p.BillTotal ?? 0m). Please check."><i class="bi bi-exclamation-triangle" aria-hidden="true"></i>Bill is RM @Money(p.BillTotal ?? 0m)</span>
+                                            }
+                                            </div>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="ap-r ap-amt @(isPaid ? "" : "is-x")"
+                                    title="@(isPaid ? null : "Not counted in the paid total")">RM @Money(p.Amount)</td>
+                                <td>
+                                    <div class="ap-acts">
+                                        @if (p.BillNo != null)
+                                        {
+                                            @* New tab: the admin closes it and is back on this page, same place and filters. *@
+                                            <a class="ap-ab ap-ab-bill" href="/Staff/Billing/Bill?billNo=@p.BillNo" target="_blank" rel="noopener"
+                                               title="Open bill @p.BillNo in a new tab"><i class="bi bi-receipt" aria-hidden="true"></i>Bill</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="ap-ab ap-ab-bill is-ghost" aria-hidden="true"><i class="bi bi-receipt"></i>Bill</span>
+                                        }
+                                        @if (isPaid)
+                                        {
+                                            @* Opens the receipt in a pop-up on this page (admin-payments.js);
+                                               without JavaScript the link opens the PDF in a new tab. *@
+                                            <a class="ap-ab ap-ab-dl" target="_blank" rel="noopener"
+                                               href="@Url.Page("/Admin/Payments", "Receipt", new { id = p.PaymentId })"
+                                               data-ap-receipt="@p.PaymentNo"
+                                               data-ap-download="@Url.Page("/Admin/Payments", "Receipt", new { id = p.PaymentId, download = true })"
+                                               title="View receipt @p.PaymentNo (PDF)"><i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>Receipt</a>
+                                        }
+                                        else
+                                        {
+                                            <span class="ap-ab ap-ab-dl is-ghost" aria-hidden="true"><i class="bi bi-file-earmark-pdf"></i>Receipt</span>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    @if (d.PageCount > 1)
+    {
+        <nav class="ap-pager" aria-label="Pages">
+            <span>Showing @firstNo–@lastNo of @d.Matches</span>
+            <div>
+                @if (d.Page > 1)
+                {
+                    <a href="@Model.FilterUrl(page: d.Page - 1)"><i class="bi bi-chevron-left" aria-hidden="true"></i>Newer</a>
+                }
+                <b>Page @d.Page of @d.PageCount</b>
+                @if (d.Page < d.PageCount)
+                {
+                    <a href="@Model.FilterUrl(page: d.Page + 1)">Older<i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+                }
+            </div>
+        </nav>
+    }
+    @* ================= RECEIPT PREVIEW POP-UP (US35 PDF) ================= *@
+    <dialog class="ap-pdf" id="apPdf" aria-labelledby="apPdfTitle">
+        <div class="ap-pdf-box">
+            <header class="ap-pdf-head">
+                <div>
+                    <p class="ap-pdf-eyebrow">RECEIPT PREVIEW</p>
+                    <h2 id="apPdfTitle">Receipt</h2>
+                </div>
+                <a class="ap-ab ap-ab-dl" id="apPdfDownload" href="#"><i class="bi bi-download" aria-hidden="true"></i>Download PDF</a>
+                <button type="button" class="ap-pdf-close" data-ap-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            </header>
+            <iframe class="ap-pdf-frame" id="apPdfFrame" title="Receipt PDF"></iframe>
+        </div>
+    </dialog>
+</div>

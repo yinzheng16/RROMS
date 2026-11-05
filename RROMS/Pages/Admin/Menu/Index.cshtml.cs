@@ -35,7 +35,7 @@ namespace RROMS.Pages.Admin.Menu
 
         public bool CategoryEditorHasErrors { get; private set; }
         public string? CategoryEditorCode { get; private set; }
-        public const int CategoryPageSize = 5;
+        public const int CategoryPageSize = 23;   // 23 strips + the "Add a category" tile fill four rows of six
         public int TotalCategories { get; private set; }
         public int ListedItemCount { get; private set; }
         public int EmptyCategoryCount { get; private set; }
@@ -124,9 +124,20 @@ namespace RROMS.Pages.Admin.Menu
 
             if (result == CategoryOperationStatus.Success)
             {
+                string savedName = Input.Name.Trim();
                 TempData["SuccessMessage"] = Input.Id.HasValue
-                    ? "Category updated successfully."
-                    : "Category created successfully.";
+                    ? $"“{savedName}” updated successfully."
+                    : $"“{savedName}” created successfully.";
+                if (!Input.Id.HasValue)
+                {
+                    // A new category goes to the end of the menu order, so show the page it is on
+                    // (menu order, no search) and highlight it, instead of staying on the current page.
+                    TempData["NewCategoryName"] = Input.Name.Trim();
+                    if (ShowAll) return RedirectToPage("./Index", new { ShowAll = true });
+                    var firstPage = await _orderService.GetCategoryPageAsync(
+                        1, CategoryPageSize, cancellationToken, null, MenuCategorySorting.Default, false);
+                    return RedirectToPage("./Index", new { PageNumber = firstPage.TotalPages > 1 ? firstPage.TotalPages : (int?)null });
+                }
                 return RedirectToCategoryList();
             }
 
@@ -154,10 +165,14 @@ namespace RROMS.Pages.Admin.Menu
             if (id <= 0)
                 return BadRequest();
 
+            // Read the name first so the toast can say which category was deleted.
+            string? deletedName = (await _orderService.GetCategoryAsync(id, cancellationToken))?.Name;
             var result = await _orderService.DeleteCategoryAsync(id, cancellationToken);
 
             if (result == CategoryOperationStatus.Success)
-                TempData["SuccessMessage"] = "Category deleted successfully.";
+                TempData["SuccessMessage"] = deletedName is null
+                    ? "Category deleted successfully."
+                    : $"“{deletedName}” deleted successfully.";
             else
                 TempData["ErrorMessage"] = GetErrorMessage(result);
 

@@ -42,6 +42,14 @@ namespace RROMS.Models
         public bool ServiceChargeOnTakeaway { get; set; }
 
         // ---------- Receipt ----------
+        // US49 follow-up: the registered (legal) business name, as on the SSM / SST registration,
+        // e.g. "Yoru Izakaya Sdn. Bhd.". Printed on bills and receipts (Member 4) under Brand.FullName.
+        // Optional: leave it out of the receipt when empty. The brand name itself stays fixed in Brand.cs.
+        [StringLength(100, ErrorMessage = "Business name can be at most 100 characters.")]
+        [RegularExpression(@"^[A-Za-z0-9 .,&()'/\-]*$",
+            ErrorMessage = "Use letters, numbers, spaces and . , & ( ) ' / - only.")]
+        public string? BusinessName { get; set; }
+
         // Printed on bills and receipts (Member 4), e.g. "W10-1808-31000123".
         [StringLength(30, ErrorMessage = "SST registration number can be at most 30 characters.")]
         [RegularExpression(@"^[A-Za-z0-9\- ]*$",

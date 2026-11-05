@@ -66,6 +66,9 @@
     else
     {
         decimal subtotal, taxAmount, serviceCharge, totalAmount, taxRate, serviceRate;
+        // No % on the charge labels for now: orders do not save their rates yet,
+        // and % worked back from rounded amounts is misleading (e.g. 5.92%).
+        // Use the saved rates once Member 3's rate fields are in develop.
 
         if (Model.IsDineIn)
         {
@@ -171,7 +174,14 @@
                                 <br />
                                 <small class="text-muted">
                                     Confirmed @confirmedAt.ToString("d MMM yyyy, h:mm tt")
-                                    @(Model.ConfirmedByName is null ? "" : $"by {Model.ConfirmedByName}")
+                                    @if (Model.ConfirmedForOnlinePayment)
+                                    {
+                                        <span class="bill-sep" aria-hidden="true"></span><text>for online payment by the customer</text>
+                                    }
+                                    else
+                                    {
+                                        <text>@(Model.ConfirmedByName is null ? "" : $"by {Model.ConfirmedByName}")</text>
+                                    }
                                 </small>
                             }
                         </p>
@@ -203,7 +213,7 @@
                             </ul>
                         }
 
-                        <!-- Bill totals (saved order amounts; SST is charged on subtotal + service) -->
+                        <!-- Bill totals (saved order amounts; tax is charged on subtotal + service) -->
                         <div class="row justify-content-end mt-4">
                             <div class="col-md-8">
 
@@ -213,12 +223,12 @@
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Service Charge (@serviceRate.ToString("0.##")%)</span>
+                                    <span>Service Charge</span>
                                     <span>RM @serviceCharge.ToString("F2")</span>
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>SST (@taxRate.ToString("0.##")%)</span>
+                                    <span>Tax</span>
                                     <span>RM @taxAmount.ToString("F2")</span>
                                 </div>
 
@@ -425,8 +435,61 @@
                             <!-- ---------- Step 2: counter payment (one step) ---------- -->
                             @if (Model.IsConfirmed)
                             {
+                                bool onlineLocked = Model.OnlinePaymentInProgress;
+
+                                @* US33: the customer is paying this bill online (Stripe) *@
+                                if (onlineLocked)
+                                {
+                                    <div class="payment-result payment-result-pending online-progress mb-3" role="status">
+                                        <strong>Customer is paying online</strong>
+                                        @(Model.OnlineInfo!.StartedByStaff ? "QR code · " : "")Started @(Model.OnlineInfo.StartedAt?.ToString("h:mm tt"))
+                                        <span class="bill-sep" aria-hidden="true"></span>
+                                        counter payment locked until @(Model.OnlineInfo.LockedUntil?.ToString("h:mm tt")).
+                                        @if (Model.QrImageDataUri != null)
+                                        {
+                                            @* US33: QR code of the Stripe payment page for the customer's phone *@
+                                            <div class="online-qr">
+                                                <img src="@Model.QrImageDataUri" width="200" height="200"
+                                                     alt="QR code: scan with your phone to pay this bill on Stripe" />
+                                                <span>Scan to pay RM @Model.CurrentBill!.TotalAmount.ToString("F2")</span>
+                                            </div>
+                                        }
+                                        <div class="online-progress-actions">
+                                            @* "check" changes on every load, so the link always reloads the page
+                                               (a link to the same address plus #billActions would only scroll). *@
+                                            @{ var checkStamp = DateTime.Now.Ticks; }
+                                            @if (Model.IsDineIn)
+                                            {
+                                                <a class="btn btn-outline-dark flex-fill" asp-page="./Bill"
+                                                   asp-route-sessionId="@(Model.SessionBill!.SessionId)" asp-route-check="@checkStamp" data-keep-scroll>Check again</a>
+                                            }
+                                            else
+                                            {
+                                                <a class="btn btn-outline-dark flex-fill" asp-page="./Bill"
+                                                   asp-route-orderNo="@(Model.TakeawayOrder!.OrderNo)" asp-route-check="@checkStamp" data-keep-scroll>Check again</a>
+                                            }
+                                            <form method="post" asp-page-handler="CancelOnline" class="d-flex flex-fill js-once" data-keep-scroll>
+                                                <input type="hidden" name="billId" value="@(Model.CurrentBill!.Id)" />
+                                                @if (Model.IsDineIn)
+                                                {
+                                                    <input type="hidden" name="sessionId" value="@(Model.SessionBill!.SessionId)" />
+                                                }
+                                                else
+                                                {
+                                                    <input type="hidden" name="orderNo" value="@(Model.TakeawayOrder!.OrderNo)" />
+                                                }
+                                                <button type="submit" class="btn btn-outline-danger w-100">Cancel online payment</button>
+                                            </form>
+                                        </div>
+                                        <small class="online-progress-note">
+                                            Cancel only if the customer wants to pay at the counter instead.
+                                            Stripe is checked first; if they already paid, the bill is marked Paid.
+                                        </small>
+                                    </div>
+                                }
+
                                 <form method="post" asp-page-handler="RecordPayment"
-                                      class="payment-record-form js-once">
+                                      class="payment-record-form js-once @(onlineLocked ? "is-locked" : "")">
 
                                     <input type="hidden" name="billId" value="@(Model.CurrentBill!.Id)" />
 
@@ -452,7 +515,7 @@
                                             <div class="col-4">
                                                 <input type="radio"
                                                        class="visually-hidden payment-method-radio"
-                                                       name="method" id="paymentCash" value="Cash" required />
+                                                       name="method" id="paymentCash" value="Cash" required disabled="@onlineLocked" />
                                                 <label class="payment-method-tile" for="paymentCash">
                                                     <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M560-440q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35ZM280-320q-33 0-56.5-23.5T200-400v-320q0-33 23.5-56.5T280-800h560q33 0 56.5 23.5T920-720v320q0 33-23.5 56.5T840-320H280Zm80-80h400q0-33 23.5-56.5T840-480v-160q-33 0-56.5-23.5T760-720H360q0 33-23.5 56.5T280-640v160q33 0 56.5 23.5T360-400Zm440 240H120q-33 0-56.5-23.5T40-240v-440h80v440h680v80ZM280-400v-320 320Z"/></svg></span>
                                                     <strong>Cash</strong>
@@ -463,7 +526,7 @@
                                             <div class="col-4">
                                                 <input type="radio"
                                                        class="visually-hidden payment-method-radio"
-                                                       name="method" id="paymentCard" value="Card" required />
+                                                       name="method" id="paymentCard" value="Card" required disabled="@onlineLocked" />
                                                 <label class="payment-method-tile" for="paymentCard">
                                                     <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M880-720v480q0 33-23.5 56.5T800-160H160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720Zm-720 80h640v-80H160v80Zm0 160v240h640v-240H160Zm0 240v-480 480Z"/></svg></span>
                                                     <strong>Card</strong>
@@ -475,12 +538,13 @@
                                             <div class="col-4">
                                                 <input type="radio"
                                                        class="visually-hidden payment-method-radio"
-                                                       name="method" id="paymentOnline" value="Online" disabled />
-                                                <label class="payment-method-tile payment-method-tile-disabled"
+                                                       name="method" id="paymentOnline" value="Online" required
+                                                       disabled="@(onlineLocked || !Model.OnlinePaymentAvailable)" />
+                                                <label class="payment-method-tile @(Model.OnlinePaymentAvailable ? "" : "payment-method-tile-disabled")"
                                                        for="paymentOnline">
                                                     <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-280v-280h80v280h-80Zm240 0v-280h80v280h-80ZM80-120v-80h800v80H80Zm600-160v-280h80v280h-80ZM80-640v-80l400-200 400 200v80H80Zm178-80h444-444Zm0 0h444L480-830 258-720Z"/></svg></span>
                                                     <strong>Online</strong>
-                                                    <small>By customer</small>
+                                                    <small>@(Model.OnlinePaymentAvailable ? "QR code" : "Not set up")</small>
                                                 </label>
                                             </div>
                                         </div>
@@ -494,7 +558,7 @@
                                                maxlength="100" autocomplete="off" placeholder="e.g. approval code" />
                                     </div>
 
-                                    <button type="submit" class="btn btn-dark w-100 mt-3">
+                                    <button type="submit" id="recordPaymentButton" class="btn btn-dark w-100 mt-3" disabled="@onlineLocked">
                                         Record Payment
                                     </button>
 
@@ -543,9 +607,24 @@
                             <hr class="my-3" />
 
                             <div class="d-flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-outline-dark flex-fill" onclick="window.print()">
-                                    <i class="bi bi-printer" aria-hidden="true"></i> Print Bill
-                                </button>
+                                @* US35: after payment staff print the receipt PDF (the same one the
+                                   customer downloads); before payment they print the BILL page.
+                                   Print Receipt loads the PDF in a hidden frame and opens the print
+                                   dialog on this page, like Print Bill. The href is the fallback
+                                   (new tab) if the browser cannot print the frame. *@
+                                @if (Model.IsPaid && Model.LatestPayment != null)
+                                {
+                                    <a class="btn btn-outline-dark flex-fill js-print-receipt" target="_blank" rel="noopener"
+                                       asp-page-handler="Receipt" asp-route-paymentId="@Model.LatestPayment.Id">
+                                        <i class="bi bi-printer" aria-hidden="true"></i> Print Receipt
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-outline-dark flex-fill" onclick="window.print()">
+                                        <i class="bi bi-printer" aria-hidden="true"></i> Print Bill
+                                    </button>
+                                }
                                 <a class="btn btn-outline-dark flex-fill" asp-page="./Index">
                                     Back to list
                                 </a>
@@ -596,7 +675,65 @@
 </div>
 
 @section Scripts {
+    @if (Model.HasBill && !Model.IsPaid && Model.StatusStamp != null)
+    {
+        @* US33: watch this bill while the page is open (every 5 s, visible tab only).
+           When the customer confirms/pays online, or an online payment ends,
+           the stamp changes and the page reloads to show the new state. *@
+        <div id="billStatusWatch" hidden
+             data-url="@Url.Page("./Bill", "Status", new { sessionId = Model.SessionBill?.SessionId, orderNo = Model.TakeawayOrder?.OrderNo })"
+             data-reload="@Url.Page("./Bill", null, new { sessionId = Model.SessionBill?.SessionId, orderNo = Model.TakeawayOrder?.OrderNo })"
+             data-stamp="@Model.StatusStamp"></div>
+    }
     <script>
+        (function () {
+            // Keep the scroll position across an automatic reload, "Check again"
+            // and "Cancel online payment": save it before leaving, restore it here.
+            function saveScroll() {
+                try { sessionStorage.setItem('billWatchScroll', String(window.scrollY)); } catch (e) { }
+            }
+            document.querySelectorAll('a[data-keep-scroll]').forEach(function (a) {
+                a.addEventListener('click', saveScroll);
+            });
+            document.querySelectorAll('form[data-keep-scroll]').forEach(function (f) {
+                f.addEventListener('submit', saveScroll);
+            });
+            try {
+                const y = sessionStorage.getItem('billWatchScroll');
+                if (y !== null) {
+                    sessionStorage.removeItem('billWatchScroll');
+                    const top = parseInt(y, 10) || 0;
+                    window.scrollTo({ top: top, behavior: 'instant' });
+                    // Again after images and fonts have loaded and the page height is final.
+                    window.addEventListener('load', function () {
+                        window.scrollTo({ top: top, behavior: 'instant' });
+                    });
+                }
+            } catch (e) { /* storage blocked: stay at the top */ }
+
+            const watch = document.getElementById('billStatusWatch');
+            if (!watch) return;
+            let busy = false;
+            setInterval(async function () {
+                if (busy || document.visibilityState !== 'visible') return;
+                busy = true;
+                try {
+                    const res = await fetch(watch.dataset.url, { cache: 'no-store' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.stamp && data.stamp !== watch.dataset.stamp) {
+                            const url = new URL(watch.dataset.reload, window.location.origin);
+                            url.searchParams.set('check', Date.now());
+                            saveScroll();
+                            window.location.replace(url.toString());
+                            return;
+                        }
+                    }
+                } catch (e) { /* offline for a moment: try again next time */ }
+                busy = false;
+            }, 5000);
+        })();
+
         (function () {
             // Prevent double submits: disable the button once a form is sent.
             document.querySelectorAll('form.js-once').forEach(function (form) {
@@ -615,6 +752,11 @@
             const radios = document.querySelectorAll('input[name="method"]');
 
             function syncRef() {
+                // US33: Online = show a Stripe QR code instead of recording a payment.
+                const online = document.getElementById('paymentOnline');
+                const button = document.getElementById('recordPaymentButton');
+                if (button) button.textContent = online && online.checked ? 'Show QR code' : 'Record Payment';
+
                 if (!refGroup) return;
                 const card = document.getElementById('paymentCard');
                 const isCard = card && card.checked;
@@ -624,6 +766,74 @@
 
             radios.forEach(r => r.addEventListener('change', syncRef));
             syncRef();
+        })();
+
+        // US35: Print Receipt -> print dialog on this page (no new tab).
+        // The receipt PDF is loaded into a hidden iframe as soon as the page
+        // has loaded, so clicking the button only has to open the dialog.
+        (function () {
+            const link = document.querySelector('a.js-print-receipt');
+            if (!link) return;
+
+            const label = link.innerHTML;
+            let frame = null;
+            let ready = false;
+            let printWhenReady = false;
+
+            function busy(on) {
+                link.classList.toggle('disabled', on);
+                if (on) {
+                    link.setAttribute('aria-disabled', 'true');
+                    link.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> Preparing…';
+                } else {
+                    link.removeAttribute('aria-disabled');
+                    link.innerHTML = label;
+                }
+            }
+
+            function printFrame() {
+                try {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                } catch (err) {
+                    // Browser will not print the frame: open the PDF instead.
+                    window.open(link.href, '_blank', 'noopener');
+                }
+            }
+
+            function preload() {
+                frame = document.createElement('iframe');
+                frame.setAttribute('aria-hidden', 'true');
+                frame.tabIndex = -1;
+                frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+                frame.addEventListener('load', function () {
+                    ready = true;
+                    if (printWhenReady) {
+                        printWhenReady = false;
+                        // Short pause so the PDF viewer has drawn the pages.
+                        setTimeout(function () { busy(false); printFrame(); }, 150);
+                    }
+                });
+                frame.src = link.href;
+                document.body.appendChild(frame);
+            }
+
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (link.classList.contains('disabled')) return;
+
+                if (ready) {
+                    printFrame();          // already loaded: dialog opens at once
+                } else {
+                    printWhenReady = true; // still loading: print when it arrives
+                    busy(true);
+                    if (!frame) preload();
+                }
+            });
+
+            // Start loading in the background once the page itself is done.
+            if (document.readyState === 'complete') preload();
+            else window.addEventListener('load', preload);
         })();
     </script>
 }

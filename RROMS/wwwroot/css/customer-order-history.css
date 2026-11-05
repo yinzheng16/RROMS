@@ -4358,3 +4358,577 @@ html.oj-history-js .oh-journal .oh-workspace > #history-drawer {
     letter-spacing: .04em;
     line-height: 1.4;
 }
+
+
+/* UI polish (My Orders): same style as the menu toolbar, sort dropdown and red buttons. */
+
+/* "Browse the menu": red gradient button */
+.oh-journal .oj-hero .oj-menu-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    min-block-size: 3rem;
+    padding: .6rem 1.35rem;
+    border: 0 !important;
+    border-radius: .7rem !important;
+    background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+    background-origin: border-box !important;
+    box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .3) !important;
+    color: #fff8ec !important;
+    font: 600 15px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+    .oh-journal .oj-hero .oj-menu-button:hover,
+    .oh-journal .oj-hero .oj-menu-button:focus-visible {
+        color: #fff8ec !important;
+        filter: brightness(1.07);
+        transform: translateY(-1px);
+        box-shadow: 0 .5rem 1.1rem rgba(168, 50, 36, .38) !important;
+    }
+
+    .oh-journal .oj-hero .oj-menu-button span {
+        margin-left: 0;
+    }
+
+/* Tabs: cream pills with a gold edge; the active tab is the red gradient */
+.oh-journal .oj-tabs {
+    gap: .6rem;
+    margin-bottom: 1rem;
+}
+
+    .oh-journal .oj-tabs a {
+        min-block-size: 2.9rem;
+        padding: .45rem 1.1rem;
+        border: 1px solid rgba(183, 155, 114, .55);
+        border-radius: .85rem;
+        background: #fffaf0;
+        color: #2b241c;
+        box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05);
+        transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+    }
+
+        .oh-journal .oj-tabs a > .oj-icon {
+            color: #8a6a3c;
+        }
+
+        .oh-journal .oj-tabs a > span {
+            padding: .1rem .55rem;
+            border-radius: 999px;
+            background: rgba(183, 155, 114, .18);
+            color: #6a4b1d;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .oh-journal .oj-tabs a:hover:not(.is-active) {
+            border-color: #b79b72;
+            background: #f6efe2;
+        }
+
+        .oh-journal .oj-tabs a.is-active,
+        .oh-journal .oj-tabs a.is-active:hover {
+            border-color: transparent;
+            background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%);
+            background-origin: border-box;
+            box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28);
+            color: #fff8ec;
+        }
+
+            .oh-journal .oj-tabs a.is-active > .oj-icon {
+                color: #fff8ec;
+            }
+
+            .oh-journal .oj-tabs a.is-active > span {
+                background: rgba(255, 248, 236, .25);
+                color: #fff8ec;
+            }
+
+/* Toolbar: no Apply button; the fields share the row evenly */
+.oh-journal .oj-toolbar {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: .75rem;
+    padding: .9rem;
+    border: 1px solid rgba(183, 155, 114, .45);
+    border-radius: 1rem;
+    background: rgba(255, 250, 240, .75);
+}
+
+    .oh-journal .oj-toolbar > .oj-search {
+        flex: 1 1 15rem;
+    }
+
+    .oh-journal .oj-toolbar > .oj-tool-field {
+        flex: 0 1 11.5rem;
+    }
+
+    .oh-journal .oj-toolbar > .oj-date-range {
+        flex: 0 1 17rem;
+    }
+
+    .oh-journal .oj-toolbar > .oj-sort-field {
+        flex: 0 1 11rem;
+    }
+
+    /* Search, dropdowns and date range: cream fields with a fine gold border */
+    .oh-journal .oj-toolbar .oj-search,
+    .oh-journal .oj-toolbar .oj-tool-field,
+    .oh-journal .oj-toolbar .oj-date-range {
+        block-size: 3rem;
+        min-block-size: 3rem;
+        padding: 0 .9rem;
+        border: 1px solid rgba(183, 155, 114, .55) !important;
+        border-radius: .85rem !important;
+        background: #fffaf0 !important;
+        box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05);
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+        .oh-journal .oj-toolbar .oj-search:hover,
+        .oh-journal .oj-toolbar .oj-tool-field:hover,
+        .oh-journal .oj-toolbar .oj-date-range:hover {
+            border-color: #b79b72 !important;
+        }
+
+        .oh-journal .oj-toolbar .oj-search:focus-within,
+        .oh-journal .oj-toolbar .oj-tool-field:focus-within,
+        .oh-journal .oj-toolbar .oj-custom-select.is-open,
+        .oh-journal .oj-toolbar .oj-date-range.is-calendar-open {
+            border-color: #9a7a4c !important;
+            background: #fffdf8 !important;
+            box-shadow: 0 0 0 .22rem rgba(183, 155, 114, .25);
+        }
+
+        .oh-journal .oj-toolbar .oj-search .oj-icon,
+        .oh-journal .oj-toolbar .oj-tool-field > .oj-icon,
+        .oh-journal .oj-toolbar .oj-date-range > .oj-icon {
+            color: #8a6a3c;
+        }
+
+        .oh-journal .oj-toolbar .oj-search input,
+        .oh-journal .oj-select-trigger,
+        .oh-journal .oj-date-trigger {
+            color: #2b241c;
+            font: 14px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+/* Dropdown lists: the menu sort dropdown design */
+.oh-journal .oj-select-options {
+    top: calc(100% + .45rem);
+    left: -1px;
+    right: -1px;
+    padding: .55rem;
+    border: 1px solid rgba(183, 155, 114, .55);
+    border-radius: 1rem;
+    background: #fffaf0 linear-gradient(180deg, rgba(183, 155, 114, .08), transparent 3.5rem);
+    box-shadow: 0 1.1rem 2.4rem rgba(25, 25, 25, .16), 0 0 0 4px rgba(255, 250, 240, .6);
+}
+
+.oh-journal .oj-select-option {
+    display: flex;
+    align-items: center;
+    min-block-size: 2.6rem;
+    margin: .1rem 0;
+    padding: .5rem .75rem;
+    border-radius: .7rem;
+    color: #2b241c;
+    font: 500 14px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+    .oh-journal .oj-select-option::after {
+        content: none !important;
+    }
+
+    .oh-journal .oj-select-option.is-focused,
+    .oh-journal .oj-select-option:hover {
+        background: rgba(183, 155, 114, .16);
+        color: #2b241c;
+    }
+
+    .oh-journal .oj-select-option[aria-selected="true"],
+    .oh-journal .oj-select-option[aria-selected="true"].is-focused,
+    .oh-journal .oj-select-option[aria-selected="true"]:hover {
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%);
+        background-origin: border-box;
+        color: #fff8ec;
+        font-weight: 600;
+        box-shadow: 0 .3rem .8rem rgba(0, 0, 0, .15);
+    }
+
+/* Reset: plain text when there is nothing to reset; a red capsule once a filter is on */
+.oh-journal .oj-toolbar .oj-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    flex: none;
+    inline-size: auto;
+    min-block-size: 3rem;
+    padding: 0 1.1rem;
+    border: 0 !important;
+    border-radius: .85rem !important;
+    background: transparent !important;
+    box-shadow: none;
+    font: 600 14px/1 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    text-decoration: none;
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+    .oh-journal .oj-toolbar .oj-reset.is-idle {
+        color: #b9b3a6 !important;
+        cursor: default;
+    }
+
+    .oh-journal .oj-toolbar .oj-reset.is-active {
+        background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+        background-origin: border-box !important;
+        color: #fff8ec !important;
+        box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28);
+    }
+
+        .oh-journal .oj-toolbar .oj-reset.is-active:hover,
+        .oh-journal .oj-toolbar .oj-reset.is-active:focus-visible {
+            color: #fff8ec !important;
+            filter: brightness(1.07);
+            transform: translateY(-1px);
+            box-shadow: 0 .5rem 1.1rem rgba(168, 50, 36, .35);
+        }
+
+/* While new results load, dim them slightly. */
+.oh-journal .oh-workspace[aria-busy="true"] {
+    opacity: .6;
+    transition: opacity .2s ease;
+}
+
+@media (max-width: 900px) {
+    .oh-journal .oj-toolbar > .oj-search {
+        flex-basis: 100%;
+    }
+
+    .oh-journal .oj-toolbar > .oj-tool-field,
+    .oh-journal .oj-toolbar > .oj-sort-field,
+    .oh-journal .oj-toolbar > .oj-date-range {
+        flex: 1 1 10rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .oh-journal .oj-hero .oj-menu-button,
+    .oh-journal .oj-tabs a,
+    .oh-journal .oj-toolbar .oj-reset,
+    .oh-journal .oj-select-option {
+        transition: none;
+    }
+}
+
+/* Sort / dropdown fields: icon, text and arrow sit side by side (no overlap). */
+.oh-journal .oj-toolbar .oj-custom-select {
+    display: flex !important;
+    align-items: center;
+    gap: .55rem;
+    padding: 0 .9rem !important;
+}
+
+    .oh-journal .oj-toolbar .oj-custom-select > .oj-icon {
+        position: static !important;
+        flex: 0 0 19px;
+        transform: none !important;
+    }
+
+    .oh-journal .oj-toolbar .oj-custom-select > .oj-select-trigger {
+        flex: 1;
+        min-inline-size: 0;
+        padding: 0 !important;
+    }
+
+.oh-journal .oj-toolbar > .oj-sort-field {
+    flex: 0 1 12.5rem;
+}
+
+/* My Orders cards, order details and Reorder page: same buttons as the menu and cart. */
+
+/* Shared red gradient (main actions) */
+.oh-journal .oj-actions .oh-button,
+.oh-journal .oj-details .oh-button.oh-wide,
+[data-reorder-page] [data-review-button],
+[data-reorder-page] .oh-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    min-block-size: 2.9rem;
+    padding: .55rem 1.2rem;
+    border: 0 !important;
+    border-radius: .7rem !important;
+    background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    font: 600 14px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+    box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28) !important;
+    text-decoration: none;
+    transition: filter .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+    .oh-journal .oj-actions .oh-button:hover,
+    .oh-journal .oj-details .oh-button.oh-wide:hover,
+    [data-reorder-page] [data-review-button]:hover:not(:disabled),
+    [data-reorder-page] .oh-button:hover:not(:disabled),
+    .oh-journal .oj-actions .oh-button:focus-visible,
+    .oh-journal .oj-details .oh-button.oh-wide:focus-visible,
+    [data-reorder-page] [data-review-button]:focus-visible {
+        color: #fff8ec !important;
+        filter: brightness(1.07);
+        transform: translateY(-1px);
+        box-shadow: 0 .5rem 1.1rem rgba(168, 50, 36, .35) !important;
+    }
+
+    [data-reorder-page] [data-review-button]:disabled {
+        background: #d9d3c7 !important;
+        color: #8b8676 !important;
+        box-shadow: none !important;
+        filter: none;
+        transform: none;
+    }
+
+/* Shared cream + gold edge (second actions) */
+.oh-journal .oj-view,
+.oh-journal .oj-details .oh-detail-link,
+[data-reorder-page] [data-reorder-all],
+[data-reorder-page] [data-reorder-none],
+[data-reorder-page] a[href$="/Customer/Orders"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-block-size: 2.9rem;
+    padding: .55rem 1.2rem;
+    border: 1px solid rgba(183, 155, 114, .6) !important;
+    border-radius: .7rem !important;
+    background: #fffaf0 !important;
+    color: #5a4127 !important;
+    font: 600 14px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+    text-decoration: none !important;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05) !important;
+    transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+    .oh-journal .oj-view:hover,
+    .oh-journal .oj-details .oh-detail-link:hover,
+    [data-reorder-page] [data-reorder-all]:hover,
+    [data-reorder-page] [data-reorder-none]:hover,
+    [data-reorder-page] a[href$="/Customer/Orders"]:hover {
+        border-color: #9a7a4c !important;
+        background: #f6efe2 !important;
+        color: #3d2a17 !important;
+        transform: translateY(-1px);
+    }
+
+.oh-journal .oj-details .oh-detail-link {
+    display: flex;
+    inline-size: 100%;
+    margin-top: .75rem;
+}
+
+[data-reorder-page] [data-reorder-all],
+[data-reorder-page] [data-reorder-none] {
+    min-block-size: 2.5rem;
+    padding: .4rem 1rem;
+}
+
+/* Reorder quantity: the small red stepper used in the cart */
+[data-reorder-page] .oh-reorder-line :has(> [data-reorder-quantity]) {
+    display: inline-flex;
+    align-items: center;
+    gap: .2rem;
+    padding: .2rem;
+    border: 1px solid rgba(200, 62, 45, .35);
+    border-radius: .7rem;
+    background: #fffaf7;
+}
+
+    [data-reorder-page] .oh-reorder-line :has(> [data-reorder-quantity]):focus-within {
+        border-color: #c83e2d;
+        box-shadow: 0 0 0 .2rem rgba(200, 62, 45, .18);
+    }
+
+[data-reorder-page] [data-quantity-step] {
+    display: grid;
+    place-items: center;
+    inline-size: 1.85rem;
+    block-size: 1.85rem;
+    padding: 0;
+    border: 0 !important;
+    border-radius: .5rem !important;
+    background: rgba(200, 62, 45, .1) !important;
+    color: #a83224 !important;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+    [data-reorder-page] [data-quantity-step]:hover:not(:disabled) {
+        background: linear-gradient(135deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+        color: #fff8ec !important;
+    }
+
+    [data-reorder-page] [data-quantity-step]:disabled {
+        background: rgba(200, 62, 45, .05) !important;
+        color: #d9b8b2 !important;
+    }
+
+[data-reorder-page] [data-reorder-quantity] {
+    inline-size: 2.2rem;
+    min-block-size: 1.85rem;
+    margin: 0;
+    padding: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #2b241c;
+    font-size: .95rem;
+    font-weight: 600;
+    text-align: center;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+    [data-reorder-page] [data-reorder-quantity]::-webkit-outer-spin-button,
+    [data-reorder-page] [data-reorder-quantity]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+@media (prefers-reduced-motion: reduce) {
+    .oh-journal .oj-actions .oh-button,
+    .oh-journal .oj-view,
+    .oh-journal .oj-details .oh-button.oh-wide,
+    .oh-journal .oj-details .oh-detail-link,
+    [data-reorder-page] [data-review-button],
+    [data-reorder-page] [data-reorder-all],
+    [data-reorder-page] [data-reorder-none],
+    [data-reorder-page] a[href$="/Customer/Orders"] {
+        transition: none;
+    }
+}
+
+/* Pagination: cream buttons with a gold edge; Show all in red; page label as a quiet pill. */
+.oh-journal .oh-pagination > div {
+    gap: .6rem;
+}
+
+.oh-journal .oh-pagination .oh-page-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    min-block-size: 2.9rem;
+    padding: .5rem 1.15rem;
+    border: 1px solid rgba(183, 155, 114, .6) !important;
+    border-radius: .7rem !important;
+    background: #fffaf0 !important;
+    color: #5a4127 !important;
+    font: 600 14px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+    text-decoration: none;
+    box-shadow: 0 .35rem .9rem rgba(25, 25, 25, .05);
+    transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+.oh-journal .oh-pagination a.oh-page-button:hover,
+.oh-journal .oh-pagination a.oh-page-button:focus-visible {
+    border-color: #9a7a4c !important;
+    background: #f6efe2 !important;
+    color: #3d2a17 !important;
+    transform: translateY(-1px);
+}
+
+.oh-journal .oh-pagination .oh-page-button.is-disabled {
+    border-color: rgba(183, 155, 114, .3) !important;
+    background: rgba(255, 250, 240, .6) !important;
+    color: #c9bfae !important;
+    box-shadow: none;
+    opacity: 1;
+}
+
+.oh-journal .oh-pagination .oh-page-button.oj-show-all {
+    border: 0 !important;
+    background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28);
+}
+
+    .oh-journal .oh-pagination .oh-page-button.oj-show-all:hover {
+        border: 0 !important;
+        background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+        color: #fff8ec !important;
+        filter: brightness(1.07);
+    }
+
+/* "Page 1 of 16" */
+.oh-journal .oh-pagination > div > span:not(.oh-page-button) {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 2.9rem;
+    padding: 0 1rem;
+    border-radius: .7rem;
+    background: rgba(183, 155, 114, .16);
+    color: #5a4127;
+    font: 600 14px/1 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Reorder page: "Back to my orders" = gold gradient, like "Continue browsing" in the cart */
+[data-reorder-page] a[href*="/Customer/Orders"]:not([href*="Reorder"]) {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-block-size: 2.9rem;
+    padding: .55rem 1.25rem;
+    border: 0 !important;
+    border-radius: .7rem !important;
+    background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    font: 600 14px/1.2 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+    text-decoration: none !important;
+    box-shadow: 0 .35rem .9rem rgba(111, 84, 48, .25) !important;
+    transition: filter .2s ease, transform .2s ease;
+}
+
+    [data-reorder-page] a[href*="/Customer/Orders"]:not([href*="Reorder"]):hover {
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%) !important;
+        color: #fff8ec !important;
+        filter: brightness(1.08);
+        transform: translateY(-1px);
+    }
+
+/* "Select available" = small gold gradient button */
+[data-reorder-page] [data-reorder-all] {
+    border: 0 !important;
+    background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%) !important;
+    background-origin: border-box !important;
+    color: #fff8ec !important;
+    box-shadow: 0 .3rem .8rem rgba(111, 84, 48, .22) !important;
+}
+
+    [data-reorder-page] [data-reorder-all]:hover {
+        background: linear-gradient(90deg, #6f5430 0%, #9a7a4c 55%, #b79b72 100%) !important;
+        color: #fff8ec !important;
+        filter: brightness(1.08);
+    }
+
+/* "Clear" = like Reset: red text, red capsule on hover */
+[data-reorder-page] [data-reorder-none] {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #c83e2d !important;
+}
+
+    [data-reorder-page] [data-reorder-none]:hover,
+    [data-reorder-page] [data-reorder-none]:focus-visible {
+        background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%) !important;
+        color: #fff8ec !important;
+        box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28) !important;
+    }

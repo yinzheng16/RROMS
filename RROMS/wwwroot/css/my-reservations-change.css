@@ -1,0 +1,547 @@
+/* Owner: Member 2 — US15 modify my reservation. Same look as the cancel pop-up. */
+.myr-change-dialog {
+    --myr-gold: #d8b26b;
+    --myr-gold-bright: #ffd387;
+    --myr-cream: #f6ecda;
+    --myr-muted: #b8a898;
+    --myr-red: #e44032;
+    --myr-line: rgba(214,177,111,.58);
+    color: var(--myr-cream);
+    font-family: Georgia,"Times New Roman",serif;
+    box-sizing: border-box;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    width: min(620px,calc(100vw - 32px));
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    margin: auto;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(214,177,111,.5) transparent
+}
+
+    .myr-change-dialog::-webkit-scrollbar { width: 8px }
+
+    .myr-change-dialog::-webkit-scrollbar-track { background: transparent }
+
+    .myr-change-dialog::-webkit-scrollbar-thumb { background: rgba(214,177,111,.4); border-radius: 8px; border: 2px solid transparent; background-clip: content-box }
+
+        .myr-change-dialog::-webkit-scrollbar-thumb:hover { background: rgba(214,177,111,.7); background-clip: content-box }
+
+    .myr-change-dialog *, .myr-change-dialog *::before, .myr-change-dialog *::after { box-sizing: border-box }
+
+    .myr-change-dialog [hidden] { display: none !important }
+
+    .myr-change-dialog::backdrop { background: rgba(0,0,0,.72); backdrop-filter: blur(4px) }
+
+    .myr-change-dialog svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none }
+
+    .myr-change-dialog button { font: inherit }
+
+    .myr-change-dialog button { cursor: pointer }
+
+    .myr-change-dialog button:disabled { opacity: .55; cursor: not-allowed }
+
+    .myr-change-dialog :focus-visible { outline: 2px solid var(--myr-gold-bright); outline-offset: 2px }
+
+.myr-change-inner {
+    border: 1px solid var(--myr-gold);
+    position: relative;
+    padding: 30px 34px 28px;
+    border-radius: 10px;
+    background: linear-gradient(#100d0de0,#130c0ceb),url('../images/Reservations/ticket-black.webp') center/cover;
+    box-shadow: inset 0 0 0 5px #100b09,inset 0 0 0 6px #b7914a66
+}
+
+    .myr-change-inner .myr-confirm-mark {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        border: 1px solid #c89749;
+        border-radius: 50%;
+        color: #edc578;
+        margin-bottom: 18px
+    }
+
+    .myr-change-inner .myr-confirm-eyebrow { font-family: Arial,sans-serif; font-size: 10px; letter-spacing: 2px; color: #e4b56b; margin: 0 0 8px }
+
+    .myr-change-inner h2 { font-size: 31px; line-height: 1.15; margin: 0 0 10px; color: #fff0db }
+
+.myr-change-head { display: flex; gap: 18px; align-items: center; margin-bottom: 20px }
+
+    .myr-change-head .myr-confirm-mark { margin: 0; flex: none }
+
+    .myr-change-head h2 { margin: 0 0 6px !important }
+
+.myr-change-now { margin: 0; font-size: 15px; color: var(--myr-muted) }
+
+    .myr-change-now strong { color: #f2ce8a; font-weight: 400 }
+
+#myrChangeForm { display: grid; gap: 16px }
+
+.myr-change-buttons { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px }
+
+.myr-change-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; align-items: start }
+
+.myr-change-field { position: relative; display: grid; gap: 8px; min-width: 0; align-content: start }
+
+.myr-change-wide { grid-column: 1 / -1 }
+
+    .myr-change-field .myr-label, .myr-change-types .myr-label { font-family: Arial,sans-serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #e4b56b }
+
+/* the Date and Time buttons: they open the calendar and the time list */
+.myr-change-dialog .myr-pick {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    height: 48px;
+    padding: 0 13px 0 15px;
+    border: 1px solid var(--myr-line);
+    border-radius: 7px;
+    background: #090807cf;
+    color: #fff0db;
+    font-size: 17px;
+    text-align: left
+}
+
+    .myr-pick svg { width: 18px; height: 18px; color: var(--myr-gold); stroke-width: 2; transition: transform .2s }
+
+    .myr-pick[aria-expanded="true"] { border-color: var(--myr-gold-bright) }
+
+        .myr-pick[aria-expanded="true"] svg { transform: rotate(180deg) }
+
+    .myr-pick:hover:not(:disabled) { border-color: var(--myr-gold) }
+
+.myr-pop {
+    position: absolute;
+    z-index: 4;
+    top: calc(100% + 6px);
+    left: 0;
+    border: 1px solid var(--myr-gold);
+    border-radius: 10px;
+    background: #130d0c;
+    box-shadow: 0 14px 34px #000c
+}
+
+.myr-cal { width: min(350px,calc(100vw - 60px)); padding: 14px 14px 12px }
+
+.myr-time-pop { right: 0; left: auto; width: min(320px,calc(100vw - 60px)); padding: 12px 8px 12px 12px }
+
+.myr-time-pop .myr-slots { height: auto; max-height: 218px }
+
+.myr-change-dialog .myr-change-x {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    background: transparent;
+    color: #e4b56b
+}
+
+    .myr-change-dialog .myr-change-x svg { width: 18px; height: 18px; stroke-width: 2 }
+
+
+    .myr-change-x:hover:not(:disabled) { border-color: var(--myr-line); background: #39291b }
+
+/* calendar: the same look as the reservation page */
+
+.myr-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px }
+
+    .myr-cal-head strong { font-size: 19px; font-weight: 400; color: #fff0db }
+
+.myr-change-dialog .myr-cal-nav { width: 34px; height: 34px; border: 1px solid var(--myr-line); border-radius: 50%; background: transparent; color: var(--myr-gold-bright); font-size: 22px; line-height: 1; padding: 0 0 3px }
+
+    .myr-cal-nav:hover:not(:disabled) { background: #39291b; border-color: var(--myr-gold) }
+
+.myr-cal-week, .myr-cal-grid { display: grid; grid-template-columns: repeat(7,minmax(0,1fr)); gap: 4px; text-align: center }
+
+    .myr-cal-week span { font-family: Arial,sans-serif; font-size: 10.5px; letter-spacing: .08em; color: var(--myr-muted); padding: 4px 0 }
+
+.myr-cal-grid { grid-auto-rows: 38px; align-content: start }
+
+.myr-cal-day { height: 38px; min-width: 0; padding: 0; border-radius: 10px; border: 1px solid transparent; background: transparent; color: #fff0db; font-size: 15px; transition: background .2s, border-color .2s }
+
+    .myr-cal-day:disabled { color: rgba(255,255,255,.22); cursor: not-allowed; opacity: 1 }
+
+    .myr-cal-day:not(:disabled):hover { background: rgba(214,177,111,.16); border-color: var(--myr-line) }
+
+    .myr-cal-day.is-today { border-color: var(--myr-line) }
+
+    .myr-cal-day.is-selected, .myr-cal-day.is-selected:hover:not(:disabled) { background: var(--myr-red); border-color: #ff8a77; color: #fff }
+
+    .myr-cal-day.is-blank { visibility: hidden }
+
+/* time slots */
+.myr-slots {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+    height: 178px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 2px 6px 2px 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(214,177,111,.4) transparent
+}
+
+    .myr-slots::-webkit-scrollbar { width: 8px }
+
+    .myr-slots::-webkit-scrollbar-track { background: transparent }
+
+    .myr-slots::-webkit-scrollbar-thumb { background: rgba(214,177,111,.32); border-radius: 8px; border: 2px solid transparent; background-clip: content-box }
+
+        .myr-slots::-webkit-scrollbar-thumb:hover { background: rgba(214,177,111,.6); background-clip: content-box }
+
+.myr-slot {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 84px;
+    height: 38px;
+    padding: 0 13px;
+    border-radius: 999px;
+    border: 1px solid var(--myr-line);
+    background: transparent;
+    color: #fff0db;
+    font-size: 14.5px;
+    line-height: 1.05;
+    transition: background .2s, border-color .2s
+}
+
+    .myr-slot small { font-family: Arial,sans-serif; font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--myr-muted); margin-top: 1px }
+
+    .myr-slot:hover { border-color: var(--myr-gold); background: rgba(214,177,111,.12) }
+
+    .myr-slot.is-selected { background: var(--myr-red); border-color: #ff8a77; color: #fff }
+
+        .myr-slot.is-selected small { color: #ffd9d3 }
+
+.myr-slots-empty { margin: 0; padding: 8px 2px; font-size: 15px; color: var(--myr-muted) }
+
+.myr-change-field { display: grid; gap: 7px; min-width: 0 }
+
+    .myr-change-field .myr-label { font-family: Arial,sans-serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #e4b56b }
+
+.myr-change-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border: 1px solid var(--myr-line);
+    border-radius: 7px;
+    background: #090807cf;
+    overflow: hidden
+}
+
+    .myr-change-step button { width: 54px; height: 46px; border: 0; background: transparent; color: var(--myr-gold-bright); font-size: 26px; line-height: 1 }
+
+        .myr-change-step button:hover:not(:disabled) { background: #39291b }
+
+    .myr-change-count { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 18px; color: #fff0db }
+
+    .myr-change-count input {
+        width: 3ch;
+        min-width: 44px;
+        padding: 4px 0;
+        border: 0;
+        border-bottom: 1px solid var(--myr-line);
+        background: transparent;
+        color: #fff0db;
+        font: inherit;
+        text-align: center;
+        -moz-appearance: textfield;
+        appearance: textfield
+    }
+
+        .myr-change-count input::-webkit-outer-spin-button, .myr-change-count input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
+
+        .myr-change-count input:focus { outline: none; border-bottom-color: var(--myr-gold-bright) }
+
+.myr-change-status {
+    padding: 11px 13px;
+    border: 1px solid var(--myr-line);
+    border-radius: 7px;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--myr-muted);
+    background: #0d0a09b3
+}
+
+    .myr-change-status.is-ok { border-color: #6bb06a; color: #c9eec2; background: #16301566 }
+
+    .myr-change-status.is-bad { border-color: #b84939; color: #ffc0b0; background: #5f1c1666 }
+
+    .myr-change-status.is-wait { color: var(--myr-muted) }
+
+.myr-change-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 15px; color: var(--myr-muted) }
+
+    .myr-change-suggest button {
+        padding: 6px 14px;
+        border: 1px solid var(--myr-gold);
+        border-radius: 25px;
+        background: #090807cf;
+        color: #f2ce8a;
+        font-size: 15px
+    }
+
+        .myr-change-suggest button:hover { background: #39291b }
+
+.myr-change-note { margin: 0; font-size: 14px; line-height: 1.45; color: var(--myr-muted) }
+
+.myr-change-submit {
+    padding: 13px;
+    border: 1px solid #e4b45b;
+    border-radius: 6px;
+    background: linear-gradient(115deg,#f2af49,#ffe09d 48%,#e9ae51);
+    color: #211504;
+    font-size: 17px;
+    font-weight: 600
+}
+
+.myr-change-inner .myr-close-button { min-width: 0; padding: 11px; font-size: 17px; border-radius: 6px; background: #171716b8; border: 1px solid #bbb7af; color: #ede9df }
+
+    .myr-change-inner .myr-close-button:hover:not(:disabled) { background: #33302b }
+
+/* the Change buttons on the list and in the details pop-up */
+.myr-quick-change {
+    padding: 8px 20px;
+    border-radius: 25px;
+    border: 1px solid var(--myr-gold, #d8b26b);
+    background: #090807cf;
+    color: #f2ce8a;
+    font-size: clamp(14px,1.25vw,19px);
+    white-space: nowrap;
+    transition: background .15s;
+    cursor: pointer
+}
+
+    .myr-quick-change:hover { background: #39291b }
+
+.myr-later-actions .myr-quick-change { font-size: 16px; padding: 7px 18px }
+
+.myr-change-button {
+    min-width: 210px;
+    padding: 13px 26px;
+    border-radius: 7px;
+    background: linear-gradient(#170f06,#24180a);
+    color: #f2ce8a;
+    border: 1px solid #d8b26b;
+    font-size: 21px;
+    cursor: pointer
+}
+
+    .myr-change-button:hover { background: #4a3315 }
+
+@media (max-width: 760px) {
+    .myr-change-buttons { grid-template-columns: 1fr }
+    .myr-change-inner { padding: 24px 18px 22px }
+    .myr-change-head { padding-right: 34px }
+    .myr-change-inner h2 { font-size: 26px }
+    .myr-cal-grid { grid-auto-rows: 36px }
+    .myr-cal-day { height: 36px }
+}
+
+@media (max-width: 520px) {
+    .myr-change-fields { grid-template-columns: 1fr }
+    .myr-change-type-list { grid-template-columns: 1fr }
+    .myr-time-pop { right: auto; left: 0 }
+    .myr-change-button { min-width: 0; width: 100%; font-size: 18px }
+}
+
+/* US15: another table type, when the party no longer fits the booked one */
+.myr-change-types { display: grid; gap: 9px }
+
+    .myr-change-types .myr-label { font-family: Arial,sans-serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #e4b56b }
+
+.myr-change-type-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+
+.myr-change-type {
+    display: grid;
+    gap: 3px;
+    text-align: left;
+    padding: 11px 14px;
+    border: 1px solid var(--myr-line);
+    border-radius: 7px;
+    background: #090807cf;
+    color: #fff0db
+}
+
+    .myr-change-type strong { font-size: 17px; font-weight: 400 }
+
+    .myr-change-type span { font-size: 14px; color: var(--myr-muted) }
+
+    .myr-change-type .myr-type-spend { color: #f2ce8a }
+
+    .myr-change-type:hover { border-color: var(--myr-gold) }
+
+    .myr-change-type.is-on { border-color: var(--myr-gold-bright); background: #2a1d0e; box-shadow: inset 0 0 0 1px #d8b26b66 }
+
+.myr-change-spend { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; line-height: 1.4; color: #f2ce8a; cursor: pointer }
+
+    .myr-change-spend input { width: 18px; height: 18px; margin-top: 2px; accent-color: #d8b26b; flex: none }
+
+.myr-change-status.is-warn { border-color: #d8b26b; color: #ffe2a8; background: #3a2a0f66 }
+
+/* leaving with unsaved changes */
+.myr-change-leave { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; border-radius: 10px; background: rgba(8,5,4,.82); backdrop-filter: blur(3px) }
+
+.myr-change-leave-box { display: grid; gap: 10px; width: min(380px,100%); padding: 24px; border: 1px solid var(--myr-gold); border-radius: 10px; background: #130c0c; box-shadow: 0 10px 40px #000a }
+
+    .myr-change-leave-box h3 { margin: 0; font-size: 24px; font-weight: 400; color: #fff0db }
+
+    .myr-change-leave-box p { margin: 0 0 6px; font-size: 15px; line-height: 1.45; color: var(--myr-muted) }
+
+.myr-change-discard { padding: 12px; border-radius: 6px; border: 1px solid #ff5b4d; background: #170b0bcf; color: #ff6b5a; font-size: 16px }
+
+    .myr-change-discard:hover { background: #511612 }
+
+/* list: keep the day number clear of the month */
+.myr-later-date { gap: 0; padding: 9px 0 8px }
+
+    .myr-later-date b { margin: 5px 0 9px; line-height: 1 }
+
+/* next-up ticket right side: status and seal on top, two equal buttons, then View Reservation */
+.myr-status-area .myr-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-self: stretch; margin-top: 4px }
+
+    .myr-status-area .myr-actions .myr-view { grid-column: 1 / -1; justify-content: center; gap: 12px }
+
+    .myr-status-area .myr-actions .myr-quick-change, .myr-status-area .myr-actions .myr-quick-cancel { padding: 8px 10px; text-align: center }
+
+.myr-status-area > p { margin: 8px 0 12px }
+
+/* AM / PM a little smaller than the clock */
+.myr-ampm { font-style: normal; font-size: .6em; font-weight: 400; letter-spacing: .06em; margin-left: .05em }
+
+.myr-later-time .myr-ampm { color: inherit; font-size: .58em }
+
+/* list buttons: Modify, Cancel and View share one height, so they line up */
+.myr-later-actions { align-items: center }
+
+    .myr-later-actions > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px; font-size: 16px; line-height: 1 }
+
+    .myr-later-actions .myr-view svg { width: 20px; height: 20px }
+
+/* details ticket: a little less space around the lines, so the ticket is shorter */
+.myr-detail-main { padding-top: 24px; padding-bottom: 22px }
+
+.myr-ticket-header { padding: 6px 0 5px }
+
+.myr-detail-main .myr-brand { margin-bottom: 12px }
+
+.myr-detail-grid { padding: 9px 0 }
+
+.myr-arrival { padding: 10px 8px 4px 13px }
+
+/* the red stub decided the ticket height, so it is tightened too */
+.myr-detail-stub .myr-stub-inner { padding: 18px 0 12px }
+
+.myr-detail-stub .myr-stub-label { margin-bottom: 10px }
+
+.myr-detail-stub .myr-stub-rule { margin: 16px 0 }
+
+.myr-detail-stub .myr-stub-symbol { margin-bottom: 10px }
+
+/* a fixed 560px height made the rows stretch; let the ticket be as tall as its content */
+.myr-detail-ticket { height: auto }
+
+.myr-detail-main .myr-detail-grid { flex: 0 0 auto }
+
+/* list buttons: the words sit in the middle of the button */
+.myr-later .myr-later-actions > button { padding: 2px 18px 0; line-height: 1 }
+
+.myr-later .myr-later-actions > .myr-view svg { margin-top: -2px }
+
+/* Later list: 5 per page */
+.myr-later.is-paged-out { display: none !important }
+
+.myr-pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 18px;
+    margin-top: 16px;
+    color: var(--myr-muted, #b8a898);
+    font-size: 15px
+}
+
+.myr-pager-pages { display: flex; align-items: center; gap: 6px }
+
+    .myr-pager-pages[hidden] { display: none }
+
+.myr-pager button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--myr-line, rgba(214,177,111,.58));
+    border-radius: 999px;
+    background: #090807cf;
+    color: #f2ce8a;
+    font-family: Arial,sans-serif;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s
+}
+
+    .myr-pager button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round }
+
+    .myr-pager button:hover:not(:disabled) { background: #39291b }
+
+    .myr-pager button:disabled { opacity: .35; cursor: not-allowed }
+
+    .myr-pager button:focus-visible { outline: 2px solid #ffd387; outline-offset: 2px }
+
+.myr-pager .myr-pager-num.is-on { background: linear-gradient(115deg,#f2af49,#ffe09d 48%,#e9ae51); border-color: #e4b45b; color: #211504; font-weight: 600 }
+
+.myr-pager .myr-pager-all { padding: 0 20px; font-family: Georgia,"Times New Roman",serif; font-size: 16px }
+
+@media (max-width: 560px) {
+    .myr-pager { justify-content: center }
+    .myr-pager-info { width: 100%; text-align: center }
+}
+
+/* special requests */
+.myr-change-request { display: grid; gap: 8px }
+
+    .myr-change-request .myr-label { font-family: Arial,sans-serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #e4b56b }
+
+    .myr-change-request .myr-label small { font-size: 10px; letter-spacing: 1px; text-transform: none; color: var(--myr-muted) }
+
+    .myr-change-request textarea {
+        width: 100%;
+        min-height: 64px;
+        max-height: 140px;
+        resize: vertical;
+        padding: 10px 13px;
+        border: 1px solid var(--myr-line);
+        border-radius: 7px;
+        background: #090807cf;
+        color: #fff0db;
+        font: inherit;
+        font-size: 16px;
+        line-height: 1.4;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(214,177,111,.4) transparent
+    }
+
+        .myr-change-request textarea::placeholder { color: #8f8174 }
+
+        .myr-change-request textarea:focus { outline: none; border-color: var(--myr-gold-bright) }
+
+    .myr-change-request .myr-change-count-note { justify-self: end; margin-top: -2px; font-family: Arial,sans-serif; font-size: 11px; color: var(--myr-muted) }

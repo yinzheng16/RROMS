@@ -1,6 +1,8 @@
 // Owner: Member 4 — US37 in-app notifications (all customer pages, loaded by _NotificationBell.cshtml).
 // - Fills the bell dropdown with the latest 5 notices (from /Customer/Notifications?handler=Summary).
-// - Checks again every 30 seconds (and when the tab becomes visible) and updates the red badge.
+// - US37 SignalR push: NotificationHub signals a new notice the moment it is saved, so the badge
+//   and toast update straight away. The 30-second check (and on tab visible) stays as a fallback
+//   for when the live connection is down.
 // - Shows the shared YORU toast for notices that arrived since the last check, on whichever page
 //   the customer is on. Pages that already show a live order (data-watching-order="<orderId>",
 //   Member 3's order page) get no second toast for that order; the badge still updates.
@@ -148,8 +150,14 @@
         close.addEventListener('click', hide);
     }
 
+    // The order page (Member 3 / US27) already shows its own live toast for that order,
+    // so the bell skips the toast for it (the badge still updates). Recognised by
+    // data-watching-order="<id>" or by being on /Customer/OrderConfirmation?id=<id>.
     function watchingOrder(orderId) {
-        return orderId != null && document.querySelector('[data-watching-order="' + orderId + '"]') !== null;
+        if (orderId == null) return false;
+        if (document.querySelector('[data-watching-order="' + orderId + '"]')) return true;
+        var onOrderPage = location.pathname.toLowerCase() === '/customer/orderconfirmation';
+        return onOrderPage && new URLSearchParams(location.search).get('id') === String(orderId);
     }
 
     function handleNew(items) {
@@ -225,7 +233,46 @@
     }, POLL_MS);
     refresh();
 
-    // US37 step 2 (after the shared SignalR setup is in develop): NotificationHub pushes
-    // "NotificationReceived" and this file calls refresh() straight away.
+    // ---------- US37 SignalR push ----------
+    // The shared SignalR client (Member 3 / US27, wwwroot/lib) is loaded here only if the page
+    // has not loaded it already (the order page does).
+    function loadSignalR(done) {
+        if (window.signalR) { done(); return; }
+        var src = bell.getAttribute('data-signalr-src');
+        if (!src) return;
+        var s = document.createElement('script');
+        s.src = src;
+        s.onload = done;
+        document.head.appendChild(s);
+    }
+
+    function connectLive() {
+        var hubUrl = bell.getAttribute('data-hub-url');
+        if (!hubUrl || !window.signalR) return;
+
+        var hub = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl)
+            .withAutomaticReconnect()
+            .configureLogging(signalR.LogLevel.None)
+            .build();
+
+        // Only a signal arrives; the details come from Summary (owner-checked).
+        hub.on('NotificationReceived', refresh);
+        // Back online after a drop: catch up on anything missed.
+        hub.onreconnected(refresh);
+        // Automatic reconnect gave up (e.g. server restarted for a long time): start again.
+        hub.onclose(function () { start(5000); });
+
+        function start(delay) {
+            hub.start().catch(function () {
+                // Server busy or offline: polling keeps working; try again a bit later (max 60 s).
+                setTimeout(function () { start(Math.min(delay * 2, 60000)); }, delay);
+            });
+        }
+        start(5000);
+    }
+
+    loadSignalR(connectLive);
+
     window.rromsNotifications = { refresh: refresh };
 })();

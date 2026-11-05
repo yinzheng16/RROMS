@@ -31,7 +31,7 @@ namespace RROMS.Services.Interfaces
         Task<OrderBillingInfo?> GetOrderBillingInfoAsync(string orderNo);
 
         // US32 (called by Member 3): true once the session's bill is
-        // Confirmed or Paid. Block new dine-in orders and partial
+        // Confirmed or Paid. Block new dine-in orders and order
         // cancellations for the session while this returns true.
         Task<bool> IsSessionLockedAsync(int sessionId);
 

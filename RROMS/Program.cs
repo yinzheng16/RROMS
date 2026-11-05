@@ -104,12 +104,26 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<IOrderStatusNotifier, OrderStatusNotifier>(); // Member 3 / US27
 builder.Services.AddScoped<IBillingService, BillingService>(); // Member 4 / US32
 builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IReceiptService, ReceiptService>(); // Member 4 / US35 PDF receipt
+builder.Services.AddScoped<IReservationConfirmationService, ReservationConfirmationService>(); // Member 4 / US36 reservation confirmation PDF
+builder.Services.AddScoped<IAdminPaymentService, AdminPaymentService>(); // Member 4 / US40 Admin payments
+builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection(StripeSettings.Section)); // Member 4 / US33
+builder.Services.AddSingleton<IStripeCheckoutGateway, StripeCheckoutGateway>();   // Member 4 / US33
+builder.Services.AddScoped<IOnlinePaymentService, OnlinePaymentService>();   // Member 4 / US33
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();   // Member 4 / US39
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
+builder.Services.AddScoped<IStaffReservationService, StaffReservationService>();   // Member 2: US16 staff reservations
+builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics
+builder.Services.AddScoped<IAdminOverviewService, AdminOverviewService>();   // Member 5: US41
 
-//Member 5
+// Member 5: Feedback, Reports & Dashboard
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();   // US42
+builder.Services.AddScoped<IAdminFeedbackService, AdminFeedbackService>();   // US43
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<ISalesReportService, SalesReportService>();   // Member 5: US44 Filtered reports
+builder.Services.AddScoped<IDashboardService, DashboardService>();   // Member 5: US46 Dashboard
 var app = builder.Build();
+
 
 // Apply migrations and create the roles and test accounts.
 using (var scope = app.Services.CreateScope())
@@ -158,5 +172,6 @@ app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
 app.MapHub<OrderStatusHub>(OrderStatusHub.Path); // Member 3 / US27 live order status
+app.MapHub<NotificationHub>(NotificationHub.Path); // Member 4 / US37 live notification bell
 
 app.Run();
