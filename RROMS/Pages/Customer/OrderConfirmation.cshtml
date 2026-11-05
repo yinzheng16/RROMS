@@ -67,6 +67,7 @@
                     <div><dt>Reservation</dt><dd>@receipt.ReservationReference · @receipt.ReservedAt?.ToString("dd MMM · h:mm tt", CultureInfo.InvariantCulture) · @receipt.Guests @(receipt.Guests == 1 ? "guest" : "guests")</dd></div>
                 }
             </dl>
+            <partial name="/Pages/Customer/_TakeawayPay.cshtml" model="Model.PayView" />
             <section class="cart-confirmation__remarks" aria-labelledby="order-remarks-title">
                 <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
                 <div><h2 id="order-remarks-title">Order remarks</h2><p>@(receipt.Notes ?? "No additional remarks.")</p></div>

@@ -1,0 +1,77 @@
+@model RROMS.Pages.Customer.TakeawayPayView
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@* Owner: Member 3. Payment panel on the order confirmation page and the My Orders details.
+   The button posts to Member 4's Pay page (OnPostTakeawayAsync), which opens Stripe;
+   Member 4's PayResult page handles success, cancel and retry. *@
+@{
+    string Rm(decimal v) => "RM " + v.ToString("N2", CultureInfo.GetCultureInfo("en-MY"));
+    string tone = Model.Dark ? " pay-now--dark" : "";
+}
+<link rel="stylesheet" href="~/css/customer-pay-now.css" asp-append-version="true" />
+@if (Model.OrderType == OrderType.DineIn)
+{
+    if (Model.OrderStatus != OrderStatus.Cancelled)
+    {
+        <div class="pay-now pay-now--note@(tone)">
+            <span class="pay-now__icon" aria-hidden="true"><i class="bi bi-receipt"></i></span>
+            <p>Dine-in orders are paid together on your table's bill. Once our staff confirm it, you can
+                <a asp-page="/Customer/Payments/Pay">pay online</a> or pay at the counter.</p>
+        </div>
+    }
+}
+else if (Model.Status is TakeawayPayStatus status)
+{
+    switch (status)
+    {
+        case TakeawayPayStatus.Paid:
+            <div class="pay-now pay-now--paid@(tone)" role="status">
+                <span class="pay-now__icon" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <div><strong>Paid</strong><p>Thank you. This takeaway order has been paid.</p></div>
+            </div>
+            break;
+
+        case TakeawayPayStatus.CanPay:
+        case TakeawayPayStatus.InProgress:
+            bool again = status == TakeawayPayStatus.InProgress;
+            <div class="pay-now pay-now--action@(tone)">
+                <div class="pay-now__copy">
+                    <strong>@(again ? "Payment in progress" : "Pay before you collect")</strong>
+                    <p>@(again ? "Your Stripe payment page is still open. Continue to finish it." : "Pay online now, or pay at the counter when you collect your order.")</p>
+                </div>
+                <form method="post" asp-page="/Customer/Payments/Pay" asp-page-handler="Takeaway" asp-route-orderId="@Model.OrderId" data-pay-now-form>
+                    <button type="submit" class="pay-now__button@(again ? " is-again" : "")">
+                        <i class="bi bi-credit-card" aria-hidden="true"></i>
+                        <span>@(again ? "Continue payment" : "Pay now · " + Rm(Model.Total))</span>
+                    </button>
+                </form>
+            </div>
+            break;
+
+        default: // PayAtCounter
+            if (Model.OrderStatus != OrderStatus.Cancelled)
+            {
+                string reason = !Model.OnlineAvailable
+                    ? "Online payment isn't available right now."
+                    : Model.Total < Model.MinimumAmount
+                        ? $"Online payment needs at least {Rm(Model.MinimumAmount)}."
+                        : "This order can't be paid online.";
+                <div class="pay-now pay-now--note@(tone)">
+                    <span class="pay-now__icon" aria-hidden="true"><i class="bi bi-shop"></i></span>
+                    <p>@reason Please pay at the counter when you collect your order.</p>
+                </div>
+            }
+            break;
+    }
+}
+<script>
+    // One click is enough: stop double submits while Stripe opens.
+    document.querySelectorAll('[data-pay-now-form]:not([data-ready])').forEach(function (form) {
+        form.dataset.ready = 'true';
+        form.addEventListener('submit', function () {
+            var btn = form.querySelector('button');
+            if (btn) { btn.disabled = true; btn.querySelector('span').textContent = 'Opening Stripe…'; }
+        });
+    });
+</script>

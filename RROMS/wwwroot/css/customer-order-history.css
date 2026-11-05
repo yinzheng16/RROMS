@@ -4932,3 +4932,42 @@ html.oj-history-js .oh-journal .oh-workspace > #history-drawer {
         color: #fff8ec !important;
         box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .28) !important;
     }
+
+/* 5 Nov: page background is a seamless washi tile (seigaiha waves and petals).
+   The order cards and details keep their own journal paper. */
+.oh-journal {
+    background: #f6f0e5 url('/images/orders/yoru-order-page-washi.webp') center top / 512px repeat;
+}
+
+/* 5 Nov: on narrower laptop screens (about 1100-1440px wide) the toolbar fields
+   shrink a little so Reset stays on the same row instead of dropping below. */
+.oh-journal .oj-toolbar > * {
+    min-width: 0;
+}
+
+.oh-journal .oj-toolbar .oj-reset {
+    flex: none;
+}
+
+@media (min-width: 1100px) {
+    .oh-journal .oj-toolbar {
+        flex-wrap: nowrap;
+    }
+
+        .oh-journal .oj-toolbar > .oj-search {
+            flex: 1 1 12rem;
+        }
+}
+
+/* Smaller laptops / tablets: search on its own row, the filters, sort and Reset on the next. */
+@media (min-width: 901px) and (max-width: 1099.98px) {
+    .oh-journal .oj-toolbar > .oj-search {
+        flex-basis: 100%;
+    }
+
+    .oh-journal .oj-toolbar > .oj-tool-field,
+    .oh-journal .oj-toolbar > .oj-sort-field,
+    .oh-journal .oj-toolbar > .oj-date-range {
+        flex: 1 1 9rem;
+    }
+}
