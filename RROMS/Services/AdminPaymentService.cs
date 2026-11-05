@@ -172,7 +172,18 @@ namespace RROMS.Services
                     BillTotal = p.Bill != null ? (decimal?)p.Bill.TotalAmount : null,
                     PaidOnSameBill = p.Bill != null
                         ? p.Bill.Payments.Count(x => x.Status == PaymentStatus.Paid)
-                        : p.Order!.Payments.Count(x => x.BillId == null && x.Status == PaymentStatus.Paid)
+                        : p.Order!.Payments.Count(x => x.BillId == null && x.Status == PaymentStatus.Paid),
+
+                    // US54 refunds
+                    PaidEarlierOnSameBill = p.Bill != null
+                        ? p.Bill.Payments.Count(x => x.Status == PaymentStatus.Paid && x.Id < p.Id)
+                        : p.Order!.Payments.Count(x => x.BillId == null && x.Status == PaymentStatus.Paid && x.Id < p.Id),
+                    RefundedAt = p.RefundedAt,
+                    RefundReason = p.RefundReason,
+                    RefundedByName = users
+                        .Where(u => u.Id == p.RefundedByUserId)
+                        .Select(u => u.FullName)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
 

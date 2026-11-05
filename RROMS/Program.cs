@@ -111,6 +111,7 @@ builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection(Stri
 builder.Services.AddSingleton<IStripeCheckoutGateway, StripeCheckoutGateway>();   // Member 4 / US33
 builder.Services.AddScoped<IOnlinePaymentService, OnlinePaymentService>();   // Member 4 / US33
 builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();   // Member 4 / US39
+builder.Services.AddScoped<IPaymentRefundService, PaymentRefundService>();   // Member 4 / US54 refunds
 builder.Services.AddScoped<IDiningSessionService, DiningSessionService>();   // Member 2: dining sessions
 builder.Services.AddScoped<IStaffReservationService, StaffReservationService>();   // Member 2: US16 staff reservations
 builder.Services.AddScoped<IOccupancyAnalyticsService, OccupancyAnalyticsService>();   // Member 2: US20 occupancy analytics

@@ -494,12 +494,12 @@ input[type="date"].ap-input::-webkit-calendar-picker-indicator {
 }
 
     .ap-table col.c-pay  { width: 12%; }
-    .ap-table col.c-bill { width: 19%; }
+    .ap-table col.c-bill { width: 17%; }
     .ap-table col.c-cust { width: 13%; }
     .ap-table col.c-meth { width: 13%; }
     .ap-table col.c-stat { width: 16%; }
     .ap-table col.c-amt  { width: 10%; }
-    .ap-table col.c-act  { width: 17%; }
+    .ap-table col.c-act  { width: 19%; }
 
     .ap-table th {
         height: 2.4rem;
@@ -813,3 +813,289 @@ html.ap-restoring .ap-page { visibility: hidden; }
     .ap-kpis, .ap-filters { grid-template-columns: minmax(0, 1fr); }
     .ap-dh { flex-wrap: wrap; }
 }
+
+/* =====================================================
+   US54 REFUNDS (Member 4)
+   ===================================================== */
+
+/* refunded: when · who, and the reason under it (same small style as the other flags) */
+.ap-flag.is-ref { color: var(--ap-ref); }
+    .ap-flag.is-ref .bi-arrow-counterclockwise { font-size: .66rem; }
+    .ap-flag.is-reason {
+        display: block;
+        max-width: 11rem;
+        padding-left: 1.1rem;              /* lines up with the text after the icon above */
+        line-height: 1.35;                 /* line-height 1 cut off the bottom of g, y, p */
+        margin-top: -.15rem;               /* keeps the same gap as the other flags */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--ap-mute);
+    }
+
+/* "Refund this one" under "Paid 2 times" */
+.ap-flag-link {
+    padding: 0 0 0 1.1rem;
+    border: 0;
+    background: none;
+    font-size: .68rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--ap-ref);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+    .ap-flag-link:hover { color: #3F3468; }
+    .ap-flag-link:focus-visible { outline: 2px solid var(--ap-gold); outline-offset: 2px; border-radius: 3px; }
+
+/* "⋯" button and its small menu */
+.ap-more { position: relative; }
+
+.ap-ab-more {
+    justify-content: center;
+    width: 2rem;
+    padding: 0;
+    color: var(--ap-ink);
+    border: 1px solid var(--ap-line);
+    background: #fff;
+    cursor: pointer;
+}
+    .ap-ab-more:hover,
+    .ap-ab-more[aria-expanded="true"] { color: var(--ap-ref); border-color: var(--ap-ref); background: var(--ap-ref-bg); }
+
+/* fixed + placed by admin-payments.js: the table clips anything absolutely positioned */
+.ap-menu {
+    position: fixed;
+    z-index: 1050;
+    min-width: 12rem;
+    padding: .3rem;
+    border: 1px solid var(--ap-line);
+    border-radius: 8px;
+    background: var(--ap-paper);
+    box-shadow: 0 12px 28px -12px rgba(25, 20, 15, .35);
+}
+
+.ap-menu-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .5rem .65rem;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--ap-ref);
+    text-align: left;
+    white-space: nowrap;
+}
+    .ap-menu-item:hover,
+    .ap-menu-item:focus-visible { outline: 0; background: var(--ap-ref-bg); }
+
+/* message after a refund: fixed at the bottom, because the page returns to the same scroll place */
+.ap-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    width: max-content;
+    max-width: min(40rem, calc(100vw - 2rem));
+    padding: .75rem .75rem .75rem 1rem;
+    border-radius: 10px;
+    font-size: .88rem;
+    color: var(--ap-fail);
+    background: var(--ap-fail-bg);
+    border: 1px solid rgba(155, 40, 35, .25);
+    box-shadow: 0 16px 32px -16px rgba(25, 20, 15, .45);
+    transform: translateX(-50%);
+    transition: opacity .3s, transform .3s;
+}
+    .ap-toast.is-ok { color: var(--ap-paid); background: var(--ap-paid-bg); border-color: rgba(47, 107, 52, .25); }
+    .ap-toast.is-hiding { opacity: 0; transform: translate(-50%, 8px); }
+    .ap-toast > .bi { font-size: 1rem; }
+
+.ap-toast-x {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-left: .25rem;
+    border: 0;
+    border-radius: 6px;
+    color: inherit;
+    background: transparent;
+}
+    .ap-toast-x:hover { background: rgba(0, 0, 0, .06); }
+
+/* refund pop-up: same header as the receipt pop-up */
+.ap-rf {
+    width: min(30rem, calc(100vw - 2rem));
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: var(--yoru-paper, #FCFAF5);
+    color: var(--yoru-ink, #191919);
+    box-shadow: 0 30px 60px -20px rgba(20, 10, 5, .6);
+}
+    .ap-rf::backdrop { background: rgba(23, 17, 16, .6); }
+    .ap-rf .ap-pdf-head { border-top: 3px solid var(--ap-ref, #584A86); border-radius: 12px 12px 0 0; }
+
+.ap-rf-body { display: flex; flex-direction: column; padding: 1rem 1.25rem .5rem; }
+
+.ap-rf-sum {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .35rem 1rem;
+    margin: 0 0 .9rem;
+    padding: .75rem .9rem;
+    border: 1px solid var(--yoru-line, #E4DACA);
+    border-radius: 8px;
+    background: #fff;
+    font-size: .85rem;
+}
+    .ap-rf-sum dt { font-weight: 500; color: var(--yoru-olive-text, #5C5F55); }
+    .ap-rf-sum dd { margin: 0; text-align: right; }
+    .ap-rf-sum .ap-rf-amt { font-family: var(--font-display); font-size: 1rem; font-weight: 700; }
+
+.ap-rf-how { margin: 0 0 .75rem; font-size: .85rem; color: var(--yoru-olive-text, #5C5F55); }
+
+.ap-rf-check {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin-bottom: .9rem;
+    padding: .6rem .75rem;
+    border: 1px dashed #C9B89A;
+    border-radius: 8px;
+    font-size: .85rem;
+    cursor: pointer;
+}
+    .ap-rf-check input { flex: none; margin: 0; accent-color: var(--ap-ref, #584A86); }
+    .ap-rf-check > span { line-height: 1.3; transform: translateY(-1px); }
+
+.ap-rf-label {
+    margin: .2rem 0 .3rem;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    color: var(--yoru-olive-text, #5C5F55);
+}
+    .ap-rf-label span { margin-left: .3rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+.ap-rf-body .ap-input { width: 100%; margin-bottom: .75rem; }
+.ap-rf-body textarea.ap-input { height: auto; min-height: 4.5rem; padding-top: .5rem; resize: vertical; }
+
+.ap-rf-err { margin: 0 0 .6rem; font-size: .82rem; color: var(--ap-fail, #9B2823); }
+
+.ap-rf-warn {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: .1rem 0 .4rem;
+    font-size: .78rem;
+    color: var(--ap-fail, #9B2823);
+}
+
+.ap-rf-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: .6rem;
+    padding: .85rem 1.25rem 1.1rem;
+}
+
+.ap-rf-cancel {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: 1px solid var(--yoru-line, #E4DACA);
+    border-radius: 8px;
+    font-size: .88rem;
+    font-weight: 500;
+    color: var(--yoru-ink, #191919);
+    background: #fff;
+}
+    .ap-rf-cancel:hover { border-color: var(--yoru-ink, #191919); }
+
+.ap-rf-foot .ap-btn[disabled] { opacity: .65; cursor: progress; }
+
+/* refund reason in the row: a button that opens the full details */
+button.ap-flag.is-reason {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+}
+    button.ap-flag.is-reason > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    button.ap-flag.is-reason .bi { flex: none; width: auto; font-size: .7rem; color: var(--ap-ref); transform: translateY(1px); }
+    button.ap-flag.is-reason:hover > span { color: var(--ap-ref); text-decoration: underline; text-underline-offset: 2px; }
+    button.ap-flag.is-reason:focus-visible { outline: 2px solid var(--ap-gold); outline-offset: 2px; border-radius: 3px; }
+
+.ap-rfi .ap-rf-body { padding-bottom: 1.25rem; }
+
+.ap-rfi-note {
+    margin: 0;
+    padding: .7rem .9rem;
+    border-radius: 8px;
+    background: var(--ap-ref-bg, #ECE8F4);
+    font-size: .88rem;
+    line-height: 1.5;
+    white-space: pre-wrap;           /* the whole note, on as many lines as it needs */
+    overflow-wrap: anywhere;
+}
+    .ap-rfi-note.is-empty { color: var(--yoru-olive-text, #5C5F55); background: transparent; padding: 0; }
+
+/* "by <admin>" under the refund time: same indent as the reason, long names cut with … */
+.ap-flag.is-by {
+    display: block;
+    max-width: 11rem;
+    padding-left: 1.1rem;
+    line-height: 1.35;
+    margin-top: -.15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ap-mute);
+}
+
+/* Final look (2 Nov): the reason always opens the details; purple + dotted underline
+   says "click me", hover turns it darker with a solid underline. */
+button.ap-flag.is-reason > span {
+    color: var(--ap-ref);
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+}
+    button.ap-flag.is-reason:hover > span {
+        color: #3F3468;
+        text-decoration-style: solid;
+    }
+
+/* "Refund this one" belongs to "Paid 2 times": close to it, more space before the next flag */
+.ap-flags .ap-flag-link {
+    margin-top: -.2rem;
+    margin-bottom: .2rem;
+}
+
+/* Final colours (2 Nov, round 2) */
+/* time line and "by <admin>": the same purple */
+.ap-flag.is-by { color: var(--ap-ref); }
+
+/* reason that opens the details: brighter purple, solid underline */
+button.ap-flag.is-reason > span {
+    color: #6A4BC4;
+    text-decoration: underline solid;
+}
+    button.ap-flag.is-reason:hover > span { color: #4B3399; }
+
+/* "Refund this one": same red family as "Paid 2 times", not bold, so it reads as part of that warning */
+.ap-flags .ap-flag-link { font-weight: 500; color: var(--ap-fail); }
+    .ap-flags .ap-flag-link:hover { color: #6E1B17; }
+
+/* the box cuts at its edge (needed for "…"); 3px room below so the underline is never cut,
+   the negative margin keeps the line spacing the same */
+button.ap-flag.is-reason > span { padding-bottom: 3px; margin-bottom: -3px; }
