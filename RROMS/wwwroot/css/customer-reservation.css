@@ -2071,7 +2071,18 @@ html {
     margin: 12px auto 0;
 }
 
-.rsv-flip.is-flipped + .rsv-ticket-close {
+.rsv-flip.is-flipped ~ .rsv-ticket-close {
+    display: flex;
+}
+
+/* US36: the PDF link sits above Close, and only after the ticket has turned over */
+.rsv-ticket-pdf {
+    display: none;
+    width: min(350px,100%);
+    margin: 12px auto 0;
+}
+
+.rsv-flip.is-flipped ~ .rsv-ticket-pdf:not([hidden]) {
     display: flex;
 }
 

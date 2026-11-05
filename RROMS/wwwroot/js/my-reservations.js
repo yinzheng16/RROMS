@@ -142,6 +142,11 @@
             seal.setAttribute('aria-label', 'Table ' + table);
         }
         byId('myrSpendAccepted').hidden = !(item.hasMinimumSpend && item.spendAccepted);
+        // US36: the booking PDF. The page only accepts upcoming Pending / Confirmed bookings, so no button for the others.
+        const pdf = byId('myrPdf');
+        const hasPdf = ['Pending', 'Confirmed'].includes(item.status) && item.reservedAtMs > restaurantNow();
+        pdf.hidden = !hasPdf;
+        if (hasPdf) pdf.href = '/Customer/ReservationConfirmation?id=' + encodeURIComponent(item.id);
         refreshCancellationState();
         details.classList.remove('is-closing');
         details.showModal();
