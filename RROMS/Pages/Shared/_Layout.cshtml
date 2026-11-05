@@ -13,7 +13,7 @@
     var isStaff = signedIn && User.IsInRole(Roles.Staff);
     var isBackOffice = isAdmin || isStaff;
     // US51: clicking the logo goes to your role's starting page.
-    var brandHref = isAdmin ? "/Admin" : isStaff ? "/Staff" : "/";
+    var brandHref = isAdmin ? "/Admin" : isStaff ? "/Staff/Reservations" : "/";
 
     // A page can set ViewData["FullWidth"] = true to draw edge to edge (e.g. the home page hero).
     var fullWidth = ViewData["FullWidth"] as bool? ?? false;
@@ -88,7 +88,7 @@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Floor</a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="/Staff">Today's reservations</a></li>
+                                    <li><a class="dropdown-item" href="/Staff/Reservations">Today's reservations</a></li>
                                     <li><a class="dropdown-item" href="/Staff/Orders">Order queue</a></li>
                                     <li><a class="dropdown-item" href="/Staff/Billing">Billing</a></li>
                                 </ul>
@@ -120,7 +120,7 @@
                         else if (isStaff)
                         {
                             @* Staff menu (US51) *@
-                            <li class="nav-item"><a class="nav-link @Active("/Staff", true)" href="/Staff">Reservations</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/Staff/Reservations")" href="/Staff/Reservations">Reservations</a></li>
                             <li class="nav-item"><a class="nav-link @Active("/Staff/Orders")" href="/Staff/Orders">Orders</a></li>
                             <li class="nav-item"><a class="nav-link @Active("/Staff/Billing")" href="/Staff/Billing">Billing</a></li>
                         }

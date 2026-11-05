@@ -1,0 +1,140 @@
+@model RROMS.Pages.Admin.Menu.IndexModel
+@using System.Globalization
+@* Menu item editor pop-up with a live dish-card preview. Same form contract as before:
+   handler "ItemSave" (multipart), _MenuItemViewState, ItemInput.*, ItemImage and RemoveItemImage. *@
+@{
+    bool editing = Model.ItemInput.Id.HasValue;
+    bool open = editing || string.Equals(Context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase) || Context.Request.Query.ContainsKey("New");
+    bool noCategories = Model.ItemCategories.Count == 0;
+    bool summaryErrors = ViewData.ModelState.TryGetValue(string.Empty, out var summary) && summary is not null && summary.Errors.Count > 0;
+    string? photo = string.IsNullOrWhiteSpace(Model.CurrentItemImage) ? null : Url.Content(Model.CurrentItemImage);
+    var category = Model.ItemCategories.FirstOrDefault(c => c.Id == Model.ItemInput.CategoryId);
+    string categoryShort = category is null ? "Category" : category.Name.Split('·', 2, StringSplitOptions.TrimEntries)[0];
+    string price = Model.ItemInput.Price is decimal p ? p.ToString("N2", CultureInfo.GetCultureInfo("en-MY")) : "0.00";
+}
+<dialog class="ms-dialog ms-dialog--paper" data-ms-dialog data-ms-kind="item" data-ms-draft="@(editing ? $"item-edit-{Model.ItemInput.Id}" : "item-new")"
+        data-open="@(open ? "true" : "false")" aria-labelledby="ms-item-title" open="@open">
+    <form id="menu-item-form" class="ms-dialog__form" method="post" asp-page="./Index" asp-page-handler="ItemSave" enctype="multipart/form-data" data-ms-form novalidate>
+        <partial name="_MenuItemViewState" model="Model" />
+        <input type="hidden" asp-for="ItemInput.Id" />
+
+        <p class="ms-confirm__eyebrow">A place on the menu</p>
+        <button type="button" class="ms-confirm__close" aria-label="Close" data-ms-close><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+        <h2 id="ms-item-title">@(editing ? "Edit menu item" : "New menu item")</h2>
+        <p class="ms-dialog__lead">
+            @if (editing && !string.IsNullOrEmpty(Model.ItemEditorCode))
+            {
+                <span>Item code <span class="ms-code">@Model.ItemEditorCode</span></span>
+                <span class="ms-dialog__codenote" data-ms-code-note hidden>A new code is assigned when you move the dish to another category.</span>
+            }
+            else
+            {
+                <span>The item code is assigned when you save.</span>
+            }
+        </p>
+        <p class="ms-draft-note" data-ms-draft-note hidden><i class="bi bi-journal-text" aria-hidden="true"></i>Draft restored. Choose the photo again if you picked one, then save.</p>
+
+        @if (noCategories)
+        {
+            <p class="ms-alert">Create a category before adding a dish. <a asp-page="./Index">Manage categories</a></p>
+        }
+        <div asp-validation-summary="ModelOnly" data-valmsg-summary="false" class="ms-alert" role="alert" hidden="@(!summaryErrors)"></div>
+        @if (Model.PhotoReselectionRequired)
+        {
+            <p class="ms-note ms-note--warn"><i class="bi bi-image" aria-hidden="true"></i>The dish was not saved. Correct the errors, then choose your photo again before saving.</p>
+        }
+
+        <div class="ms-item-grid">
+            <div class="ms-item-fields">
+                <div class="ms-item-row">
+                    <div>
+                        <label class="ms-label" for="ItemInput_CategoryId">Category</label>
+                        @* A styled dropdown is built over this select by the script; the select still submits the value. *@
+                        <div class="ms-select" data-ms-select>
+                            <select asp-for="ItemInput.CategoryId" class="ms-input" required data-ms-category data-original="@(editing ? Model.ItemInput.CategoryId.ToString() : "")">
+                                <option value="">Select a category</option>
+                                @foreach (var item in Model.ItemCategories)
+                                {
+                                    <option value="@item.Id">@item.Name</option>
+                                }
+                            </select>
+                            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                        </div>
+                        <span asp-validation-for="ItemInput.CategoryId" class="ms-error"></span>
+                    </div>
+                    <div>
+                        <label class="ms-label" for="ItemInput_Price">Price (RM)</label>
+                        <input asp-for="ItemInput.Price" type="number" class="ms-input" min="0.01" max="10000" step="0.01" required placeholder="0.00" inputmode="decimal" data-ms-price />
+                        <span asp-validation-for="ItemInput.Price" class="ms-error"></span>
+                    </div>
+                </div>
+
+                <label class="ms-label" for="ItemInput_Name">Name</label>
+                <input asp-for="ItemInput.Name" class="ms-input" maxlength="100" required placeholder="e.g. Edamame" autocomplete="off" data-ms-name />
+                <div class="ms-hint"><span></span><span><span data-ms-count>@(Model.ItemInput.Name?.Length ?? 0)</span>/100</span></div>
+                <span asp-validation-for="ItemInput.Name" class="ms-error"></span>
+
+                <label class="ms-label" for="ItemInput_Description">Description <small>optional</small></label>
+                <textarea asp-for="ItemInput.Description" class="ms-input ms-input--area" rows="3" maxlength="500" placeholder="Describe the dish, ingredients and flavour." data-ms-desc></textarea>
+                <div class="ms-hint"><span></span><span><span data-ms-desc-count>@(Model.ItemInput.Description?.Length ?? 0)</span>/500</span></div>
+                <span asp-validation-for="ItemInput.Description" class="ms-error"></span>
+
+                <span class="ms-label">Food photo</span>
+                <label class="ms-drop ms-drop--slim" data-ms-drop>
+                    <input asp-for="ItemImage" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-ms-image />
+                    <i class="bi bi-image" aria-hidden="true"></i>
+                    <span><b data-ms-drop-title>@(photo is null ? "Drop a photo or click to choose" : "Drop a new photo or click to replace")</b>
+                        <span>JPG, PNG or WebP, up to 5 MB.@(photo is null ? "" : " Leave empty to keep the current photo.")</span></span>
+                </label>
+                <span asp-validation-for="ItemImage" class="ms-error" data-ms-image-error></span>
+                @if (photo is not null)
+                {
+                    <label class="ms-check ms-check--small">
+                        <input asp-for="RemoveItemImage" data-ms-remove-image />
+                        <span>Remove current photo</span>
+                    </label>
+                }
+
+                @if (editing)
+                {
+                    <label class="ms-avail-box">
+                        <input asp-for="ItemInput.IsAvailable" data-ms-available />
+                        <span><b>Available for ordering</b><span>Untick to hide it from customers without deleting it.</span></span>
+                    </label>
+                }
+                else
+                {
+                    @* New dishes are always created available; availability is changed later in Edit. *@
+                    <input type="hidden" name="ItemInput.IsAvailable" value="true" />
+                }
+            </div>
+
+            <aside class="ms-item-preview" aria-label="Live preview">
+                <p class="ms-dialog__preview-label">Live preview · customer menu</p>
+                <article class="ms-dish ms-dish--preview @(Model.ItemInput.IsAvailable ? "" : "is-off")" data-ms-preview-card>
+                    <div class="ms-dish__photo">
+                        <img src="@photo" alt="" hidden="@(photo is null)" data-ms-preview-photo data-current="@photo" />
+                        <span class="ms-dish__nophoto ms-dish__nophoto--plain" aria-hidden="true" hidden="@(photo is not null)" data-ms-preview-nophoto><i class="bi bi-camera"></i><small>No photo yet</small></span>
+                        <span class="ms-dish__off" data-ms-preview-off hidden="@Model.ItemInput.IsAvailable"><span>UNAVAILABLE</span><span lang="ja">品切れ</span></span>
+                    </div>
+                    <div class="ms-dish__body">
+                        <div class="ms-dish__meta"><span data-ms-preview-category>@categoryShort</span><span class="ms-code">@(editing && !string.IsNullOrEmpty(Model.ItemEditorCode) ? Model.ItemEditorCode : "NEW")</span></div>
+                        <h3 data-ms-preview-name>@(string.IsNullOrWhiteSpace(Model.ItemInput.Name) ? "Dish name" : Model.ItemInput.Name)</h3>
+                        <p class="ms-dish__desc" data-ms-preview-desc>@(string.IsNullOrWhiteSpace(Model.ItemInput.Description) ? "A short description appears here." : Model.ItemInput.Description)</p>
+                        <div class="ms-dish__row">
+                            <span class="ms-price"><span>RM <span data-ms-preview-price>@price</span></span></span>
+                            <span class="ms-avail @(Model.ItemInput.IsAvailable ? "" : "is-off")" data-ms-preview-avail><i aria-hidden="true"></i><span>@(Model.ItemInput.IsAvailable ? "Available" : "Unavailable")</span></span>
+                        </div>
+                    </div>
+                </article>
+                <p class="ms-dialog__preview-note" data-ms-photo-state>This is how the dish appears on the customer menu.</p>
+                <p class="ms-item-promo"><i class="bi bi-tag" aria-hidden="true"></i>Normal price. Running promotions lower it automatically for customers.</p>
+            </aside>
+        </div>
+
+        <div class="ms-confirm__actions ms-dialog__actions">
+            <button type="button" class="ms-confirm__back" data-ms-close>Cancel</button>
+            <button type="submit" class="ms-confirm__ok" data-ms-save disabled="@noCategories">@(editing ? "Save changes" : "Create item")</button>
+        </div>
+    </form>
+</dialog>

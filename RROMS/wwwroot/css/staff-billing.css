@@ -1985,3 +1985,131 @@
 .us32-billing .billing-list .bill-state-paid {
     color: var(--yoru-olive-text);
 }
+
+
+/* =====================================================
+   US35: PRINT TYPOGRAPHY (printed BILL, before payment)
+   After payment staff print the receipt PDF (ReceiptPdfDocument).
+   Kept last so it wins over the earlier print rules.
+   Two fonts:
+   - Display (Shippori Mincho): restaurant name, document title
+     (BILL / RECEIPT) and the Japanese thank-you line only.
+   - Body (Zen Kaku Gothic New): everything else.
+   Sizes: 12px rows, 10.5px secondary text, 10px section labels,
+   15px Final Total. The "Table · Dine-in / Confirmed ..." line under
+   the title keeps its own (US32) style. Amounts use tabular figures and
+   share one right edge. The receipt PDF follows the same design.
+   ===================================================== */
+@media print {
+    #printableBill,
+    #printableBill *:not(.bill-order-number):not(.bill-order-number *) {
+        font-family: var(--font-body) !important;
+    }
+
+    #printableBill .yoru-print-brand h1,
+    #printableBill .yoru-print-header h2,
+    #printableBill .yoru-print-footer .yoru-japanese {
+        font-family: var(--font-display) !important;
+    }
+
+    #printableBill {
+        font-size: 12px !important;
+        line-height: 1.5;
+        color: #24201c !important;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Header */
+    #printableBill .yoru-print-brand h1 {
+        font-size: 34px !important;
+        font-weight: 700 !important;
+    }
+
+    #printableBill .yoru-print-subtitle,
+    #printableBill .yoru-print-sst,
+    #printableBill .yoru-print-header p {
+        font-size: 10.5px !important;
+    }
+
+    #printableBill .yoru-print-header h2 {
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        letter-spacing: 3px !important;
+    }
+
+    /* Section labels: ORDERED ITEMS and PAYMENT look the same */
+    #printableBill h6 {
+        margin: 0 0 8px !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        letter-spacing: 1.5px !important;
+        text-transform: uppercase;
+        color: #6f5b47 !important;
+    }
+
+    /* Item rows */
+    #printableBill .bill-items li {
+        padding: 8px 0 !important;
+    }
+
+    #printableBill .bill-item-main,
+    #printableBill .bill-item-amount {
+        font-size: 12px !important;
+        font-weight: 500 !important;
+    }
+
+    #printableBill .bill-item-sub {
+        font-size: 10.5px !important;
+        color: #77716b !important;
+    }
+
+    /* Totals and payment rows: same size, muted label left, value right */
+    #printableBill .row.justify-content-end {
+        margin: 16px 0 0 !important;
+    }
+
+        #printableBill .row.justify-content-end > div {
+            padding: 0 !important;
+        }
+
+        #printableBill .row.justify-content-end .d-flex.mb-2 {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 0 0 4px !important;
+            font-size: 12px !important;
+        }
+
+            #printableBill .row.justify-content-end .d-flex.mb-2 > span:first-child {
+                color: #77716b !important;
+            }
+
+    #printableBill .billing-total-divider {
+        margin: 10px 0 !important;
+    }
+
+    #printableBill .billing-final-total strong,
+    #printableBill .billing-final-total h4 {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0 !important;
+    }
+
+    #printableBill .billing-final-total h4 {
+        color: #a94736 !important;
+    }
+
+    /* Footer */
+    #printableBill .yoru-print-footer .yoru-japanese {
+        font-size: 16px !important;
+    }
+
+    #printableBill .yoru-print-footer p,
+    #printableBill .yoru-print-footer strong {
+        font-size: 10.5px !important;
+    }
+
+    #printableBill .yoru-print-footer .yoru-print-notice {
+        font-size: 10px !important;
+    }
+}

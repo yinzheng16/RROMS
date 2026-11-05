@@ -546,9 +546,24 @@
                             <hr class="my-3" />
 
                             <div class="d-flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-outline-dark flex-fill" onclick="window.print()">
-                                    <i class="bi bi-printer" aria-hidden="true"></i> Print Bill
-                                </button>
+                                @* US35: after payment staff print the receipt PDF (the same one the
+                                   customer downloads); before payment they print the BILL page.
+                                   Print Receipt loads the PDF in a hidden frame and opens the print
+                                   dialog on this page, like Print Bill. The href is the fallback
+                                   (new tab) if the browser cannot print the frame. *@
+                                @if (Model.IsPaid && Model.LatestPayment != null)
+                                {
+                                    <a class="btn btn-outline-dark flex-fill js-print-receipt" target="_blank" rel="noopener"
+                                       asp-page-handler="Receipt" asp-route-paymentId="@Model.LatestPayment.Id">
+                                        <i class="bi bi-printer" aria-hidden="true"></i> Print Receipt
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-outline-dark flex-fill" onclick="window.print()">
+                                        <i class="bi bi-printer" aria-hidden="true"></i> Print Bill
+                                    </button>
+                                }
                                 <a class="btn btn-outline-dark flex-fill" asp-page="./Index">
                                     Back to list
                                 </a>
@@ -627,6 +642,74 @@
 
             radios.forEach(r => r.addEventListener('change', syncRef));
             syncRef();
+        })();
+
+        // US35: Print Receipt -> print dialog on this page (no new tab).
+        // The receipt PDF is loaded into a hidden iframe as soon as the page
+        // has loaded, so clicking the button only has to open the dialog.
+        (function () {
+            const link = document.querySelector('a.js-print-receipt');
+            if (!link) return;
+
+            const label = link.innerHTML;
+            let frame = null;
+            let ready = false;
+            let printWhenReady = false;
+
+            function busy(on) {
+                link.classList.toggle('disabled', on);
+                if (on) {
+                    link.setAttribute('aria-disabled', 'true');
+                    link.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> Preparing…';
+                } else {
+                    link.removeAttribute('aria-disabled');
+                    link.innerHTML = label;
+                }
+            }
+
+            function printFrame() {
+                try {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                } catch (err) {
+                    // Browser will not print the frame: open the PDF instead.
+                    window.open(link.href, '_blank', 'noopener');
+                }
+            }
+
+            function preload() {
+                frame = document.createElement('iframe');
+                frame.setAttribute('aria-hidden', 'true');
+                frame.tabIndex = -1;
+                frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+                frame.addEventListener('load', function () {
+                    ready = true;
+                    if (printWhenReady) {
+                        printWhenReady = false;
+                        // Short pause so the PDF viewer has drawn the pages.
+                        setTimeout(function () { busy(false); printFrame(); }, 150);
+                    }
+                });
+                frame.src = link.href;
+                document.body.appendChild(frame);
+            }
+
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (link.classList.contains('disabled')) return;
+
+                if (ready) {
+                    printFrame();          // already loaded: dialog opens at once
+                } else {
+                    printWhenReady = true; // still loading: print when it arrives
+                    busy(true);
+                    if (!frame) preload();
+                }
+            });
+
+            // Start loading in the background once the page itself is done.
+            if (document.readyState === 'complete') preload();
+            else window.addEventListener('load', preload);
         })();
     </script>
 }

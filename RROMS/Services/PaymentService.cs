@@ -290,6 +290,107 @@ namespace RROMS.Services
                 .ToListAsync();
         }
 
+        // US34: The logged-in customer's own payments, newest first.
+        // Which payments belong to the customer:
+        //  - dine-in combined bill: the customer of the dining session
+        //  - takeaway bill: the customer who placed the order
+        //  - older order-based payment (US31): the customer of that order
+        // Dates are local server time (team rule), filtered on PaidAt,
+        // or CreatedAt for attempts that were never paid.
+        public async Task<CustomerPaymentHistory> GetCustomerPaymentsAsync(
+            string customerId,
+            DateOnly? from = null,
+            DateOnly? to = null)
+        {
+            if (string.IsNullOrWhiteSpace(customerId))
+                throw new ArgumentException("Customer ID is required.");
+
+            if (from is DateOnly f && to is DateOnly t && f > t)
+                throw new ArgumentException(
+                    "The From date cannot be after the To date.");
+
+            string id = customerId.Trim();
+
+            var query = _payments.Query()
+                .AsNoTracking()
+                .Where(p =>
+                    (p.Bill != null &&
+                     p.Bill.DiningSessionId != null &&
+                     p.Bill.DiningSession!.CustomerId == id) ||
+                    (p.Bill != null &&
+                     p.Bill.DiningSessionId == null &&
+                     p.Bill.Orders.Any(o => o.UserId == id)) ||
+                    (p.BillId == null &&
+                     p.Order != null &&
+                     p.Order.UserId == id));
+
+            if (from is DateOnly fromDate)
+            {
+                DateTime start = fromDate.ToDateTime(TimeOnly.MinValue);
+                query = query.Where(p => (p.PaidAt ?? p.CreatedAt) >= start);
+            }
+
+            if (to is DateOnly toDate)
+            {
+                // Up to the end of the To day: before midnight of the next day.
+                DateTime end = toDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
+                query = query.Where(p => (p.PaidAt ?? p.CreatedAt) < end);
+            }
+
+            var payments = await query
+                .OrderByDescending(p => p.PaidAt ?? p.CreatedAt)
+                .ThenByDescending(p => p.Id)
+                .Select(p => new CustomerPaymentRecord
+                {
+                    PaymentId = p.Id,
+                    BillId = p.BillId,
+
+                    OrderType = p.Bill != null
+                        ? (p.Bill.DiningSessionId != null
+                            ? OrderType.DineIn
+                            : OrderType.Takeaway)
+                        : p.Order!.OrderType,
+
+                    TableNumber = p.Bill != null
+                        ? (p.Bill.DiningSession != null
+                            ? p.Bill.DiningSession.Table.TableNumber
+                            : null)
+                        : (p.Order != null && p.Order.DiningSession != null
+                            ? p.Order.DiningSession.Table.TableNumber
+                            : null),
+
+                    OrderNo = p.Bill != null
+                        ? p.Bill.Orders
+                            .OrderBy(o => o.Id)
+                            .Select(o => o.OrderNo)
+                            .FirstOrDefault()
+                        : p.Order!.OrderNo,
+
+                    OrderCount = p.Bill != null
+                        ? p.Bill.Orders.Count(o => o.Status != OrderStatus.Cancelled)
+                        : 1,
+
+                    Amount = p.Amount,
+                    Method = p.Method,
+                    Status = p.Status,
+                    TransactionRef = p.TransactionRef,
+                    CreatedAt = p.CreatedAt,
+                    PaidAt = p.PaidAt
+                })
+                .ToListAsync();
+
+            var paid = payments
+                .Where(p => p.Status == PaymentStatus.Paid)
+                .ToList();
+
+            return new CustomerPaymentHistory
+            {
+                Payments = payments,
+                TotalPaid = paid.Sum(p => p.Amount),
+                PaidCount = paid.Count
+            };
+        }
+
         // US26 integration: a legacy payment attempt and order cancellation must not both succeed.
         // Counter payments already require a Confirmed bill, which locks cancellation.
         private async Task<Payment> WithLegacyOrderLockAsync(int orderId, Func<Task<Payment>> operation)

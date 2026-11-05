@@ -31,7 +31,7 @@ namespace RROMS.Services.Interfaces
         // US02: signs the user out and removes the login cookie.
         Task LogoutAsync();
 
-        // US51: each role's starting page. Admin -> "/Admin" (US41), Staff -> "/Staff" (US16), Customer -> "/" (US50).
+        // US51: each role's starting page. Admin -> "/Admin" (US41), Staff -> "/Staff/Reservations" (US16), Customer -> "/" (US50).
         // Use the email version right after login (the new login cookie is only read on the next request).
         Task<string> GetStartPageAsync(string email);
 
