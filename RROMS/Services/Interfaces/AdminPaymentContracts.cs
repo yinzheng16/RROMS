@@ -85,6 +85,21 @@ namespace RROMS.Services.Interfaces
         public bool IsAmountMismatch => Status == PaymentStatus.Paid && BillTotal is decimal total && Amount != total;
 
         public bool NeedsCheck => IsDuplicatePaid || IsAmountMismatch;
+
+        // ---------- US54 refunds ----------
+
+        // Paid payments on the same bill (older payments: same order) with a lower ID.
+        public int PaidEarlierOnSameBill { get; init; }
+
+        // Paid twice: only the later payment offers "Refund this one".
+        public bool IsLaterDuplicate => IsDuplicatePaid && PaidEarlierOnSameBill > 0;
+
+        public bool CanRefund => Status == PaymentStatus.Paid;
+
+        // Filled once refunded.
+        public DateTime? RefundedAt { get; init; }
+        public string? RefundedByName { get; init; }
+        public string? RefundReason { get; init; }
     }
 
     // How many payments have one status, and their amount.

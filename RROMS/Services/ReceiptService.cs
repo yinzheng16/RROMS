@@ -75,7 +75,8 @@ namespace RROMS.Services
                 .Include(p => p.Bill!).ThenInclude(b => b.Orders).ThenInclude(o => o.Items).ThenInclude(i => i.MenuItem)
                 .Include(p => p.Order!).ThenInclude(o => o.Items).ThenInclude(i => i.MenuItem)
                 .Include(p => p.Order!).ThenInclude(o => o.DiningSession!).ThenInclude(s => s.Table)
-                .Where(p => p.Id == paymentId && p.Status == PaymentStatus.Paid);
+                .Where(p => p.Id == paymentId &&
+                            (p.Status == PaymentStatus.Paid || p.Status == PaymentStatus.Refunded));   // US54: refunded keeps its receipt
 
         private async Task<PaymentReceipt> BuildAsync(Payment payment)
         {
@@ -123,6 +124,8 @@ namespace RROMS.Services
                     ? null
                     : payment.TransactionRef.Trim(),
                 CashierName = await GetStaffNameAsync(payment.RecordedByUserId),
+                RefundedAt = payment.Status == PaymentStatus.Refunded ? payment.RefundedAt : null,
+                RefundReason = payment.Status == PaymentStatus.Refunded ? payment.RefundReason : null,
                 Address = Blank(settings.Address),
                 Phone = Blank(PhoneDisplay.Pretty(settings.Phone)),
                 SstRegistrationNo = Blank(settings.SstRegistrationNo),

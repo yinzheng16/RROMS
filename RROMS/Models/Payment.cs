@@ -42,5 +42,17 @@ namespace RROMS.Models
         // (AspNetUsers.Id). Null for online payments and older records.
         [StringLength(450)]
         public string? RecordedByUserId { get; set; }
+
+        // US54 (Member 4): Full refund by an Admin. All null until refunded;
+        // Status then becomes Refunded. The bill keeps its own status.
+        public DateTime? RefundedAt { get; set; }
+
+        // Admin who refunded it (AspNetUsers.Id).
+        [StringLength(450)]
+        public string? RefundedByUserId { get; set; }
+
+        // Reason picked by the admin, plus the optional note ("Other · ...").
+        [StringLength(400)]
+        public string? RefundReason { get; set; }
     }
 }
