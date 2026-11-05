@@ -39,6 +39,7 @@ namespace RROMS.Data
         public DbSet<Bill> Bills => Set<Bill>();
         public DbSet<Payment> Payments => Set<Payment>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<Announcement> Announcements => Set<Announcement>();   // US39
 
         // Member 5: Feedback & Settings
         public DbSet<Feedback> Feedbacks => Set<Feedback>();
@@ -302,6 +303,17 @@ namespace RROMS.Data
                  .WithMany(u => u.Notifications)
                  .HasForeignKey(n => n.UserId)
                  .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // US39: the home page asks for the running announcements by date.
+            builder.Entity<Announcement>(e =>
+            {
+                e.HasIndex(a => new { a.StartDate, a.EndDate });
+                e.Property(a => a.Link).HasConversion<string>().HasMaxLength(20);
+                e.HasOne<ApplicationUser>()
+                 .WithMany()
+                 .HasForeignKey(a => a.CreatedByUserId)
+                 .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ---------- Feedback & Settings ----------
