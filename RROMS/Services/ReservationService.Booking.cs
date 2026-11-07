@@ -803,20 +803,16 @@ public partial class ReservationService
     {
         var cutoff = DateTime.Now.AddMinutes(-BookingRules.NoShowGraceMinutes);
 
-        var overdue = await _db.Reservations
-            .Where(r => (r.Status == ReservationStatus.Pending ||
-                         r.Status == ReservationStatus.Confirmed) &&
-                        r.ReservedAt < cutoff)
-            .ToListAsync();
+        // One conditional UPDATE per status, so a booking that staff seat, confirm or cancel at the same
+        // moment is never overwritten: only rows that are still Pending / Confirmed are changed.
+        var cancelled = await _db.Reservations
+            .Where(r => r.Status == ReservationStatus.Pending && r.ReservedAt < cutoff)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, ReservationStatus.Cancelled));
 
-        if (overdue.Count == 0) return 0;
+        var noShow = await _db.Reservations
+            .Where(r => r.Status == ReservationStatus.Confirmed && r.ReservedAt < cutoff)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, ReservationStatus.NoShow));
 
-        foreach (var r in overdue)
-            r.Status = r.Status == ReservationStatus.Pending
-                ? ReservationStatus.Cancelled
-                : ReservationStatus.NoShow;
-
-        await _db.SaveChangesAsync();
-        return overdue.Count;
+        return cancelled + noShow;
     }
 }
