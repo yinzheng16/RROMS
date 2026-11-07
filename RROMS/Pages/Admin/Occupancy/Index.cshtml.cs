@@ -30,7 +30,6 @@ public class IndexModel : PageModel
     [BindProperty(Name = "range", SupportsGet = true)] public int? Range { get; set; }
     [BindProperty(Name = "area", SupportsGet = true)] public int? AreaId { get; set; }
     [BindProperty(Name = "type", SupportsGet = true)] public int? TableTypeId { get; set; }
-    [BindProperty(Name = "mode", SupportsGet = true)] public string? Mode { get; set; }
 
     public OccupancyReport Report { get; private set; } = null!;
     public OccupancyChoices Choices { get; private set; } =
@@ -42,10 +41,9 @@ public class IndexModel : PageModel
     public string? FilterNotice { get; private set; }      // shown in red under the filter when the dates make no sense
     // true when anything other than the plain default view is chosen, so the filter panel stays open and Reset is in reach
     public bool FilterActive =>
-        FilterNotice != null || TypeNotice != null || AreaId.HasValue || TableTypeId.HasValue
-        || string.Equals(Mode, "res", StringComparison.OrdinalIgnoreCase) || ActivePreset == 0;
+        FilterNotice != null || TypeNotice != null || AreaId.HasValue || TableTypeId.HasValue || ActivePreset == 0;
     public bool IsDevelopment => _env.IsDevelopment();
-    public bool HasData => Report.Totals.Reservations > 0 || Report.Totals.WalkIns > 0;
+    public bool HasData => Report.Totals.Reservations > 0;
 
     [TempData] public string? SuccessMessage { get; set; }
 
@@ -66,14 +64,12 @@ public class IndexModel : PageModel
             hour = d.Hour,
             percent = d.Percent,
             reservations = d.Reservations,
-            walkIns = d.WalkIns,
             avgGuests = d.AvgGuests,
             daysCounted = d.DaysCounted,
             topTables = d.TopTables.Select(t => new { name = t.Name, type = t.TypeName, hours = t.Hours }),
             busiestDate = d.BusiestDate?.ToString("yyyy-MM-dd"),
             busiestDateText = d.BusiestDate?.ToString("ddd d MMM", CultureInfo.InvariantCulture),
             busiestDateReservations = d.BusiestDateReservations,
-            busiestDateWalkIns = d.BusiestDateWalkIns,
             // only offer the link when the staff page exists in this build and that day has real reservations to open
             staffUrl = d.BusiestDate.HasValue && d.BusiestDateReservations > 0
                 ? Url.Page("/Staff/Reservations/Index", new { date = d.BusiestDate.Value.ToString("yyyy-MM-dd") })
@@ -171,9 +167,7 @@ public class IndexModel : PageModel
             ToText = to.ToString("yyyy-MM-dd");
         }
 
-        // "res" = reservations only. Anything else counts reservations and walk-ins.
-        var walkIns = !string.Equals(Mode, "res", StringComparison.OrdinalIgnoreCase);
-        return new OccupancyFilter(from, to, AreaId, TableTypeId, walkIns);
+        return new OccupancyFilter(from, to, AreaId, TableTypeId);
     }
 
     private static bool TryDate(string? text, out DateTime date) =>
@@ -210,15 +204,14 @@ public class IndexModel : PageModel
         _ => 5
     };
 
-    public string PageUrl(string? from = null, string? to = null, int? range = null, string? mode = null,
+    public string PageUrl(string? from = null, string? to = null, int? range = null,
                        int? area = null, int? type = null, string? handler = null)
     {
         var url = Url.Page("/Admin/Occupancy/Index", new
         {
             handler,
             from, to, range,
-            type = type ?? TableTypeId,
-            mode = mode ?? (Filter.IncludeWalkIns ? null : "res")
+            type = type ?? TableTypeId
         })!;
 
         // "area" is a reserved route value in ASP.NET Core (it names an MVC area), so Url.Page returns null

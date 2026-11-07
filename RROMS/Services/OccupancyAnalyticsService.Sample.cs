@@ -1,8 +1,6 @@
 ﻿// Owner: Member 2 (Tables & Reservations) - US20. Sample data for demos (Development only; the page hides the buttons elsewhere).
 //
-// Sample reservations have a reference starting with "DEMO-".
-// Sample walk-in sessions have no reservation and an opening time ending in .777 seconds, so they can be removed
-// again without ever touching real walk-ins.
+// Sample reservations have a reference starting with "DEMO-", so they can be removed again without touching real ones.
 using Microsoft.EntityFrameworkCore;
 using RROMS.Models;
 
@@ -113,31 +111,6 @@ public partial class OccupancyAnalyticsService
                     });
                 }
             }
-
-            // a few walk-ins with no reservation
-            var walkIns = rng.Next(0, tables.Count / 4 + 2);
-            for (var w = 0; w < walkIns; w++)
-            {
-                var stay = rng.Next(45, 101);
-                var start = PickStart(day, segs, stay);
-                if (start == null) continue;
-                var end = start.Value.AddMinutes(stay);
-                if (end > now) continue;
-                var party = rng.Next(1, 5);
-                var table = tables.Where(t => t.Capacity >= party && Free(t.Id, start.Value, end))
-                                  .OrderBy(t => t.Capacity).ThenBy(_ => rng.Next()).FirstOrDefault();
-                if (table == null) continue;
-
-                busy[table.Id].Add(new Seg(start.Value, end));
-                _db.DiningSessions.Add(new DiningSession
-                {
-                    TableId = table.Id,
-                    OpenedAt = start.Value.AddMilliseconds(777),                 // the sample marker
-                    ClosedAt = end,
-                    Status = DiningSessionStatus.Closed
-                });
-                added++;
-            }
         }
 
         await _db.SaveChangesAsync(ct);
@@ -146,6 +119,7 @@ public partial class OccupancyAnalyticsService
 
     public async Task<int> ClearSampleAsync(CancellationToken ct = default)
     {
+        // ".777" sessions without a reservation were made by an older version of this sample data; they are cleaned up too.
         var sessions = await _db.DiningSessions
             .Where(s => (s.Reservation != null && s.Reservation.ReferenceNo.StartsWith(SamplePrefix))
                         || (s.ReservationId == null && s.OpenedAt.Millisecond == 777))

@@ -41,7 +41,7 @@ namespace RROMS.Services
             if (session.CustomerId != null)
                 return new(false, "taken", "This table already belongs to another guest.");
 
-            // Walk-in: claim it atomically so two people cannot both win.
+            // A session without an owner (only old data has one): claim it atomically so two people cannot both win.
             var rows = await _db.DiningSessions
                 .Where(s => s.Id == sessionId
                             && s.CustomerId == null

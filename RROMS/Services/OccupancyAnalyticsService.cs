@@ -1,8 +1,8 @@
 ﻿// Owner: Member 2 (Tables & Reservations) - US20 table occupancy and reservation analytics.
 //
 // How "busy" is worked out
-//  * A table is occupied while a dining session is open, or (when no session exists) during a Confirmed / Seated /
-//    Completed reservation. Walk-ins are dining sessions that have no reservation.
+//  * A table is occupied while the dining session of its reservation is open, or (when no session exists) during a
+//    Confirmed / Seated / Completed reservation.
 //  * Only opening hours count: closed days, special dates and the afternoon break are left out of both sides.
 //  * Heatmap box = occupied table-minutes / open table-minutes for that weekday and hour, over the whole date range.
 //  * Table % = occupied minutes / opening minutes of that one table.
@@ -32,7 +32,7 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
     // so a half-finished day does not drag the utilisation down and booked-but-not-yet-happened tables are not counted
     private static List<Seg> UpTo(List<Seg> segs, DateTime now) =>
         segs.Where(sg => sg.S < now).Select(sg => sg.E > now ? new Seg(sg.S, now) : sg).ToList();
-    private sealed record Interval(int TableId, DateTime Start, DateTime End, bool WalkIn, int Guests);
+    private sealed record Interval(int TableId, DateTime Start, DateTime End, int Guests);
 
     private sealed class DataSet
     {
@@ -55,7 +55,6 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         public Dictionary<DateTime, double> DayAvail = new();
         public Dictionary<int, double> TableOcc = new();
         public Dictionary<int, int> TableBookings = new();
-        public Dictionary<int, int> TableWalkIns = new();
         public double OpenMinutesPerTable;
     }
 
@@ -91,7 +90,7 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         var prevFrom = prevTo.AddDays(-(length - 1));
         var prevDs = await LoadAsync(filter with { From = prevFrom, To = prevTo }, ct);
         var prevTotals = BuildTotals(prevDs, Analyse(prevDs));
-        var hasPrev = prevTotals.Reservations > 0 || prevTotals.WalkIns > 0;
+        var hasPrev = prevTotals.Reservations > 0;
 
         var heat = BuildHeatmap(an);
         var hasSample = await _db.Reservations.AsNoTracking().AnyAsync(r => r.ReferenceNo.StartsWith("DEMO-"), ct);
@@ -111,10 +110,9 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         var names = ds.Tables.ToDictionary(t => t.Id);
 
         double occMin = 0, availMin = 0, guestSum = 0;
-        int reservations = 0, walkIns = 0, daysCounted = 0;
+        int reservations = 0, daysCounted = 0;
         var tableMin = new Dictionary<int, double>();
         var perDateRes = new Dictionary<DateTime, int>();
-        var perDateWalk = new Dictionary<DateTime, int>();
 
         for (var d = ds.Start; d < ds.End; d = d.AddDays(1))
         {
@@ -142,8 +140,9 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
 
                 occMin += mins;
                 tableMin[iv.TableId] = tableMin.GetValueOrDefault(iv.TableId) + mins;
-                if (iv.WalkIn) { walkIns++; perDateWalk[d] = perDateWalk.GetValueOrDefault(d) + 1; }
-                else { reservations++; guestSum += iv.Guests; perDateRes[d] = perDateRes.GetValueOrDefault(d) + 1; }
+                reservations++;
+                guestSum += iv.Guests;
+                perDateRes[d] = perDateRes.GetValueOrDefault(d) + 1;
             }
         }
 
@@ -155,19 +154,18 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         // the busiest single day for this slot (most parties; the later day wins a tie)
         DateTime? bestDate = null;
         var bestTotal = 0;
-        foreach (var day0 in perDateRes.Keys.Union(perDateWalk.Keys).OrderBy(k => k))
+        foreach (var day0 in perDateRes.Keys.OrderBy(k => k))
         {
-            var total = perDateRes.GetValueOrDefault(day0) + perDateWalk.GetValueOrDefault(day0);
+            var total = perDateRes[day0];
             if (total >= bestTotal) { bestDate = day0; bestTotal = total; }
         }
         var bestRes = bestDate.HasValue ? perDateRes.GetValueOrDefault(bestDate.Value) : 0;
-        var bestWalk = bestDate.HasValue ? perDateWalk.GetValueOrDefault(bestDate.Value) : 0;
 
         double? percent = availMin > 0 ? Math.Round(Math.Min(100, occMin / availMin * 100), 1) : null;
         var avgGuests = reservations > 0 ? Math.Round(guestSum / reservations, 1) : 0;
 
-        return new OccupancySlotDetail(day, hour, percent, reservations, walkIns, avgGuests, top,
-            bestDate, bestRes, bestWalk, daysCounted);
+        return new OccupancySlotDetail(day, hour, percent, reservations, avgGuests, top,
+            bestDate, bestRes, daysCounted);
     }
 
     public async Task<string> ExportCsvAsync(OccupancyFilter filter, CancellationToken ct = default)
@@ -192,25 +190,21 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         sb.AppendLine($"To,{filter.To:yyyy-MM-dd}");
         sb.AppendLine($"Dining area,{Csv(areaName ?? "All")}");
         sb.AppendLine($"Table type,{Csv(typeNames.Length > 0 ? typeNames : "None")}");
-        sb.AppendLine($"Counted,{(filter.IncludeWalkIns ? "Reservations and walk-ins" : "Reservations only")}");
         sb.AppendLine($"Tables,{totals.TableCount}");
         sb.AppendLine($"Reservations,{totals.Reservations}");
         sb.AppendLine($"Completed,{totals.Completed}");
         sb.AppendLine($"Cancelled,{totals.Cancelled}");
         sb.AppendLine($"No-show,{totals.NoShow}");
-        sb.AppendLine($"Walk-ins,{totals.WalkIns}");
         sb.AppendLine($"Average utilisation %,{totals.AvgUtilisation.ToString("0.0", inv)}");
         sb.AppendLine($"No-show rate %,{totals.NoShowRate.ToString("0.0", inv)}");
         sb.AppendLine();
 
         sb.AppendLine("Daily summary");
-        sb.AppendLine("Date,Weekday,Reservations,Completed,Cancelled,No-show,Walk-ins,Utilisation %");
+        sb.AppendLine("Date,Weekday,Reservations,Completed,Cancelled,No-show,Utilisation %");
         for (var d = ds.Start; d < ds.End; d = d.AddDays(1))
         {
             var next = d.AddDays(1);
             var rs = ds.InRange.Where(r => r.ReservedAt >= d && r.ReservedAt < next).ToList();
-            var walk = filter.IncludeWalkIns
-                ? ds.Sessions.Count(s => s.ReservationId == null && s.OpenedAt >= d && s.OpenedAt < next) : 0;
             var avail = an.DayAvail.GetValueOrDefault(d);
             var util = avail > 0 ? an.DayOcc.GetValueOrDefault(d) / avail * 100 : 0;
             sb.AppendLine(string.Join(",",
@@ -219,16 +213,15 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
                 rs.Count(r => r.Status == ReservationStatus.Completed),
                 rs.Count(r => r.Status == ReservationStatus.Cancelled),
                 rs.Count(r => r.Status == ReservationStatus.NoShow),
-                walk,
                 avail > 0 ? util.ToString("0.0", inv) : "closed"));
         }
         sb.AppendLine();
 
         sb.AppendLine("Per table");
-        sb.AppendLine("Table,Type,Area,Seats,Reservations,Walk-ins,Occupied hours,Utilisation %");
+        sb.AppendLine("Table,Type,Area,Seats,Reservations,Occupied hours,Utilisation %");
         foreach (var t in BuildTableRows(ds, an))
             sb.AppendLine(string.Join(",", Csv(t.Name), Csv(t.TypeName), Csv(t.AreaName), t.Capacity,
-                t.Bookings, t.WalkIns, t.OccupiedHours.ToString("0.0", inv), t.Percent.ToString("0.0", inv)));
+                t.Bookings, t.OccupiedHours.ToString("0.0", inv), t.Percent.ToString("0.0", inv)));
         sb.AppendLine();
 
         sb.AppendLine("Peak hours (average % of tables in use)");
@@ -278,7 +271,7 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
 
         var sessRaw = await _db.DiningSessions.AsNoTracking()
             .Where(s => s.OpenedAt < ds.End && (s.ClosedAt == null || s.ClosedAt >= from))
-            .Where(s => ids.Contains(s.TableId))
+            .Where(s => ids.Contains(s.TableId) && s.ReservationId != null)
             .Select(s => new { s.Id, s.TableId, s.ReservationId, s.OpenedAt, s.ClosedAt })
             .ToListAsync(ct);
         ds.Sessions = sessRaw
@@ -291,24 +284,21 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         var guestsOf = allRes.ToDictionary(r => r.Id, r => r.Guests);
         var withSession = new HashSet<int>();
 
-        if (f.IncludeWalkIns)
+        foreach (var s in ds.Sessions)
         {
-            foreach (var s in ds.Sessions)
-            {
-                // a session still open is counted up to now, never into the future
-                var end = s.ClosedAt ?? (ds.Now > s.OpenedAt ? ds.Now : s.OpenedAt);
-                if (end <= s.OpenedAt) continue;
-                var guests = s.ReservationId.HasValue && guestsOf.TryGetValue(s.ReservationId.Value, out var g) ? g : 0;
-                ds.Intervals.Add(new Interval(s.TableId, s.OpenedAt, end, s.ReservationId == null, guests));
-                if (s.ReservationId.HasValue) withSession.Add(s.ReservationId.Value);
-            }
+            // a session still open is counted up to now, never into the future
+            var end = s.ClosedAt ?? (ds.Now > s.OpenedAt ? ds.Now : s.OpenedAt);
+            if (end <= s.OpenedAt) continue;
+            var guests = s.ReservationId.HasValue && guestsOf.TryGetValue(s.ReservationId.Value, out var g) ? g : 0;
+            ds.Intervals.Add(new Interval(s.TableId, s.OpenedAt, end, guests));
+            if (s.ReservationId.HasValue) withSession.Add(s.ReservationId.Value);
         }
 
         foreach (var r in allRes)
         {
             if (r.TableId == null || !CountsAsBooked(r.Status)) continue;
             if (withSession.Contains(r.Id)) continue;       // the real session already covers it
-            ds.Intervals.Add(new Interval(r.TableId.Value, r.ReservedAt, r.ReservedAt.AddMinutes(r.Duration), false, r.Guests));
+            ds.Intervals.Add(new Interval(r.TableId.Value, r.ReservedAt, r.ReservedAt.AddMinutes(r.Duration), r.Guests));
         }
 
         return ds;
@@ -379,8 +369,7 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
             }
             if (iv.Start >= ds.Start && iv.Start < ds.End && iv.Start < ds.Now)
             {
-                if (iv.WalkIn) a.TableWalkIns[iv.TableId] = a.TableWalkIns.GetValueOrDefault(iv.TableId) + 1;
-                else a.TableBookings[iv.TableId] = a.TableBookings.GetValueOrDefault(iv.TableId) + 1;
+                a.TableBookings[iv.TableId] = a.TableBookings.GetValueOrDefault(iv.TableId) + 1;
             }
         }
         return a;
@@ -399,15 +388,11 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
             (r.Status is ReservationStatus.Confirmed or ReservationStatus.Seated
                 or ReservationStatus.Completed or ReservationStatus.NoShow));
 
-        var walkIns = ds.Filter.IncludeWalkIns
-            ? ds.Sessions.Count(s => s.ReservationId == null && s.OpenedAt >= ds.Start && s.OpenedAt < ds.End) : 0;
-
         var booked = rs.Where(r => CountsAsBooked(r.Status)).ToList();
         var avgGuests = booked.Count > 0 ? booked.Average(r => (double)r.Guests) : 0;
 
         var closed = ds.Sessions
-            .Where(s => s.ClosedAt != null && s.OpenedAt >= ds.Start && s.OpenedAt < ds.End
-                        && (ds.Filter.IncludeWalkIns || s.ReservationId != null))
+            .Where(s => s.ClosedAt != null && s.OpenedAt >= ds.Start && s.OpenedAt < ds.End)
             .Select(s => (s.ClosedAt!.Value - s.OpenedAt).TotalMinutes).ToList();
         var avgDwell = closed.Count > 0 ? closed.Average() : 0;
 
@@ -416,7 +401,7 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
         foreach (var kv in a.DayOcc) occ += kv.Value;
 
         return new OccupancyTotals(
-            rs.Count, completed, cancelled, noShow, active, due, walkIns,
+            rs.Count, completed, cancelled, noShow, active, due,
             avail > 0 ? Math.Round(Math.Min(100, occ / avail * 100), 1) : 0,
             due > 0 ? Math.Round(noShow * 100.0 / due, 1) : 0,
             Math.Round(avgGuests, 1), Math.Round(avgDwell, 0),
@@ -461,15 +446,13 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
             var we = ws.AddDays(7) > ds.End ? ds.End : ws.AddDays(7);      // we is the day after the last day
             var n = (int)(we - ws).TotalDays;
             var res = ds.InRange.Count(r => r.ReservedAt >= ws && r.ReservedAt < we);
-            var walk = ds.Filter.IncludeWalkIns
-                ? ds.Sessions.Count(s => s.ReservationId == null && s.OpenedAt >= ws && s.OpenedAt < we) : 0;
             double occ = 0, avail = 0;
             for (var d = ws; d < we; d = d.AddDays(1))
             {
                 occ += a.DayOcc.GetValueOrDefault(d);
                 avail += a.DayAvail.GetValueOrDefault(d);
             }
-            weeks.Add(new OccupancyWeek(ws, we.AddDays(-1), n, n < 7, res, walk,
+            weeks.Add(new OccupancyWeek(ws, we.AddDays(-1), n, n < 7, res,
                 avail > 0 ? Math.Round(Math.Min(100, occ / avail * 100), 1) : 0));
         }
         return weeks;
@@ -482,7 +465,7 @@ public partial class OccupancyAnalyticsService : IOccupancyAnalyticsService
             var occ = a.TableOcc.GetValueOrDefault(t.Id);
             var pct = a.OpenMinutesPerTable > 0 ? Math.Min(100, occ / a.OpenMinutesPerTable * 100) : 0;
             return new OccupancyTableRow(t.Id, t.Name, t.TypeName, t.AreaName, t.Capacity,
-                Math.Round(pct, 1), a.TableBookings.GetValueOrDefault(t.Id), a.TableWalkIns.GetValueOrDefault(t.Id),
+                Math.Round(pct, 1), a.TableBookings.GetValueOrDefault(t.Id),
                 Math.Round(occ / 60.0, 1));
         })
         .OrderByDescending(r => r.Percent).ThenBy(r => NaturalKey(r.Name)).ToList();
