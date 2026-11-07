@@ -620,8 +620,11 @@ public class StaffReservationService(
         ChangedByUserId = userId,
         ChangedByRole = RoleName(role),
         ChangedAt = DateTime.Now,
-        Note = note.Length > 250 ? note[..250] : note
+        // ReservationStatusLog.Note is limited to 200 characters in the database (see ApplicationDbContext).
+        Note = note.Length > MaxLogNoteLength ? note[..MaxLogNoteLength] : note
     };
+
+    private const int MaxLogNoteLength = 200;
 
     // ---------- Modify ----------
 
