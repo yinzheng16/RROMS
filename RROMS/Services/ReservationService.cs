@@ -690,9 +690,27 @@ public partial class ReservationService : IReservationService
         if (area is null) return ReservationResult.Fail("Dining area not found.");
         if (area.Tables.Any()) return ReservationResult.Fail("This area still has tables. Move or delete its tables first.");
 
+        // A table type keeps this area as its default area, even when it has no tables yet.
+        var usedBy = await _db.TableTypeDefinitions
+            .Where(t => t.DefaultDiningAreaId == id)
+            .Select(t => t.Name)
+            .FirstOrDefaultAsync();
+
+        if (usedBy is not null)
+            return ReservationResult.Fail(
+                $"The table type {usedBy} still uses this area. Move or delete that table type first.");
+
         _db.DiningAreas.Remove(area);
-        await _db.SaveChangesAsync();
-        return ReservationResult.Ok();
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            return ReservationResult.Ok();
+        }
+        catch (DbUpdateException)
+        {
+            return ReservationResult.Fail("This dining area is still referenced and cannot be deleted.");
+        }
     }
 
     // ================= US11: tables =================
@@ -816,6 +834,34 @@ public partial class ReservationService : IReservationService
             return ReservationResult.Fail(
                 $"{area.Name} is marked as Occupied, so its tables stay " +
                 "Out of service until the dining area is switched back.");
+        }
+
+        // Same protection as marking a whole area Occupied: do not take a table out of service
+        // while guests are expecting it.
+        if (existing != null &&
+            input.Status == TableStatus.OutOfService &&
+            existing.Status != TableStatus.OutOfService)
+        {
+            var now = DateTime.Now;
+
+            var upcoming = (await _db.Reservations
+                .AsNoTracking()
+                .Where(r => r.TableId == existing.Id &&
+                            (r.Status == ReservationStatus.Pending ||
+                             r.Status == ReservationStatus.Confirmed ||
+                             r.Status == ReservationStatus.Seated))
+                .Select(r => new { r.ReferenceNo, r.ReservedAt, r.DurationMinutes })
+                .ToListAsync())
+                .Where(r => r.ReservedAt.AddMinutes(r.DurationMinutes) > now)
+                .OrderBy(r => r.ReservedAt)
+                .FirstOrDefault();
+
+            if (upcoming != null)
+                return ReservationResult.Fail(
+                    $"Table {existing.TableNumber} has an upcoming reservation " +
+                    $"({upcoming.ReferenceNo}, " +
+                    $"{upcoming.ReservedAt.ToString("d MMM, h:mm tt", System.Globalization.CultureInfo.InvariantCulture)}). " +
+                    "Cancel or move it before setting the table to Out of service.");
         }
 
         if (existing == null)
