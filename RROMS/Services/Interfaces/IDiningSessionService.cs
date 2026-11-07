@@ -39,7 +39,7 @@ namespace RROMS.Services.Interfaces
     // Code: ok, claimed, taken, closed, not_found
     public record SessionClaimResult(bool Success, string Code, string Message);
 
-    // Code: opened, already_seated, not_found, status_changed, no_table, wrong_day, table_busy
+    // Code: opened, already_seated, not_found, status_changed, no_table, wrong_day, too_early, table_busy
     public record SessionOpenResult(bool Success, string Code, string Message, int? SessionId = null,
         int AttachedOrders = 0, string? TableNumber = null);
 

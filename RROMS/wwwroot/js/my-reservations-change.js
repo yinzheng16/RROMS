@@ -322,7 +322,17 @@
     const checkSoon = () => { clearTimeout(timer); timer = setTimeout(check, 120); };
 
     function setGuests(n, typing) {
+        const wanted = n;
         guests = Math.max(1, Math.min(cfg.maxGuests, n));
+        // Tell the customer why the + button stops (or a larger typed number was cut back).
+        const limitHint = byId('myrChangeGuestsHint');
+        if (limitHint) {
+            const atLimit = wanted >= cfg.maxGuests;
+            limitHint.hidden = !atLimit;
+            limitHint.textContent = atLimit
+                ? 'Our largest table seats ' + cfg.maxGuests + '. For bigger parties, please contact the restaurant.'
+                : '';
+        }
         if (current) resetType();
         guestsOut.max = String(cfg.maxGuests);
         if (!typing || Number(guestsOut.value) !== guests) guestsOut.value = String(guests);

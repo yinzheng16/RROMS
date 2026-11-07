@@ -135,7 +135,8 @@ public class StaffReservationService(
             late, late ? Math.Max(0, (int)(now - x.ReservedAt).TotalMinutes) : 0,
             left,
             CanConfirm: x.Status == ReservationStatus.Pending && now < autoCancelAt && x.TableId != null,
-            CanSeat: waiting && x.TableId != null && x.ReservedAt.Date == now.Date,
+            CanSeat: waiting && x.TableId != null && x.ReservedAt.Date == now.Date
+                     && x.ReservedAt <= now.AddMinutes(BookingRules.SeatEarlyMinutes),
             CanNoShow: waiting && x.ReservedAt <= now,
             CanCancel: waiting,
             CanModify: waiting,
@@ -620,8 +621,11 @@ public class StaffReservationService(
         ChangedByUserId = userId,
         ChangedByRole = RoleName(role),
         ChangedAt = DateTime.Now,
-        Note = note.Length > 250 ? note[..250] : note
+        // ReservationStatusLog.Note is limited to 200 characters in the database (see ApplicationDbContext).
+        Note = note.Length > MaxLogNoteLength ? note[..MaxLogNoteLength] : note
     };
+
+    private const int MaxLogNoteLength = 200;
 
     // ---------- Modify ----------
 
@@ -747,8 +751,8 @@ public class StaffReservationService(
             return new(false, "bad_time", "Choose a valid time.");
         var start = req.Date.Date + tod;
         var guests = req.Guests;
-        if (guests < 1 || guests > 50)
-            return new(false, "bad_guests", "Enter a number of guests between 1 and 50.");
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return new(false, "bad_guests", $"Enter a number of guests between 1 and {BookingRules.MaxGuests}.");
 
         var timeChanged = start != cur.ReservedAt;
         if (timeChanged && start < DateTime.Now)

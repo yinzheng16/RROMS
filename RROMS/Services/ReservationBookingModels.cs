@@ -8,9 +8,11 @@ public static class BookingRules
     public const int SlotMinutes = 30;          // time choices every 30 minutes
     public const int MinLeadMinutes = 60;       // book at least 1 hour ahead
     public const int MaxAdvanceDays = 60;       // book at most 60 days ahead
+    public const int MaxGuests = 100;           // largest party in one booking: new, changed by the customer, changed by staff
     public const int TurnoverMinutes = 15;      // gap kept before and after another booking on the same table
     public const int MaxActiveBookings = 10;     // upcoming Pending / Confirmed bookings per customer
     public const int NoShowGraceMinutes = 15;   // held for 15 minutes from the booking time
+    public const int SeatEarlyMinutes = 60;     // staff can seat a party at most 1 hour before the booking time
 }
 
 public enum TypeAvailability { Available, FullyBooked, NotSuitable, Unavailable }

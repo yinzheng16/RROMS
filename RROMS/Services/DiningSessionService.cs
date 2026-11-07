@@ -41,7 +41,7 @@ namespace RROMS.Services
             if (session.CustomerId != null)
                 return new(false, "taken", "This table already belongs to another guest.");
 
-            // Walk-in: claim it atomically so two people cannot both win.
+            // A session without an owner (only old data has one): claim it atomically so two people cannot both win.
             var rows = await _db.DiningSessions
                 .Where(s => s.Id == sessionId
                             && s.CustomerId == null
@@ -100,6 +100,9 @@ namespace RROMS.Services
                 return new(false, "no_table", "This booking has no table yet, so guests cannot be seated.");
             if (cur.ReservedAt.Date != now.Date)
                 return new(false, "wrong_day", "Only a booking for today can be marked as seated.");
+            if (cur.ReservedAt > now.AddMinutes(BookingRules.SeatEarlyMinutes))
+                return new(false, "too_early",
+                    $"Guests can be seated from {cur.ReservedAt.AddMinutes(-BookingRules.SeatEarlyMinutes).ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture)}, at most 1 hour before the booking time.");
 
             await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
