@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 168"
+                                     preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+                                    <defs>
+                                        <linearGradient id="rsvInk" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#716b60" stop-opacity=".06" />
+                                            <stop offset="1" stop-color="#535650" stop-opacity=".38" />
+                                        </linearGradient>
+                                        <linearGradient id="rsvMist" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0" stop-color="#f1e7d5" stop-opacity="0" />
+                                            <stop offset="1" stop-color="#f1e7d5" stop-opacity=".72" />
+                                        </linearGradient>
+                                        <filter id="rsvBrush" x="-5%" y="-10%" width="110%" height="130%">
+                                            <feTurbulence type="fractalNoise" baseFrequency=".025 .05"
+                                                          numOctaves="3" seed="7" result="grain" />
+                                            <feDisplacementMap in="SourceGraphic" in2="grain"
+                                                               scale="7" xChannelSelector="R" yChannelSelector="G" />
+                                        </filter>
+                                    </defs>
+                                    <g filter="url(#rsvBrush)">
+                                        <path d="M0 132 C26 120 35 112 52 103 Q63 77 74 95
+                                        C86 113 98 91 113 76 Q126 60 140 86
+                                        C153 106 163 82 179 64 Q193 47 207 75
+                                        C222 100 236 91 250 78 Q263 69 275 89
+                                        C293 105 305 76 316 70 Q328 66 338 86 L350 79
+                                        V168 H0 Z" fill="url(#rsvInk)" />
+                                        <path d="M0 139 C25 131 43 135 61 124 C77 114 91 126 112 113
+                                        S145 118 165 111 C190 103 210 123 235 112
+                                        S274 113 291 105 C318 99 331 112 350 105
+                                        V168 H0 Z" fill="#575b55" opacity=".15" />
+                                    </g>
+                                    <path d="M7 129 Q41 113 62 110 M90 111 Q111 88 123 80
+                                    M152 101 Q179 72 191 65 M252 99 Q280 91 315 75"
+                                          fill="none" stroke="#66675f" stroke-width="1.2" opacity=".27" />
+                                    <path d="M0 126 Q70 113 113 125 T222 118 T350 119
+                                    V168 H0 Z" fill="url(#rsvMist)" opacity=".6" />
+                                    <path d="M0 151 C49 135 67 147 94 139 S147 149 176 138
+                                    S223 142 249 135 S310 144 350 124 V168 H0 Z"
+                                          fill="#50544d" opacity=".13" />
+                                    <path d="M0 146 Q42 140 77 147 T151 144 T229 146 T350 137
+                                    V168 H0 Z" fill="url(#rsvMist)" />
+                                    <g fill="none" stroke="#424941" stroke-linecap="round" opacity=".32">
+                                        <path d="M18 168 Q20 135 17 111 M17 128 Q8 120 1 124 M17 118 Q27 108 38 112
+                                        M316 168 Q314 136 316 112 M315 131 Q305 123 293 127
+                                        M316 120 Q328 109 343 116" stroke-width="2.2" />
+                                        <path d="M7 133 Q18 125 30 129 M4 140 Q19 131 32 137
+                                        M298 135 Q316 125 335 133 M297 141 Q320 134 343 141"
+                                              stroke-width="1.4" />
+                                    </g>
+                                </svg>

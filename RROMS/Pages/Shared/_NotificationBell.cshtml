@@ -1,0 +1,36 @@
+@model int
+@*
+    US37 (Member 4): navbar bell for customers (used in _LoginPartial).
+    Model = unread count when the page was drawn. notifications.js fills the dropdown,
+    gets a live SignalR signal (NotificationHub) for new notices, keeps a 30 s check as a fallback,
+    updates the badge and shows the shared YORU toast.
+*@
+<li class="nav-item dropdown ntf-bell" data-ntf-bell
+    data-summary-url="/Customer/Notifications?handler=Summary"
+    data-hub-url="/hubs/notifications"
+    data-signalr-src="/lib/microsoft/signalr/dist/browser/signalr.min.js">
+    <a class="nav-link nav-icon" href="/Customer/Notifications" role="button"
+       data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+       title="Notifications" aria-label="Notifications, @Model unread">
+        <i class="bi bi-bell"></i>
+        <span class="nav-badge" data-ntf-badge hidden="@(Model <= 0)">@(Model > 9 ? "9+" : Model.ToString())</span>
+    </a>
+    <div class="dropdown-menu dropdown-menu-end ntf-menu">
+        <div class="ntf-menu-head">
+            <div>
+                <small lang="ja">お知らせ</small>
+                <p class="ntf-menu-title">Notices from <span>YORU</span></p>
+            </div>
+            <form method="post" action="/Customer/Notifications?handler=MarkAll" data-ntf-markall hidden="@(Model <= 0)">
+                @Html.AntiForgeryToken()
+                <button type="submit">Mark all as read</button>
+            </form>
+        </div>
+        <ul class="ntf-menu-list" data-ntf-list>
+            <li class="ntf-menu-empty">Loading…</li>
+        </ul>
+        <a class="ntf-menu-all" href="/Customer/Notifications">View all notices<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    <link rel="stylesheet" href="~/css/notifications.css" asp-append-version="true" />
+    <script src="~/js/notifications.js" asp-append-version="true" defer></script>
+</li>

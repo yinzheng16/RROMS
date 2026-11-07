@@ -1,0 +1,76 @@
+@page
+@model RROMS.Pages.Admin.Menu.IndexModel
+@{
+    ViewData["Title"] = "Menu management";
+    ViewData["FullWidth"] = true;   // the hero photo runs edge to edge, like Promotions; content sits in .ms-body
+    bool items = Model.MenuView == "items";
+}
+@* Owner: Member 3. Menu studio redesign: categories (small tiles) and dishes (cards),
+   live search, styled filters, pop-up editors with live preview and drafts.
+   The admin Promotions page shares the same button language. *@
+<link rel="stylesheet" href="~/css/admin-menu-studio.css" asp-append-version="true" />
+
+<div class="ms-page" data-ms-page data-ms-view="@(items ? "items" : "categories")">
+    <header class="ms-hero" aria-labelledby="ms-title">
+        <img class="ms-hero__art" src="~/images/menu/yoru-night-counter.png" asp-append-version="true" alt="" aria-hidden="true" decoding="async" fetchpriority="high" />
+        <div class="container-xl container-wide"><div class="ms-hero__inner">
+            <p class="ms-eyebrow">MENU STUDIO <span aria-hidden="true">·</span> <span lang="ja">お品書き</span></p>
+            <h1 id="ms-title">Every dish has<br /><span>its place.</span></h1>
+            <p class="ms-hero__sub" data-ms-swap="hero-sub">@(items ? "Keep every dish accurate, inviting and ready to order." : "Organise categories, then fill them with dishes.")</p>
+            <div class="ms-hero__row" data-ms-swap="hero-row">
+                <nav class="ms-seg" aria-label="Menu management sections">
+                    <a asp-page="./Index" class="@(items ? "" : "is-on")" aria-current="@(items ? null : "page")" data-ms-nav>Categories</a>
+                    <a asp-page="./Index" asp-route-MenuView="items" class="@(items ? "is-on" : "")" aria-current="@(items ? "page" : null)" data-ms-nav>Menu items</a>
+                </nav>
+                @if (items)
+                {
+                    <a class="ms-btn ms-btn--main" href="@Url.Page("./Index", new { MenuView = "items", New = true })" data-ms-open data-ms-draft-key="item-new"
+                       aria-disabled="@(Model.ItemCategories.Count == 0 ? "true" : null)">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span data-ms-draft-label>New menu item</span>
+                    </a>
+                }
+                else
+                {
+                    <a class="ms-btn ms-btn--main" href="@Url.Page("./Index", new { New = true })" data-ms-open data-ms-draft-key="cat-new">
+                        <i class="bi bi-plus-lg" aria-hidden="true"></i><span data-ms-draft-label>New category</span>
+                    </a>
+                }
+            </div>
+        </div></div>
+    </header>
+
+    <div class="ms-body"><div class="container-xl container-wide ms-wrap" id="ms-collection">
+        <span class="visually-hidden" role="status" aria-live="polite" data-ms-live></span>
+        <div data-ms-swap="workspace">
+            @if (items)
+            {
+                <partial name="_MenuItems" model="Model" />
+            }
+            else if (Model.Reorder)
+            {
+                <partial name="_MenuCategoryReorder" model="Model" />
+            }
+            else
+            {
+                <partial name="_MenuCategories" model="Model" />
+            }
+        </div>
+    </div></div>
+
+    @* Editors are pop-ups. The server opens one after Edit/New links or a failed save. *@
+    <div data-ms-swap="dialog">
+        @if (items)
+        {
+            <partial name="_MenuItemDialog" model="Model" />
+        }
+        else
+        {
+            <partial name="_MenuCategoryDrawer" model="Model" />
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/admin-menu-studio.js" asp-append-version="true"></script>
+}

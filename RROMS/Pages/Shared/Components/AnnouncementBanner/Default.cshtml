@@ -1,0 +1,83 @@
+@model List<RROMS.Services.Interfaces.AnnouncementBannerItem>
+@using System.Globalization
+@using RROMS.Models
+@using RROMS.Services.Interfaces
+@{
+    // US39 (Owner: Member 4; restyle Member 1): one-line announcement banner for the home page.
+    // Styles: wwwroot/css/announcement-banner.css, script: wwwroot/js/announcement-banner.js (every class starts with ab-).
+    // Painted corners (images/home/news-sakura.webp, news-fuji.webp), gold sakura + NEWS 新着,
+    // serif title | message, UNTIL date, gold outline pill button.
+    // 2 or more live: they take turns (slide left every AnnouncementBanner.SlideSeconds, pause on hover),
+    // with ‹ › at both ends, a "1 / 2" counter and a thin progress line. Always shown (no close button).
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var many = Model.Count > 1;
+}
+
+<link rel="stylesheet" href="~/css/announcement-banner.css" asp-append-version="true" />
+
+<aside class="ab-bar @(many ? "is-many" : "")" aria-label="Announcements" aria-roledescription="@(many ? "carousel" : null)"
+       data-ab data-seconds="@AnnouncementBanner.SlideSeconds" style="--ab-ms: @(AnnouncementBanner.SlideSeconds * 1000)ms">
+    <span class="ab-art ab-art-l" aria-hidden="true"></span>
+    <span class="ab-art ab-art-r" aria-hidden="true"></span>
+
+    <div class="container-xl ab-in">
+        @if (many)
+        {
+            <button type="button" class="ab-arrow" data-ab-prev aria-label="Previous announcement">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5" /></svg>
+            </button>
+        }
+
+        <div class="ab-view">
+            <div class="ab-track" data-ab-track aria-live="off">
+                @for (var i = 0; i < Model.Count; i++)
+                {
+                    var item = Model[i];
+                    // "Join YORU" is for visitors only: a signed-in guest gets no button.
+                    var link = item.Link == AnnouncementLink.SignUp && signedIn ? AnnouncementLink.None : item.Link;
+                    var buttonText = AnnouncementLinks.Text(link);
+                    var buttonPath = AnnouncementLinks.Path(link);
+                    <div class="ab-slide" aria-hidden="@(i == 0 ? "false" : "true")" data-ab-slide>
+                        <div class="ab-line">
+                            <span class="ab-tag">
+                                @* small gold sakura *@
+                                <svg class="ab-flower" viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><path d="M12 11.2c-1.9-1.3-3.1-3.3-2.6-5.4.3-1.3 1.4-2.3 2.6-2.6 1.2.3 2.3 1.3 2.6 2.6.5 2.1-.7 4.1-2.6 5.4z" /><path d="M12 11.2c-1.9-1.3-3.1-3.3-2.6-5.4.3-1.3 1.4-2.3 2.6-2.6 1.2.3 2.3 1.3 2.6 2.6.5 2.1-.7 4.1-2.6 5.4z" transform="rotate(72 12 12)" /><path d="M12 11.2c-1.9-1.3-3.1-3.3-2.6-5.4.3-1.3 1.4-2.3 2.6-2.6 1.2.3 2.3 1.3 2.6 2.6.5 2.1-.7 4.1-2.6 5.4z" transform="rotate(144 12 12)" /><path d="M12 11.2c-1.9-1.3-3.1-3.3-2.6-5.4.3-1.3 1.4-2.3 2.6-2.6 1.2.3 2.3 1.3 2.6 2.6.5 2.1-.7 4.1-2.6 5.4z" transform="rotate(216 12 12)" /><path d="M12 11.2c-1.9-1.3-3.1-3.3-2.6-5.4.3-1.3 1.4-2.3 2.6-2.6 1.2.3 2.3 1.3 2.6 2.6.5 2.1-.7 4.1-2.6 5.4z" transform="rotate(288 12 12)" /></g><circle cx="12" cy="12" r="1.6" fill="#7a2418" /></svg>
+                                <span class="ab-word">News</span>
+                                <span class="ab-jp" lang="ja">新着</span>
+                            </span>
+                            <span class="ab-sep" aria-hidden="true"></span>
+                            <p class="ab-tx" title="@item.Message"><b>@item.Title</b><i aria-hidden="true"></i><span>@item.Message</span></p>
+                            <span class="ab-sep" aria-hidden="true"></span>
+                            <span class="ab-until">Until @AnnouncementTimes.Until(item.EndDate)</span>
+                            @if (buttonText is not null && buttonPath is not null)
+                            {
+                                <a class="ab-go" href="@buttonPath" tabindex="@(i == 0 ? null : "-1")">
+                                    <span>@buttonText</span>
+                                    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" /></svg>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (many)
+        {
+            <span class="ab-count" aria-hidden="true"><b data-ab-now>1</b> / @Model.Count</span>
+            <button type="button" class="ab-arrow" data-ab-next aria-label="Next announcement">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5" /></svg>
+            </button>
+        }
+    </div>
+
+    @if (many)
+    {
+        <span class="ab-progress" data-ab-progress aria-hidden="true"></span>
+    }
+</aside>
+
+@if (many)
+{
+    <script src="~/js/announcement-banner.js" asp-append-version="true" defer></script>
+}

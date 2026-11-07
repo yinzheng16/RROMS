@@ -1,0 +1,41 @@
+@model RROMS.Pages.Admin.Menu.IndexModel
+@* Reorder mode: drag the tiles (or use the arrow buttons), then Save order. Same form contract as before:
+   handler "Reorder", OrderStamp, and one OrderIds field per category in the new order. *@
+<form method="post" asp-page="./Index" asp-page-handler="Reorder" data-ms-reorder>
+    <input type="hidden" name="OrderStamp" value="@Model.OrderStamp" />
+    <div class="ms-head">
+        <div>
+            <h2>Reorder categories</h2>
+            <p>All @Model.TotalCategories categories, in the order customers see them.</p>
+        </div>
+    </div>
+    <div class="ms-reorder-bar">
+        <i class="bi bi-info-circle" aria-hidden="true"></i>
+        <span data-ms-reorder-status role="status" aria-live="polite">Drag the tiles into the order customers should see. Nothing changes until you save.</span>
+        <a class="ms-btn ms-btn--line" asp-page="./Index" asp-route-ShowAll="true" data-ms-nav>Cancel</a>
+        <button type="submit" class="ms-btn ms-btn--main"><i class="bi bi-check-lg" aria-hidden="true"></i>Save order</button>
+    </div>
+    <ol class="ms-tiles ms-tiles--strips ms-tiles--reorder" data-ms-reorder-list>
+        @foreach (var category in Model.Categories)
+        {
+            var parts = category.Name.Split('·', 2, StringSplitOptions.TrimEntries);
+            <li class="ms-tile ms-strip" data-ms-reorder-item draggable="true">
+                <input type="hidden" name="OrderIds" value="@category.Id" />
+                <div class="ms-strip__num">
+                    <span class="ms-tile__num" data-ms-position>@category.DisplayOrder.ToString("D2")</span>
+                    <span class="ms-code">@category.Code</span>
+                </div>
+                <div class="ms-strip__main">
+                    <h3 title="@category.Name">@parts[0]</h3>
+                    <p class="ms-tile__sub">@(parts.Length > 1 ? parts[1] : "\u00a0")</p>
+                    <span class="ms-grip" aria-hidden="true" title="Drag to reorder"><i class="bi bi-grip-horizontal"></i>Drag</span>
+                </div>
+                <div class="ms-strip__acts">
+                    <button type="button" class="ms-icon-btn ms-icon-btn--plain" data-ms-move="up" aria-label="Move @category.Name earlier" title="Move earlier"><i class="bi bi-arrow-left" aria-hidden="true"></i></button>
+                    <button type="button" class="ms-icon-btn ms-icon-btn--plain" data-ms-move="down" aria-label="Move @category.Name later" title="Move later"><i class="bi bi-arrow-right" aria-hidden="true"></i></button>
+                </div>
+            </li>
+        }
+    </ol>
+    <noscript><p class="ms-note">Enable JavaScript to drag tiles or use the move buttons.</p></noscript>
+</form>

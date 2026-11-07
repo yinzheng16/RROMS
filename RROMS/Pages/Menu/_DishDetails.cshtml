@@ -1,0 +1,56 @@
+@model RROMS.Services.Interfaces.MenuItemSummary
+@using System.Globalization
+<div class="dish-detail">
+    <div class="dish-detail__photo">
+        @if (Model.OriginalPrice is decimal normalPrice && normalPrice > 0)
+        {
+            <span class="menu-promo-seal" aria-hidden="true"><strong>@(((normalPrice - Model.Price) / normalPrice * 100m).ToString("0.#", CultureInfo.InvariantCulture))%</strong><small>OFF</small></span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+        {
+            <img src="@Url.Content(Model.ImageUrl)" alt="@Model.Name" width="800" height="800" data-dish-photo />
+        }
+        else
+        {
+
+            <div class="menu-photo-placeholder"><span aria-hidden="true">夜</span><span>Photo coming soon</span></div>
+        }
+    </div>
+    <div class="dish-detail__text">
+        <p class="eyebrow">@Model.CategoryName</p>
+        <p class="dish-detail__code">@Model.Code</p>
+        <h2 id="dish-detail-title">@Model.Name</h2>
+       
+        <p class="dish-detail__description">@(string.IsNullOrWhiteSpace(Model.Description) ? "A little taste of YORU. Ask our team for more details about this dish." : Model.Description)</p>
+        <p class="menu-availability dish-detail__availability"><span class="bg-success" aria-hidden="true"></span>Available</p>
+        <form method="post" asp-page="/Menu/Index" asp-page-handler="Add" class="dish-detail__cart" data-cart-add data-cart-detail-form>
+            <input type="hidden" name="menuItemId" value="@Model.Id" />
+            <input type="hidden" name="returnUrl" value="@Url.Page("/Menu/Index", new { ItemId = Model.Id })" />
+            <div class="dish-detail__note">
+                <label for="detail-note-@Model.Id">Add a note <span class="cart-note__optional">(optional)</span><span class="visually-hidden"> for @Model.Name</span></label>
+                <textarea id="detail-note-@Model.Id" class="form-control" name="notes" rows="2" maxlength="200" placeholder="E.g. less salt or less ice, please" aria-describedby="detail-note-help-@Model.Id"></textarea>
+                <small id="detail-note-help-@Model.Id">Requests depend on what our kitchen can accommodate.</small>
+            </div>
+            <div class="dish-detail__footer">
+                <strong class="menu-price @(Model.OriginalPrice is null ? "" : "is-promo")">
+                    @if (Model.OriginalPrice is decimal wasPrice)
+                    {
+                        <span class="menu-price__line">
+                            <s class="menu-price__was"><span class="visually-hidden">Normal price </span>RM @wasPrice.ToString("F2", CultureInfo.InvariantCulture)</s>
+                            @if (Model.PromoEndsOn is DateTime endsOn)
+                            {
+                                <span class="menu-price__ends">· @RROMS.Services.PromotionRules.EndsLabel(endsOn, DateTime.Now)</span>
+                            }
+                        </span>
+                    }
+                    <span class="menu-price__now">RM @Model.Price.ToString("F2", CultureInfo.InvariantCulture)</span>
+                </strong>
+                <div class="cart-detail-actions" data-menu-detail-actions>
+                    <label class="visually-hidden" for="detail-quantity-@Model.Id">Quantity</label>
+                    <div class="cart-quantity"><button type="button" data-cart-step="-1" aria-label="Decrease quantity" disabled>−</button><input id="detail-quantity-@Model.Id" type="number" name="quantity" min="1" max="100" value="1" required data-cart-quantity-input /><button type="button" data-cart-step="1" aria-label="Increase quantity">+</button></div>
+                    <button type="submit" class="btn btn-primary" disabled="@(!Model.IsAvailable)">Add to cart</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

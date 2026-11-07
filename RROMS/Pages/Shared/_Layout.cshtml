@@ -1,52 +1,296 @@
-﻿<!DOCTYPE html>
+@using Microsoft.AspNetCore.Identity
+@using RROMS.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@inject RROMS.Services.Interfaces.IHomeService HomeData
+@inject RROMS.Services.Interfaces.IReportService ReportService
+@{
+    // EN04 Shared layout (Owner: Member 1). Ask Member 1 before changing this file.
+    // Brand name, taglines and logo: Models/Brand.cs (one place for the whole site).
+
+    var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
+    var signedIn = SignInManager.IsSignedIn(User);
+    var isAdmin = signedIn && User.IsInRole(Roles.Admin);
+    var isStaff = signedIn && User.IsInRole(Roles.Staff);
+    var isBackOffice = isAdmin || isStaff;
+    // US51: clicking the logo goes to your role's starting page.
+    var brandHref = isAdmin ? "/Admin" : isStaff ? "/Staff/Reservations" : "/";
+
+    // A page can set ViewData["FullWidth"] = true to draw edge to edge (e.g. the home page hero).
+    var fullWidth = ViewData["FullWidth"] as bool? ?? false;
+
+    // Same max width on every screen, so a 2560px monitor and a 1920px laptop look the same.
+    // Back office gets a slightly wider area for tables.
+    var containerClass = isBackOffice ? "container-xl container-wide" : "container-xl";
+
+    // Highlights the link of the page being shown.
+    // exact = true: only that page; otherwise the page and everything under its folder.
+    string Active(string href, bool exact = false)
+    {
+        var target = href == "/" ? "/Index" : href;
+        var match = currentPage.Equals(target, StringComparison.OrdinalIgnoreCase)
+                 || currentPage.Equals(target + "/Index", StringComparison.OrdinalIgnoreCase)
+                 || (!exact && currentPage.StartsWith(target + "/", StringComparison.OrdinalIgnoreCase));
+        return match ? "active" : "";
+    }
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - RROMS</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] · @Brand.FullName</title>
+    <link rel="icon" type="image/png" href="@Brand.Favicon" />
+    <link rel="apple-touch-icon" href="~/images/yoru-icon-180.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/RROMS.styles.css" asp-append-version="true" />
+    @* A page's own stylesheet can go here with @section Styles { <link ... /> },
+       so it loads before the page is drawn (no flash of an unstyled page). *@
+    @if (!isBackOffice)
+    {
+        @* US08 (Member 1): "Ask YORU" chat bubble on the customer pages (Pages/Shared/_ChatWidget.cshtml) *@
+        <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+    }
+    @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body class="@(isBackOffice ? "back-office" : "front-of-house")">
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">RROMS</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg site-nav" data-bs-theme="dark">
+            <div class="@containerClass">
+                <a class="navbar-brand brand" href="@brandHref">
+                    <img class="brand-logo" src="@Brand.Logo" alt="@Brand.FullName" />
+                    @if (isAdmin)
+                    {
+                        <span class="role-pill">Admin</span>
+                    }
+                    else if (isStaff)
+                    {
+                        <span class="role-pill">Staff</span>
+                    }
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto ms-lg-4">
+                        @if (isAdmin)
+                        {
+                            @* Admin menu (US51). Page owners in README "Page addresses". *@
+                            <li class="nav-item"><a class="nav-link @Active("/Admin", true)" href="/Admin">Overview</a></li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Floor</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/Staff/Reservations">Today's reservations</a></li>
+                                    <li><a class="dropdown-item" href="/Staff/Orders">Order queue</a></li>
+                                    <li><a class="dropdown-item" href="/Staff/Billing">Billing</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Restaurant</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/Admin/Tables">Tables &amp; hours</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Menu">Menu</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Promotions">Promotions</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Announcements">Announcements</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/ChatFaqs">Chatbot FAQs</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" href="/Admin/Settings">Settings</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Reports</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="/Admin/Dashboard">Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Reports">Reports</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Occupancy">Table occupancy</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Payments">Payments</a></li>
+                                    <li><a class="dropdown-item" href="/Admin/Feedback">Feedback</a></li>
+                                </ul>
+                            </li>
+                            <li class="nav-item"><a class="nav-link @Active("/Admin/Users")" href="/Admin/Users">Users</a></li>
+                        }
+                        else if (isStaff)
+                        {
+                            @* Staff menu (US51) *@
+                            <li class="nav-item"><a class="nav-link @Active("/Staff/Reservations")" href="/Staff/Reservations">Reservations</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/Staff/Orders")" href="/Staff/Orders">Orders</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/Staff/Billing")" href="/Staff/Billing">Billing</a></li>
+                        }
+                        else
+                        {
+                            @* Visitor and customer menu (US51) *@
+                            <li class="nav-item"><a class="nav-link @Active("/", true)" href="/">Home</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/Menu")" href="/Menu">Our Menu</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/About")" href="/About">About Us</a></li>
+                            <li class="nav-item"><a class="nav-link @Active("/Customer/Reservations/Create")" href="/Customer/Reservations/Create">Reserve</a></li>
+                        }
                     </ul>
+
                     <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - RROMS - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
+    <main role="main" class="site-main">
+        @* ---------- Toast notification (all pages) ----------
+           Any page can show one by setting, before a redirect:
+             TempData["SuccessMessage"] = "...";   (green tick, 完了)
+             TempData["ErrorMessage"]   = "...";   (red !, 注意)
+             TempData["InfoMessage"]    = "...";   (gold i, お知らせ)
+           It floats at the top right, closes itself after 5 seconds, and waits while the mouse is over it. *@
+        @{
+            string? toastText = null, toastKind = null, toastTitle = null, toastJp = null, toastIcon = null;
+            if (TempData["SuccessMessage"] is string ok) { toastText = ok; toastKind = "success"; toastTitle = "All set"; toastJp = "完了"; toastIcon = "bi-check-lg"; }
+            else if (TempData["ErrorMessage"] is string bad) { toastText = bad; toastKind = "error"; toastTitle = "Oops"; toastJp = "注意"; toastIcon = "bi-exclamation-lg"; }
+            else if (TempData["InfoMessage"] is string info) { toastText = info; toastKind = "info"; toastTitle = "Notice"; toastJp = "お知らせ"; toastIcon = "bi-info-lg"; }
+        }
+        @if (toastText is not null)
+        {
+            <div class="yoru-toast-wrap">
+                <div class="yoru-toast yoru-toast--@toastKind" role="@(toastKind == "error" ? "alert" : "status")" aria-live="polite" data-toast>
+                    <span class="yoru-toast-seal" aria-hidden="true"><i class="bi @toastIcon"></i></span>
+                    <div class="yoru-toast-body">
+                        <p class="yoru-toast-title"><span class="yoru-toast-jp">@toastJp</span>@toastTitle</p>
+                        <p class="yoru-toast-msg">@toastText</p>
+                    </div>
+                    <button type="button" class="yoru-toast-close" aria-label="Close notification"><i class="bi bi-x-lg"></i></button>
+                    <span class="yoru-toast-bar" aria-hidden="true"></span>
+                </div>
+            </div>
+            <script>
+                        // Close the toast: when its gold line runs out (5 s, paused on hover) or when × is clicked.
+                        (function () {
+                            var toast = document.querySelector('[data-toast]');
+                            if (!toast) return;
+                            function hide() {
+                                if (toast.classList.contains('is-leaving')) return;
+                                toast.classList.add('is-leaving');
+                                setTimeout(function () { toast.parentNode && toast.parentNode.remove(); }, 400);
+                            }
+                            toast.querySelector('.yoru-toast-bar').addEventListener('animationend', hide);
+                            toast.querySelector('.yoru-toast-close').addEventListener('click', hide);
+                        })();
+            </script>
+        }
+
+
+        @if (fullWidth)
+        {
+            @RenderBody()
+        }
+        else
+        {
+            <div class="@containerClass py-4 py-lg-5">
+                @RenderBody()
+            </div>
+        }
+    </main>
+
+    @if (isBackOffice)
+    {
+        <footer class="site-footer site-footer-slim">
+            <div class="@containerClass d-flex justify-content-between flex-wrap gap-2">
+                <span>@Brand.FullName · Back office</span>
+                <span>&copy; @DateTime.Now.Year RROMS</span>
+            </div>
+        </footer>
+    }
+    else
+    {
+        <footer class="site-footer">
+            <div class="seigaiha-band" aria-hidden="true"></div>
+            <div class="container-xl">
+                <div class="row gy-4">
+                    <div class="col-md-5">
+                        <img class="footer-logo" src="@Brand.Logo" alt="@Brand.FullName" />
+                        <p class="footer-tagline-jp">@Brand.TaglineJp</p>
+                        <p class="footer-tagline">@Brand.Tagline</p>
+                    </div>
+                    @{
+                        // Same data as the Home page: Member 5's settings + Member 2's opening hours.
+                        var footerInfo = await HomeData.GetInfoAsync();
+                        var footerHours = await HomeData.GetOpeningHoursAsync();
+                        // US49: email is only in Restaurant Settings (HomeInfo has address + phone).
+                        var footerEmail = (await ReportService.GetRestaurantSettingsAsync()).Email;
+                    }
+                    <div class="col-6 col-md-3">
+                        <h2 class="footer-heading">Visit</h2>
+                        @* US49: address keeps the admin's line breaks; phone is already formatted by HomeService *@
+                        <p class="footer-address">@footerInfo.Address</p>
+                        <p><a class="footer-link" href="tel:@footerInfo.Phone.Replace(" ", "")">@footerInfo.Phone</a></p>
+                        @if (!string.IsNullOrWhiteSpace(footerEmail))
+                        {
+                            <p><a class="footer-link" href="mailto:@footerEmail">@footerEmail</a></p>
+                        }
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <h2 class="footer-heading">Hours</h2>
+                        <p>
+                            @foreach (var row in footerHours)
+                            {
+                                <span class="d-block">@row.Days · @row.Hours</span>
+                            }
+                        </p>
+                        <a class="btn btn-primary btn-sm mt-1" href="/Customer/Reservations/Create">Book a table</a>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span>&copy; @DateTime.Now.Year @Brand.FullName</span>
+                    <span>5026CMD Software Engineering · RROMS</span>
+                </div>
+            </div>
+        </footer>
+    }
+
+    @* Back to top (EN04): appears after scrolling down; the gold ring shows how far down the page you are *@
+    <button type="button" class="to-top" id="toTop" aria-label="Back to top" hidden>
+        <svg class="to-top-ring" viewBox="0 0 48 48" aria-hidden="true">
+            <circle cx="24" cy="24" r="22" class="to-top-track" />
+            <circle cx="24" cy="24" r="22" class="to-top-bar" id="toTopBar" />
+        </svg>
+        <svg class="to-top-arrow" viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M8 13V3M3.5 7.5 8 3l4.5 4.5" />
+        </svg>
+    </button>
+    <script>
+            (function () {
+                var btn = document.getElementById('toTop'), bar = document.getElementById('toTopBar');
+                if (!btn) return;
+                var len = 2 * Math.PI * 22;
+                bar.style.strokeDasharray = len;
+                function onScroll() {
+                    var max = document.documentElement.scrollHeight - window.innerHeight;
+                    var y = window.scrollY;
+                    btn.hidden = false;
+                    btn.classList.toggle('is-shown', y > window.innerHeight * 0.8);
+                    bar.style.strokeDashoffset = len * (1 - (max > 0 ? Math.min(1, y / max) : 0));
+                }
+                window.addEventListener('scroll', onScroll, { passive: true });
+                onScroll();
+                btn.addEventListener('click', function () {
+                    var smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+                });
+            })();
+    </script>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (!isBackOffice)
+    {
+        <partial name="_ChatWidget" />
+        <script src="~/js/chat.js" asp-append-version="true"></script>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

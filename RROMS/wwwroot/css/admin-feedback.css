@@ -1,0 +1,1142 @@
+/* =========================================================
+   US43 Admin feedback (Member 5) · Pages/Admin/Feedback/Index
+   Same family as the Business Dashboard and Restaurant Settings:
+   night header with a lantern, round section icons, cream cards.
+   Every class starts with af- so nothing leaks to other pages.
+   ========================================================= */
+
+.af-page {
+    --af-card: #FFFCF7;
+    --af-line: #EDE2D3;
+    --af-line-2: #DFC3A6;
+    --af-soft: #F5E6D6;
+    --af-ink: #1E1A18;
+    --af-text: #5A4A3E;
+    --af-muted: #8A7A6E;
+    --af-red: #C9392B;
+    --af-red-dark: #A92E22;
+    --af-red-soft: #FBE8E3;
+    --af-green: #3F7A4C;
+    --af-green-soft: #E6F0E5;
+    --af-amber: #A8741A;
+    --af-amber-soft: #FBF0DA;
+    --af-gold: #C9A26A;
+    --af-serif: "Noto Serif JP", "Shippori Mincho", Georgia, serif;
+
+    /* Same width as Restaurant Settings and the dashboard: the normal page width,
+       and up to 1536px on large screens (see the media query below). */
+    position: relative;
+    margin: -24px 0 0;
+    padding: 0 0 56px;
+    color: var(--af-ink);
+    font-family: "Josefin Sans", -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+@media (min-width: 1600px) {
+    .af-page {
+        --af-width: min(1536px, calc(100vw - 48px));
+        left: 50%;
+        width: var(--af-width);
+        margin-left: calc(var(--af-width) / -2);
+    }
+}
+
+.af-page *,
+.af-page *::before,
+.af-page *::after {
+    box-sizing: border-box;
+}
+
+.af-page a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.af-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+
+.af-visually-hidden {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.af-muted {
+    color: var(--af-muted);
+    font-style: italic;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+/* =========================================================
+   Header (same as the dashboard)
+   ========================================================= */
+
+.af-hero {
+    position: relative;
+    min-height: 300px;
+    padding: 52px 56px 46px;
+    overflow: hidden;
+    border-radius: 24px;
+    color: #fff;
+    background:
+            radial-gradient(60% 90% at 78% 30%, rgba(255, 170, 90, .28), transparent 60%),
+            radial-gradient(40% 60% at 95% 90%, rgba(201, 57, 43, .35), transparent 70%),
+            linear-gradient(120deg, #160F0D 0%, #2A1812 45%, #3B2116 100%);
+    box-shadow: 0 18px 40px rgba(40, 18, 8, .25);
+}
+
+.af-hero::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 46%;
+    height: 60px;
+    opacity: .5;
+    background: radial-gradient(circle at 50% 100%, transparent 12px, var(--af-gold) 13px, var(--af-gold) 14px, transparent 15px, transparent 19px, var(--af-gold) 20px, var(--af-gold) 21px, transparent 22px) 0 0 / 36px 18px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%);
+    mask-image: linear-gradient(90deg, transparent, #000 40%);
+}
+
+.af-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 58%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.af-moon {
+    position: absolute;
+    top: 34px;
+    right: 300px;
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #FFF6E2, #F3D9A8 60%, #E3B877);
+    box-shadow: 0 0 50px 12px rgba(255, 214, 150, .25);
+}
+
+.af-eyebrow {
+    position: relative;
+    color: #E7B98A;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .38em;
+}
+
+.af-eyebrow b {
+    color: #F08B6E;
+    font-family: var(--af-serif);
+    letter-spacing: .2em;
+}
+
+.af-title {
+    position: relative;
+    margin: 16px 0 14px;
+    font-family: var(--af-serif);
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+}
+
+.af-title em {
+    font-style: normal;
+    color: #F0654F;
+}
+
+.af-sub {
+    position: relative;
+    max-width: 520px;
+    margin: 0;
+    color: #E6D6C6;
+    font-size: 15.5px;
+    line-height: 1.7;
+}
+
+.af-chips {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.af-chip-hero {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 9px 16px;
+    border: 1px solid rgba(255, 230, 200, .35);
+    border-radius: 999px;
+    background: rgba(20, 10, 6, .55);
+    color: #F1E6DB;
+    font-size: 13px;
+}
+
+.af-chip-hero b {
+    color: #fff;
+}
+
+/* =========================================================
+   Section titles (round icon + serif title, like the dashboard)
+   ========================================================= */
+
+.af-sec {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px;
+    margin: 46px 0 20px;
+    scroll-margin-top: 16px;
+}
+
+.af-sec-ic {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(150deg, #D9473A, #B52F23);
+    box-shadow: 0 8px 18px rgba(185, 47, 35, .3);
+}
+
+.af-sec-ic.is-dark {
+    background: linear-gradient(150deg, #3A2B25, #1E1714);
+    box-shadow: 0 8px 18px rgba(30, 23, 20, .3);
+}
+
+.af-sec-ic svg {
+    width: 24px;
+    height: 24px;
+}
+
+.af-sec h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--af-serif);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.af-sec h2 small {
+    color: var(--af-red);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: .2em;
+}
+
+.af-sec p {
+    margin: 4px 0 0;
+    color: var(--af-muted);
+    font-size: 14px;
+}
+
+.af-rule {
+    flex: 1;
+    height: 1px;
+    margin-left: 8px;
+    background: linear-gradient(90deg, var(--af-line-2), transparent);
+}
+
+#af-list {
+    scroll-margin-top: 16px;
+}
+
+/* =========================================================
+   Overview cards
+   ========================================================= */
+
+.af-kpis {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr;
+    gap: 16px;
+}
+
+.af-card {
+    min-width: 0;
+    padding: 22px 24px 20px;
+    border: 1px solid var(--af-line);
+    border-radius: 22px;
+    background: var(--af-card);
+    box-shadow: 0 6px 18px rgba(80, 50, 20, .04);
+}
+
+.af-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.af-card-l {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.af-card-jp {
+    color: var(--af-muted);
+    font-family: var(--af-serif);
+    font-size: 11px;
+    letter-spacing: .15em;
+    white-space: nowrap;
+}
+
+.af-card-note {
+    margin: 10px 0 0;
+    color: var(--af-muted);
+    font-size: 13px;
+}
+
+.af-card.is-dark {
+    border-color: #3A2117;
+    background: linear-gradient(160deg, #3A2117, #1C120E);
+    color: #fff;
+}
+
+.af-card.is-dark .af-card-jp,
+.af-card.is-dark .af-card-note {
+    color: #D7C3B0;
+}
+
+.af-avg {
+    margin: 18px 0 8px;
+    font-family: var(--af-serif);
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.af-avg small {
+    color: #D7C3B0;
+    font-size: 20px;
+}
+
+.af-seals {
+    display: flex;
+    gap: 5px;
+}
+
+.af-seals i {
+    width: 20px;
+    height: 20px;
+    border: 1.3px solid #8C6E5E;
+    border-radius: 4px;
+}
+
+.af-seals i.is-on {
+    border-color: #E8604A;
+    background: #E8604A;
+}
+
+.af-seals i.is-half {
+    border-color: #E8604A;
+    background: linear-gradient(90deg, #E8604A 50%, transparent 50%);
+}
+
+.af-dist {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.af-dist-row {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) 30px;
+    gap: 12px;
+    align-items: center;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: background .15s, border-color .15s;
+}
+
+.af-dist-row:hover,
+.af-dist-row.is-on {
+    border-color: var(--af-line-2);
+    background: #fff;
+}
+
+.af-dist-row.is-on {
+    font-weight: 700;
+}
+
+.af-dist-k {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: 1.3px solid var(--af-red);
+    border-radius: 5px;
+    color: var(--af-red);
+    font-family: var(--af-serif);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.af-bar {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #EFE3D3;
+}
+
+.af-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--af-green);
+}
+
+.af-dist-row.is-low .af-bar i {
+    background: var(--af-red);
+}
+
+.af-dist-count {
+    text-align: right;
+    color: var(--af-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.af-need {
+    margin: 18px 0 4px;
+    font-family: var(--af-serif);
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--af-amber);
+}
+
+.af-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--af-red);
+    color: #fff !important;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.af-btn:hover {
+    background: var(--af-red-dark);
+}
+
+/* =========================================================
+   Filters
+   ========================================================= */
+
+.af-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 14px;
+    border: 1px solid var(--af-line);
+    border-radius: 18px;
+    background: var(--af-card);
+}
+
+.af-search {
+    display: flex;
+    gap: 10px;
+    margin: 0;
+}
+
+.af-search-box {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 0 14px;
+    border: 1px solid var(--af-line-2);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--af-red-dark);
+}
+
+.af-search-box:focus-within {
+    border-color: var(--af-red);
+    box-shadow: 0 0 0 3px rgba(201, 57, 43, .12);
+}
+
+.af-search-box input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 0;
+    border: 0;
+    background: none;
+    color: var(--af-ink);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.af-tools-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.af-seg {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 12px;
+    background: #F3E8DA;
+}
+
+.af-seg a {
+    padding: 8px 14px;
+    border-radius: 9px;
+    color: var(--af-text);
+    font-size: 13.5px;
+    white-space: nowrap;
+}
+
+.af-seg a:hover {
+    color: var(--af-ink);
+}
+
+.af-seg a.is-on {
+    background: var(--af-ink);
+    color: #fff;
+    font-weight: 600;
+}
+
+.af-stamps {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.af-stamps small {
+    margin-right: 4px;
+    color: var(--af-muted);
+    font-size: 12px;
+    letter-spacing: .1em;
+}
+
+.af-hanko {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--af-line-2);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--af-text);
+    font-family: var(--af-serif);
+    font-weight: 700;
+    font-size: 15px;
+    transition: border-color .15s, color .15s, background .15s, transform .15s;
+}
+
+a.af-hanko:hover {
+    border-color: var(--af-red);
+    color: var(--af-red);
+}
+
+.af-hanko.is-on {
+    border-color: var(--af-ink);
+    background: var(--af-ink);
+    color: #fff;
+    transform: rotate(-6deg);
+}
+
+.af-hanko.is-on.is-low {
+    border-color: var(--af-red);
+    background: var(--af-red);
+}
+
+/* ---------- Sort: plain select without JavaScript, hanko menu with it ---------- */
+
+.af-sort-select {
+    flex: none;
+    padding: 0 38px 0 14px;
+    border: 1px solid var(--af-line-2);
+    border-radius: 12px;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23C9392B' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 14px center;
+    color: var(--af-ink);
+    font-size: 14px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.af-sort {
+    display: none;
+    position: relative;
+    flex: none;
+}
+
+.af-js .af-sort {
+    display: block;
+}
+
+.af-js .af-sort-select {
+    display: none;
+}
+
+.af-sort-btn {
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    border: 1px solid var(--af-line-2);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--af-ink);
+    font: inherit;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.af-sort-btn:hover,
+.af-sort-btn:focus-visible,
+.af-sort.is-open .af-sort-btn {
+    outline: none;
+    border-color: var(--af-red);
+}
+
+.af-sort-arrow {
+    width: 7px;
+    height: 7px;
+    border-right: 1.6px solid var(--af-red);
+    border-bottom: 1.6px solid var(--af-red);
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform .15s ease;
+}
+
+.af-sort.is-open .af-sort-arrow {
+    transform: translateY(1px) rotate(-135deg);
+}
+
+.af-sort-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 20;
+    display: none;
+    min-width: 250px;
+    padding: 6px;
+    border: 1px solid var(--af-line);
+    border-radius: 14px;
+    background: var(--af-card);
+    box-shadow: 0 14px 30px rgba(80, 50, 20, .16);
+}
+
+.af-sort.is-open .af-sort-menu {
+    display: block;
+}
+
+.af-sort-opt {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--af-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.af-sort-opt:hover,
+.af-sort-opt:focus-visible {
+    outline: none;
+    background: var(--af-soft);
+}
+
+.af-sort-opt b {
+    display: block;
+    font-size: 13.5px;
+}
+
+.af-sort-opt small {
+    display: block;
+    color: var(--af-muted);
+    font-size: 11.5px;
+}
+
+.af-sort-stamp {
+    width: 32px;
+    height: 32px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--af-line-2);
+    border-radius: 6px;
+    color: var(--af-muted);
+    font-family: var(--af-serif);
+    font-weight: 700;
+    font-size: 14px;
+    transform: rotate(-6deg);
+}
+
+.af-sort-opt.is-on b {
+    color: var(--af-red);
+}
+
+.af-sort-opt.is-on .af-sort-stamp {
+    border-color: var(--af-ink);
+    background: var(--af-ink);
+    color: #fff;
+}
+
+.af-sort-opt.is-on.is-low .af-sort-stamp {
+    border-color: var(--af-red);
+    background: var(--af-red);
+}
+
+.af-showing {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--af-muted);
+}
+
+.af-showing a {
+    color: var(--af-red) !important;
+    font-weight: 700;
+}
+
+/* =========================================================
+   Review cards
+   ========================================================= */
+
+.af-row {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 24px;
+    margin-bottom: 14px;
+    padding: 20px 24px;
+    border: 1px solid var(--af-line);
+    border-radius: 18px;
+    background: var(--af-card);
+    box-shadow: 0 6px 18px rgba(80, 50, 20, .04);
+    scroll-margin-top: 20px;
+}
+
+.af-row.is-low {
+    border-left: 4px solid var(--af-red);
+}
+
+/* The review that was just answered: page scrolls to it and it glows once. */
+.af-row.is-just-replied {
+    animation: af-just-replied 2.6s ease-out;
+}
+
+@keyframes af-just-replied {
+    0%, 35% {
+        background: var(--af-soft);
+        box-shadow: 0 0 0 2px var(--af-red);
+    }
+    100% {
+        background: var(--af-card);
+        box-shadow: 0 0 0 2px transparent;
+    }
+}
+
+.af-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.af-avatar {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.af-person b {
+    display: block;
+    font-size: 15px;
+}
+
+.af-person small {
+    color: var(--af-muted);
+    font-size: 12.5px;
+}
+
+.af-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 12px;
+    color: var(--af-muted);
+    font-size: 12.5px;
+}
+
+.af-code {
+    padding: 2px 8px;
+    border: 1px solid var(--af-line-2);
+    border-radius: 5px;
+    background: #FFFAF2;
+    color: var(--af-ink);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+
+.af-tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.af-tag::before {
+    content: "● ";
+    font-size: 9px;
+}
+
+.af-tag.is-need {
+    background: var(--af-amber-soft);
+    color: var(--af-amber);
+}
+
+.af-tag.is-done {
+    background: var(--af-green-soft);
+    color: var(--af-green);
+}
+
+.af-main {
+    min-width: 0;
+}
+
+.af-rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.af-rating i {
+    width: 18px;
+    height: 18px;
+    border: 1.3px solid #E0C9B8;
+    border-radius: 4px;
+}
+
+.af-rating i.is-on {
+    border-color: var(--af-red);
+    background: var(--af-red);
+}
+
+.af-rating b {
+    margin-left: 8px;
+    font-family: var(--af-serif);
+    font-size: 17px;
+}
+
+.af-comment {
+    margin-bottom: 12px;
+    color: #3A2E27;
+    font-family: var(--af-serif);
+    font-size: 15.5px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+}
+
+.af-answer {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid #EFD6CC;
+    border-left: 3px solid var(--af-red);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.af-answer-who {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: var(--af-red);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .2em;
+}
+
+.af-answer-seal {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border: 1.3px solid var(--af-red);
+    font-family: var(--af-serif);
+    font-size: 11px;
+    letter-spacing: 0;
+    transform: rotate(-6deg);
+}
+
+.af-answer p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- Reply box ---------- */
+
+.af-reply summary {
+    display: inline-block;
+    cursor: pointer;
+    list-style: none;
+    color: var(--af-red);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.af-reply summary:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.af-reply summary::-webkit-details-marker {
+    display: none;
+}
+
+.af-reply[open] summary {
+    margin-bottom: 8px;
+}
+
+.af-reply-text {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    padding: 10px 14px;
+    border: 1px solid var(--af-line-2);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--af-ink);
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.af-reply-text::placeholder {
+    color: #A8968A;
+}
+
+.af-reply-text:focus {
+    outline: none;
+    border-color: var(--af-red);
+    box-shadow: 0 0 0 3px rgba(201, 57, 43, .12);
+}
+
+.af-under {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--af-muted);
+}
+
+.af-count.is-over {
+    color: var(--af-red);
+    font-weight: 700;
+}
+
+.af-error {
+    display: block;
+    margin-top: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--af-red-dark);
+}
+
+.af-reply-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.af-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.af-quick-btn {
+    padding: 6px 12px;
+    border: 1px dashed var(--af-line-2);
+    border-radius: 999px;
+    background: #FFFAF2;
+    color: var(--af-ink);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.af-quick-btn:hover {
+    border-color: var(--af-red);
+    color: var(--af-red);
+}
+
+.af-send {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--af-red);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.af-send:hover {
+    background: var(--af-red-dark);
+}
+
+/* ---------- Empty state ---------- */
+
+.af-empty {
+    padding: 40px 20px;
+    border: 1px solid var(--af-line);
+    border-radius: 18px;
+    background: var(--af-card);
+    text-align: center;
+}
+
+.af-empty-seal {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 12px;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid var(--af-red);
+    color: var(--af-red);
+    font-family: var(--af-serif);
+    font-size: 30px;
+    transform: rotate(-6deg);
+}
+
+.af-empty h3 {
+    margin: 0 0 6px;
+    font-family: var(--af-serif);
+    font-size: 22px;
+}
+
+.af-empty p {
+    margin: 0;
+    color: var(--af-muted);
+}
+
+/* =========================================================
+   Small screens
+   ========================================================= */
+
+@media (max-width: 1000px) {
+    .af-kpis {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .af-kpis .af-card:nth-child(2) {
+        grid-column: 1 / -1;
+        order: 3;
+    }
+
+    .af-art,
+    .af-moon {
+        opacity: .35;
+    }
+}
+
+@media (max-width: 760px) {
+    .af-hero {
+        min-height: 0;
+        padding: 34px 24px;
+        border-radius: 18px;
+    }
+
+    .af-title {
+        font-size: 38px;
+    }
+
+    .af-sec h2 {
+        font-size: 28px;
+    }
+
+    .af-kpis,
+    .af-row {
+        grid-template-columns: 1fr;
+    }
+
+    .af-kpis .af-card:nth-child(2) {
+        order: 0;
+    }
+
+    .af-meta {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .af-search {
+        flex-wrap: wrap;
+    }
+
+    .af-search-box {
+        flex-basis: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .af-hanko,
+    .af-dist-row {
+        transition: none;
+    }
+
+    .af-row.is-just-replied {
+        animation: none;
+        background: var(--af-soft);
+    }
+}

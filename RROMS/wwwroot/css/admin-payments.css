@@ -1,0 +1,1101 @@
+/* =====================================================
+   YORU IZAKAYA — US40 ADMIN → PAYMENTS (Member 4)
+   Used by Pages/Admin/Payments.cshtml.
+   Every class starts with ap- so nothing clashes with
+   Bootstrap, site.css or other pages.
+   Banner idea borrowed from the other Admin pages (night
+   izakaya, thin gold frame, seigaiha waves) but drawn in
+   CSS: a 銭 lantern and an old coin, no image files.
+   ===================================================== */
+
+.ap-page {
+    --ap-paper: var(--yoru-paper, #FCFAF5);
+    --ap-line: var(--yoru-line, #E4DACA);
+    --ap-line-2: #EDE4D6;
+    --ap-head: #F4ECDF;
+    --ap-hover: #FBF5EA;
+    --ap-ink: var(--yoru-ink, #191919);
+    --ap-mute: var(--yoru-olive-text, #5C5F55);
+    --ap-gold: var(--yoru-gold, #B79B72);
+    --ap-red: var(--yoru-red, #C83E2D);
+    --ap-red-d: var(--yoru-red-dark, #A93324);
+    --ap-red-t: var(--yoru-red-text, #B23526);
+    /* status colours (same family as the Billing page tags) */
+    --ap-paid: #2F6B34;   --ap-paid-bg: #E5EFE2;
+    --ap-pend: #8A5A00;   --ap-pend-bg: #FBEFD3;   --ap-pend-c: #C08A1E;
+    --ap-fail: #9B2823;   --ap-fail-bg: #FBE4E1;
+    --ap-ref: #584A86;    --ap-ref-bg: #ECE8F4;
+    /* one row of seigaiha waves; --ap-wave sets the colour */
+    --ap-seigaiha: radial-gradient(circle at 50% 100%,
+        transparent 0 22%, var(--ap-wave) 23% 26%, transparent 27% 44%,
+        var(--ap-wave) 45% 48%, transparent 49% 66%, var(--ap-wave) 67% 70%, transparent 71%);
+    color: var(--ap-ink);
+    font-size: .9rem;
+}
+
+    .ap-page .jp { font-family: var(--font-display); }
+
+    /* Bootstrap icons sit a little low by default; centre them on the text */
+    .ap-page .bi { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+        .ap-page .bi::before { display: block; vertical-align: 0; line-height: 1; }
+
+/* ---------------- hero ---------------- */
+.ap-hero {
+    --ap-wave: rgba(183, 155, 114, .7);
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 11rem;
+    margin-bottom: 1.25rem;
+    padding: 2.1rem 2.5rem;
+    border-radius: 14px;
+    overflow: hidden;
+    color: var(--yoru-cream, #F5F0E7);
+    background:
+        radial-gradient(220px 220px at 80% 34%, rgba(255, 170, 90, .30), transparent 70%),
+        radial-gradient(420px 260px at 100% 110%, rgba(200, 62, 45, .38), transparent 70%),
+        linear-gradient(115deg, #171110 0%, #26150F 48%, #3A1C12 100%);
+    box-shadow: 0 18px 36px -20px rgba(40, 18, 8, .55);
+}
+
+    /* thin gold frame inside the banner */
+    .ap-hero::before {
+        content: "";
+        position: absolute;
+        inset: 7px;
+        border: 1px solid rgba(183, 155, 114, .38);
+        border-radius: 9px;
+        pointer-events: none;
+    }
+
+    /* gold waves along the bottom, fading in from the left */
+    .ap-hero::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 46px;
+        opacity: .5;
+        pointer-events: none;
+        background: var(--ap-seigaiha) 0 100% / 44px 22px repeat-x;
+        -webkit-mask: linear-gradient(90deg, transparent 0, #000 55%);
+        mask: linear-gradient(90deg, transparent 0, #000 55%);
+    }
+
+.ap-hero-art {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 260px;
+    pointer-events: none;
+}
+
+.ap-lantern {
+    position: absolute;
+    right: 150px;
+    top: 26px;
+    width: 58px;
+    height: 78px;
+    border-radius: 46% 46% 42% 42% / 50% 50% 50% 50%;
+    background: radial-gradient(circle at 50% 45%, #ffb36b 0%, #e0532f 45%, #9c2416 100%);
+    box-shadow: 0 0 50px 12px rgba(255, 140, 60, .35);
+}
+
+    .ap-lantern::before {   /* string */
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -30px;
+        width: 1px;
+        height: 30px;
+        background: rgba(183, 155, 114, .7);
+    }
+
+    .ap-lantern::after {    /* paper ribs */
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: repeating-linear-gradient(180deg, transparent 0 11px, rgba(90, 20, 10, .35) 11px 12px);
+    }
+
+    .ap-lantern span {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #3a0d06;
+    }
+
+/* old round coin with a square hole (both centred with inset + margin:auto) */
+.ap-coin {
+    position: absolute;
+    right: 56px;
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid rgba(183, 155, 114, .45);
+}
+
+    .ap-coin::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(183, 155, 114, .45);
+    }
+
+.ap-hero-tx { position: relative; z-index: 1; max-width: 40rem; }
+
+.ap-eyebrow {
+    margin: 0 0 .5rem;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .26em;
+    color: var(--ap-gold);
+}
+
+    .ap-eyebrow span { letter-spacing: .3em; }
+
+.ap-hero h1 {
+    margin: 0 0 .5rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 2.8vw, 2.3rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: #fff;
+}
+
+    .ap-hero h1 em { font-style: normal; color: #E8A08F; }
+
+.ap-lede { margin: 0; max-width: 33rem; line-height: 1.65; color: #D9CCB8; }
+
+/* ---------------- KPI cards ---------------- */
+.ap-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.ap-kpi {
+    --ap-wave: var(--ap-c);
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: .9rem;
+    min-width: 0;
+    padding: 1.1rem 1.25rem 1rem;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--ap-paper);
+    border: 1px solid var(--ap-line);
+    box-shadow: 0 10px 22px -18px rgba(60, 35, 15, .45);
+}
+
+    .ap-kpi::before {   /* status colour strip */
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--ap-c);
+    }
+
+    .ap-kpi::after {    /* faint waves in the corner */
+        content: "";
+        position: absolute;
+        right: -18px;
+        bottom: -26px;
+        width: 96px;
+        height: 60px;
+        opacity: .16;
+        pointer-events: none;
+        background: var(--ap-seigaiha) 0 100% / 32px 16px repeat-x;
+    }
+
+    .ap-kpi.is-paid { --ap-c: var(--ap-paid); --ap-bg: var(--ap-paid-bg); }
+    .ap-kpi.is-pend { --ap-c: var(--ap-pend-c); --ap-bg: var(--ap-pend-bg); }
+    .ap-kpi.is-fail { --ap-c: var(--ap-fail); --ap-bg: var(--ap-fail-bg); }
+    .ap-kpi.is-ref  { --ap-c: var(--ap-ref); --ap-bg: var(--ap-ref-bg); }
+
+.ap-kpi-ic {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    color: var(--ap-c);
+    background: var(--ap-bg);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05);
+}
+
+.ap-kpi-tx { min-width: 0; }
+
+    .ap-kpi-tx small {
+        display: block;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .16em;
+        color: var(--ap-mute);
+    }
+
+    .ap-kpi-tx b {
+        display: block;
+        margin: .25rem 0 .1rem;
+        font-family: var(--font-display);
+        font-size: 1.6rem;
+        line-height: 1.15;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+        .ap-kpi-tx b em { margin-right: .25rem; font-size: .85rem; font-style: normal; color: var(--ap-mute); }
+
+    .ap-kpi-tx span { display: block; font-size: .76rem; color: var(--ap-mute); }
+
+/* ---------------- filters ---------------- */
+.ap-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 19rem 10rem auto;
+    gap: 1rem;
+    align-items: end;
+    padding: 1.1rem 1.25rem;
+    border-radius: 10px;
+    background: var(--ap-paper);
+    border: 1px solid var(--ap-line);
+}
+
+.ap-field label {
+    display: block;
+    margin-bottom: .4rem;
+    padding-left: 2px;   /* optical: lines up with the box edge (1px border + rounded corner) */
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    color: var(--ap-mute);
+}
+
+.ap-input {
+    width: 100%;
+    height: 2.5rem;
+    padding: 0 .75rem;
+    border: 1px solid var(--ap-line);
+    border-radius: 6px;
+    font: inherit;
+    color: var(--ap-ink);
+    background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+}
+
+    .ap-input:hover { border-color: var(--ap-gold); }
+
+/* Same gap on the right for the select arrow and the calendar icon (.75rem) */
+select.ap-input {
+    padding-right: 2.25rem;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%235C5F55' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3E%3C/svg%3E") right 13px center / 12px 12px no-repeat;   /* arrow ends 15px from the edge, same as the calendar icon */
+    cursor: pointer;
+}
+
+input[type="date"].ap-input::-webkit-calendar-picker-indicator {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    opacity: .75;
+}
+    .ap-input:focus { outline: 0; border-color: var(--ap-gold); box-shadow: 0 0 0 3px rgba(183, 155, 114, .22); }
+
+.ap-search { position: relative; }
+
+    .ap-search > .bi {
+        position: absolute;
+        left: .8rem;
+        top: 0;
+        bottom: 0;
+        color: var(--ap-gold);
+        pointer-events: none;
+    }
+
+    .ap-search .ap-input { padding-left: 2.25rem; }
+
+.ap-dates {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) .9rem minmax(0, 1fr);
+    align-items: center;
+    gap: .35rem;
+}
+
+    .ap-dates > span { text-align: center; color: var(--ap-mute); }
+
+/* Clear all sits left of the Search button */
+.ap-field-btn { display: flex; align-items: center; gap: 1rem; }
+
+.ap-clear {
+    display: inline-flex;
+    align-items: center;
+    height: 2.5rem;
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--ap-red-t);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+    .ap-clear:hover { color: var(--ap-red-d); text-decoration: underline; }
+
+.ap-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-width: 7rem;
+    padding: 0 1.25rem;
+    height: 2.5rem;
+    border: 0;
+    border-radius: 6px;
+    font: inherit;
+    font-weight: 700;
+    color: #fff;
+    background: var(--ap-red);
+    transition: background .15s;
+}
+
+    .ap-btn:hover { background: var(--ap-red-d); }
+
+.ap-alert {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .75rem;
+    padding: .65rem 1rem;
+    border-radius: 8px;
+    font-size: .85rem;
+    color: var(--ap-fail);
+    background: var(--ap-fail-bg);
+}
+
+/* status chips (left) and quick date buttons (right) */
+.ap-subrow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .75rem 1rem;
+    margin: .75rem 0 1.4rem;
+}
+
+.ap-chips, .ap-quick { display: flex; flex-wrap: wrap; gap: .5rem; }
+
+.ap-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    height: 2rem;
+    padding: 0 .9rem;
+    border-radius: 6px;
+    border: 1px solid var(--ap-line);
+    font-size: .82rem;
+    color: var(--ap-ink);
+    text-decoration: none;
+    background: var(--ap-paper);
+    transition: border-color .15s, background .15s, color .15s;
+}
+
+    .ap-chip:hover { color: var(--ap-ink); border-color: var(--ap-gold); background: var(--ap-hover); }
+    .ap-chip .ap-n { font-size: .7rem; font-weight: 700; color: var(--ap-mute); }
+    .ap-chip.is-on { color: #fff; border-color: var(--ap-ink); background: var(--ap-ink); }
+        .ap-chip.is-on .ap-n { color: var(--ap-gold); }
+
+    .ap-chip.is-paid { --ap-c: var(--ap-paid); }
+    .ap-chip.is-pend { --ap-c: var(--ap-pend-c); }
+    .ap-chip.is-fail { --ap-c: var(--ap-fail); }
+    .ap-chip.is-ref  { --ap-c: var(--ap-ref); }
+
+.ap-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ap-c); }
+
+.ap-quick a {
+    display: inline-flex;
+    align-items: center;
+    height: 2rem;
+    padding: 0 .8rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: .78rem;
+    color: var(--ap-mute);
+    text-decoration: none;
+    transition: color .15s, border-color .15s, background .15s;
+}
+
+    .ap-quick a:hover { color: var(--ap-ink); border-color: var(--ap-line); }
+    .ap-quick a.is-on { font-weight: 700; color: var(--ap-ink); border-color: var(--ap-gold); background: var(--ap-hover); }
+
+/* ---------------- one day ---------------- */
+.ap-day { margin-bottom: 1.65rem; }
+
+.ap-dh {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--ap-ink);
+}
+
+    .ap-dh h2 { margin: 0; font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; }
+
+        .ap-dh h2 small {
+            margin-left: .6rem;
+            font-family: var(--font-body);
+            font-size: .76rem;
+            font-weight: 400;
+            color: var(--ap-mute);
+        }
+
+.ap-dtot { font-size: .74rem; letter-spacing: .04em; color: var(--ap-mute); white-space: nowrap; }
+
+    .ap-dtot b {
+        margin-left: .5rem;
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        color: var(--ap-ink);
+        font-variant-numeric: tabular-nums;
+    }
+
+/* ---------------- table: same column widths for every day so columns line up ---------------- */
+.ap-table-wrap { margin-top: .65rem; overflow-x: auto; }
+
+.ap-table {
+    width: 100%;
+    min-width: 62rem;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--ap-line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--ap-paper);
+}
+
+    .ap-table col.c-pay  { width: 12%; }
+    .ap-table col.c-bill { width: 17%; }
+    .ap-table col.c-cust { width: 13%; }
+    .ap-table col.c-meth { width: 13%; }
+    .ap-table col.c-stat { width: 16%; }
+    .ap-table col.c-amt  { width: 10%; }
+    .ap-table col.c-act  { width: 19%; }
+
+    .ap-table th {
+        height: 2.4rem;
+        padding: 0 1rem;
+        font-size: .68rem;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        text-align: left;
+        color: var(--ap-mute);
+        background: var(--ap-head);
+        white-space: nowrap;
+    }
+
+    .ap-table td {
+        height: 3.9rem;
+        padding: .55rem 1rem;
+        border-top: 1px solid var(--ap-line-2);
+        vertical-align: middle;
+        overflow: hidden;
+    }
+
+    .ap-table tbody tr { transition: background .15s; }
+        .ap-table tbody tr:hover { background: var(--ap-hover); }
+
+    .ap-table .ap-r { text-align: right; }
+
+.ap-no { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.ap-sub {
+    display: block;
+    margin-top: .1rem;
+    font-size: .75rem;
+    color: var(--ap-mute);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ap-cust { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ap-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 1.15rem;
+    margin-right: .4rem;
+    padding: 0 .45rem 2px;   /* 2px at the bottom lifts the text to the visual centre */
+    border-radius: 4px;
+    font-size: .68rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    background: var(--ap-ink);
+}
+
+    .ap-tag.is-tk { background: #6F5B47; }
+
+.ap-st {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    height: 1.5rem;
+    padding: 0 .65rem;
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+    .ap-st::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .ap-st.is-paid { color: var(--ap-paid); background: var(--ap-paid-bg); }
+    .ap-st.is-pend { color: var(--ap-pend); background: var(--ap-pend-bg); }
+    .ap-st.is-fail { color: var(--ap-fail); background: var(--ap-fail-bg); }
+    .ap-st.is-ref  { color: var(--ap-ref); background: var(--ap-ref-bg); }
+
+.ap-amt {
+    font-family: var(--font-display);
+    font-size: .95rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+    /* not money received: not counted in the paid totals */
+    .ap-amt.is-x { font-weight: 500; color: #A39C93; text-decoration: line-through; }
+
+/* ---------------- checks under the status ----------------
+   green  = settled, nothing to do
+   amber  = still waiting for money, follow up
+   red    = should never happen (paid twice / amount differs) */
+/* flags sit to the right of the badge; several flags stack with the same gap and left edge */
+/* Two columns: the badge column has a fixed width (wide enough for "Refunded"),
+   so the flags start on the same line in every row, whatever the badge says. */
+.ap-stcell {
+    display: grid;
+    grid-template-columns: 5.75rem minmax(0, 1fr);
+    align-items: center;
+    column-gap: .5rem;
+}
+
+    .ap-stcell > .ap-st { justify-self: start; }
+
+.ap-flags {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .35rem;
+    min-width: 0;
+}
+
+.ap-flag {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .68rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--ap-mute);
+}
+
+    /* every icon gets the same box, so the text after it always starts at the same place;
+       1px down puts the icon on the middle line of the text (the font sits a little low) */
+    .ap-flag .bi {
+        flex: none;
+        width: .8rem;
+        justify-content: flex-start;
+        font-size: .72rem;
+        transform: translateY(1px);
+    }
+
+    .ap-flag .bi-check2 { transform: translateY(1.5px); }   /* the tick is drawn high in its box */
+
+    /* the clock and the warning sign look bigger than the tick at the same size */
+    .ap-flag .bi-clock,
+    .ap-flag .bi-exclamation-triangle { font-size: .64rem; }
+    .ap-flag .bi-clock { transform: translateY(2px); }
+
+    .ap-flag.is-ok   { color: var(--ap-paid); }
+    .ap-flag.is-wait { color: var(--ap-pend); }
+    .ap-flag.is-bad  { color: var(--ap-fail); }
+
+/* paid twice / amount differs: soft red row with a red line on the left */
+.ap-table tbody tr.is-check { background: #FDF4F2; }
+    .ap-table tbody tr.is-check:hover { background: #FBEDEA; }
+    .ap-table tbody tr.is-check > td:first-child { box-shadow: inset 3px 0 0 var(--ap-fail); }
+
+/* ---------------- row buttons ---------------- */
+.ap-acts { display: flex; justify-content: flex-end; gap: .5rem; }
+
+.ap-ab {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    height: 2rem;
+    padding: 0 .75rem;
+    border-radius: 6px;
+    font-size: .8rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+    .ap-ab .bi { font-size: .9rem; }
+
+.ap-ab-bill { color: var(--ap-ink); border: 1px solid var(--ap-line); background: #fff; }
+    .ap-ab-bill:hover { color: #fff; border-color: var(--ap-ink); background: var(--ap-ink); }
+
+.ap-ab-dl { color: var(--ap-red-t); border: 1px solid rgba(200, 62, 45, .35); background: #FDF3F1; }
+    .ap-ab-dl:hover { color: #fff; border-color: var(--ap-red); background: var(--ap-red); }
+
+.ap-ab:focus-visible { outline: 2px solid var(--ap-gold); outline-offset: 2px; }
+
+/* keeps the place of a missing button so the other one stays lined up */
+.ap-ab.is-ghost { visibility: hidden; }
+
+/* ---------------- empty / pager ---------------- */
+.ap-empty {
+    padding: 3rem 1.5rem;
+    border-radius: 10px;
+    border: 1px dashed var(--ap-line);
+    text-align: center;
+    color: var(--ap-mute);
+    background: var(--ap-paper);
+}
+
+    .ap-empty > .bi { display: inline-flex; font-size: 2rem; color: var(--ap-gold); }
+    .ap-empty h3 { margin: .6rem 0 .25rem; font-family: var(--font-display); font-size: 1.15rem; color: var(--ap-ink); }
+    .ap-empty p { margin: 0; font-size: .85rem; }
+
+.ap-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: .25rem;
+    font-size: .82rem;
+    color: var(--ap-mute);
+}
+
+    .ap-pager > div { display: flex; align-items: center; gap: .5rem; }
+    .ap-pager b { color: var(--ap-ink); }
+
+    .ap-pager a {
+        display: inline-flex;
+        align-items: center;
+        gap: .3rem;
+        height: 2rem;
+        padding: 0 .8rem;
+        border-radius: 6px;
+        border: 1px solid var(--ap-line);
+        color: var(--ap-ink);
+        text-decoration: none;
+        background: #fff;
+        transition: background .15s, color .15s, border-color .15s;
+    }
+
+        .ap-pager a:hover { color: #fff; border-color: var(--ap-ink); background: var(--ap-ink); }
+
+/* ---------------- keep scroll position (admin-payments.js) ---------------- */
+html.ap-restoring .ap-page { visibility: hidden; }
+
+/* ---------------- receipt preview pop-up ---------------- */
+.ap-pdf {
+    width: min(56rem, calc(100vw - 2rem));
+    height: min(52rem, calc(100vh - 2rem));
+    max-width: none;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: var(--yoru-paper, #FCFAF5);
+    box-shadow: 0 30px 60px -20px rgba(20, 10, 5, .6);
+}
+
+    .ap-pdf::backdrop { background: rgba(23, 17, 16, .6); }
+
+.ap-pdf-box { display: flex; flex-direction: column; height: 100%; }
+
+.ap-pdf-head {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .9rem 1rem .9rem 1.25rem;
+    border-bottom: 1px solid var(--yoru-line, #E4DACA);
+}
+
+    .ap-pdf-head > div { margin-right: auto; min-width: 0; }
+
+.ap-pdf-eyebrow {
+    margin: 0;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    color: var(--yoru-olive-text, #5C5F55);
+}
+
+.ap-pdf-head h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--yoru-ink, #191919);
+}
+
+/* the pop-up sits outside .ap-page, so the button colours are repeated here */
+.ap-pdf .ap-ab {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    height: 2.25rem;
+    padding: 0 .9rem;
+    border-radius: 6px;
+    font-size: .85rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    color: var(--yoru-red-text, #B23526);
+    border: 1px solid rgba(200, 62, 45, .35);
+    background: #FDF3F1;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+    .ap-pdf .ap-ab:hover { color: #fff; border-color: var(--yoru-red, #C83E2D); background: var(--yoru-red, #C83E2D); }
+
+.ap-pdf-close {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--yoru-line, #E4DACA);
+    border-radius: 6px;
+    color: var(--yoru-ink, #191919);
+    background: #fff;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+    .ap-pdf-close:hover { color: #fff; border-color: var(--yoru-ink, #191919); background: var(--yoru-ink, #191919); }
+
+.ap-pdf-frame { flex: 1; width: 100%; border: 0; border-radius: 0 0 12px 12px; background: #525659; }
+
+/* ---------------- smaller screens ---------------- */
+@media (max-width: 1199.98px) {
+    .ap-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ap-filters { grid-template-columns: minmax(0, 1fr) 19rem; }
+}
+
+@media (max-width: 767.98px) {
+    .ap-hero { padding: 1.6rem 1.4rem; }
+    .ap-hero-art { display: none; }
+    .ap-kpis, .ap-filters { grid-template-columns: minmax(0, 1fr); }
+    .ap-dh { flex-wrap: wrap; }
+}
+
+/* =====================================================
+   US54 REFUNDS (Member 4)
+   ===================================================== */
+
+/* refunded: when · who, and the reason under it (same small style as the other flags) */
+.ap-flag.is-ref { color: var(--ap-ref); }
+    .ap-flag.is-ref .bi-arrow-counterclockwise { font-size: .66rem; }
+    .ap-flag.is-reason {
+        display: block;
+        max-width: 11rem;
+        padding-left: 1.1rem;              /* lines up with the text after the icon above */
+        line-height: 1.35;                 /* line-height 1 cut off the bottom of g, y, p */
+        margin-top: -.15rem;               /* keeps the same gap as the other flags */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--ap-mute);
+    }
+
+/* "Refund this one" under "Paid 2 times" */
+.ap-flag-link {
+    padding: 0 0 0 1.1rem;
+    border: 0;
+    background: none;
+    font-size: .68rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--ap-ref);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+    .ap-flag-link:hover { color: #3F3468; }
+    .ap-flag-link:focus-visible { outline: 2px solid var(--ap-gold); outline-offset: 2px; border-radius: 3px; }
+
+/* "⋯" button and its small menu */
+.ap-more { position: relative; }
+
+.ap-ab-more {
+    justify-content: center;
+    width: 2rem;
+    padding: 0;
+    color: var(--ap-ink);
+    border: 1px solid var(--ap-line);
+    background: #fff;
+    cursor: pointer;
+}
+    .ap-ab-more:hover,
+    .ap-ab-more[aria-expanded="true"] { color: var(--ap-ref); border-color: var(--ap-ref); background: var(--ap-ref-bg); }
+
+/* fixed + placed by admin-payments.js: the table clips anything absolutely positioned */
+.ap-menu {
+    position: fixed;
+    z-index: 1050;
+    min-width: 12rem;
+    padding: .3rem;
+    border: 1px solid var(--ap-line);
+    border-radius: 8px;
+    background: var(--ap-paper);
+    box-shadow: 0 12px 28px -12px rgba(25, 20, 15, .35);
+}
+
+.ap-menu-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .5rem .65rem;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--ap-ref);
+    text-align: left;
+    white-space: nowrap;
+}
+    .ap-menu-item:hover,
+    .ap-menu-item:focus-visible { outline: 0; background: var(--ap-ref-bg); }
+
+/* message after a refund: fixed at the bottom, because the page returns to the same scroll place */
+.ap-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 1.5rem;
+    z-index: 1080;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    width: max-content;
+    max-width: min(40rem, calc(100vw - 2rem));
+    padding: .75rem .75rem .75rem 1rem;
+    border-radius: 10px;
+    font-size: .88rem;
+    color: var(--ap-fail);
+    background: var(--ap-fail-bg);
+    border: 1px solid rgba(155, 40, 35, .25);
+    box-shadow: 0 16px 32px -16px rgba(25, 20, 15, .45);
+    transform: translateX(-50%);
+    transition: opacity .3s, transform .3s;
+}
+    .ap-toast.is-ok { color: var(--ap-paid); background: var(--ap-paid-bg); border-color: rgba(47, 107, 52, .25); }
+    .ap-toast.is-hiding { opacity: 0; transform: translate(-50%, 8px); }
+    .ap-toast > .bi { font-size: 1rem; }
+
+.ap-toast-x {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-left: .25rem;
+    border: 0;
+    border-radius: 6px;
+    color: inherit;
+    background: transparent;
+}
+    .ap-toast-x:hover { background: rgba(0, 0, 0, .06); }
+
+/* refund pop-up: same header as the receipt pop-up */
+.ap-rf {
+    width: min(30rem, calc(100vw - 2rem));
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: var(--yoru-paper, #FCFAF5);
+    color: var(--yoru-ink, #191919);
+    box-shadow: 0 30px 60px -20px rgba(20, 10, 5, .6);
+}
+    .ap-rf::backdrop { background: rgba(23, 17, 16, .6); }
+    .ap-rf .ap-pdf-head { border-top: 3px solid var(--ap-ref, #584A86); border-radius: 12px 12px 0 0; }
+
+.ap-rf-body { display: flex; flex-direction: column; padding: 1rem 1.25rem .5rem; }
+
+.ap-rf-sum {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: .35rem 1rem;
+    margin: 0 0 .9rem;
+    padding: .75rem .9rem;
+    border: 1px solid var(--yoru-line, #E4DACA);
+    border-radius: 8px;
+    background: #fff;
+    font-size: .85rem;
+}
+    .ap-rf-sum dt { font-weight: 500; color: var(--yoru-olive-text, #5C5F55); }
+    .ap-rf-sum dd { margin: 0; text-align: right; }
+    .ap-rf-sum .ap-rf-amt { font-family: var(--font-display); font-size: 1rem; font-weight: 700; }
+
+.ap-rf-how { margin: 0 0 .75rem; font-size: .85rem; color: var(--yoru-olive-text, #5C5F55); }
+
+.ap-rf-check {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin-bottom: .9rem;
+    padding: .6rem .75rem;
+    border: 1px dashed #C9B89A;
+    border-radius: 8px;
+    font-size: .85rem;
+    cursor: pointer;
+}
+    .ap-rf-check input { flex: none; margin: 0; accent-color: var(--ap-ref, #584A86); }
+    .ap-rf-check > span { line-height: 1.3; transform: translateY(-1px); }
+
+.ap-rf-label {
+    margin: .2rem 0 .3rem;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    color: var(--yoru-olive-text, #5C5F55);
+}
+    .ap-rf-label span { margin-left: .3rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+.ap-rf-body .ap-input { width: 100%; margin-bottom: .75rem; }
+.ap-rf-body textarea.ap-input { height: auto; min-height: 4.5rem; padding-top: .5rem; resize: vertical; }
+
+.ap-rf-err { margin: 0 0 .6rem; font-size: .82rem; color: var(--ap-fail, #9B2823); }
+
+.ap-rf-warn {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: .1rem 0 .4rem;
+    font-size: .78rem;
+    color: var(--ap-fail, #9B2823);
+}
+
+.ap-rf-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: .6rem;
+    padding: .85rem 1.25rem 1.1rem;
+}
+
+.ap-rf-cancel {
+    height: 2.5rem;
+    padding: 0 1rem;
+    border: 1px solid var(--yoru-line, #E4DACA);
+    border-radius: 8px;
+    font-size: .88rem;
+    font-weight: 500;
+    color: var(--yoru-ink, #191919);
+    background: #fff;
+}
+    .ap-rf-cancel:hover { border-color: var(--yoru-ink, #191919); }
+
+.ap-rf-foot .ap-btn[disabled] { opacity: .65; cursor: progress; }
+
+/* refund reason in the row: a button that opens the full details */
+button.ap-flag.is-reason {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    border: 0;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+}
+    button.ap-flag.is-reason > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    button.ap-flag.is-reason .bi { flex: none; width: auto; font-size: .7rem; color: var(--ap-ref); transform: translateY(1px); }
+    button.ap-flag.is-reason:hover > span { color: var(--ap-ref); text-decoration: underline; text-underline-offset: 2px; }
+    button.ap-flag.is-reason:focus-visible { outline: 2px solid var(--ap-gold); outline-offset: 2px; border-radius: 3px; }
+
+.ap-rfi .ap-rf-body { padding-bottom: 1.25rem; }
+
+.ap-rfi-note {
+    margin: 0;
+    padding: .7rem .9rem;
+    border-radius: 8px;
+    background: var(--ap-ref-bg, #ECE8F4);
+    font-size: .88rem;
+    line-height: 1.5;
+    white-space: pre-wrap;           /* the whole note, on as many lines as it needs */
+    overflow-wrap: anywhere;
+}
+    .ap-rfi-note.is-empty { color: var(--yoru-olive-text, #5C5F55); background: transparent; padding: 0; }
+
+/* "by <admin>" under the refund time: same indent as the reason, long names cut with … */
+.ap-flag.is-by {
+    display: block;
+    max-width: 11rem;
+    padding-left: 1.1rem;
+    line-height: 1.35;
+    margin-top: -.15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ap-mute);
+}
+
+/* Final look (2 Nov): the reason always opens the details; purple + dotted underline
+   says "click me", hover turns it darker with a solid underline. */
+button.ap-flag.is-reason > span {
+    color: var(--ap-ref);
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+}
+    button.ap-flag.is-reason:hover > span {
+        color: #3F3468;
+        text-decoration-style: solid;
+    }
+
+/* "Refund this one" belongs to "Paid 2 times": close to it, more space before the next flag */
+.ap-flags .ap-flag-link {
+    margin-top: -.2rem;
+    margin-bottom: .2rem;
+}
+
+/* Final colours (2 Nov, round 2) */
+/* time line and "by <admin>": the same purple */
+.ap-flag.is-by { color: var(--ap-ref); }
+
+/* reason that opens the details: brighter purple, solid underline */
+button.ap-flag.is-reason > span {
+    color: #6A4BC4;
+    text-decoration: underline solid;
+}
+    button.ap-flag.is-reason:hover > span { color: #4B3399; }
+
+/* "Refund this one": same red family as "Paid 2 times", not bold, so it reads as part of that warning */
+.ap-flags .ap-flag-link { font-weight: 500; color: var(--ap-fail); }
+    .ap-flags .ap-flag-link:hover { color: #6E1B17; }
+
+/* the box cuts at its edge (needed for "…"); 3px room below so the underline is never cut,
+   the negative margin keeps the line spacing the same */
+button.ap-flag.is-reason > span { padding-bottom: 3px; margin-bottom: -3px; }

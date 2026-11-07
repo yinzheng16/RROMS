@@ -1,0 +1,23 @@
+@model RROMS.Services.Interfaces.UserLogRow
+@using RROMS.Models
+@using System.Globalization
+@{
+    // US07 (Member 1): one line of the activity log (Users page panel + Activity page).
+    var e = Model;
+    var (cls, icon, text) = e.Action switch
+    {
+        UserAdminAction.Created => ("is-add", "bi-plus-lg", $"created {e.Detail}"),
+        UserAdminAction.RoleChanged => ("is-role", "bi-arrow-left-right", $"role: {e.Detail}"),
+        UserAdminAction.Deactivated => ("is-off", "bi-dash-lg", "deactivated"),
+        UserAdminAction.Reactivated => ("is-on", "bi-check-lg", "reactivated"),
+        UserAdminAction.Removed => ("is-gone", "bi-trash3", $"removed ({e.Detail})"),
+        _ => ("is-link", "bi-arrow-repeat", e.Detail == "set-password link" ? "set-password link sent" : "password reset link sent")
+    };
+}
+<li class="uu-ev">
+    <span class="uu-dot @cls" aria-hidden="true"><i class="bi @icon"></i></span>
+    <div>
+        <p><b>@e.TargetName</b> @text</p>
+        <small>by @e.DoneByName · <time datetime="@e.DoneAt.ToString("s", CultureInfo.InvariantCulture)">@e.DoneAt.ToString("d MMM yyyy, h:mm tt", CultureInfo.InvariantCulture)</time></small>
+    </div>
+</li>

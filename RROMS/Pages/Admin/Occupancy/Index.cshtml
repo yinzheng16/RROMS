@@ -1,0 +1,528 @@
+﻿@page
+@model RROMS.Pages.Admin.Occupancy.IndexModel
+@using System.Globalization
+@using System.Text.Json
+@using RROMS.Pages.Admin.Occupancy
+@using RROMS.Services
+@using RROMS.Services.Interfaces
+@{
+    // US20: admin table occupancy and reservation analytics. Route: /Admin/Occupancy
+    ViewData["Title"] = "Service & Seating";
+    ViewData["FullWidth"] = true;
+
+    var inv = CultureInfo.InvariantCulture;
+    var r = Model.Report;
+    var t = r.Totals;
+    var f = Model.Filter;
+    var heat = r.Heatmap;
+
+    // ---------- little formatters ----------
+    string Pct(double v) => v.ToString("0.#", inv);
+    string Day(DateTime d) => d.ToString("d MMM", inv);
+    var rangeText = f.From.Year == f.To.Year
+        ? (f.From == f.To ? f.To.ToString("d MMM yyyy", inv) : Day(f.From) + " – " + f.To.ToString("d MMM yyyy", inv))
+        : f.From.ToString("d MMM yyyy", inv) + " – " + f.To.ToString("d MMM yyyy", inv);
+
+    // "▲ 18%" chip. upIsGood = false for things like the no-show rate, where a rise is bad news.
+    string Chip(double diff, string text, bool upIsGood = true)
+    {
+        if (Math.Abs(diff) < 0.05) return "<span class=\"occ-delta is-flat\">— no change</span>";
+        var up = diff > 0;
+        var good = up == upIsGood;
+        return "<span class=\"occ-delta " + (good ? "is-good" : "is-bad") + "\">" + (up ? "▲ " : "▼ ") + text + "</span>";
+    }
+    string ChangePct(double cur, double? prev, bool upIsGood = true)
+    {
+        if (prev == null || prev.Value <= 0) return "";
+        var d = (cur - prev.Value) / prev.Value * 100;
+        return Chip(d, Math.Abs(Math.Round(d)).ToString("0", inv) + "%", upIsGood);
+    }
+    string ChangePts(double cur, double? prev, bool upIsGood = true)
+    {
+        if (prev == null) return "";
+        var d = cur - prev.Value;
+        return Chip(d, Math.Abs(d).ToString("0.#", inv) + " pts", upIsGood);
+    }
+    var prev = r.Previous;
+    var prevText = r.PreviousFrom.HasValue ? "vs " + Day(r.PreviousFrom.Value) + " – " + Day(r.PreviousTo!.Value) : "";
+
+    // ---------- heatmap helpers ----------
+    string CellTip(int d, int hour, OccupancyHeatCell c) =>
+        IndexModel.DayLong[d] + " · " + IndexModel.Hour12(hour) + "|" + Pct(c.Percent ?? 0) + "% of tables in use|" +
+        c.Bookings + (c.Bookings == 1 ? " booking" : " bookings") + " in this range";
+
+    // ---------- status split ----------
+    var split = new[]
+    {
+        (Label: "Completed", Count: t.Completed, Css: "c-done"),
+        (Label: "Upcoming / seated", Count: t.Active, Css: "c-active"),
+        (Label: "Cancelled", Count: t.Cancelled, Css: "c-cancel"),
+        (Label: "No-show", Count: t.NoShow, Css: "c-noshow")
+    };
+    var splitTotal = Math.Max(1, split.Sum(x => x.Count));
+
+    // ---------- trend line (drawn here as SVG, so no chart library is needed) ----------
+    const double cw = 430, ch = 240, pl = 44, pr = 18, pt = 16, pb = 36;
+    var weeks = r.Weeks;
+    var maxV = Math.Max(1, weeks.Max(w => w.Reservations));
+    double step = 1;
+    foreach (var s in new double[] { 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000 })
+    {
+        step = s;
+        if (s * 4 >= maxV) break;
+    }
+    var top = step * 4;
+    double X(int i) => weeks.Count == 1 ? pl + (cw - pl - pr) / 2 : pl + i * (cw - pl - pr) / (weeks.Count - 1);
+    double Y(double v) => pt + (ch - pt - pb) * (1 - v / top);
+    var fullIdx = Enumerable.Range(0, weeks.Count).Where(i => !weeks[i].IsPartial).ToList();
+    var linePath = string.Join(" ", fullIdx.Select((i, n) => (n == 0 ? "M" : "L") + X(i).ToString("0.#", inv) + "," + Y(weeks[i].Reservations).ToString("0.#", inv)));
+    var areaPath = fullIdx.Count > 1
+        ? linePath + " L" + X(fullIdx[^1]).ToString("0.#", inv) + "," + (ch - pb).ToString("0.#", inv)
+          + " L" + X(fullIdx[0]).ToString("0.#", inv) + "," + (ch - pb).ToString("0.#", inv) + " Z"
+        : "";
+    var labelEvery = (int)Math.Ceiling(weeks.Count / 6.0);
+
+    // ---------- tables ----------
+    var tbl = r.Tables;
+    var take = tbl.Count <= 1 ? tbl.Count : Math.Min(3, tbl.Count / 2);
+    var most = tbl.Take(take).ToList();
+    var least = tbl.Count <= 1 ? new List<OccupancyTableRow>() : tbl.OrderBy(x => x.Percent).Take(take).ToList();
+    var maxPct = tbl.Count > 0 ? Math.Max(1, tbl.Max(x => x.Percent)) : 1;
+    string TableBar(OccupancyTableRow row, int i, bool low) =>
+        "<span class=\"occ-trow-bar\"><i class=\"" + (low ? "is-low" : "") + "\" style=\"--w:" + (row.Percent / maxPct * 100).ToString("0.#", inv) + "%;--i:" + i + "\"></i></span>";
+
+    var areaName = Model.AreaId.HasValue ? Model.Choices.Areas.FirstOrDefault(a => a.Id == Model.AreaId)?.Name : null;
+    var typeName = Model.TableTypeId.HasValue ? Model.Choices.TableTypes.FirstOrDefault(a => a.Id == Model.TableTypeId)?.Name : null;
+}
+<link rel="stylesheet" href="~/css/admin-occupancy.css" asp-append-version="true" />
+
+<div class="occ" id="occ" data-slot-url="@Url.Page("/Admin/Occupancy/Index", new { handler = "Slot" })">
+    <svg class="occ-defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+    <symbol id="occFan" viewBox="0 0 200 130">
+    <g class="occ-fan-paper"><path d="M78.8,110.7 L4.6,71.3 A108,108 0 0 1 16.4,53.6 L81.4,106.8 A24,24 0 0 0 78.8,110.7Z" fill-opacity=".95"/><path d="M81.4,106.8 L16.4,53.6 A108,108 0 0 1 31.4,38.6 L84.7,103.5 A24,24 0 0 0 81.4,106.8Z" fill-opacity=".62"/><path d="M84.7,103.5 L31.4,38.6 A108,108 0 0 1 49,26.8 L88.7,100.8 A24,24 0 0 0 84.7,103.5Z" fill-opacity=".95"/><path d="M88.7,100.8 L49,26.8 A108,108 0 0 1 68.6,18.7 L93,99 A24,24 0 0 0 88.7,100.8Z" fill-opacity=".62"/><path d="M93,99 L68.6,18.7 A108,108 0 0 1 89.4,14.5 L97.6,98.1 A24,24 0 0 0 93,99Z" fill-opacity=".95"/><path d="M97.6,98.1 L89.4,14.5 A108,108 0 0 1 110.6,14.5 L102.4,98.1 A24,24 0 0 0 97.6,98.1Z" fill-opacity=".62"/><path d="M102.4,98.1 L110.6,14.5 A108,108 0 0 1 131.4,18.7 L107,99 A24,24 0 0 0 102.4,98.1Z" fill-opacity=".95"/><path d="M107,99 L131.4,18.7 A108,108 0 0 1 151,26.8 L111.3,100.8 A24,24 0 0 0 107,99Z" fill-opacity=".62"/><path d="M111.3,100.8 L151,26.8 A108,108 0 0 1 168.6,38.6 L115.3,103.5 A24,24 0 0 0 111.3,100.8Z" fill-opacity=".95"/><path d="M115.3,103.5 L168.6,38.6 A108,108 0 0 1 183.6,53.6 L118.6,106.8 A24,24 0 0 0 115.3,103.5Z" fill-opacity=".62"/><path d="M118.6,106.8 L183.6,53.6 A108,108 0 0 1 195.4,71.3 L121.2,110.7 A24,24 0 0 0 118.6,106.8Z" fill-opacity=".95"/></g>
+    <path class="occ-fan-rib" d="M78.8,110.7L4.6,71.3M81.4,106.8L16.4,53.6M84.7,103.5L31.4,38.6M88.7,100.8L49,26.8M93,99L68.6,18.7M97.6,98.1L89.4,14.5M102.4,98.1L110.6,14.5M107,99L131.4,18.7M111.3,100.8L151,26.8M115.3,103.5L168.6,38.6M118.6,106.8L183.6,53.6M121.2,110.7L195.4,71.3M45.3,92.9A62,62 0 0 1 154.7,92.9M25.8,82.6A84,84 0 0 1 174.2,82.6" fill="none"/>
+    <g class="occ-fan-dot"><circle cx="20.1" cy="68.8" r="2.6"/><circle cx="46.6" cy="42.2" r="2.6"/><circle cx="81.2" cy="27.9" r="2.6"/><circle cx="118.8" cy="27.9" r="2.6"/><circle cx="153.4" cy="42.2" r="2.6"/><circle cx="179.9" cy="68.8" r="2.6"/></g>
+    <path class="occ-fan-edge" d="M78.8,110.7 L4.6,71.3 A108,108 0 0 1 195.4,71.3 L121.2,110.7" fill="none"/>
+    <circle class="occ-fan-pivot" cx="100" cy="122" r="5.5"/><circle class="occ-fan-pivot-in" cx="100" cy="122" r="2"/>
+    </symbol>
+    <symbol id="occKnot" viewBox="0 0 44 38">
+    <path d="M22 15C13 2 2 6 6 15C9 21 18 20 22 15Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M22 15C31 2 42 6 38 15C35 21 26 20 22 15Z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M22 17C19 25 15 31 11 37M22 17C25 25 29 31 33 37" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="22" cy="15" r="4.6" fill="currentColor"/><circle cx="20.6" cy="13.6" r="1.3" fill="#fff" fill-opacity=".55"/>
+    </symbol>
+    </defs>
+    </svg>
+
+    <header class="occ-hero">
+        <div class="occ-hero-img" aria-hidden="true"></div>
+        <div class="occ-hero-shade" aria-hidden="true"></div>
+        <div class="occ-sparks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="occ-wrap occ-hero-in">
+            <p class="occ-eyebrow">YORU IZAKAYA <span>·</span> <span lang="ja">夜の記録</span></p>
+            <h1 class="occ-title">Service &amp; Seating</h1>
+            <p class="occ-lede">Reservation analytics · the story behind every seat</p>
+        </div>
+        <span class="occ-seal" aria-hidden="true">夜</span>
+    </header>
+
+    <div class="occ-wrap occ-body">
+
+        <!-- three headline cards: omamori charms, half on the banner and half on the page -->
+        <section class="occ-insights" aria-label="Highlights">
+            <div class="occ-om-slot is-busy" style="--i:0">
+                <span class="occ-om-knot" aria-hidden="true"><svg><use href="#occKnot" /></svg></span>
+                <article class="occ-om">
+                    <span class="occ-om-d is-l" aria-hidden="true"></span><span class="occ-om-d is-r" aria-hidden="true"></span>
+                    <div class="occ-om-tape" aria-hidden="true" lang="ja"><b>繁忙</b></div>
+                    <svg class="occ-fan" viewBox="0 0 200 130" aria-hidden="true"><use href="#occFan" /></svg>
+                    <div class="occ-om-body">
+                        <p class="occ-kicker">Busiest hour</p>
+                        @if (r.Busiest != null)
+                        {
+                            <p class="occ-big"><b data-count="@Pct(r.Busiest.Percent)" data-dec="@(r.Busiest.Percent % 1 == 0 ? 0 : 1)">@Pct(r.Busiest.Percent)</b><small>%</small></p>
+                            <p class="occ-om-desc">of tables booked</p>
+                        }
+                        else
+                        {
+                            <p class="occ-big"><b>—</b></p>
+                            <p class="occ-om-desc">Bookings will appear here</p>
+                        }
+                    </div>
+                    <div class="occ-om-belt">
+                        <span>@(r.Busiest != null ? IndexModel.DayLong[r.Busiest.FromDay] + " · " + IndexModel.Hour12(r.Busiest.FromHour) : "Not enough data yet")</span>
+                        <i class="bi bi-fire" aria-hidden="true"></i>
+                    </div>
+                </article>
+            </div>
+            <div class="occ-om-slot is-quiet" style="--i:1">
+                <span class="occ-om-knot" aria-hidden="true"><svg><use href="#occKnot" /></svg></span>
+                <article class="occ-om">
+                    <span class="occ-om-d is-l" aria-hidden="true"></span><span class="occ-om-d is-r" aria-hidden="true"></span>
+                    <div class="occ-om-tape" aria-hidden="true" lang="ja"><b>閑静</b></div>
+                    <svg class="occ-fan" viewBox="0 0 200 130" aria-hidden="true"><use href="#occFan" /></svg>
+                    <div class="occ-om-body">
+                        <p class="occ-kicker">Quieter window</p>
+                        @if (r.Quietest != null)
+                        {
+                            <p class="occ-big"><b data-count="@Pct(r.Quietest.Percent)" data-dec="@(r.Quietest.Percent % 1 == 0 ? 0 : 1)">@Pct(r.Quietest.Percent)</b><small>%</small></p>
+                            <p class="occ-om-desc">of tables booked</p>
+                        }
+                        else
+                        {
+                            <p class="occ-big"><b>—</b></p>
+                            <p class="occ-om-desc">Opening hours are needed</p>
+                        }
+                    </div>
+                    <div class="occ-om-belt">
+                        <span>@(r.Quietest != null ? IndexModel.DayText(r.Quietest.FromDay, r.Quietest.ToDay) + " · " + IndexModel.HourRange(r.Quietest.FromHour, r.Quietest.ToHour) : "Not enough data yet")</span>
+                        <i class="bi bi-moon-stars" aria-hidden="true"></i>
+                    </div>
+                </article>
+            </div>
+            <div class="occ-om-slot is-noshow" style="--i:2">
+                <span class="occ-om-knot" aria-hidden="true"><svg><use href="#occKnot" /></svg></span>
+                <article class="occ-om">
+                    <span class="occ-om-d is-l" aria-hidden="true"></span><span class="occ-om-d is-r" aria-hidden="true"></span>
+                    <div class="occ-om-tape" aria-hidden="true" lang="ja"><b>欠席</b></div>
+                    <svg class="occ-fan" viewBox="0 0 200 130" aria-hidden="true"><use href="#occFan" /></svg>
+                    <div class="occ-om-body">
+                        <p class="occ-kicker">No-show rate</p>
+                        <p class="occ-big"><b data-count="@Pct(t.NoShowRate)" data-dec="1">@t.NoShowRate.ToString("0.0", inv)</b><small>%</small></p>
+                        <p class="occ-om-desc">of due bookings</p>
+                    </div>
+                    <div class="occ-om-belt">
+                        <span>@t.NoShow of @t.Due due bookings</span>
+                        <i class="bi bi-person-x" aria-hidden="true"></i>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- date range, presets, filter, export -->
+        <section class="occ-bar" aria-label="Date range">
+            <div class="occ-range">
+                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                <span>@rangeText</span>
+                @if (r.HasSampleData)
+                {
+                    <span class="occ-chip" title="Reservations starting with DEMO- are sample records">Sample data</span>
+                }
+            </div>
+            <div class="occ-bar-right">
+                <nav class="occ-seg" aria-label="Quick ranges">
+                    <a href="@Model.PageUrl(range: 7)" class="@(Model.ActivePreset == 7 ? "is-on" : "")">7 days</a>
+                    <a href="@Model.PageUrl(range: 30)" class="@(Model.ActivePreset == 30 ? "is-on" : "")">30 days</a>
+                    <a href="@Model.PageUrl(range: 90)" class="@(Model.ActivePreset == 90 ? "is-on" : "")">90 days</a>
+                </nav>
+                <button type="button" class="occ-btn is-primary" id="occFilterBtn" aria-expanded="@(Model.FilterActive ? "true" : "false")" aria-controls="occFilter">
+                    <i class="bi bi-sliders" aria-hidden="true"></i> Filter
+                </button>
+                <a class="occ-btn" href="@Model.PageUrl(from: Model.FromText, to: Model.ToText, handler: "Export")">
+                    <i class="bi bi-download" aria-hidden="true"></i> Export CSV
+                </a>
+            </div>
+        </section>
+
+        <form method="get" class="occ-filter" id="occFilter" hidden="@(!Model.FilterActive)"
+              data-area-types="@JsonSerializer.Serialize(Model.Choices.AreaTypes)">
+            <div class="occ-field"><span class="occ-fl">From</span><input type="date" name="from" value="@Model.FromText" max="@Model.Today.ToString("yyyy-MM-dd")" data-label="From date" /></div>
+            <div class="occ-field"><span class="occ-fl">To</span><input type="date" name="to" value="@Model.ToText" max="@Model.Today.ToString("yyyy-MM-dd")" data-label="To date" /></div>
+            <div class="occ-field"><span class="occ-fl">Dining area</span>
+                <select name="area" data-label="Dining area">
+                    <option value="">All dining areas</option>
+                    @foreach (var a in Model.Choices.Areas)
+                    {
+                        <option value="@a.Id" selected="@(Model.AreaId == a.Id)">@a.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="occ-field"><span class="occ-fl">Table type</span>
+                <select name="type" data-label="Table type">
+                    <option value="">All table types</option>
+                    @foreach (var a in Model.Choices.TableTypes)
+                    {
+                        <option value="@a.Id" selected="@(Model.TableTypeId == a.Id)">@a.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="occ-filter-act">
+                <button type="submit" class="occ-btn is-primary" id="occApply">Apply</button>
+                <a class="occ-btn" href="@Url.Page("/Admin/Occupancy/Index")">Reset</a>
+            </div>
+            <p class="occ-err" id="occDateErr" role="alert" hidden="@(Model.FilterNotice == null)"><i class="bi bi-exclamation-circle" aria-hidden="true"></i> <span>@Model.FilterNotice</span></p>
+            @if (Model.TypeNotice != null)
+            {
+                <p class="occ-err is-note" role="status"><i class="bi bi-info-circle" aria-hidden="true"></i> <span>@Model.TypeNotice</span></p>
+            }
+        </form>
+
+        <p class="occ-scope">
+            @(areaName ?? "All dining areas") · @(typeName ?? "All table types") · @t.TableCount tables &amp; rooms · reservations only
+        </p>
+
+        @if (!Model.HasData)
+        {
+            <section class="occ-card occ-empty">
+                <i class="bi bi-calendar2-x" aria-hidden="true"></i>
+                <div>
+                    <h2>No reservations in this range</h2>
+                    <p>Try a longer range, or clear the filters.@(Model.IsDevelopment ? " For a demo, load the sample data below." : "")</p>
+                </div>
+            </section>
+        }
+
+        <!-- key numbers, with the change since the previous period -->
+        <section class="occ-stats" aria-label="Key numbers">
+            <article class="occ-card occ-stat" style="--i:0">
+                <p class="occ-kicker">Reservations</p>
+                <p class="occ-num"><b data-count="@t.Reservations">@t.Reservations</b> @Html.Raw(ChangePct(t.Reservations, prev?.Reservations))</p>
+                <p class="occ-sub">@t.Completed completed · @t.Cancelled cancelled · @t.NoShow no-show</p>
+            </article>
+            <article class="occ-card occ-stat" style="--i:1">
+                <p class="occ-kicker">Average utilisation</p>
+                <p class="occ-num"><b data-count="@Pct(t.AvgUtilisation)" data-dec="@(t.AvgUtilisation % 1 == 0 ? 0 : 1)">@Pct(t.AvgUtilisation)</b><small>%</small> @Html.Raw(ChangePts(t.AvgUtilisation, prev?.AvgUtilisation))</p>
+                <p class="occ-sub">of @(Pct(t.OpenHours)) open hours per table</p>
+            </article>
+            <article class="occ-card occ-stat" style="--i:2">
+                <p class="occ-kicker">Average party &amp; stay</p>
+                <p class="occ-num"><b data-count="@Pct(t.AvgGuests)" data-dec="1">@t.AvgGuests.ToString("0.0", inv)</b><small>guests</small></p>
+                <p class="occ-sub">@(t.AvgDwellMinutes > 0 ? "Stay about " + t.AvgDwellMinutes.ToString("0", inv) + " min (table held " + BookingRules.DurationMinutes + ")" : "No finished meals yet")</p>
+            </article>
+        </section>
+        @if (!string.IsNullOrEmpty(prevText))
+        {
+            <p class="occ-compare">Arrows compare with the previous period (@prevText).</p>
+        }
+
+        <div class="occ-grid">
+
+            <!-- 1. peak dining hours -->
+            <section class="occ-card occ-panel occ-heatcard" aria-labelledby="occH1">
+                <header class="occ-panel-head">
+                    <span class="occ-badge" aria-hidden="true" lang="ja">壱</span>
+                    <div>
+                        <h2 id="occH1">Peak dining hours</h2>
+                        <p>Average share of tables in use · by weekday and hour</p>
+                    </div>
+                    <span class="occ-jp" aria-hidden="true" lang="ja">繁忙時間</span>
+                </header>
+
+                <div class="occ-heat" style="--cols:@heat.Hours.Count">
+                    <div class="occ-heat-row occ-heat-head">
+                        <span></span>
+                        @foreach (var h in heat.Hours)
+                        {
+                            <span>@IndexModel.HourShort(h)</span>
+                        }
+                    </div>
+                    @for (var d = 0; d < 7; d++)
+                    {
+                        <div class="occ-heat-row">
+                            <span class="occ-day">@IndexModel.DayShort[d]</span>
+                            @for (var i = 0; i < heat.Hours.Count; i++)
+                            {
+                                var c = heat.Rows[d][i];
+                                if (c.Percent.HasValue)
+                                {
+                                    <button type="button" class="occ-cell l@(IndexModel.Level(c.Percent))" style="--i:@(d + i)"
+                                            data-day="@d" data-hour="@heat.Hours[i]" data-tip="@CellTip(d, heat.Hours[i], c)"
+                                            aria-label="@IndexModel.DayLong[d] @IndexModel.Hour12(heat.Hours[i]), @Pct(c.Percent.Value) percent">@Math.Round(c.Percent.Value, 0).ToString("0", inv)</button>
+                                }
+                                else
+                                {
+                                    <span class="occ-cell is-closed" style="--i:@(d + i)" data-tip="@(IndexModel.DayLong[d] + " · " + IndexModel.Hour12(heat.Hours[i]))|Closed" title="Closed"></span>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="occ-legend">
+                    <span>Quiet</span>
+                    <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><i class="l5"></i>
+                    <span>Busy</span>
+                    <span class="occ-legend-note"><i class="occ-hatch"></i> Closed</span>
+                </div>
+
+                <div class="occ-slot" id="occSlot" aria-live="polite">
+                    <p class="occ-slot-empty"><i class="bi bi-hand-index" aria-hidden="true"></i> Select a time slot to explore.</p>
+                </div>
+            </section>
+
+            <!-- 2. booking trends + outcome split -->
+            <section class="occ-card occ-panel occ-trendcard" aria-labelledby="occH2">
+                <header class="occ-panel-head">
+                    <span class="occ-badge" aria-hidden="true" lang="ja">弐</span>
+                    <div>
+                        <h2 id="occH2">Booking trends</h2>
+                        <p>Reservations per 7 days in your date range</p>
+                    </div>
+                </header>
+
+                <p class="occ-trend-total"><b data-count="@t.Reservations">@t.Reservations</b> <span>reservations</span></p>
+
+                <svg class="occ-trend" viewBox="0 0 @cw @ch" role="img" aria-label="Weekly reservations">
+                    <defs>
+                        <linearGradient id="occArea" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0" stop-color="#7a2b3a" stop-opacity=".22" />
+                            <stop offset="1" stop-color="#7a2b3a" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    @for (var k = 0; k <= 4; k++)
+                    {
+                        var gv = step * k;
+                        <line class="occ-grid-line" x1="@pl" x2="@(cw - pr)" y1="@Y(gv).ToString("0.#", inv)" y2="@Y(gv).ToString("0.#", inv)" />
+                        @:<text class="occ-axis" x="@(pl - 8)" y="@((Y(gv) + 4).ToString("0.#", inv))" text-anchor="end">@gv.ToString("0", inv)</text>
+                    }
+                    @if (areaPath != "")
+                    {
+                        <path class="occ-area" d="@areaPath" fill="url(#occArea)" />
+                    }
+                    @if (fullIdx.Count > 1)
+                    {
+                        <path class="occ-line-path" d="@linePath" pathLength="1" />
+                    }
+                    @for (var i = 0; i < weeks.Count; i++)
+                    {
+                        var w = weeks[i];
+                        var tip = Day(w.Start) + (w.Days > 1 ? " – " + Day(w.End) : "") + "|" + w.Reservations + " reservations|" +
+                                  Pct(w.UtilisationPercent) + "% utilised" +
+                                  (w.IsPartial ? "|Only " + w.Days + (w.Days == 1 ? " day" : " days") + " so far" : "");
+                        <g class="occ-pt-g" style="--i:@i">
+                            <circle class="occ-pt @(w.IsPartial ? "is-partial" : "")" cx="@X(i).ToString("0.#", inv)" cy="@Y(w.Reservations).ToString("0.#", inv)" r="@(w.IsPartial ? "5" : "4.5")" />
+                            <circle class="occ-pt-hit" cx="@X(i).ToString("0.#", inv)" cy="@Y(w.Reservations).ToString("0.#", inv)" r="16" data-tip="@tip" tabindex="0" />
+                        </g>
+                        if (i % labelEvery == 0 || i == weeks.Count - 1)
+                        {
+                            @:<text class="occ-axis" x="@(X(i).ToString("0.#", inv))" y="@(ch - 12)" text-anchor="@(weeks.Count == 1 ? "middle" : (i == 0 ? "start" : (i == weeks.Count - 1 ? "end" : "middle")))">@Day(w.Start)@(w.IsPartial ? "*" : "")</text>
+                        }
+                    }
+                </svg>
+                @if (weeks.Any(w => w.IsPartial))
+                {
+                    <p class="occ-foot">* Partial week, shown as an open dot and not joined to the line.</p>
+                }
+
+                <div class="occ-split-wrap">
+                    <h3>How bookings ended</h3>
+                    <div class="occ-split" role="img" aria-label="Booking outcomes">
+                        @foreach (var s in split.Where(x => x.Count > 0))
+                        {
+                            <i class="@s.Css" style="--w:@((s.Count * 100.0 / splitTotal).ToString("0.##", inv))%" title="@s.Label: @s.Count"></i>
+                        }
+                    </div>
+                    <ul class="occ-split-key">
+                        @foreach (var s in split)
+                        {
+                            <li><i class="@s.Css"></i>@s.Label <b>@s.Count</b></li>
+                        }
+                    </ul>
+                </div>
+            </section>
+        </div>
+
+        <!-- 3. every table -->
+        <section class="occ-panel occ-tables" aria-labelledby="occH3">
+            <header class="occ-panel-head">
+                <span class="occ-badge" aria-hidden="true" lang="ja">参</span>
+                <div>
+                    <h2 id="occH3">Tables &amp; private rooms</h2>
+                    <p>Occupied hours ÷ opening hours · bars are scaled to the busiest table</p>
+                </div>
+            </header>
+
+            @if (tbl.Count == 0)
+            {
+                <p class="occ-tables-empty">No active tables match this filter.</p>
+            }
+            else
+            {
+                <div class="occ-tables-cols">
+                    <div>
+                        <h3>Most booked</h3>
+                        @for (var i = 0; i < most.Count; i++)
+                        {
+                            var row = most[i];
+                            <div class="occ-trow" style="--i:@i">
+                                <span class="occ-rank">@(i + 1)</span>
+                                <span class="occ-tname">@row.Name<small>@row.TypeName · @row.Capacity seats</small></span>
+                                @Html.Raw(TableBar(row, i, false))
+                                <b class="occ-tpct">@Pct(row.Percent)%</b>
+                            </div>
+                        }
+                    </div>
+                    @if (least.Count > 0)
+                    {
+                        <div>
+                            <h3>Least booked</h3>
+                            @for (var i = 0; i < least.Count; i++)
+                            {
+                                var row = least[i];
+                                <div class="occ-trow" style="--i:@i">
+                                    <span class="occ-rank">@(i + 1)</span>
+                                    <span class="occ-tname">@row.Name<small>@row.TypeName · @row.Capacity seats</small></span>
+                                    @Html.Raw(TableBar(row, i, true))
+                                    <b class="occ-tpct">@Pct(row.Percent)%</b>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if (tbl.Count > 6)
+                {
+                    <button type="button" class="occ-more" id="occMore" aria-expanded="false" aria-controls="occAll">
+                        <span>View all @tbl.Count tables</span> <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                    </button>
+                    <div class="occ-all" id="occAll">
+                        <div class="occ-all-in">
+                            <table>
+                                <thead><tr><th>Table</th><th>Type</th><th>Area</th><th>Seats</th><th>Bookings</th><th>Hours used</th><th>Used</th></tr></thead>
+                                <tbody>
+                                    @foreach (var row in tbl)
+                                    {
+                                        <tr>
+                                            <td>@row.Name</td><td>@row.TypeName</td><td>@row.AreaName</td><td>@row.Capacity</td>
+                                            <td>@row.Bookings</td><td>@Pct(row.OccupiedHours)</td>
+                                            <td><span class="occ-trow-bar"><i class="@(row.Percent <= maxPct * 0.4 ? "is-low" : "")" style="--w:@((row.Percent / maxPct * 100).ToString("0.#", inv))%"></i></span> <b>@Pct(row.Percent)%</b></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <div class="occ-all-foot">
+                                <div class="occ-pager" id="occPager" hidden>
+                                    <button type="button" class="occ-pg" id="occPrev" aria-label="Previous page"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+                                    <span id="occPageInfo" aria-live="polite"></span>
+                                    <button type="button" class="occ-pg" id="occNext" aria-label="Next page"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+                                </div>
+                                <button type="button" class="occ-more occ-less" id="occLess">
+                                    <span>Show less</span> <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </section>
+
+        @if (Model.IsDevelopment)
+        {
+            <form method="post" class="occ-dev">
+                <span>Development only</span>
+                <button type="submit" asp-page-handler="LoadSample" class="occ-btn">Load sample data</button>
+                <button type="submit" asp-page-handler="ClearSample" class="occ-btn">Remove sample data</button>
+            </form>
+        }
+
+        <footer class="occ-foot-note">
+            <span>Occupancy counts confirmed, seated and finished bookings. Cancellations and no-shows are left out. Today is counted up to the current time; hours still to come are not included.</span>
+            <span lang="ja">夜 · YORU IZAKAYA</span>
+        </footer>
+    </div>
+
+    <div class="occ-tip" id="occTip" role="tooltip" hidden></div>
+</div>
+
+<script src="~/js/admin-occupancy.js" asp-append-version="true"></script>

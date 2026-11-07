@@ -1,0 +1,232 @@
+@model RROMS.Pages.Admin.Menu.IndexModel
+@using System.Globalization
+@using Microsoft.AspNetCore.Routing
+@* Dish cards: live search, category + sort dropdowns, availability chips, 12 per page.
+   Availability is shown with the original badge and changed in Edit ("Available for ordering").
+   Promotion prices are read-only here; they are managed on the Promotions page. *@
+@{
+    var results = Model.ItemResults;
+    var my = CultureInfo.GetCultureInfo("en-MY");
+    string availability = Model.ItemAvailability is "available" or "unavailable" ? Model.ItemAvailability : "all";
+    string sort = string.IsNullOrEmpty(Model.ItemSort) ? "name" : Model.ItemSort;
+    var sorts = new (string Value, string Label, string Icon)[]
+    {
+        ("name", "Name: A to Z", "bi-sort-alpha-down"), ("name-desc", "Name: Z to A", "bi-sort-alpha-up"),
+        ("price", "Price: low to high", "bi-sort-numeric-down"), ("price-desc", "Price: high to low", "bi-sort-numeric-down-alt"),
+        ("newest", "Newest added", "bi-clock-history"), ("oldest", "Oldest added", "bi-hourglass-bottom")
+    };
+    var currentSort = sorts.FirstOrDefault(s => s.Value == sort);
+    if (currentSort.Value is null) currentSort = sorts[0];
+    var currentCategory = Model.ItemCategories.FirstOrDefault(c => c.Id == Model.ItemCategory);
+    bool filtered = !string.IsNullOrWhiteSpace(Model.ItemSearch) || Model.ItemCategory.HasValue || availability != "all" || currentSort.Value != "name";
+    int allCount = results.AvailableCount + results.UnavailableCount;
+
+    // List links keep the current view and drop default values so the address stays short.
+    string Link(params (string Key, object? Value)[] changes)
+    {
+        var values = new RouteValueDictionary
+        {
+            ["MenuView"] = "items",
+            ["ItemSearch"] = string.IsNullOrWhiteSpace(Model.ItemSearch) ? null : Model.ItemSearch,
+            ["ItemCategory"] = Model.ItemCategory,
+            ["ItemAvailability"] = availability == "all" ? null : availability,
+            ["ItemSort"] = currentSort.Value == "name" ? null : currentSort.Value,
+            ["ItemPage"] = Model.ItemPage > 1 ? (object)Model.ItemPage : null,
+            ["ItemShowAll"] = Model.ItemShowAll ? (object)true : null
+        };
+        foreach (var (key, value) in changes) values[key] = value;
+        return Url.Page("./Index", values) ?? string.Empty;
+    }
+}
+<div class="ms-head">
+    <div>
+        <h2>Your dishes</h2>
+        <p>What customers can browse and order.</p>
+    </div>
+</div>
+
+<form class="ms-toolbar" method="get" asp-page="./Index" role="search" aria-label="Find a dish" data-ms-filters>
+    <input type="hidden" name="MenuView" value="items" />
+    <input type="hidden" name="ItemCategory" value="@Model.ItemCategory" />
+    <input type="hidden" name="ItemAvailability" value="@(availability == "all" ? "" : availability)" />
+    <input type="hidden" name="ItemSort" value="@(currentSort.Value == "name" ? "" : currentSort.Value)" />
+    <label class="ms-field ms-field--search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <span class="visually-hidden">Search dishes</span>
+        <input type="search" name="ItemSearch" value="@Model.ItemSearch" maxlength="100" placeholder="Search by dish, code or category" autocomplete="off" data-ms-search />
+        <a class="ms-field__clear" href="@Link(("ItemSearch", null), ("ItemPage", null))" hidden="@string.IsNullOrWhiteSpace(Model.ItemSearch)" aria-label="Clear search" data-ms-nav data-ms-search-clear><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+    </label>
+
+    <details class="ms-pick ms-pick--category" data-ms-pick>
+        <summary aria-label="Filter by category"><i class="bi bi-grid ms-pick__icon" aria-hidden="true"></i><span>@(currentCategory?.Name ?? "All categories")</span><i class="bi bi-chevron-down ms-pick__chev" aria-hidden="true"></i></summary>
+        <div class="ms-pick__menu ms-pick__menu--scroll" role="list">
+            <a role="listitem" class="@(currentCategory is null ? "is-on" : "")" aria-current="@(currentCategory is null ? "true" : null)" href="@Link(("ItemCategory", null), ("ItemPage", null))" data-ms-nav>
+                <span>All categories</span>@if (currentCategory is null) { <i class="bi bi-check-lg" aria-hidden="true"></i> }
+            </a>
+            @foreach (var category in Model.ItemCategories)
+            {
+                bool on = category.Id == Model.ItemCategory;
+                <a role="listitem" class="@(on ? "is-on" : "")" aria-current="@(on ? "true" : null)" href="@Link(("ItemCategory", category.Id), ("ItemPage", null))" data-ms-nav>
+                    <span>@category.Name</span>@if (on) { <i class="bi bi-check-lg" aria-hidden="true"></i> }
+                </a>
+            }
+        </div>
+    </details>
+
+    <details class="ms-pick" data-ms-pick>
+        <summary aria-label="Sort dishes"><i class="bi bi-sort-down ms-pick__icon" aria-hidden="true"></i><span>@currentSort.Label</span><i class="bi bi-chevron-down ms-pick__chev" aria-hidden="true"></i></summary>
+        <div class="ms-pick__menu" role="list">
+            @foreach (var option in sorts)
+            {
+                bool on = option.Value == currentSort.Value;
+                <a role="listitem" class="@(on ? "is-on" : "")" aria-current="@(on ? "true" : null)" href="@Link(("ItemSort", option.Value == "name" ? null : option.Value), ("ItemPage", null))" data-ms-nav>
+                    <span>@option.Label</span>@if (on) { <i class="bi bi-check-lg" aria-hidden="true"></i> }
+                </a>
+            }
+        </div>
+    </details>
+
+    @if (filtered)
+    {
+        <a class="ms-reset" href="@Url.Page("./Index", new { MenuView = "items" })" data-ms-nav><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset</a>
+    }
+    else
+    {
+        <span class="ms-reset is-idle" aria-disabled="true" title="Nothing to reset"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset</span>
+    }
+    <button type="submit" class="visually-hidden" tabindex="-1">Search</button>
+</form>
+
+<nav class="ms-chips" aria-label="Filter by availability">
+    <a class="ms-chip @(availability == "all" ? "is-on" : "")" aria-current="@(availability == "all" ? "true" : null)" href="@Link(("ItemAvailability", null), ("ItemPage", null))" data-ms-nav>All <span>@allCount</span></a>
+    <a class="ms-chip @(availability == "available" ? "is-on" : "")" aria-current="@(availability == "available" ? "true" : null)" href="@Link(("ItemAvailability", "available"), ("ItemPage", null))" data-ms-nav><i class="ms-dot ms-dot--on" aria-hidden="true"></i>Available <span>@results.AvailableCount</span></a>
+    <a class="ms-chip @(availability == "unavailable" ? "is-on" : "")" aria-current="@(availability == "unavailable" ? "true" : null)" href="@Link(("ItemAvailability", "unavailable"), ("ItemPage", null))" data-ms-nav><i class="ms-dot ms-dot--off" aria-hidden="true"></i>Unavailable <span>@results.UnavailableCount</span></a>
+</nav>
+
+@if (results.TotalCount == 0)
+{
+    <div class="ms-empty">
+        <span lang="ja" aria-hidden="true">夜</span>
+        @if (filtered)
+        {
+            <h3>No dishes match this view.</h3>
+            <p>Try another dish name, or reset the filters.</p>
+            <a class="ms-btn ms-btn--line" href="@Url.Page("./Index", new { MenuView = "items" })" data-ms-nav><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset filters</a>
+        }
+        else if (Model.ItemCategories.Count == 0)
+        {
+            <h3>Create a category first.</h3>
+            <p>Every dish belongs to a category on the menu.</p>
+            <a class="ms-btn ms-btn--main" asp-page="./Index" data-ms-nav><i class="bi bi-grid" aria-hidden="true"></i>Go to categories</a>
+        }
+        else
+        {
+            <h3>No dishes yet.</h3>
+            <p>Add the first dish customers can order.</p>
+            <a class="ms-btn ms-btn--main" href="@Url.Page("./Index", new { MenuView = "items", New = true })" data-ms-open data-ms-draft-key="item-new"><i class="bi bi-plus-lg" aria-hidden="true"></i><span data-ms-draft-label>New menu item</span></a>
+        }
+    </div>
+}
+else
+{
+    <div class="ms-dishes">
+        @foreach (var item in results.Items)
+        {
+            bool promo = item.OriginalPrice is decimal normal && normal > item.Price;
+            int percent = promo ? (int)Math.Round((1 - item.Price / item.OriginalPrice!.Value) * 100, MidpointRounding.AwayFromZero) : 0;
+            var categoryShort = item.CategoryName.Split('·', 2, StringSplitOptions.TrimEntries)[0];
+            <article class="ms-dish @(item.IsAvailable ? "" : "is-off")">
+                <div class="ms-dish__photo">
+                    @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                    {
+                        <img src="@Url.Content(item.ImageUrl)" alt="" loading="lazy" decoding="async" />
+                    }
+                    else
+                    {
+                        <span class="ms-dish__nophoto" aria-hidden="true"><span lang="ja">夜</span><small>No photo yet</small></span>
+                    }
+                    @if (promo)
+                    {
+                        <span class="ms-dish__tag" title="@(item.PromoEndsOn is DateTime ends ? $"Promotion until {ends:d MMM yyyy}" : "On promotion")">@percent% OFF</span>
+                    }
+                    @if (!item.IsAvailable)
+                    {
+                        <span class="ms-dish__off"><span>UNAVAILABLE</span><span lang="ja">品切れ</span></span>
+                    }
+                </div>
+                <div class="ms-dish__body">
+                    <div class="ms-dish__meta"><span title="@item.CategoryName">@categoryShort</span><span class="ms-code">@item.Code</span></div>
+                    <h3>@item.Name</h3>
+                    <p class="ms-dish__desc">@(string.IsNullOrWhiteSpace(item.Description) ? "No description yet." : item.Description)</p>
+                    <div class="ms-dish__row">
+                        <span class="ms-price">
+                            @if (promo)
+                            {
+                                <s>RM @item.OriginalPrice!.Value.ToString("N2", my)</s>
+                                <b>RM @item.Price.ToString("N2", my)</b>
+                            }
+                            else
+                            {
+                                <span>RM @item.Price.ToString("N2", my)</span>
+                            }
+                        </span>
+                        <span class="ms-avail @(item.IsAvailable ? "" : "is-off")"><i aria-hidden="true"></i>@(item.IsAvailable ? "Available" : "Unavailable")</span>
+                    </div>
+                    @if (promo)
+                    {
+                        <a class="ms-dish__promo" asp-page="/Admin/Promotions/Index" title="Promotion prices are managed on the Promotions page">
+                            <i class="bi bi-tag" aria-hidden="true"></i><span>Promotion price</span><span>@(item.PromoEndsOn is DateTime until ? $"until {until:d MMM}" : "")</span>
+                        </a>
+                    }
+                    <div class="ms-tile__actions">
+                        <a class="ms-btn ms-btn--edit" href="@Link(("itemEditId", item.Id))" data-ms-open data-ms-draft-key="item-edit-@item.Id" aria-label="Edit @item.Name">
+                            <i class="bi bi-pencil" aria-hidden="true"></i><span data-ms-draft-label>Edit</span>
+                        </a>
+                        @if (!item.HasOrders)
+                        {
+                            <form method="post" asp-page="./Index" asp-page-handler="ItemDelete" class="ms-inline" data-ms-delete="@item.Name">
+                                <partial name="_MenuItemViewState" model="Model" />
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="ms-icon-btn" aria-label="Delete @item.Name" title="Delete"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="ms-lock" title="Ordered before, so it can't be deleted. Mark it unavailable in Edit instead."><i class="bi bi-receipt" aria-hidden="true"></i>In orders</span>
+                        }
+                    </div>
+                </div>
+            </article>
+        }
+    </div>
+
+    <nav class="ms-pager" aria-label="Dish pages">
+        <span>Showing @Model.FirstItemNumber–@Model.LastItemNumber of @results.TotalCount @(results.TotalCount == 1 ? "dish" : "dishes")</span>
+        <div>
+            @if (!Model.ItemShowAll)
+            {
+                if (Model.ItemPage > 1)
+                {
+                    <a class="ms-btn ms-btn--line" href="@Link(("ItemPage", Model.ItemPage - 1 > 1 ? (object)(Model.ItemPage - 1) : null))" data-ms-nav data-ms-top><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</a>
+                }
+                else
+                {
+                    <span class="ms-btn ms-btn--line is-disabled" aria-disabled="true"><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</span>
+                }
+                <span class="ms-pager__label">Page @Model.ItemPage of @results.TotalPages</span>
+                if (Model.ItemPage < results.TotalPages)
+                {
+                    <a class="ms-btn ms-btn--line" href="@Link(("ItemPage", Model.ItemPage + 1))" data-ms-nav data-ms-top>Next<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                }
+                else
+                {
+                    <span class="ms-btn ms-btn--line is-disabled" aria-disabled="true">Next<i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                }
+            }
+            @if (results.TotalPages > 1 || Model.ItemShowAll)
+            {
+                <a class="ms-btn ms-btn--main" href="@Link(("ItemShowAll", Model.ItemShowAll ? null : (object)true), ("ItemPage", null))" data-ms-nav>@(Model.ItemShowAll ? $"Show {RROMS.Pages.Admin.Menu.IndexModel.ItemPageSize} per page" : "Show all")</a>
+            }
+        </div>
+    </nav>
+}

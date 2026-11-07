@@ -1,0 +1,983 @@
+﻿/* =====================================================================
+   US03 / US04 (Member 1): Security pop-ups on My profile
+   (Change password · Change email) + the email-confirmation page.
+   Art: wwwroot/images/profile/security-bg.webp, security-stamp-red.webp, security-stamp-green.webp
+   The kanji on the stamp is real text, so one stamp image serves every pop-up.
+   ===================================================================== */
+
+.sx {
+    position: fixed;
+    inset: 0;
+    z-index: 1085;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(20, 14, 12, .58);
+    backdrop-filter: blur(3px);
+}
+
+    .sx.show {
+        display: flex;
+        animation: sx-fade .2s ease;
+    }
+
+.sx-box {
+    position: relative;
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr);
+    width: min(50rem, 100%);
+    max-height: calc(100vh - 2.5rem);
+    overflow: hidden;
+    border-radius: 22px;
+    background: #120c0a url("../images/profile/security-bg.webp") left center / cover;
+    box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .85), 0 0 0 1px rgba(183, 155, 114, .4);
+    animation: sx-pop .26s cubic-bezier(.2, 1.3, .4, 1);
+}
+
+/* ---------- left: art panel ---------- */
+.sx-art {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.4rem 1.4rem 1.5rem;
+    color: #f4ead8;
+    background: linear-gradient(180deg, rgba(12, 8, 7, .42) 0%, rgba(12, 8, 7, .62) 45%, rgba(12, 8, 7, .88) 100%);
+}
+
+/* gold-framed stamp; the kanji is real text, centred in the frame */
+.sx-stamp {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 6rem;
+    height: 6rem;
+    margin: .3rem 0 1rem;
+    background: url("../images/profile/security-stamp-red.webp") center / contain no-repeat;
+    filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .55));
+}
+
+    .sx-stamp span {
+        font-family: var(--font-display);
+        font-size: 2.9rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #f2cf86;
+        background: linear-gradient(180deg, #fff0c2, #e8b960 60%, #c8913a);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 2px 0 rgba(90, 20, 5, .6)) drop-shadow(0 0 6px rgba(255, 200, 110, .35));
+    }
+
+    /* "done": the green stamp with 済 */
+    .sx-stamp.is-done {
+        background-image: url("../images/profile/security-stamp-green.webp");
+    }
+
+        .sx-stamp.is-done span {
+            filter: drop-shadow(0 2px 0 rgba(5, 40, 15, .65)) drop-shadow(0 0 6px rgba(255, 220, 130, .35));
+        }
+
+.sx-art h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 1.1;
+    color: #fff;
+}
+
+.sx-jp {
+    margin: .45rem 0 .7rem;
+    font-family: var(--font-display);
+    font-size: .82rem;
+    letter-spacing: .32em;
+    color: var(--yoru-gold);
+}
+
+.sx-art p {
+    margin: 0;
+    font-size: .86rem;
+    line-height: 1.55;
+    color: #e6d9c3;
+}
+
+.sx-steps {
+    display: grid;
+    gap: .6rem;
+    margin: auto 0 0;
+    padding: 1.4rem 0 0;
+    list-style: none;
+    font-size: .82rem;
+    counter-reset: sx;
+}
+
+    .sx-steps li {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        color: #bfae92;
+        counter-increment: sx;
+    }
+
+        .sx-steps li::before {
+            content: counter(sx);
+            display: grid;
+            place-items: center;
+            flex: none;
+            width: 1.55rem;
+            height: 1.55rem;
+            border-radius: 50%;
+            border: 1px solid rgba(217, 191, 146, .55);
+            font-size: .72rem;
+            background: rgba(0, 0, 0, .25);
+        }
+
+        .sx-steps li.on {
+            color: #fff;
+        }
+
+            .sx-steps li.on::before {
+                background: var(--yoru-red);
+                border-color: var(--yoru-red);
+            }
+
+        .sx-steps li.done {
+            color: #cfe8d6;
+        }
+
+            .sx-steps li.done::before {
+                content: "✓";
+                background: #2e7d4f;
+                border-color: #2e7d4f;
+            }
+
+/* ---------- right: cream card ---------- */
+.sx-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 1rem 1rem 1rem 0;
+    padding: 1.5rem 1.6rem 1.4rem;
+    overflow-y: auto;
+    border-radius: 16px;
+    background: linear-gradient(rgba(252, 249, 243, .95), rgba(252, 249, 243, .95)), url("../images/settings/washi.webp") center / 420px;
+    box-shadow: inset 0 0 0 1px rgba(183, 155, 114, .35);
+}
+
+    /* a small sakura sprig in the top corner, away from fields and buttons */
+    .sx-card::after {
+        content: "";
+        position: absolute;
+        right: 2.6rem;
+        top: -.2rem;
+        width: 8rem;
+        height: 3rem;
+        background: url("../images/profile/profile-sprig.webp") right top / contain no-repeat;
+        opacity: .55;
+        pointer-events: none;
+    }
+
+.sx-x {
+    position: absolute;
+    z-index: 2;
+    right: .7rem;
+    top: .7rem;
+    display: grid;
+    place-items: center;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #8a8478;
+    font-size: 1.15rem;
+}
+
+    .sx-x:hover,
+    .sx-x:focus-visible {
+        background: rgba(0, 0, 0, .06);
+        color: var(--yoru-ink);
+    }
+
+.sx-head {
+    position: relative;
+    margin: 0 2.4rem 1.1rem 0;
+}
+
+    .sx-head h3 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 1.3rem;
+        color: var(--yoru-ink);
+    }
+
+    .sx-head p {
+        margin: .2rem 0 0;
+        font-size: .84rem;
+        color: var(--yoru-olive-text);
+    }
+
+.sx-field {
+    margin-bottom: .95rem;
+}
+
+    .sx-field > label,
+    .sx-field .sx-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: .35rem;
+        font-size: .8rem;
+        font-weight: 700;
+        color: var(--yoru-ink);
+    }
+
+        .sx-field > label a,
+        .sx-field .sx-label a {
+            font-weight: 500;
+            color: var(--yoru-red-text);
+            text-decoration: none;
+        }
+
+            .sx-field > label a:hover {
+                text-decoration: underline;
+            }
+
+.sx-in {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+    .sx-in > svg {
+        position: absolute;
+        left: .8rem;
+        width: 1.05rem;
+        height: 1.05rem;
+        color: #9a9180;
+        pointer-events: none;
+    }
+
+    .sx-in input {
+        width: 100%;
+        padding: .72rem 2.7rem .72rem 2.45rem;
+        border: 1px solid var(--yoru-line);
+        border-radius: 12px;
+        background: #fff;
+        font: inherit;
+        font-size: .95rem;
+        color: var(--yoru-ink);
+    }
+
+        .sx-in input:focus {
+            outline: none;
+            border-color: var(--yoru-gold);
+            box-shadow: 0 0 0 3px rgba(183, 155, 114, .25);
+        }
+
+.sx-eye {
+    position: absolute;
+    right: .45rem;
+    display: grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #9a9180;
+}
+
+    .sx-eye svg {
+        width: 1.15rem;
+        height: 1.15rem;
+    }
+
+    .sx-eye:hover {
+        color: var(--yoru-red);
+        background: rgba(183, 155, 114, .12);
+    }
+
+    /* same as Login / Register: slashed eye while hidden, open eye while shown */
+    .sx-eye .eye-open,
+    .sx-eye.on .eye-shut {
+        display: none;
+    }
+
+    .sx-eye.on .eye-open {
+        display: block;
+    }
+
+.sx-field.bad .sx-in input {
+    border-color: #d9877b;
+    background: #fff6f4;
+}
+
+.sx-field.good .sx-in input {
+    border-color: #9cc9ad;
+}
+
+.sx-err,
+.sx-ok {
+    display: block;
+    margin-top: .35rem;
+    font-size: .8rem;
+}
+
+.sx-err {
+    color: var(--yoru-red-text);
+}
+
+    .sx-err:empty {
+        display: none;
+    }
+
+.sx-ok {
+    color: #2e7d4f;
+}
+
+/* strength meter + rules */
+.sx-meter {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .3rem;
+    margin: .5rem 0 .35rem;
+}
+
+    .sx-meter b {
+        height: .32rem;
+        border-radius: 9px;
+        background: #e9e1d3;
+        transition: background .2s;
+    }
+
+        .sx-meter b.on {
+            background: linear-gradient(90deg, #e8a04a, #d9772f);
+        }
+
+    .sx-meter.strong b.on {
+        background: #2e7d4f;
+    }
+
+.sx-mlabel {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .55rem;
+    font-size: .75rem;
+    color: var(--yoru-olive-text);
+}
+
+    .sx-mlabel b {
+        color: #2e7d4f;
+    }
+
+.sx-rules {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+    .sx-rules li {
+        padding: .22rem .6rem;
+        border-radius: 99px;
+        background: #efe8db;
+        font-size: .72rem;
+        color: #8a8478;
+    }
+
+        .sx-rules li.ok {
+            background: #e3f1e7;
+            color: #2e7d4f;
+        }
+
+            .sx-rules li.ok::before {
+                content: "✓ ";
+            }
+
+/* notes and alerts */
+.sx-note {
+    display: flex;
+    gap: .6rem;
+    margin-bottom: 1.15rem;
+    padding: .7rem .85rem;
+    border: 1px dashed #dcc9a6;
+    border-radius: 12px;
+    background: #f6eedf;
+    font-size: .8rem;
+    line-height: 1.45;
+    color: #6b5634;
+}
+
+    .sx-note svg {
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+        margin-top: .1rem;
+    }
+
+    .sx-note svg.sx-caution {
+        width: 1.15rem;
+        height: 1.05rem;
+    }
+
+    .sx-note.warn {
+        border: 1px solid #f0c3b9;
+        background: #fff1ee;
+        color: #8f2a1d;
+    }
+
+.sx-tries {
+    display: flex;
+    gap: .25rem;
+    margin-top: .35rem;
+}
+
+    .sx-tries b {
+        width: 1.1rem;
+        height: .3rem;
+        border-radius: 9px;
+        background: #f0c3b9;
+    }
+
+        .sx-tries b.used {
+            background: var(--yoru-red);
+        }
+
+/* now -> new email */
+.sx-journey {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: .6rem;
+    align-items: center;
+    margin-bottom: 1.1rem;
+}
+
+.sx-jcard {
+    min-width: 0;
+    padding: .6rem .75rem;
+    border: 1px solid var(--yoru-line);
+    border-radius: 12px;
+    background: #fff;
+    font-size: .82rem;
+}
+
+    .sx-jcard small {
+        display: block;
+        margin-bottom: .15rem;
+        font-size: .66rem;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--yoru-olive-text);
+    }
+
+    .sx-jcard b {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sx-jcard.new {
+        border-color: var(--yoru-gold);
+        background: #fffaf0;
+    }
+
+        .sx-jcard.new b:empty::before {
+            content: "—";
+            color: #b8ae9c;
+            font-weight: 400;
+        }
+
+.sx-arrow {
+    color: var(--yoru-red);
+    font-size: 1.3rem;
+}
+
+/* buttons */
+.sx-btns {
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+}
+
+.sx-btn {
+    border: 0;
+    border-radius: 12px;
+    padding: .75rem 1.2rem;
+    font: inherit;
+    font-size: .92rem;
+    font-weight: 700;
+    transition: filter .15s, transform .15s;
+}
+
+    .sx-btn:active {
+        transform: translateY(1px);
+    }
+
+    .sx-btn.main {
+        flex: 1;
+        background: linear-gradient(180deg, #d24a37, var(--yoru-red-dark));
+        color: #fff;
+        box-shadow: 0 10px 20px -10px rgba(200, 62, 45, .8);
+    }
+
+        .sx-btn.main:hover {
+            filter: brightness(1.06);
+        }
+
+        .sx-btn.main:disabled {
+            opacity: .55;
+            filter: grayscale(.3);
+            cursor: not-allowed;
+        }
+
+        .sx-btn.main .sx-spin {
+            display: none;
+            width: 1rem;
+            height: 1rem;
+            margin-right: .4rem;
+            vertical-align: -.15rem;
+            border: 2px solid rgba(255, 255, 255, .45);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: sx-spin .7s linear infinite;
+        }
+
+        .sx-btn.main.busy .sx-spin {
+            display: inline-block;
+        }
+
+    .sx-btn.ghost {
+        border: 1px solid var(--yoru-line);
+        background: #fff;
+        color: var(--yoru-ink);
+    }
+
+    .sx-btn.link {
+        background: none;
+        color: var(--yoru-olive-text);
+        font-weight: 500;
+        text-decoration: underline;
+    }
+
+.sx-general {
+    margin: -.4rem 0 .9rem;
+}
+
+/* ---------- done pane ---------- */
+.sx-done {
+    margin: auto 0;             /* centred up and down in the card */
+    padding: 1rem .4rem;
+    text-align: center;
+}
+
+.sx-tick {
+    display: grid;
+    place-items: center;
+    width: 4.4rem;
+    height: 4.4rem;
+    margin: 0 auto .9rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #3c9a63, #256b42);
+    color: #fff;
+    box-shadow: 0 0 0 8px rgba(46, 125, 79, .12);
+}
+
+    .sx-tick svg {
+        width: 1.9rem;
+        height: 1.9rem;
+    }
+
+.sx-done h3 {
+    margin: 0 0 .5rem;
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--yoru-ink);
+}
+
+.sx-done p {
+    margin: 0 0 1rem;
+    font-size: .92rem;
+    line-height: 1.6;
+    color: var(--yoru-olive-text);
+}
+
+.sx-chip {
+    display: inline-flex;
+    max-width: 100%;
+    gap: .5rem;
+    align-items: center;
+    margin: 0 0 1rem;
+    padding: .5rem 1rem;
+    border: 1px solid var(--yoru-line);
+    border-radius: 99px;
+    background: #fff;
+    font-weight: 700;
+    color: var(--yoru-ink);
+    overflow-wrap: anywhere;
+}
+
+.sx-done .sx-btns {
+    justify-content: center;
+}
+
+.sx-done .sx-btn.main {
+    flex: 0 0 12rem;
+}
+
+.sx-resent {
+    display: block;
+    margin-top: .6rem;
+    font-size: .8rem;
+    color: #2e7d4f;
+}
+
+    .sx-resent:empty {
+        display: none;
+    }
+
+/* ---------- the email-confirmation page (same look, not a pop-up) ---------- */
+.sx-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 14rem);
+    padding: 3rem 1rem;
+}
+
+    .sx-page .sx-box {
+        animation: none;
+    }
+
+/* ---------- phones: the art panel becomes a strip on top ---------- */
+@media (max-width: 760px) {
+    .sx {
+        padding: .6rem;
+    }
+
+    .sx-box {
+        grid-template-columns: 1fr;
+        max-height: calc(100vh - 1.2rem);
+        overflow-y: auto;
+    }
+
+    .sx-art {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.2rem 1.2rem .4rem;
+    }
+
+    .sx-stamp {
+        flex: none;
+        width: 3.8rem;
+        height: 3.8rem;
+        margin: 0;
+    }
+
+        .sx-stamp span {
+            font-size: 1.8rem;
+        }
+
+    .sx-art h2 {
+        font-size: 1.35rem;
+    }
+
+    .sx-art p,
+    .sx-steps,
+    .sx-jp {
+        display: none;
+    }
+
+    .sx-card {
+        margin: .6rem;
+        padding: 1.2rem 1.1rem 1.1rem;
+        overflow: visible;
+    }
+
+    .sx-journey {
+        grid-template-columns: 1fr;
+    }
+
+    .sx-arrow {
+        justify-self: center;
+        transform: rotate(90deg);
+    }
+
+    .sx-btns {
+        flex-wrap: wrap;
+    }
+}
+
+@keyframes sx-fade {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes sx-pop {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(.97);
+    }
+}
+
+@keyframes sx-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sx.show,
+    .sx-box {
+        animation: none;
+    }
+}
+
+/* The two Security links on My profile are now buttons that open the pop-ups. */
+button.pf-link {
+    width: 100%;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+a.sx-btn {
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+}
+
+    a.sx-btn.main:hover {
+        color: #fff;
+    }
+
+.sx-chip svg {
+    flex: none;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--yoru-red);
+}
+
+
+/* Account status on the member card (US04): Active = green, Inactive = grey */
+.pf-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-left: auto;
+    padding: .2rem .65rem .2rem .55rem;
+    border-radius: 99px;
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+    .pf-status::before {
+        content: "";
+        width: .5rem;
+        height: .5rem;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .pf-status.is-on {
+        color: #7fd69f;
+        background: rgba(46, 125, 79, .22);
+        box-shadow: inset 0 0 0 1px rgba(127, 214, 159, .35);
+    }
+
+        .pf-status.is-on::before {
+            box-shadow: 0 0 0 3px rgba(127, 214, 159, .2), 0 0 8px rgba(127, 214, 159, .8);
+        }
+
+    .pf-status.is-off {
+        color: #b9b1a4;
+        background: rgba(255, 255, 255, .06);
+        box-shadow: inset 0 0 0 1px rgba(185, 177, 164, .3);
+    }
+
+
+/* ---------- US52 Forgot / Reset password pages (same look as the pop-ups) ---------- */
+.sx-page .sx-box {
+    min-height: 34rem;
+}
+
+.sx-page .sx-card > form {
+    margin: auto 0;             /* form sits in the middle of the card, like the "done" panes */
+}
+
+.sx-in > svg,
+.sx-note > svg,
+.sx-chip > svg {
+    fill: none;
+}
+
+.sx-tick > svg {
+    width: 1.9rem;
+    height: 1.9rem;
+}
+
+/* expired / used link */
+.sx-tick.is-bad {
+    background: #fff1ee;
+    box-shadow: 0 0 0 8px rgba(200, 62, 45, .1);
+}
+
+    .sx-tick.is-bad svg {
+        width: 2.2rem;
+        height: 2rem;
+    }
+
+.sx-arrow-ic {
+    width: 1rem;
+    height: 1rem;
+    margin-left: .35rem;
+    vertical-align: -.15rem;
+}
+
+.sx-btns form {
+    display: contents;          /* "Send again" button sits in the row like the others */
+}
+
+
+/* ---------- US52: full-page scene (Forgot / Reset password) ---------- */
+.sx-scene {
+    position: relative;
+    min-height: calc(100vh - 5rem);
+    padding: 4rem 1rem 5rem;
+    background:
+        radial-gradient(ellipse at center, rgba(20, 12, 8, .35) 0%, rgba(20, 12, 8, 0) 60%),
+        #2a1d16 url("../images/auth/reset-scene.webp") center / cover no-repeat;
+}
+
+    .sx-scene .sx-box {
+        grid-template-columns: 20rem minmax(0, 1fr);
+        width: min(58rem, 100%);
+        min-height: 36rem;
+        box-shadow: 0 50px 90px -30px rgba(0, 0, 0, .85), 0 0 0 1px rgba(214, 178, 110, .6);
+    }
+
+    /* left panel: gold bar under the title, steps joined by a thin line (Japanese line hidden here) */
+    .sx-scene .sx-jp {
+        display: none;
+    }
+
+    .sx-scene .sx-art h2::after {
+        content: "";
+        display: block;
+        width: 100%;
+        max-width: 16rem;
+        height: 2px;
+        margin: 1rem 0 1.1rem;
+        background: linear-gradient(90deg, #d9b56e, rgba(217, 181, 110, 0));
+    }
+
+    .sx-scene .sx-steps {
+        gap: 1.1rem;
+    }
+
+        .sx-scene .sx-steps li {
+            position: relative;
+        }
+
+            .sx-scene .sx-steps li:not(:last-child)::after {
+                content: "";
+                position: absolute;
+                left: .76rem;
+                top: 1.6rem;
+                width: 1px;
+                height: 1.05rem;
+                background: rgba(217, 191, 146, .45);
+            }
+
+    /* right panel: warm parchment, a stronger sakura corner */
+    .sx-scene .sx-card {
+        margin: 0;
+        border-radius: 0 22px 22px 0;
+        padding: 2.2rem 2.4rem 2rem;
+        background: linear-gradient(rgba(250, 242, 228, .94), rgba(246, 236, 218, .96)), url("../images/settings/washi.webp") center / 420px;
+        box-shadow: inset 1px 0 0 rgba(214, 178, 110, .5);
+        overflow: hidden;           /* no scroll bar: the card grows with its content */
+    }
+
+        .sx-scene .sx-card::after {
+            right: 0;
+            top: 0;
+            width: 11rem;
+            height: 5rem;
+            opacity: .9;
+        }
+
+    .sx-scene .sx-head h3 {
+        font-size: 1.65rem;
+    }
+
+    .sx-scene .sx-head p {
+        font-size: .95rem;
+        color: #3b3530;
+    }
+
+    .sx-scene .sx-btn.main {
+        background: linear-gradient(180deg, #b8321f, #8e1c12);
+        box-shadow: 0 12px 22px -12px rgba(142, 28, 18, .9);
+    }
+
+    .sx-scene .sx-btn.ghost {
+        background: #fffaf0;
+        border-color: #d8c49d;
+        font-family: var(--font-display);
+    }
+
+/* small ornament above the heading:  ——— ✿ ——— */
+.sx-orn {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    margin: 0 0 1.1rem;
+    color: #a8241a;
+}
+
+    .sx-orn i {
+        width: 5.5rem;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(168, 36, 26, 0), #a8241a);
+    }
+
+        .sx-orn i:last-child {
+            background: linear-gradient(90deg, #a8241a, rgba(168, 36, 26, 0));
+        }
+
+    .sx-orn span {
+        font-size: 1.05rem;
+        line-height: 1;
+    }
+
+.sx-done .sx-orn {
+    justify-content: center;
+}
+
+@media (max-width: 760px) {
+    .sx-scene {
+        padding: 1.5rem .6rem 3rem;
+    }
+
+        .sx-scene .sx-box {
+            grid-template-columns: 1fr;
+        }
+
+        .sx-scene .sx-card {
+            margin: .6rem;
+            border-radius: 16px;
+            padding: 1.4rem 1.2rem;
+        }
+
+        .sx-scene .sx-art h2::after {
+            display: none;
+        }
+}

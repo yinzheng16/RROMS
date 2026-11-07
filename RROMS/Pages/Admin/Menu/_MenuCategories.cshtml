@@ -1,0 +1,149 @@
+@model RROMS.Pages.Admin.Menu.IndexModel
+@{
+    var sorts = new (string Value, string Label, string Icon)[]
+    {
+        ("display", "Menu order", "bi-list-ol"), ("display-desc", "Menu order: reversed", "bi-sort-numeric-up"),
+        ("name", "Name: A to Z", "bi-sort-alpha-down"), ("name-desc", "Name: Z to A", "bi-sort-alpha-up"),
+        ("items-desc", "Most dishes", "bi-sort-numeric-down-alt"), ("items", "Fewest dishes", "bi-sort-numeric-down")
+    };
+    var current = sorts.FirstOrDefault(s => s.Value == Model.SortOrder);
+    if (current.Value is null) current = sorts[0];
+    // Set after "Create category" so the new card can be highlighted.
+    string? justCreated = TempData["NewCategoryName"] as string;
+    bool filtered = Model.IsSearching || (!string.IsNullOrEmpty(Model.SortOrder) && Model.SortOrder != "display");
+}
+<div class="ms-head">
+    <div>
+        <h2>Your categories</h2>
+        <p>Customers see them in this order on the menu.
+        @if (Model.EmptyCategoryCount > 0)
+        {
+            <span class="ms-head__warn"><i class="bi bi-inbox" aria-hidden="true"></i>@Model.EmptyCategoryCount @(Model.EmptyCategoryCount == 1 ? "category has" : "categories have") no dishes yet</span>
+        }</p>
+    </div>
+    <a class="ms-btn ms-btn--line" asp-page="./Index" asp-route-Reorder="true" data-ms-nav><i class="bi bi-arrow-down-up" aria-hidden="true"></i>Reorder</a>
+</div>
+
+<form class="ms-toolbar" method="get" asp-page="./Index" role="search" aria-label="Find a category" data-ms-filters>
+    <label class="ms-field ms-field--search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <span class="visually-hidden">Search categories</span>
+        <input type="search" name="SearchTerm" value="@Model.SearchTerm" maxlength="50" placeholder="Search by name or code" autocomplete="off" data-ms-search />
+        <a class="ms-field__clear" asp-page="./Index" asp-route-SortOrder="@Model.SortOrder" hidden="@(!Model.IsSearching)" aria-label="Clear search" data-ms-nav data-ms-search-clear><i class="bi bi-x-lg" aria-hidden="true"></i></a>
+    </label>
+    <input type="hidden" name="SortOrder" value="@Model.SortOrder" />
+    <details class="ms-pick" data-ms-pick>
+        <summary aria-label="Sort categories"><i class="bi bi-sort-down ms-pick__icon" aria-hidden="true"></i><span>@current.Label</span><i class="bi bi-chevron-down ms-pick__chev" aria-hidden="true"></i></summary>
+        <div class="ms-pick__menu" role="list">
+            @foreach (var sort in sorts)
+            {
+                <a role="listitem" class="@(sort.Value == current.Value ? "is-on" : "")" aria-current="@(sort.Value == current.Value ? "true" : null)"
+                   href="@this.Url.Page("./Index", new { Model.SearchTerm, SortOrder = sort.Value == "display" ? null : sort.Value })" data-ms-nav>
+                    <span>@sort.Label</span>@if (sort.Value == current.Value) { <i class="bi bi-check-lg" aria-hidden="true"></i> }
+                </a>
+            }
+        </div>
+    </details>
+    @if (filtered)
+    {
+        <a class="ms-reset" asp-page="./Index" data-ms-nav><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset</a>
+    }
+    else
+    {
+        <span class="ms-reset is-idle" aria-disabled="true" title="Nothing to reset"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>Reset</span>
+    }
+    <button type="submit" class="visually-hidden" tabindex="-1">Search</button>
+</form>
+
+@if (Model.Categories.Count == 0)
+{
+    <div class="ms-empty">
+        <span lang="ja" aria-hidden="true">夜</span>
+        <h3>@(Model.IsSearching ? "No categories match your search." : "No categories yet.")</h3>
+        <p>@(Model.IsSearching ? "Try another name or code, or reset the search." : "Create the first section of your menu.")</p>
+        <a class="ms-btn ms-btn--main" href="@this.Url.Page("./Index", new { New = true })" data-ms-open data-ms-draft-key="cat-new"><i class="bi bi-plus-lg" aria-hidden="true"></i><span data-ms-draft-label>New category</span></a>
+    </div>
+}
+else
+{
+    <div class="ms-tiles ms-tiles--strips">
+        @foreach (var category in Model.Categories)
+        {
+            var parts = category.Name.Split('·', 2, StringSplitOptions.TrimEntries);
+            bool empty = category.ItemCount == 0;
+            <article class="ms-tile ms-strip @(empty ? "is-empty" : "") @(justCreated is not null && string.Equals(category.Name.Trim(), justCreated, StringComparison.OrdinalIgnoreCase) ? "is-new" : "")">
+                <div class="ms-strip__num">
+                    <span class="ms-tile__num">@category.DisplayOrder.ToString("D2")</span>
+                    <span class="ms-code">@category.Code</span>
+                </div>
+                <div class="ms-strip__main">
+                    <h3 title="@category.Name">@parts[0]</h3>
+                    <p class="ms-tile__sub">@(parts.Length > 1 ? parts[1] : "\u00a0")</p>
+                    @if (empty)
+                    {
+                        <span class="ms-count is-empty"><i class="bi bi-inbox" aria-hidden="true"></i>No dishes yet</span>
+                    }
+                    else
+                    {
+                        <a class="ms-count" asp-page="./Index" asp-route-MenuView="items" asp-route-ItemCategory="@category.Id" title="Show these dishes"><i class="bi bi-cup-hot" aria-hidden="true"></i>@category.ItemCount @(category.ItemCount == 1 ? "dish" : "dishes")</a>
+                    }
+                </div>
+                <div class="ms-strip__acts">
+                    <a class="ms-btn ms-btn--edit ms-strip__edit" href="@this.Url.Page("./Index", new { editId = category.Id, Model.SearchTerm, Model.SortOrder, Model.PageNumber, Model.ShowAll })"
+                       title="Edit" data-ms-open data-ms-draft-key="cat-edit-@category.Id">
+                        <i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden" data-ms-draft-label>Edit @category.Name</span>
+                    </a>
+                    @if (empty)
+                    {
+                        <form method="post" asp-page="./Index" asp-page-handler="Delete" class="ms-inline" data-ms-delete="@category.Name">
+                            <input type="hidden" name="id" value="@category.Id" />
+                            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" /><input type="hidden" name="SortOrder" value="@Model.SortOrder" />
+                            <input type="hidden" name="PageNumber" value="@Model.PageNumber" /><input type="hidden" name="ShowAll" value="@Model.ShowAll.ToString().ToLowerInvariant()" />
+                            <button type="submit" class="ms-icon-btn" aria-label="Delete @category.Name" title="Delete"><i class="bi bi-trash3" aria-hidden="true"></i></button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="ms-lock ms-lock--icon" title="In use: categories with dishes cannot be deleted"><i class="bi bi-lock" aria-hidden="true"></i><span class="visually-hidden">In use</span></span>
+                    }
+                </div>
+            </article>
+        }
+        @if (!Model.IsSearching)
+        {
+            <a class="ms-tile ms-tile--add" href="@this.Url.Page("./Index", new { New = true })" data-ms-open data-ms-draft-key="cat-new">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i><span data-ms-draft-label>Add a category</span>
+            </a>
+        }
+    </div>
+
+    <nav class="ms-pager" aria-label="Category pages">
+        <span>Showing @Model.FirstCategoryNumber–@Model.LastCategoryNumber of @Model.TotalCategories @(Model.TotalCategories == 1 ? "category" : "categories")</span>
+        <div>
+            @if (!Model.ShowAll)
+            {
+                if (Model.PageNumber > 1)
+                {
+                    <a class="ms-btn ms-btn--line" href="@this.Url.Page("./Index", new { Model.SearchTerm, Model.SortOrder, PageNumber = Model.PageNumber - 1 })" data-ms-nav><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</a>
+                }
+                else
+                {
+                    <span class="ms-btn ms-btn--line is-disabled" aria-disabled="true"><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</span>
+                }
+                <span class="ms-pager__label">Page @Model.PageNumber of @Model.TotalPages</span>
+                if (Model.PageNumber < Model.TotalPages)
+                {
+                    <a class="ms-btn ms-btn--line" href="@this.Url.Page("./Index", new { Model.SearchTerm, Model.SortOrder, PageNumber = Model.PageNumber + 1 })" data-ms-nav>Next<i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                }
+                else
+                {
+                    <span class="ms-btn ms-btn--line is-disabled" aria-disabled="true">Next<i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                }
+            }
+            @if (Model.TotalPages > 1 || Model.ShowAll)
+            {
+                <a class="ms-btn ms-btn--main" href="@this.Url.Page("./Index", new { Model.SearchTerm, Model.SortOrder, ShowAll = !Model.ShowAll })" data-ms-nav>@(Model.ShowAll ? $"Show {RROMS.Pages.Admin.Menu.IndexModel.CategoryPageSize} per page" : "Show all")</a>
+            }
+        </div>
+    </nav>
+}

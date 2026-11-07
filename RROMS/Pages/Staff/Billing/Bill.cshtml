@@ -1,0 +1,839 @@
+﻿@page
+@model RROMS.Pages.Staff.Billing.BillModel
+@using RROMS.Models
+@using RROMS.Pages.Staff.Billing
+
+@{
+    ViewData["Title"] = "Bill";
+    ViewData["FullWidth"] = true;   // banner goes edge to edge, like the billing list
+    var ordersInKitchen = Model.OrdersInKitchen;
+}
+
+<link rel="stylesheet" href="~/css/staff-billing.css" asp-append-version="true" />
+
+<div class="us32-billing">
+
+    <!-- Header banner (slim version of the billing list banner) -->
+    <section class="billing-hero billing-hero-slim">
+        <div class="billing-hero-inner container-xl container-wide">
+            <div class="billing-hero-copy">
+                <a class="billing-back" asp-page="./Index">
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> All bills
+                </a>
+                <h1 class="billing-hero-title">
+                    @if (Model.IsDineIn)
+                    {
+                        <span>Table @(Model.SessionBill!.TableNumber)</span>
+                        <span class="billing-hero-side">
+                            <span class="billing-hero-jp" lang="ja">店内</span>
+                            <span class="billing-hero-type">Dine-in</span>
+                        </span>
+                    }
+                    else if (Model.TakeawayOrder != null)
+                    {
+                        <span>Takeaway</span>
+                        <span class="billing-hero-side">
+                            <span class="billing-hero-jp" lang="ja">持ち帰り</span>
+                            <span class="billing-hero-type">@Model.TakeawayOrder.OrderNo</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span>Bill</span>
+                    }
+                </h1>
+            </div>
+        </div>
+    </section>
+
+    <div class="container-xl container-wide py-4">
+
+    @if (!Model.HasBill)
+    {
+        <!-- Nothing to show: wrong link, order not found, or not seated yet -->
+        <div class="card billing-card">
+            <div class="card-body text-center py-5">
+                <h5 class="mb-2">This bill cannot be opened</h5>
+                <p class="text-muted mb-3">
+                    @(Model.ErrorMessage ?? "The table or order could not be found.")
+                </p>
+                <a class="btn btn-dark" asp-page="./Index">
+                    Back to the billing list
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        decimal subtotal, taxAmount, serviceCharge, totalAmount, taxRate, serviceRate;
+        // No % on the charge labels for now: orders do not save their rates yet,
+        // and % worked back from rounded amounts is misleading (e.g. 5.92%).
+        // Use the saved rates once Member 3's rate fields are in develop.
+
+        if (Model.IsDineIn)
+        {
+            var preview = Model.SessionBill!;
+            subtotal = preview.Subtotal;
+            taxAmount = preview.TaxAmount;
+            serviceCharge = preview.ServiceCharge;
+            totalAmount = preview.TotalAmount;
+            taxRate = preview.TaxRatePercent;
+            serviceRate = preview.ServiceChargePercent;
+        }
+        else
+        {
+            var summary = Model.TakeawaySummary!;
+            subtotal = summary.Subtotal;
+            taxAmount = summary.TaxAmount;
+            serviceCharge = summary.ServiceCharge;
+            totalAmount = summary.TotalAmount;
+            taxRate = summary.TaxRatePercent;
+            serviceRate = summary.ServiceChargePercent;
+        }
+
+        // A confirmed bill always shows its own saved totals.
+        if (!Model.IsPreview && Model.CurrentBill != null)
+        {
+            subtotal = Model.CurrentBill.Subtotal;
+            taxAmount = Model.CurrentBill.TaxAmount;
+            serviceCharge = Model.CurrentBill.ServiceCharge;
+            totalAmount = Model.CurrentBill.TotalAmount;
+        }
+
+        var billTitle = Model.IsPreview || Model.CurrentBill == null
+            ? "Bill Preview"
+            : $"Bill {Model.BillNo(Model.CurrentBill.Id)}";
+
+        <div class="row g-4 align-items-start">
+
+            <!-- ================= LEFT: printable bill ================= -->
+            <div class="col-lg-7">
+                <div class="card billing-card" id="printableBill">
+                    <div class="card-body">
+
+                        <!-- Print-only restaurant header -->
+                        <div class="yoru-print-header">
+                            <div class="yoru-print-brand">
+                                <img src="~/images/yoru-icon.png"
+                                     asp-append-version="true"
+                                     alt="@Brand.FullName Logo"
+                                     class="yoru-print-logo" />
+
+                                <h1>@Brand.Name</h1>
+                                <div class="yoru-print-subtitle">
+                                    @(string.Join(" ", Brand.Sub.ToCharArray()))
+                                </div>
+
+                                @* US49: SST registration no. under the restaurant name *@
+                                @if (!string.IsNullOrWhiteSpace(Model.SstRegistrationNo))
+                                {
+                                    <p class="yoru-print-sst">
+                                        SST No. @Model.SstRegistrationNo
+                                    </p>
+                                }
+                            </div>
+
+                            <div class="yoru-print-divider"></div>
+
+                            <h2>
+                                @* Before payment: BILL. After payment: RECEIPT (payment details on the receipt = US35). *@
+                                @(Model.IsPreview ? "BILL PREVIEW" : Model.IsPaid ? "RECEIPT" : "BILL")
+                            </h2>
+
+                            <p>Japanese Dining</p>
+                        </div>
+
+                        <!-- Bill heading -->
+                        <div class="d-flex flex-wrap justify-content-between
+                            align-items-center gap-2 bill-preview-heading">
+
+                            <h5 class="card-title billing-card-title mb-0">
+                                @billTitle
+                            </h5>
+
+                            @if (Model.CurrentBill != null && !Model.IsPreview)
+                            {
+                                <span class="status-badge status-@Model.CurrentBill.Status">
+                                    @Model.CurrentBill.Status
+                                </span>
+                            }
+                        </div>
+
+                        <p class="bill-order-number">
+                            @if (Model.IsDineIn)
+                            {
+                                <span>Table @(Model.SessionBill!.TableNumber)<span class="bill-sep" aria-hidden="true"></span>Dine-in</span>
+                            }
+                            else
+                            {
+                                <span>Takeaway<span class="bill-sep" aria-hidden="true"></span>Order Number: @(Model.TakeawayOrder!.OrderNo)</span>
+                            }
+
+                            @if (Model.CurrentBill?.ConfirmedAt is DateTime confirmedAt && !Model.IsPreview)
+                            {
+                                <br />
+                                <small class="text-muted">
+                                    Confirmed @confirmedAt.ToString("d MMM yyyy, h:mm tt")
+                                    @if (Model.ConfirmedForOnlinePayment)
+                                    {
+                                        <span class="bill-sep" aria-hidden="true"></span><text>for online payment by the customer</text>
+                                    }
+                                    else
+                                    {
+                                        <text>@(Model.ConfirmedByName is null ? "" : $"by {Model.ConfirmedByName}")</text>
+                                    }
+                                </small>
+                            }
+                        </p>
+
+                        <!-- Ordered items: all ordering rounds combined into one list.
+                             The same dish at the same price is added up into one line.
+                             The rounds themselves are listed for staff on the right. -->
+                        <h6>Ordered Items</h6>
+
+                        @if (!Model.ReceiptLines.Any())
+                        {
+                            <p class="text-muted">No orders for this table yet.</p>
+                        }
+                        else
+                        {
+                            @* One dish per row: name + line total, then "qty × unit price" (screen and print) *@
+                            <ul class="bill-items">
+                                @foreach (var line in Model.ReceiptLines)
+                                {
+                                    <li>
+                                        <div class="bill-item-text">
+                                            <div class="bill-item-main">@line.Name</div>
+                                            <div class="bill-item-sub">@line.Quantity × RM @line.UnitPrice.ToString("F2")</div>
+                                        </div>
+                                        @* amount sits in the middle of the two lines *@
+                                        <span class="bill-item-amount">RM @line.LineTotal.ToString("F2")</span>
+                                    </li>
+                                }
+                            </ul>
+                        }
+
+                        <!-- Bill totals (saved order amounts; tax is charged on subtotal + service) -->
+                        <div class="row justify-content-end mt-4">
+                            <div class="col-md-8">
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Subtotal</span>
+                                    <span>RM @subtotal.ToString("F2")</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Service Charge</span>
+                                    <span>RM @serviceCharge.ToString("F2")</span>
+                                </div>
+
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Tax</span>
+                                    <span>RM @taxAmount.ToString("F2")</span>
+                                </div>
+
+                                <hr class="billing-total-divider" />
+
+                                <div class="d-flex justify-content-between
+                                    align-items-center billing-final-total">
+                                    <strong>Final Total</strong>
+                                    <h4 class="mb-0">RM @totalAmount.ToString("F2")</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Print-only footer -->
+                        <div class="yoru-print-footer">
+                            <div class="yoru-print-divider"></div>
+
+                            <p class="yoru-japanese">
+                                ありがとうございます
+                            </p>
+
+                            @* US49: receipt footer message from Restaurant Settings *@
+                            <p>
+                                @(string.IsNullOrWhiteSpace(Model.ReceiptFooterNote)
+                                    ? "Thank you for dining with us."
+                                    : Model.ReceiptFooterNote)
+                            </p>
+                            <strong>@Brand.FullName</strong>
+
+                            @if (Model.IsPreview)
+                            {
+                                <p class="yoru-print-notice">
+                                    Preview only — not a payment receipt.
+                                </p>
+                            }
+                            else if (Model.IsPaid)
+                            {
+                                <p class="yoru-print-notice">
+                                    Payment received. Thank you!
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="yoru-print-notice">
+                                    This bill is not proof of payment.
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= RIGHT: current step ================= -->
+            <div class="col-lg-5">
+                <div class="billing-side" id="billActions">
+
+                    <div class="card billing-card">
+                        <div class="card-body">
+
+                            <!-- Stepper -->
+                            <ol class="billing-steps" aria-label="Billing steps">
+                                @{
+                                    var steps = new[] { "Review & confirm", "Payment", "Paid" };
+                                }
+                                @for (var i = 0; i < steps.Length; i++)
+                                {
+                                    var stepNo = i + 1;
+                                    var stepClass = stepNo < Model.CurrentStep || (stepNo == 3 && Model.IsPaid)
+                                        ? "done"
+                                        : stepNo == Model.CurrentStep ? "current" : "";
+
+                                    <li class="billing-step @stepClass"
+                                        aria-current="@(stepNo == Model.CurrentStep ? "step" : null)">
+                                        <span class="billing-step-dot">@(stepClass == "done" ? "✓" : stepNo.ToString())</span>
+                                        <span class="billing-step-label">@steps[i]</span>
+                                    </li>
+                                }
+                            </ol>
+
+                            <!-- Result of the last action (shown here, next to the buttons) -->
+                            @if (!string.IsNullOrWhiteSpace(Model.SuccessMessage))
+                            {
+                                <div class="payment-result payment-result-success mb-3" role="status">
+                                    <span aria-hidden="true">&#10003;</span>
+                                    @Model.SuccessMessage
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                            {
+                                <div class="payment-result payment-result-failed mb-3" role="alert">
+                                    @Model.ErrorMessage
+                                </div>
+                            }
+
+                            <!-- Dine-in: the ordering rounds behind this bill (staff only, not printed) -->
+                            @if (Model.IsDineIn && Model.SessionBill!.Orders.Any())
+                            {
+                                <details class="billing-rounds mb-3" open="@(Model.CurrentStep == 1)">
+                                    <summary>
+                                        Orders in this bill
+                                        <span class="billing-rounds-count">@Model.SessionBill.Orders.Count</span>
+                                    </summary>
+
+                                    <ul class="billing-rounds-list">
+                                        @{
+                                            var round = 0;
+                                        }
+                                        @foreach (var order in Model.SessionBill.Orders)
+                                        {
+                                            round++;
+
+                                            <li>
+                                                @* Each round opens to show the dishes of that order. *@
+                                                <details class="billing-round">
+                                                    <summary class="billing-round-head">
+                                                        <span class="billing-round-no">Round @round</span>
+                                                        <span class="billing-round-orderno">@order.OrderNo</span>
+                                                        <span class="status-badge status-@order.Status">@IndexModel.OrderStatusLabel(order.Status)</span>
+                                                        <span class="billing-round-amount">RM @order.TotalAmount.ToString("F2")</span>
+                                                    </summary>
+
+                                                    <ul class="billing-round-items">
+                                                        @foreach (var item in order.Items)
+                                                        {
+                                                            <li>
+                                                                <span>@item.Quantity ×</span>
+                                                                <span>@(string.IsNullOrWhiteSpace(item.MenuItemName) ? $"Item #{item.MenuItemId}" : item.MenuItemName)</span>
+                                                                <span>@item.LineTotal.ToString("F2")</span>
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                </details>
+                                            </li>
+                                        }
+                                    </ul>
+                                </details>
+                            }
+
+                            <!-- ---------- Step 1: review and confirm ---------- -->
+                            @if (Model.CurrentStep == 1)
+                            {
+                                <div class="billing-side-total">
+                                    <span>Total to confirm</span>
+                                    <strong>RM @totalAmount.ToString("F2")</strong>
+                                </div>
+
+                                if (Model.CanConfirmDineIn)
+                                {
+                                    if (ordersInKitchen.Count > 0)
+                                    {
+                                        @* US32: kitchen warning (warn, not block) *@
+                                        <div class="payment-result payment-result-pending mb-3" role="alert">
+                                            <strong>Some orders are still in the kitchen:</strong>
+                                            @(string.Join(", ", ordersInKitchen)).
+                                            You can still confirm; the kitchen keeps working on them.
+                                        </div>
+                                    }
+
+                                    <p class="billing-side-note">
+                                        Confirming saves the bill and locks this table:
+                                        guests cannot add more orders afterwards.
+                                    </p>
+
+                                    <form method="post" asp-page-handler="ConfirmSession" class="mb-0 js-once">
+                                        <input type="hidden" name="sessionId" value="@(Model.SessionBill!.SessionId)" />
+                                        <input type="hidden" name="orderSnapshot" value="@(Model.SessionBill.OrderSnapshot)" />
+                                        <input type="hidden" name="acknowledgeKitchenWarning"
+                                               value="@(ordersInKitchen.Count > 0 ? "true" : "false")" />
+
+                                        <button type="submit" class="btn btn-dark w-100">
+                                            @(ordersInKitchen.Count > 0 ? "Confirm Anyway" : "Confirm Bill")
+                                        </button>
+                                    </form>
+                                }
+                                else if (Model.CanConfirmTakeaway)
+                                {
+                                    <p class="billing-side-note">
+                                        Confirming saves the bill so the payment can be recorded.
+                                    </p>
+
+                                    <form method="post" asp-page-handler="ConfirmTakeaway" class="mb-0 js-once">
+                                        <input type="hidden" name="orderNo" value="@(Model.TakeawayOrder!.OrderNo)" />
+
+                                        <button type="submit" class="btn btn-dark w-100">
+                                            Confirm Bill
+                                        </button>
+                                    </form>
+                                }
+                                else if (Model.IsDineIn && !Model.SessionBill!.Orders.Any())
+                                {
+                                    <p class="billing-side-note mb-0">
+                                        This table has no orders yet, so there is nothing to bill.
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="billing-side-note mb-0">
+                                        This bill cannot be confirmed right now.
+                                    </p>
+                                }
+                            }
+
+                            <!-- ---------- Step 2: counter payment (one step) ---------- -->
+                            @if (Model.IsConfirmed)
+                            {
+                                bool onlineLocked = Model.OnlinePaymentInProgress;
+
+                                @* US33: the customer is paying this bill online (Stripe) *@
+                                if (onlineLocked)
+                                {
+                                    <div class="payment-result payment-result-pending online-progress mb-3" role="status">
+                                        <strong>Customer is paying online</strong>
+                                        @(Model.OnlineInfo!.StartedByStaff ? "QR code · " : "")Started @(Model.OnlineInfo.StartedAt?.ToString("h:mm tt"))
+                                        <span class="bill-sep" aria-hidden="true"></span>
+                                        counter payment locked until @(Model.OnlineInfo.LockedUntil?.ToString("h:mm tt")).
+                                        @if (Model.QrImageDataUri != null)
+                                        {
+                                            @* US33: QR code of the Stripe payment page for the customer's phone *@
+                                            <div class="online-qr">
+                                                <img src="@Model.QrImageDataUri" width="200" height="200"
+                                                     alt="QR code: scan with your phone to pay this bill on Stripe" />
+                                                <span>Scan to pay RM @Model.CurrentBill!.TotalAmount.ToString("F2")</span>
+                                            </div>
+                                        }
+                                        <div class="online-progress-actions">
+                                            @* "check" changes on every load, so the link always reloads the page
+                                               (a link to the same address plus #billActions would only scroll). *@
+                                            @{ var checkStamp = DateTime.Now.Ticks; }
+                                            @if (Model.IsDineIn)
+                                            {
+                                                <a class="btn btn-outline-dark flex-fill" asp-page="./Bill"
+                                                   asp-route-sessionId="@(Model.SessionBill!.SessionId)" asp-route-check="@checkStamp" data-keep-scroll>Check again</a>
+                                            }
+                                            else
+                                            {
+                                                <a class="btn btn-outline-dark flex-fill" asp-page="./Bill"
+                                                   asp-route-orderNo="@(Model.TakeawayOrder!.OrderNo)" asp-route-check="@checkStamp" data-keep-scroll>Check again</a>
+                                            }
+                                            <form method="post" asp-page-handler="CancelOnline" class="d-flex flex-fill js-once" data-keep-scroll>
+                                                <input type="hidden" name="billId" value="@(Model.CurrentBill!.Id)" />
+                                                @if (Model.IsDineIn)
+                                                {
+                                                    <input type="hidden" name="sessionId" value="@(Model.SessionBill!.SessionId)" />
+                                                }
+                                                else
+                                                {
+                                                    <input type="hidden" name="orderNo" value="@(Model.TakeawayOrder!.OrderNo)" />
+                                                }
+                                                <button type="submit" class="btn btn-outline-danger w-100">Cancel online payment</button>
+                                            </form>
+                                        </div>
+                                        <small class="online-progress-note">
+                                            Cancel only if the customer wants to pay at the counter instead.
+                                            Stripe is checked first; if they already paid, the bill is marked Paid.
+                                        </small>
+                                    </div>
+                                }
+
+                                <form method="post" asp-page-handler="RecordPayment"
+                                      class="payment-record-form js-once @(onlineLocked ? "is-locked" : "")">
+
+                                    <input type="hidden" name="billId" value="@(Model.CurrentBill!.Id)" />
+
+                                    @if (Model.IsDineIn)
+                                    {
+                                        <input type="hidden" name="sessionId" value="@(Model.SessionBill!.SessionId)" />
+                                    }
+                                    else
+                                    {
+                                        <input type="hidden" name="orderNo" value="@(Model.TakeawayOrder!.OrderNo)" />
+                                    }
+
+                                    <div class="billing-side-total">
+                                        <span>Amount to collect</span>
+                                        <strong>RM @Model.CurrentBill.TotalAmount.ToString("F2")</strong>
+                                    </div>
+
+                                    <fieldset class="payment-method-fieldset">
+                                        <legend class="form-label">Payment method</legend>
+
+                                        <div class="row g-2">
+                                            <!-- Cash -->
+                                            <div class="col-4">
+                                                <input type="radio"
+                                                       class="visually-hidden payment-method-radio"
+                                                       name="method" id="paymentCash" value="Cash" required disabled="@onlineLocked" />
+                                                <label class="payment-method-tile" for="paymentCash">
+                                                    <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M560-440q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35ZM280-320q-33 0-56.5-23.5T200-400v-320q0-33 23.5-56.5T280-800h560q33 0 56.5 23.5T920-720v320q0 33-23.5 56.5T840-320H280Zm80-80h400q0-33 23.5-56.5T840-480v-160q-33 0-56.5-23.5T760-720H360q0 33-23.5 56.5T280-640v160q33 0 56.5 23.5T360-400Zm440 240H120q-33 0-56.5-23.5T40-240v-440h80v440h680v80ZM280-400v-320 320Z"/></svg></span>
+                                                    <strong>Cash</strong>
+                                                </label>
+                                            </div>
+
+                                            <!-- Card -->
+                                            <div class="col-4">
+                                                <input type="radio"
+                                                       class="visually-hidden payment-method-radio"
+                                                       name="method" id="paymentCard" value="Card" required disabled="@onlineLocked" />
+                                                <label class="payment-method-tile" for="paymentCard">
+                                                    <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M880-720v480q0 33-23.5 56.5T800-160H160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720Zm-720 80h640v-80H160v80Zm0 160v240h640v-240H160Zm0 240v-480 480Z"/></svg></span>
+                                                    <strong>Card</strong>
+                                                    <small>In-store</small>
+                                                </label>
+                                            </div>
+
+                                            <!-- Online Payment (US33) -->
+                                            <div class="col-4">
+                                                <input type="radio"
+                                                       class="visually-hidden payment-method-radio"
+                                                       name="method" id="paymentOnline" value="Online" required
+                                                       disabled="@(onlineLocked || !Model.OnlinePaymentAvailable)" />
+                                                <label class="payment-method-tile @(Model.OnlinePaymentAvailable ? "" : "payment-method-tile-disabled")"
+                                                       for="paymentOnline">
+                                                    <span class="payment-method-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="26" width="26" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-280v-280h80v280h-80Zm240 0v-280h80v280h-80ZM80-120v-80h800v80H80Zm600-160v-280h80v280h-80ZM80-640v-80l400-200 400 200v80H80Zm178-80h444-444Zm0 0h444L480-830 258-720Z"/></svg></span>
+                                                    <strong>Online</strong>
+                                                    <small>@(Model.OnlinePaymentAvailable ? "QR code" : "Not set up")</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                    <div class="mt-3" id="cardRefGroup">
+                                        <label for="transactionRef" class="form-label">
+                                            Card terminal reference (optional)
+                                        </label>
+                                        <input id="transactionRef" name="transactionRef" class="form-control"
+                                               maxlength="100" autocomplete="off" placeholder="e.g. approval code" />
+                                    </div>
+
+                                    <button type="submit" id="recordPaymentButton" class="btn btn-dark w-100 mt-3" disabled="@onlineLocked">
+                                        Record Payment
+                                    </button>
+
+                                    <p class="billing-side-note mt-2 mb-0">
+                                        Records the full bill amount as Paid.
+                                        Record a card payment only after the terminal approves it;
+                                        if the card is declined, nothing is recorded and another method can be used.
+                                    </p>
+                                </form>
+                            }
+
+                            <!-- ---------- Step 3: paid ---------- -->
+                            @if (Model.IsPaid && Model.LatestPayment != null)
+                            {
+                                <dl class="billing-paid-details">
+                                    <dt>Method</dt>
+                                    <dd>@Model.LatestPayment.Method</dd>
+
+                                    <dt>Amount</dt>
+                                    <dd>RM @Model.LatestPayment.Amount.ToString("F2")</dd>
+
+                                    <dt>Paid at</dt>
+                                    <dd>@(Model.LatestPayment.PaidAt?.ToString("d MMM yyyy, h:mm tt") ?? "N/A")</dd>
+
+                                    <dt>Recorded by</dt>
+                                    <dd>@(Model.LatestPaymentRecordedByName ?? "N/A")</dd>
+
+                                    <dt>Reference</dt>
+                                    <dd>
+                                        @(string.IsNullOrWhiteSpace(Model.LatestPayment.TransactionRef)
+                                            ? "—"
+                                            : Model.LatestPayment.TransactionRef)
+                                    </dd>
+                                </dl>
+
+                                if (Model.IsDineIn)
+                                {
+                                    <p class="billing-side-note mb-0">
+                                        @(Model.SessionBill!.SessionStatus == DiningSessionStatus.Closed
+                                            ? "Paid. The guests have left and the table session is closed."
+                                            : "Paid. The table stays open until staff close the session when the guests leave.")
+                                    </p>
+                                }
+                            }
+
+                            <hr class="my-3" />
+
+                            <div class="d-flex flex-wrap gap-2">
+                                @* US35: after payment staff print the receipt PDF (the same one the
+                                   customer downloads); before payment they print the BILL page.
+                                   Print Receipt loads the PDF in a hidden frame and opens the print
+                                   dialog on this page, like Print Bill. The href is the fallback
+                                   (new tab) if the browser cannot print the frame. *@
+                                @if (Model.IsPaid && Model.LatestPayment != null)
+                                {
+                                    <a class="btn btn-outline-dark flex-fill js-print-receipt" target="_blank" rel="noopener"
+                                       asp-page-handler="Receipt" asp-route-paymentId="@Model.LatestPayment.Id">
+                                        <i class="bi bi-printer" aria-hidden="true"></i> Print Receipt
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn btn-outline-dark flex-fill" onclick="window.print()">
+                                        <i class="bi bi-printer" aria-hidden="true"></i> Print Bill
+                                    </button>
+                                }
+                                <a class="btn btn-outline-dark flex-fill" asp-page="./Index">
+                                    Back to list
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment history (bill payments and older order payments) -->
+                    @if (Model.Payments.Any())
+                    {
+                        <details class="card billing-card billing-history mt-3">
+                            <summary class="card-body py-3">
+                                Payment history (@Model.Payments.Count)
+                            </summary>
+
+                            <div class="px-3 pb-3">
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Method</th>
+                                            <th>Status</th>
+                                            <th class="text-end">RM</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var payment in Model.Payments)
+                                        {
+                                            <tr>
+                                                <td>@payment.CreatedAt.ToString("d MMM, h:mm tt")</td>
+                                                <td>@payment.Method</td>
+                                                <td><span class="status-badge status-@payment.Status">@payment.Status</span></td>
+                                                <td class="text-end">@payment.Amount.ToString("F2")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            </div>
+                        </details>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.HasBill && !Model.IsPaid && Model.StatusStamp != null)
+    {
+        @* US33: watch this bill while the page is open (every 5 s, visible tab only).
+           When the customer confirms/pays online, or an online payment ends,
+           the stamp changes and the page reloads to show the new state. *@
+        <div id="billStatusWatch" hidden
+             data-url="@Url.Page("./Bill", "Status", new { sessionId = Model.SessionBill?.SessionId, orderNo = Model.TakeawayOrder?.OrderNo })"
+             data-reload="@Url.Page("./Bill", null, new { sessionId = Model.SessionBill?.SessionId, orderNo = Model.TakeawayOrder?.OrderNo })"
+             data-stamp="@Model.StatusStamp"></div>
+    }
+    <script>
+        (function () {
+            // Keep the scroll position across an automatic reload, "Check again"
+            // and "Cancel online payment": save it before leaving, restore it here.
+            function saveScroll() {
+                try { sessionStorage.setItem('billWatchScroll', String(window.scrollY)); } catch (e) { }
+            }
+            document.querySelectorAll('a[data-keep-scroll]').forEach(function (a) {
+                a.addEventListener('click', saveScroll);
+            });
+            document.querySelectorAll('form[data-keep-scroll]').forEach(function (f) {
+                f.addEventListener('submit', saveScroll);
+            });
+            try {
+                const y = sessionStorage.getItem('billWatchScroll');
+                if (y !== null) {
+                    sessionStorage.removeItem('billWatchScroll');
+                    const top = parseInt(y, 10) || 0;
+                    window.scrollTo({ top: top, behavior: 'instant' });
+                    // Again after images and fonts have loaded and the page height is final.
+                    window.addEventListener('load', function () {
+                        window.scrollTo({ top: top, behavior: 'instant' });
+                    });
+                }
+            } catch (e) { /* storage blocked: stay at the top */ }
+
+            const watch = document.getElementById('billStatusWatch');
+            if (!watch) return;
+            let busy = false;
+            setInterval(async function () {
+                if (busy || document.visibilityState !== 'visible') return;
+                busy = true;
+                try {
+                    const res = await fetch(watch.dataset.url, { cache: 'no-store' });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.stamp && data.stamp !== watch.dataset.stamp) {
+                            const url = new URL(watch.dataset.reload, window.location.origin);
+                            url.searchParams.set('check', Date.now());
+                            saveScroll();
+                            window.location.replace(url.toString());
+                            return;
+                        }
+                    }
+                } catch (e) { /* offline for a moment: try again next time */ }
+                busy = false;
+            }, 5000);
+        })();
+
+        (function () {
+            // Prevent double submits: disable the button once a form is sent.
+            document.querySelectorAll('form.js-once').forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    const btn = form.querySelector('button[type="submit"]');
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.textContent = 'Saving…';
+                    }
+                });
+            });
+
+            // The card reference only applies to card payments.
+            const refGroup = document.getElementById('cardRefGroup');
+            const refInput = document.getElementById('transactionRef');
+            const radios = document.querySelectorAll('input[name="method"]');
+
+            function syncRef() {
+                // US33: Online = show a Stripe QR code instead of recording a payment.
+                const online = document.getElementById('paymentOnline');
+                const button = document.getElementById('recordPaymentButton');
+                if (button) button.textContent = online && online.checked ? 'Show QR code' : 'Record Payment';
+
+                if (!refGroup) return;
+                const card = document.getElementById('paymentCard');
+                const isCard = card && card.checked;
+                refGroup.classList.toggle('d-none', !isCard);
+                if (!isCard && refInput) refInput.value = '';
+            }
+
+            radios.forEach(r => r.addEventListener('change', syncRef));
+            syncRef();
+        })();
+
+        // US35: Print Receipt -> print dialog on this page (no new tab).
+        // The receipt PDF is loaded into a hidden iframe as soon as the page
+        // has loaded, so clicking the button only has to open the dialog.
+        (function () {
+            const link = document.querySelector('a.js-print-receipt');
+            if (!link) return;
+
+            const label = link.innerHTML;
+            let frame = null;
+            let ready = false;
+            let printWhenReady = false;
+
+            function busy(on) {
+                link.classList.toggle('disabled', on);
+                if (on) {
+                    link.setAttribute('aria-disabled', 'true');
+                    link.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span> Preparing…';
+                } else {
+                    link.removeAttribute('aria-disabled');
+                    link.innerHTML = label;
+                }
+            }
+
+            function printFrame() {
+                try {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                } catch (err) {
+                    // Browser will not print the frame: open the PDF instead.
+                    window.open(link.href, '_blank', 'noopener');
+                }
+            }
+
+            function preload() {
+                frame = document.createElement('iframe');
+                frame.setAttribute('aria-hidden', 'true');
+                frame.tabIndex = -1;
+                frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+                frame.addEventListener('load', function () {
+                    ready = true;
+                    if (printWhenReady) {
+                        printWhenReady = false;
+                        // Short pause so the PDF viewer has drawn the pages.
+                        setTimeout(function () { busy(false); printFrame(); }, 150);
+                    }
+                });
+                frame.src = link.href;
+                document.body.appendChild(frame);
+            }
+
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (link.classList.contains('disabled')) return;
+
+                if (ready) {
+                    printFrame();          // already loaded: dialog opens at once
+                } else {
+                    printWhenReady = true; // still loading: print when it arrives
+                    busy(true);
+                    if (!frame) preload();
+                }
+            });
+
+            // Start loading in the background once the page itself is done.
+            if (document.readyState === 'complete') preload();
+            else window.addEventListener('load', preload);
+        })();
+    </script>
+}
