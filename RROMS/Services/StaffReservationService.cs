@@ -135,7 +135,8 @@ public class StaffReservationService(
             late, late ? Math.Max(0, (int)(now - x.ReservedAt).TotalMinutes) : 0,
             left,
             CanConfirm: x.Status == ReservationStatus.Pending && now < autoCancelAt && x.TableId != null,
-            CanSeat: waiting && x.TableId != null && x.ReservedAt.Date == now.Date,
+            CanSeat: waiting && x.TableId != null && x.ReservedAt.Date == now.Date
+                     && x.ReservedAt <= now.AddMinutes(BookingRules.SeatEarlyMinutes),
             CanNoShow: waiting && x.ReservedAt <= now,
             CanCancel: waiting,
             CanModify: waiting,
