@@ -750,8 +750,8 @@ public class StaffReservationService(
             return new(false, "bad_time", "Choose a valid time.");
         var start = req.Date.Date + tod;
         var guests = req.Guests;
-        if (guests < 1 || guests > 50)
-            return new(false, "bad_guests", "Enter a number of guests between 1 and 50.");
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return new(false, "bad_guests", $"Enter a number of guests between 1 and {BookingRules.MaxGuests}.");
 
         var timeChanged = start != cur.ReservedAt;
         if (timeChanged && start < DateTime.Now)

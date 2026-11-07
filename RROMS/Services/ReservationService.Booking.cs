@@ -225,7 +225,7 @@ public partial class ReservationService
             .Select(t => (int?)t.DefaultMaxGuests)
             .MaxAsync();
 
-        return Math.Clamp(max ?? 2, 1, 100);
+        return Math.Clamp(max ?? 2, 1, BookingRules.MaxGuests);
     }
 
     // ---------- availability ----------
@@ -270,8 +270,8 @@ public partial class ReservationService
     {
         await ReleaseOverdueReservationsAsync();
 
-        if (guests < 1 || guests > 100)
-            return new TypeOptionsResult("Choose between 1 and 100 guests.", new());
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return new TypeOptionsResult($"Choose between 1 and {BookingRules.MaxGuests} guests.", new());
 
         var (hours, specials) = await LoadScheduleAsync();
         var error = ValidateSlot(start, hours, specials, DateTime.Now);
@@ -387,8 +387,8 @@ public partial class ReservationService
     {
         await ReleaseOverdueReservationsAsync();
 
-        if (guests < 1 || guests > 100)
-            return new TimeCheckResult(false, false, "Choose between 1 and 100 guests.", new());
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return new TimeCheckResult(false, false, $"Choose between 1 and {BookingRules.MaxGuests} guests.", new());
 
         var now = DateTime.Now;
         start = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
@@ -567,8 +567,8 @@ public partial class ReservationService
             req.ReservedAt.Hour, req.ReservedAt.Minute, 0);
         var end = start.AddMinutes(BookingRules.DurationMinutes);
 
-        if (req.Guests < 1 || req.Guests > 100)
-            return BookingResult.Fail("guests", "Choose between 1 and 100 guests.");
+        if (req.Guests < 1 || req.Guests > BookingRules.MaxGuests)
+            return BookingResult.Fail("guests", $"Choose between 1 and {BookingRules.MaxGuests} guests.");
 
         var special = (req.SpecialRequest ?? "").Trim();
         special = new string(special.Where(c => !char.IsControl(c) || c == '\n').ToArray());

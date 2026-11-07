@@ -379,7 +379,7 @@
             field('date', 'Date', dd('date', CAL_ICON, 'dd-cal')) +
             field('time', 'Time', dd('time', CHEV, 'dd-times')) +
             field('guests', 'Guests', `<div class="dd-step"><button type="button" data-step="-1" aria-label="One guest fewer">&minus;</button>` +
-                `<input type="number" name="guests" min="1" max="50" value="${st.guests}" inputmode="numeric" aria-label="Number of guests">` +
+                `<input type="number" name="guests" min="1" max="100" value="${st.guests}" inputmode="numeric" aria-label="Number of guests">` +
                 `<button type="button" data-step="1" aria-label="One guest more">+</button></div>`) +
             field('table', 'Table', dd('table', CHEV, 'dd-tables')) +
             field('request', `Special request <em>${d.request ? 'entered by the guest, you can edit it' : 'the guest did not add one, add it here if they ask'}</em>`,
@@ -579,7 +579,7 @@
         }
 
         function setGuests(n, now) {
-            n = Math.max(1, Math.min(50, Math.round(n) || 1));
+            n = Math.max(1, Math.min(100, Math.round(n) || 1));
             st.guests = n; gIn.value = n;
             clearTimeout(gTimer);
             gTimer = setTimeout(() => { pending = load(); }, now ? 0 : 350);
