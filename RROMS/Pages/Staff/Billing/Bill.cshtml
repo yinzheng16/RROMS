@@ -65,10 +65,10 @@
     }
     else
     {
-        decimal subtotal, taxAmount, serviceCharge, totalAmount, taxRate, serviceRate;
-        // No % on the charge labels for now: orders do not save their rates yet,
-        // and % worked back from rounded amounts is misleading (e.g. 5.92%).
-        // Use the saved rates once Member 3's rate fields are in develop.
+        decimal subtotal, taxAmount, serviceCharge, totalAmount;
+        // Rates saved on the orders when they were placed (Member 3).
+        // Null = an order saved no rate or the orders differ: label shows no %.
+        decimal? taxRate, serviceRate;
 
         if (Model.IsDineIn)
         {
@@ -223,12 +223,12 @@
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Service Charge</span>
+                                    <span>@RROMS.Services.ChargeRates.Label("Service Charge", serviceRate)</span>
                                     <span>RM @serviceCharge.ToString("F2")</span>
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
-                                    <span>Tax</span>
+                                    <span>@RROMS.Services.ChargeRates.Label("Tax", taxRate)</span>
                                     <span>RM @taxAmount.ToString("F2")</span>
                                 </div>
 

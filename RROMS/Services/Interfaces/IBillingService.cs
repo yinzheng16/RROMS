@@ -100,9 +100,9 @@ namespace RROMS.Services.Interfaces
         string OrderNo,
         IReadOnlyList<BillItemSummary> Items,
         decimal Subtotal,
-        decimal TaxRatePercent,
+        decimal? TaxRatePercent,         // saved on every order and the same; null = no % shown
         decimal TaxAmount,
-        decimal ServiceChargePercent,
+        decimal? ServiceChargePercent,   // same rule
         decimal ServiceCharge,
         decimal TotalAmount
     );
@@ -129,9 +129,9 @@ namespace RROMS.Services.Interfaces
         DiningSessionStatus SessionStatus,
         IReadOnlyList<SessionBillOrderLine> Orders,
         decimal Subtotal,
-        decimal TaxRatePercent,
+        decimal? TaxRatePercent,         // saved on every order and the same; null = no % shown
         decimal TaxAmount,
-        decimal ServiceChargePercent,
+        decimal? ServiceChargePercent,   // same rule
         decimal ServiceCharge,
         decimal TotalAmount,
         // Order numbers still Pending / Preparing / ReadyToServe.

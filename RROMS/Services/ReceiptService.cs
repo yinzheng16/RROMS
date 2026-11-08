@@ -101,6 +101,7 @@ namespace RROMS.Services
             decimal service = payment.Bill?.ServiceCharge ?? payment.Order!.ServiceCharge;
             decimal tax = payment.Bill?.TaxAmount ?? payment.Order!.TaxAmount;
             decimal total = payment.Bill?.TotalAmount ?? payment.Order!.TotalAmount;
+            var (taxRate, serviceRate) = ChargeRates.SharedSaved(orders);
 
             var settings = await _reportService.GetRestaurantSettingsAsync();
 
@@ -116,6 +117,8 @@ namespace RROMS.Services
                 Subtotal = subtotal,
                 ServiceCharge = service,
                 TaxAmount = tax,
+                TaxRatePercent = taxRate,
+                ServiceChargePercent = serviceRate,
                 TotalAmount = total,
                 Method = payment.Method,
                 AmountPaid = payment.Amount,

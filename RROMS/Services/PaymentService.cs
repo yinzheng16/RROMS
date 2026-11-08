@@ -228,8 +228,11 @@ namespace RROMS.Services
                 rows.Add(new("Paid on", (payment.PaidAt ?? DateTime.Now).ToString("ddd, d MMM yyyy · h:mm tt", En)));
                 rows.Add(new("Payment method", payment.Method.ToString()));
                 rows.Add(new("Subtotal", Money(bill.Subtotal)));
-                rows.Add(new("Service charge", Money(bill.ServiceCharge)));
-                rows.Add(new("Tax", Money(bill.TaxAmount)));
+                // Same % labels as the bill and receipt (rates saved on the charged orders).
+                var (taxRate, serviceRate) = ChargeRates.SharedSaved(
+                    bill.Orders.Where(o => o.Status != OrderStatus.Cancelled));
+                rows.Add(new(ChargeRates.Label("Service charge", serviceRate), Money(bill.ServiceCharge)));
+                rows.Add(new(ChargeRates.Label("Tax", taxRate), Money(bill.TaxAmount)));
                 rows.Add(new("Total paid", amount));
 
                 if (!string.IsNullOrEmpty(payment.TransactionRef))

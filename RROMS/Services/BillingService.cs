@@ -691,10 +691,8 @@ namespace RROMS.Services
             decimal serviceCharge = orders.Sum(o => o.ServiceCharge);
             decimal totalAmount = orders.Sum(o => o.TotalAmount);
 
-            var (taxRate, serviceChargeRate) = DeriveDisplayRates(
-                subtotal,
-                taxAmount,
-                serviceCharge);
+            // Rates saved on the orders (Member 3), shown only when all orders agree.
+            var (taxRate, serviceChargeRate) = ChargeRates.SharedSaved(orders);
 
             var lines = orders
                 .Select(o => new SessionBillOrderLine(
@@ -962,10 +960,9 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "Order does not have a valid saved total.");
 
-            // US32: Historical rates are not stored in Order.
-            // Derive display percentages from saved amounts only.
+            // US32: Rates saved on the order when it was placed.
             // Never use current restaurant settings for an existing order.
-            var (taxRate, serviceChargeRate) = DeriveDisplayRates(order);
+            var (taxRate, serviceChargeRate) = ChargeRates.SharedSaved(new[] { order });
 
             return CreateSummary(
                 order,
@@ -999,9 +996,8 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "Order does not have a valid saved total.");
 
-            // Display-only percentages derived from saved amounts.
-            // These are estimates, not stored historical tax rates.
-            var (taxRate, serviceChargeRate) = DeriveDisplayRates(order);
+            // Display-only rates saved on the order (null = not shown).
+            var (taxRate, serviceChargeRate) = ChargeRates.SharedSaved(new[] { order });
 
             return CreateSummary(
                 order,
@@ -1063,9 +1059,9 @@ namespace RROMS.Services
                 throw new InvalidOperationException(
                     "Order already has a pending or completed payment.");
 
-            // Display-only percentages derived from saved amounts.
+            // Display-only rates saved on the order (null = not shown).
             // Do not use current restaurant settings.
-            var (taxRate, serviceChargeRate) = DeriveDisplayRates(order);
+            var (taxRate, serviceChargeRate) = ChargeRates.SharedSaved(new[] { order });
 
             return CreateSummary(
                 order,
@@ -1184,40 +1180,6 @@ namespace RROMS.Services
                     o.TotalAmount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))));
         }
 
-        // US32 / US49: Display-only percentages derived from saved amounts.
-        // Orders do not store their historical rates, so derive them here.
-        // Team rule (leader, US49): service = subtotal x service%;
-        //                           SST     = (subtotal + service) x tax%.
-        // Example: RM100 dine-in, 10% / 6% -> service RM10.00, SST RM6.60.
-        private static (decimal TaxRate, decimal ServiceChargeRate)
-            DeriveDisplayRates(Order order)
-        {
-            return DeriveDisplayRates(
-                order.Subtotal,
-                order.TaxAmount,
-                order.ServiceCharge);
-        }
-
-        // Same rule for combined totals (session bill preview).
-        private static (decimal TaxRate, decimal ServiceChargeRate)
-            DeriveDisplayRates(
-                decimal subtotal,
-                decimal taxAmount,
-                decimal serviceCharge)
-        {
-            decimal serviceChargeRate = subtotal > 0
-                ? Math.Round(serviceCharge / subtotal * 100m, 2)
-                : 0m;
-
-            decimal taxBase = subtotal + serviceCharge;
-
-            decimal taxRate = taxBase > 0
-                ? Math.Round(taxAmount / taxBase * 100m, 2)
-                : 0m;
-
-            return (taxRate, serviceChargeRate);
-        }
-
         private static decimal RoundMoney(decimal amount)
         {
             return Math.Round(
@@ -1242,8 +1204,8 @@ namespace RROMS.Services
 
         private static BillSummary CreateSummary(
             Order order,
-            decimal taxRate,
-            decimal serviceChargeRate)
+            decimal? taxRate,
+            decimal? serviceChargeRate)
         {
             var items = CreateItemSummaries(order);
 
