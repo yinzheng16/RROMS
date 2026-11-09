@@ -42,13 +42,15 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/admin-announcements.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/yoru-pick.css" asp-append-version="true" />
 }
 
 @section Scripts {
     <script src="~/js/admin-announcements.js" asp-append-version="true"></script>
+    <script src="~/js/yoru-pick.js" asp-append-version="true"></script>
 }
 
-<div class="an-page">
+<div class="an-page" data-yp-scope>
 
     @* ================= BANNER (edge to edge) ================= *@
     <section class="an-hero">
@@ -310,18 +312,18 @@
                     <div class="an-2">
                         <div class="an-f">
                             <label for="Input_StartDate">SHOW FROM</label>
-                            <input asp-for="Input.StartDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" step="60" class="an-in" data-an-field="start" />
+                            <input asp-for="Input.StartDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" step="60" class="an-in" data-an-field="start" data-yp />
                         </div>
                         <div class="an-f">
                             <label for="Input_EndDate">UNTIL</label>
-                            <input asp-for="Input.EndDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" step="60" class="an-in @(Model.FieldError("EndDate") is null ? "" : "is-bad")" data-an-field="end" />
+                            <input asp-for="Input.EndDate" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" step="60" class="an-in @(Model.FieldError("EndDate") is null ? "" : "is-bad")" data-an-field="end" data-yp />
                             @if (Model.FieldError("EndDate") is string eErr) { <p class="an-err"><i class="bi bi-exclamation-circle" aria-hidden="true"></i>@eErr</p> }
                         </div>
                     </div>
 
                     <div class="an-f">
                         <label for="Input_Link">BANNER BUTTON GOES TO</label>
-                        <select asp-for="Input.Link" asp-items="Model.LinkOptions" class="an-in" data-an-field="link"></select>
+                        <select asp-for="Input.Link" asp-items="Model.LinkOptions" class="an-in" data-an-field="link" data-yp></select>
                     </div>
 
                     <p class="an-note"><i class="bi bi-info-circle" aria-hidden="true"></i><span>Saving does not send it. Use <b>Send</b> in the list when you are ready.</span></p>

@@ -100,13 +100,6 @@
     const page = document.querySelector('.ap-page');
     if (!page) return;
 
-    // Message after a refund: success hides itself, an error stays until closed.
-    const hideToast = t => { t.classList.add('is-hiding'); setTimeout(() => t.remove(), 300); };
-    page.querySelectorAll('.ap-toast').forEach(t => {
-        t.querySelector('[data-ap-toast-close]')?.addEventListener('click', () => hideToast(t));
-        if (t.dataset.apToast === 'auto') setTimeout(() => hideToast(t), 7000);
-    });
-
     // ----- "⋯" menu -----
     let openMenu = null;
 

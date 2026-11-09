@@ -47,8 +47,9 @@
 }
 
 <link rel="stylesheet" href="~/css/customer-payments.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/yoru-pick.css" asp-append-version="true" />
 
-<div class="us34-payments">
+<div class="us34-payments" data-yp-scope>
 
     @* Banner: wwwroot/images/payments/yoru-payments-banner.svg (original artwork, Cart style) *@
     <section class="pay-hero" aria-labelledby="pay-title">
@@ -206,11 +207,11 @@
                         <div class="pay-filter-row">
                             <label>
                                 From
-                                <input type="date" name="from" id="payFrom" value="@IndexModel.DateIso(Model.From)" max="@Model.TodayIso" />
+                                <input type="date" name="from" id="payFrom" value="@IndexModel.DateIso(Model.From)" max="@Model.TodayIso" data-yp />
                             </label>
                             <label>
                                 To
-                                <input type="date" name="to" id="payTo" value="@IndexModel.DateIso(Model.To)" max="@Model.TodayIso" />
+                                <input type="date" name="to" id="payTo" value="@IndexModel.DateIso(Model.To)" max="@Model.TodayIso" data-yp />
                             </label>
                         </div>
                         <p class="pay-filter-error" id="payFilterError" role="alert" hidden>The To date cannot be before the From date.</p>
@@ -238,6 +239,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/yoru-pick.js" asp-append-version="true"></script>
     <script>
         // US34: browser-side date check (the server checks again).
         (function () {

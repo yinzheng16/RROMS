@@ -215,8 +215,8 @@ namespace RROMS.Services
             col.Item().PaddingTop(12).Column(t =>
             {
                 Row(t, "Subtotal", Money(r.Subtotal));
-                Row(t, "Service Charge", Money(r.ServiceCharge));
-                Row(t, "Tax", Money(r.TaxAmount));
+                Row(t, ChargeRates.Label("Service Charge", r.ServiceChargePercent), Money(r.ServiceCharge));
+                Row(t, ChargeRates.Label("Tax", r.TaxRatePercent), Money(r.TaxAmount));
             });
 
             Divider(col, 7.5f);

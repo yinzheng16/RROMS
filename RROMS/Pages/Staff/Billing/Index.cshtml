@@ -35,8 +35,9 @@
 }
 
 <link rel="stylesheet" href="~/css/staff-billing.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/yoru-pick.css" asp-append-version="true" />
 
-<div class="us32-billing">
+<div class="us32-billing" data-yp-scope>
 
     @* Header banner: wwwroot/images/billing/yoru-billing-banner.svg (original artwork) *@
     <section class="billing-hero" aria-labelledby="billing-title">
@@ -98,9 +99,9 @@
                 @* Sort by seated time (dine-in) / order time (takeaway), inside each table *@
                 <div class="billing-sort">
                     <i class="bi bi-sort-down" aria-hidden="true"></i>
-                    <select id="billingSort" class="form-select" aria-label="Sort the billing list">
-                        <option value="newest" selected>Newest first</option>
-                        <option value="oldest">Oldest first</option>
+                    <select id="billingSort" class="form-select" aria-label="Sort the billing list" data-yp>
+                        <option value="newest" data-yp-icon="bi-sort-down" selected>Newest first</option>
+                        <option value="oldest" data-yp-icon="bi-sort-up">Oldest first</option>
                     </select>
                 </div>
             </div>
@@ -310,6 +311,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/yoru-pick.js" asp-append-version="true"></script>
     <script>
         // US32: client-side search and filters for the billing list.
         // Nothing is sent to the server; the list is already loaded.

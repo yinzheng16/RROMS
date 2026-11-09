@@ -579,3 +579,44 @@
         background: var(--yoru-red-text);
         color: #fff;
     }
+
+/* =====================================================
+   9 Nov: YORU pickers (yoru-pick.css / yoru-pick.js)
+   The date filter sits in the dark summary panel, so the
+   calendar is dark too: same charcoal, gold wave lines
+   and #D6AD67 gold as the panel.
+   ===================================================== */
+.us34-payments {
+    --yp-bg: #1d1a16;
+    --yp-ink: #f5efe4;
+    --yp-mute: #a99e8b;
+    --yp-line: #3a3226;
+    --yp-line-soft: #2e281f;
+    --yp-hover: rgba(214, 173, 103, .14);
+    --yp-accent: #D6AD67;
+    --yp-today: #D6AD67;
+    --yp-on-bg: #D6AD67;
+    --yp-on-ink: #191919;
+    --yp-link: #D6AD67;
+    --yp-ring: rgba(214, 173, 103, .3);
+    --yp-head-bg:
+        linear-gradient(#191919 30%, rgba(25, 25, 25, .7)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='18'%3E%3Cg fill='none' stroke='%23B79B72' stroke-width='.8' opacity='.5'%3E%3Cpath d='M0 18a18 18 0 0 1 36 0M5 18a13 13 0 0 1 26 0M10 18a8 8 0 0 1 16 0M-18 9a18 18 0 0 1 36 0M18 9a18 18 0 0 1 36 0'/%3E%3C/g%3E%3C/svg%3E") left top / 36px 18px repeat,
+        #191919;
+    --yp-head-border: #5b4f3c;
+    --yp-head-line: #5b4f3c;
+    --yp-head-hover: rgba(255, 255, 255, .08);
+    --yp-shadow: 0 22px 44px -18px rgba(0, 0, 0, .75);
+    --yp-jp: block;
+    --yp-cal-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6d3b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2.5'/%3E%3Cpath d='M8 3v4M16 3v4M3.5 10h17'/%3E%3C/svg%3E");
+}
+
+/* the panel's own input rule sets "background", so put the icon back */
+.us34-payments .pay-filter input.yp-on {
+    padding-right: 1.9rem;
+    background: #fffaf0 var(--yp-cal-icon) right .5rem center / 14px 14px no-repeat;
+}
+
+    .us34-payments .pay-filter input.yp-on:hover { border-color: #D6AD67; }
+
+.us34-payments .yp-cal { border-top: 2px solid #D6AD67; }
