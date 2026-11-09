@@ -1666,3 +1666,34 @@
         flex: none;
         margin-inline-start: auto;
     }
+
+/* 9 Nov: dish pop-up footer. Keep the price, quantity and Add to cart on one row
+   on desktop. Prices with an extra digit (RM 13.90 and above) or a promotion line
+   made the row slightly too wide, so flex-wrap pushed the buttons under the price. */
+@media (min-width: 62rem) {
+    .menu-dish-dialog .dish-detail__footer {
+        flex-wrap: nowrap;
+        gap: .6rem;
+    }
+
+        .menu-dish-dialog .dish-detail__footer > strong {
+            flex: 1 1 auto;
+            min-inline-size: 0;
+            font-size: 1.25rem;
+        }
+
+        .menu-dish-dialog .dish-detail__footer .menu-price__now {
+            white-space: nowrap;
+        }
+
+    .menu-dish-dialog .cart-detail-actions {
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        gap: .5rem;
+    }
+
+    .customer-menu .menu-dish-dialog .dish-detail__cart button[type="submit"] {
+        white-space: nowrap;
+        padding-inline: .9rem;
+    }
+}
