@@ -311,17 +311,36 @@
             else
             {
                 <div class="ov-list">
+                    
+                    
                     @foreach (var r in upcoming)
                     {
                         var hasRequest = !string.IsNullOrWhiteSpace(r.SpecialRequest);
-                        var tableText = r.Table != null ? "Table " + r.Table.TableNumber : "No table yet";
+                        var tableText = r.Table != null
+                            ? "Table " + r.Table.TableNumber
+                            : "No table yet";
+
                         <div class="ov-row @(r == nextGuest ? "is-next" : null)">
-                            <span class="ov-time">@r.ReservedAt.ToString("h:mm")<small>@r.ReservedAt.ToString("tt")</small></span>
-                            <span class="ov-row-main">
-                                <b>@(r.User?.FullName ?? "Guest") · @r.Guests @(r.Guests == 1 ? "guest" : "guests")</b>
-                                <em class="@(hasRequest ? "req" : null)">@tableText · @(hasRequest ? r.SpecialRequest : "No special request")</em>
+                            <span class="ov-time">
+                                @r.ReservedAt.ToString("h:mm")
+                                <small>@r.ReservedAt.ToString("tt")</small>
                             </span>
-                            <span class="status-badge status-@r.Status">@Label(r.Status)</span>
+
+                            <span class="ov-row-main">
+                                <b>
+                                    @(r.User?.FullName ?? "Guest") ·
+                                    @r.Guests
+                                    @(r.Guests == 1 ? "guest" : "guests")
+                                </b>
+                                <em class="@(hasRequest ? "req" : null)">
+                                    @tableText ·
+                                    @(hasRequest ? r.SpecialRequest : "No special request")
+                                </em>
+                            </span>
+
+                            <span class="status-badge status-@r.Status">
+                                @Label(r.Status)
+                            </span>
                         </div>
                     }
                 </div>
@@ -356,15 +375,25 @@
             else
             {
                 <div class="ov-list">
+                    
                     @foreach (var order in latestOrders)
                     {
-                        <div class="ov-row ov-tk @TicketClass(order.Status)">
-                            <span class="ov-code">@order.OrderNo</span>
-                            <span class="ov-row-main">
-                                <b>@Label(order.OrderType)</b>
-                                <em>RM @order.TotalAmount.ToString("N2")</em>
-                            </span>
-                            <span class="status-badge status-@order.Status">@Label(order.Status)</span>
+                        <div class="ov-row ov-tk ov-order-item @TicketClass(order.Status)">
+                            <div class="ov-order-top">
+                                <span class="ov-code">@order.OrderNo</span>
+                                <span class="status-badge status-@order.Status">
+                                    @Label(order.Status)
+                                </span>
+                            </div>
+
+                            <div class="ov-order-bottom">
+                                <span class="ov-order-type">
+                                    @Label(order.OrderType)
+                                </span>
+                                <span class="ov-order-amount">
+                                    RM @order.TotalAmount.ToString("N2")
+                                </span>
+                            </div>
                         </div>
                     }
                 </div>
@@ -388,15 +417,30 @@
             else
             {
                 <div class="ov-list">
+                    
                     @foreach (var p in latestPayments)
                     {
-                        <div class="ov-row">
-                            <span class="ov-code">@(p.Order?.OrderNo ?? "Bill")</span>
-                            <span class="ov-row-main">
-                                <b>RM @p.Amount.ToString("N2")</b>
-                                <em>@p.Method · @(p.PaidAt?.ToString("h:mm tt") ?? "not paid")</em>
-                            </span>
-                            <span class="status-badge status-@p.Status">@p.Status</span>
+                        <div class="ov-row ov-payment-item">
+                            <div class="ov-payment-top">
+                                <span class="ov-code">
+                                    @(p.Order?.OrderNo ?? "Bill")
+                                </span>
+
+                                <span class="status-badge status-@p.Status">
+                                    @p.Status
+                                </span>
+                            </div>
+
+                            <div class="ov-payment-bottom">
+                                <span class="ov-payment-method">
+                                    @p.Method ·
+                                    @(p.PaidAt?.ToString("h:mm tt") ?? "not paid")
+                                </span>
+
+                                <span class="ov-payment-amount">
+                                    RM @p.Amount.ToString("N2")
+                                </span>
+                            </div>
                         </div>
                     }
                 </div>
