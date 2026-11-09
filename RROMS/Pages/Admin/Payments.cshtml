@@ -99,6 +99,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/admin-payments.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/yoru-pick.css" asp-append-version="true" />
     @* Coming back from a filter / search: hide the page until it has scrolled
        back to where the admin was (admin-payments.js), so it does not jump. *@
     <script>
@@ -108,9 +109,10 @@
 
 @section Scripts {
     <script src="~/js/admin-payments.js" asp-append-version="true"></script>
+    <script src="~/js/yoru-pick.js" asp-append-version="true"></script>
 }
 
-<div class="ap-page">
+<div class="ap-page" data-yp-scope>
 
     @* ================= HERO ================= *@
     <section class="ap-hero">
@@ -174,14 +176,14 @@
         <div class="ap-field">
             <label for="apFrom">DATE</label>
             <div class="ap-dates">
-                <input id="apFrom" type="date" name="from" value="@Iso(Model.From)" max="@Model.TodayIso" class="ap-input" aria-label="From date" />
+                <input id="apFrom" type="date" name="from" value="@Iso(Model.From)" max="@Model.TodayIso" class="ap-input" aria-label="From date" data-yp />
                 <span aria-hidden="true">–</span>
-                <input id="apTo" type="date" name="to" value="@Iso(Model.To)" max="@Model.TodayIso" class="ap-input" aria-label="To date" />
+                <input id="apTo" type="date" name="to" value="@Iso(Model.To)" max="@Model.TodayIso" class="ap-input" aria-label="To date" data-yp />
             </div>
         </div>
         <div class="ap-field">
             <label for="apMethod">METHOD</label>
-            <select id="apMethod" name="method" class="ap-input">
+            <select id="apMethod" name="method" class="ap-input" data-yp>
                 <option value="">All methods</option>
                 @foreach (var m in Enum.GetValues<PaymentMethod>())
                 {
@@ -213,21 +215,6 @@
         <div class="ap-alert" role="alert">
             <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
             @(ViewData.ModelState.Values.SelectMany(v => v.Errors).FirstOrDefault()?.ErrorMessage)
-        </div>
-    }
-
-    @if (TempData["ApRefundOk"] is string refundOk)
-    {
-        <div class="ap-toast is-ok" role="status" data-ap-toast="auto">
-            <i class="bi bi-check2-circle" aria-hidden="true"></i><span>@refundOk</span>
-            <button type="button" class="ap-toast-x" data-ap-toast-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
-        </div>
-    }
-    @if (TempData["ApRefundError"] is string refundError)
-    {
-        <div class="ap-toast" role="alert">
-            <i class="bi bi-exclamation-circle" aria-hidden="true"></i><span>@refundError</span>
-            <button type="button" class="ap-toast-x" data-ap-toast-close aria-label="Close"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
         </div>
     }
 
@@ -521,7 +508,7 @@
                 </label>
 
                 <label for="apRfReason" class="ap-rf-label">REASON</label>
-                <select id="apRfReason" name="reason" class="ap-input">
+                <select id="apRfReason" name="reason" class="ap-input" data-yp>
                     <option value="" disabled selected hidden>Choose a reason</option>
                     @foreach (var r in RefundReasons.All)
                     {
