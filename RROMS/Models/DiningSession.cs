@@ -3,7 +3,7 @@
 namespace RROMS.Models
 {
     // Owner: Member 2 (Tables & Reservations)
-    // One visit at one table. Opened when staff mark a reservation Seated or seat a walk-in,
+    // One visit at one table. Opened when staff mark a reservation Seated,
     // closed when the guests leave. Dine-in orders and the combined bill hang off this row.
     // Shared IDs and foreign keys: do not rename or delete without telling the team.
     public class DiningSession
@@ -13,11 +13,11 @@ namespace RROMS.Models
         public int TableId { get; set; }
         public RestaurantTable Table { get; set; } = null!;
 
-        // Null for a walk-in.
+        // Set for every visit opened from a reservation (null only in old data).
         public int? ReservationId { get; set; }
         public Reservation? Reservation { get; set; }
 
-        // Comes from the reservation; null for a walk-in until they order.
+        // Comes from the reservation (null only in old data, until a customer orders).
         public string? CustomerId { get; set; }
         public ApplicationUser? Customer { get; set; }
 

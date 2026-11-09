@@ -577,7 +577,7 @@
     .occ-empty p { margin-top: 4px !important; color: var(--occ-soft); font-size: 14px }
 
 /* ---------- key numbers ---------- */
-.occ-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 20px }
+.occ-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 20px }
 
 .occ-stat {
     padding: 16px 20px 18px;
@@ -861,8 +861,7 @@ button.occ-cell.is-sel { outline-color: var(--occ-ink); box-shadow: 0 4px 10px r
 
 .occ-stats > .occ-stat:nth-child(1) { background-image: url("../images/analytics/yoru-analytics-reservations-bg.webp") }
 .occ-stats > .occ-stat:nth-child(2) { background-image: url("../images/analytics/yoru-analytics-utilisation-bg.webp") }
-.occ-stats > .occ-stat:nth-child(3) { background-image: url("../images/analytics/yoru-analytics-walkins-bg.webp") }
-.occ-stats > .occ-stat:nth-child(4) { background-image: url("../images/analytics/yoru-analytics-party-stay-bg.webp") }
+.occ-stats > .occ-stat:nth-child(3) { background-image: url("../images/analytics/yoru-analytics-party-stay-bg.webp") }
 .occ-heatcard { background-image: url("../images/analytics/yoru-analytics-peak-hours-bg.webp") }
 .occ-trendcard { background-image: url("../images/analytics/yoru-analytics-booking-trends-bg.webp") }
 

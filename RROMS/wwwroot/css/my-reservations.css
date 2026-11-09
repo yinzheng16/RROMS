@@ -427,9 +427,10 @@
     margin: 0 0 23px
 }
 /* Native dialogs: focus containment, Escape handling and inert background are native. */
-/* While a dialog animates in or out, never show its scrollbar (the sliding content briefly overflows). */
+/* While a dialog animates in or out, never show its scrollbar (the sliding content briefly overflows).
+   Only the start is written, so once the animation ends the dialog scrolls again on small screens. */
 @keyframes myr-no-scroll {
-    from, to {
+    from {
         overflow: hidden
     }
 }
@@ -743,6 +744,7 @@ html.myr-has-dialog {
 
 .myr-dialog-actions {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     gap: 22px;
     padding: 28px 0 0
@@ -756,6 +758,30 @@ html.myr-has-dialog {
     color: #ff5745;
     border: 1px solid #ff5b4d;
     font-size: 21px
+}
+
+.myr-pdf-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 210px;
+    padding: 13px 26px;
+    border-radius: 7px;
+    background: linear-gradient(#10161b,#16232c);
+    color: #9fd3e8;
+    border: 1px solid #6fb3cf;
+    font-size: 21px;
+    text-decoration: none;
+    cursor: pointer
+}
+
+    .myr-pdf-button:hover { background: #1f3340; color: #c4e6f4 }
+
+    .myr-pdf-button[hidden] { display: none }
+
+/* The other buttons here take the dialog's own font (font: inherit); the link does the same so all four match. */
+.myr-detail-dialog a.myr-pdf-button {
+    font: inherit
 }
 
 .myr-close-button {
@@ -1133,7 +1159,7 @@ html.myr-has-dialog {
         padding-top: 18px
     }
 
-    .myr-cancel-button, .myr-close-button {
+    .myr-cancel-button, .myr-close-button, .myr-pdf-button {
         font-size: 18px;
         min-width: 170px
     }
@@ -1363,7 +1389,7 @@ html.myr-has-dialog {
         gap: 11px
     }
 
-    .myr-cancel-button, .myr-close-button {
+    .myr-cancel-button, .myr-close-button, .myr-pdf-button {
         min-width: 0;
         flex: 1;
         font-size: 16px;
@@ -2211,7 +2237,7 @@ html.myr-has-dialog {
         padding-top: 16px
     }
 
-    .myr-cancel-button, .myr-close-button {
+    .myr-cancel-button, .myr-close-button, .myr-pdf-button {
         min-width: 180px;
         font-size: 17px;
         padding: 10px 22px

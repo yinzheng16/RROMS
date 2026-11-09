@@ -93,8 +93,6 @@
 
     var areaName = Model.AreaId.HasValue ? Model.Choices.Areas.FirstOrDefault(a => a.Id == Model.AreaId)?.Name : null;
     var typeName = Model.TableTypeId.HasValue ? Model.Choices.TableTypes.FirstOrDefault(a => a.Id == Model.TableTypeId)?.Name : null;
-    var walkInShare = (t.Reservations - t.Cancelled + t.WalkIns) > 0
-        ? t.WalkIns * 100.0 / (t.Reservations - t.Cancelled + t.WalkIns) : 0;
 }
 <link rel="stylesheet" href="~/css/admin-occupancy.css" asp-append-version="true" />
 
@@ -249,12 +247,6 @@
                     }
                 </select>
             </div>
-            <div class="occ-field"><span class="occ-fl">Count</span>
-                <select name="mode" data-label="What to count">
-                    <option value="all" selected="@f.IncludeWalkIns">Reservations + walk-ins</option>
-                    <option value="res" selected="@(!f.IncludeWalkIns)">Reservations only</option>
-                </select>
-            </div>
             <div class="occ-filter-act">
                 <button type="submit" class="occ-btn is-primary" id="occApply">Apply</button>
                 <a class="occ-btn" href="@Url.Page("/Admin/Occupancy/Index")">Reset</a>
@@ -267,8 +259,7 @@
         </form>
 
         <p class="occ-scope">
-            @(areaName ?? "All dining areas") · @(typeName ?? "All table types") · @t.TableCount tables &amp; rooms ·
-            @(f.IncludeWalkIns ? "reservations + walk-ins" : "reservations only")
+            @(areaName ?? "All dining areas") · @(typeName ?? "All table types") · @t.TableCount tables &amp; rooms · reservations only
         </p>
 
         @if (!Model.HasData)
@@ -276,7 +267,7 @@
             <section class="occ-card occ-empty">
                 <i class="bi bi-calendar2-x" aria-hidden="true"></i>
                 <div>
-                    <h2>No reservations or walk-ins in this range</h2>
+                    <h2>No reservations in this range</h2>
                     <p>Try a longer range, or clear the filters.@(Model.IsDevelopment ? " For a demo, load the sample data below." : "")</p>
                 </div>
             </section>
@@ -295,11 +286,6 @@
                 <p class="occ-sub">of @(Pct(t.OpenHours)) open hours per table</p>
             </article>
             <article class="occ-card occ-stat" style="--i:2">
-                <p class="occ-kicker">Walk-ins</p>
-                <p class="occ-num"><b data-count="@t.WalkIns">@t.WalkIns</b> @Html.Raw(f.IncludeWalkIns ? ChangePct(t.WalkIns, prev?.WalkIns) : "")</p>
-                <p class="occ-sub">@(f.IncludeWalkIns ? Pct(Math.Round(walkInShare, 1)) + "% of all parties" : "Not counted in this view")</p>
-            </article>
-            <article class="occ-card occ-stat" style="--i:3">
                 <p class="occ-kicker">Average party &amp; stay</p>
                 <p class="occ-num"><b data-count="@Pct(t.AvgGuests)" data-dec="1">@t.AvgGuests.ToString("0.0", inv)</b><small>guests</small></p>
                 <p class="occ-sub">@(t.AvgDwellMinutes > 0 ? "Stay about " + t.AvgDwellMinutes.ToString("0", inv) + " min (table held " + BookingRules.DurationMinutes + ")" : "No finished meals yet")</p>
@@ -402,7 +388,7 @@
                     {
                         var w = weeks[i];
                         var tip = Day(w.Start) + (w.Days > 1 ? " – " + Day(w.End) : "") + "|" + w.Reservations + " reservations|" +
-                                  (f.IncludeWalkIns ? w.WalkIns + " walk-ins · " : "") + Pct(w.UtilisationPercent) + "% utilised" +
+                                  Pct(w.UtilisationPercent) + "% utilised" +
                                   (w.IsPartial ? "|Only " + w.Days + (w.Days == 1 ? " day" : " days") + " so far" : "");
                         <g class="occ-pt-g" style="--i:@i">
                             <circle class="occ-pt @(w.IsPartial ? "is-partial" : "")" cx="@X(i).ToString("0.#", inv)" cy="@Y(w.Reservations).ToString("0.#", inv)" r="@(w.IsPartial ? "5" : "4.5")" />
@@ -493,13 +479,13 @@
                     <div class="occ-all" id="occAll">
                         <div class="occ-all-in">
                             <table>
-                                <thead><tr><th>Table</th><th>Type</th><th>Area</th><th>Seats</th><th>Bookings</th><th>Walk-ins</th><th>Hours used</th><th>Used</th></tr></thead>
+                                <thead><tr><th>Table</th><th>Type</th><th>Area</th><th>Seats</th><th>Bookings</th><th>Hours used</th><th>Used</th></tr></thead>
                                 <tbody>
                                     @foreach (var row in tbl)
                                     {
                                         <tr>
                                             <td>@row.Name</td><td>@row.TypeName</td><td>@row.AreaName</td><td>@row.Capacity</td>
-                                            <td>@row.Bookings</td><td>@row.WalkIns</td><td>@Pct(row.OccupiedHours)</td>
+                                            <td>@row.Bookings</td><td>@Pct(row.OccupiedHours)</td>
                                             <td><span class="occ-trow-bar"><i class="@(row.Percent <= maxPct * 0.4 ? "is-low" : "")" style="--w:@((row.Percent / maxPct * 100).ToString("0.#", inv))%"></i></span> <b>@Pct(row.Percent)%</b></td>
                                         </tr>
                                     }
@@ -531,7 +517,7 @@
         }
 
         <footer class="occ-foot-note">
-            <span>@(f.IncludeWalkIns ? "Occupancy counts confirmed, seated and finished bookings plus walk-ins." : "Occupancy counts confirmed, seated and finished bookings (walk-ins are not counted in this view).") Cancellations and no-shows are left out. Today is counted up to the current time; hours still to come are not included.</span>
+            <span>Occupancy counts confirmed, seated and finished bookings. Cancellations and no-shows are left out. Today is counted up to the current time; hours still to come are not included.</span>
             <span lang="ja">夜 · YORU IZAKAYA</span>
         </footer>
     </div>

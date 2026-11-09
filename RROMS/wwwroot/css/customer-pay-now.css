@@ -1,0 +1,88 @@
+/* Owner: Member 3. "Pay now" panel for takeaway orders (US33 hook-up):
+   order confirmation (dark panel) and My Orders details (light paper). */
+.pay-now {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    margin: 1rem 0;
+    padding: .85rem 1rem;
+    border: 1px solid rgba(183, 155, 114, .45);
+    border-radius: .85rem;
+    background: rgba(255, 250, 240, .85);
+    color: #2b241c;
+    font-size: .9rem;
+}
+
+    .pay-now p { margin: .1rem 0 0; color: #5d5a50; line-height: 1.45; }
+    .pay-now strong { font-weight: 700; }
+    .pay-now a { color: #c83e2d; font-weight: 600; }
+
+.pay-now__icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: rgba(183, 155, 114, .18);
+    color: #8a6a3c;
+}
+
+.pay-now--action { flex-wrap: wrap; justify-content: space-between; }
+.pay-now__copy { flex: 1 1 14rem; min-width: 0; }
+.pay-now form { margin: 0; }
+
+.pay-now__button {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 2.75rem;
+    padding: .55rem 1.25rem;
+    border: 0;
+    border-radius: .7rem;
+    background: linear-gradient(90deg, #8e2015 0%, #c83e2d 55%, #dd6a52 100%);
+    box-shadow: 0 .35rem .9rem rgba(168, 50, 36, .3);
+    color: #fff8ec;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: filter .2s ease, transform .2s ease;
+}
+
+    .pay-now__button:hover, .pay-now__button:focus-visible { filter: brightness(1.07); transform: translateY(-1px); }
+    .pay-now__button:focus-visible { outline: .15rem solid #b79b72; outline-offset: .2rem; }
+    .pay-now__button:disabled { opacity: .7; cursor: wait; transform: none; }
+
+    .pay-now__button.is-again {
+        border: 1.5px solid #c83e2d;
+        background: #fff;
+        box-shadow: none;
+        color: #c83e2d;
+    }
+
+.pay-now--paid { border-color: #c4dccb; background: #e9f3ec; }
+    .pay-now--paid .pay-now__icon { background: #2f8a57; color: #fff; }
+    .pay-now--paid strong { color: #22583a; }
+
+/* Dark order-confirmation panel */
+.pay-now--dark {
+    border-color: rgba(183, 155, 114, .4);
+    background: rgba(25, 20, 15, .55);
+    color: #f5ead3;
+}
+
+    .pay-now--dark p { color: #d9ccb4; }
+    .pay-now--dark a { color: #f0a08f; }
+    .pay-now--dark .pay-now__icon { background: rgba(183, 155, 114, .22); color: #e3c79a; }
+    .pay-now--dark.pay-now--paid { border-color: rgba(127, 196, 150, .5); background: rgba(47, 138, 87, .2); }
+        .pay-now--dark.pay-now--paid strong { color: #9fe0b5; }
+        .pay-now--dark.pay-now--paid .pay-now__icon { background: #2f8a57; color: #fff; }
+
+@media (max-width: 575.98px) {
+    .pay-now--action form, .pay-now__button { width: 100%; justify-content: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pay-now__button { transition: none; }
+    .pay-now__button:hover { transform: none; }
+}

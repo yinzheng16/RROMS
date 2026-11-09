@@ -262,7 +262,7 @@
         </article>
         <p class="myr-cancel-note" id="myrCancelNote" hidden></p>
         <p class="myr-rule-note" id="myrRuleNote">You can cancel any time before the booking time.</p>
-        <div class="myr-dialog-actions"><button type="button" class="myr-change-button" id="myrOpenChange">Modify Booking</button><button type="button" class="myr-cancel-button" id="myrOpenCancel">Cancel Reservation</button><button type="button" class="myr-close-button" id="myrCloseDetails">Close</button></div>
+        <div class="myr-dialog-actions"><a class="myr-pdf-button" id="myrPdf" href="#" hidden>Download PDF</a><button type="button" class="myr-change-button" id="myrOpenChange">Modify Booking</button><button type="button" class="myr-cancel-button" id="myrOpenCancel">Cancel Reservation</button><button type="button" class="myr-close-button" id="myrCloseDetails">Close</button></div>
     </div>
 </dialog>
 
@@ -310,6 +310,7 @@
                         <label class="myr-change-count"><input type="number" id="myrChangeGuests" inputmode="numeric" min="1" step="1" value="2" aria-label="Number of guests" /><span id="myrChangeGuestsWord">guests</span></label>
                         <button type="button" id="myrChangePlus" aria-label="One guest more">+</button>
                     </div>
+                    <p class="myr-change-limit" id="myrChangeGuestsHint" role="status" hidden></p>
                 </div>
                 <div class="myr-change-types myr-change-wide" id="myrChangeTypes" hidden>
                     <span class="myr-label" id="myrChangeTypesLabel">Table type</span>

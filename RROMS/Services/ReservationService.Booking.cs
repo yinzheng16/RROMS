@@ -225,7 +225,7 @@ public partial class ReservationService
             .Select(t => (int?)t.DefaultMaxGuests)
             .MaxAsync();
 
-        return Math.Clamp(max ?? 2, 1, 100);
+        return Math.Clamp(max ?? 2, 1, BookingRules.MaxGuests);
     }
 
     // ---------- availability ----------
@@ -270,8 +270,8 @@ public partial class ReservationService
     {
         await ReleaseOverdueReservationsAsync();
 
-        if (guests < 1 || guests > 100)
-            return new TypeOptionsResult("Choose between 1 and 100 guests.", new());
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return new TypeOptionsResult($"Choose between 1 and {BookingRules.MaxGuests} guests.", new());
 
         var (hours, specials) = await LoadScheduleAsync();
         var error = ValidateSlot(start, hours, specials, DateTime.Now);
@@ -387,8 +387,8 @@ public partial class ReservationService
     {
         await ReleaseOverdueReservationsAsync();
 
-        if (guests < 1 || guests > 100)
-            return new TimeCheckResult(false, false, "Choose between 1 and 100 guests.", new());
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return new TimeCheckResult(false, false, $"Choose between 1 and {BookingRules.MaxGuests} guests.", new());
 
         var now = DateTime.Now;
         start = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
@@ -567,8 +567,8 @@ public partial class ReservationService
             req.ReservedAt.Hour, req.ReservedAt.Minute, 0);
         var end = start.AddMinutes(BookingRules.DurationMinutes);
 
-        if (req.Guests < 1 || req.Guests > 100)
-            return BookingResult.Fail("guests", "Choose between 1 and 100 guests.");
+        if (req.Guests < 1 || req.Guests > BookingRules.MaxGuests)
+            return BookingResult.Fail("guests", $"Choose between 1 and {BookingRules.MaxGuests} guests.");
 
         var special = (req.SpecialRequest ?? "").Trim();
         special = new string(special.Where(c => !char.IsControl(c) || c == '\n').ToArray());
@@ -726,7 +726,8 @@ public partial class ReservationService
                 reservation.SpecialRequest,
                 spend,
                 reservation.Status.ToString(),
-                AreaIconOf(type.DefaultDiningArea)));
+                AreaIconOf(type.DefaultDiningArea),
+                reservation.Id));
         }
         catch (Exception ex) when (
             ex is DbUpdateException ||
@@ -765,7 +766,8 @@ public partial class ReservationService
             r.SpecialRequest,
             r.MinimumSpendAccepted ?? 0m,
             r.Status.ToString(),
-            AreaIconOf(type?.DefaultDiningArea));
+            AreaIconOf(type?.DefaultDiningArea),
+            r.Id);
     }
 
     // e.g. YR-7K3M9Q (no 0/O/1/I, easy to read out over the phone)
@@ -801,20 +803,16 @@ public partial class ReservationService
     {
         var cutoff = DateTime.Now.AddMinutes(-BookingRules.NoShowGraceMinutes);
 
-        var overdue = await _db.Reservations
-            .Where(r => (r.Status == ReservationStatus.Pending ||
-                         r.Status == ReservationStatus.Confirmed) &&
-                        r.ReservedAt < cutoff)
-            .ToListAsync();
+        // One conditional UPDATE per status, so a booking that staff seat, confirm or cancel at the same
+        // moment is never overwritten: only rows that are still Pending / Confirmed are changed.
+        var cancelled = await _db.Reservations
+            .Where(r => r.Status == ReservationStatus.Pending && r.ReservedAt < cutoff)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, ReservationStatus.Cancelled));
 
-        if (overdue.Count == 0) return 0;
+        var noShow = await _db.Reservations
+            .Where(r => r.Status == ReservationStatus.Confirmed && r.ReservedAt < cutoff)
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, ReservationStatus.NoShow));
 
-        foreach (var r in overdue)
-            r.Status = r.Status == ReservationStatus.Pending
-                ? ReservationStatus.Cancelled
-                : ReservationStatus.NoShow;
-
-        await _db.SaveChangesAsync();
-        return overdue.Count;
+        return cancelled + noShow;
     }
 }

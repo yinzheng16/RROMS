@@ -8,7 +8,8 @@ namespace RROMS.Pages.Customer.Orders;
 
 [Authorize(Policy = "CustomerOnly")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
-public class IndexModel(ICustomerCartService carts) : PageModel
+public class IndexModel(ICustomerCartService carts, IOnlinePaymentService online,
+    ILogger<IndexModel> logger) : PageModel
 {
     public CustomerOrderHistory History { get; private set; } = null!;
     public HistoryOrderDetails? Details { get; private set; }
@@ -29,6 +30,7 @@ public class IndexModel(ICustomerCartService carts) : PageModel
         {
             Details = await carts.GetHistoryOrderAsync(userId, orderId.Value, cancellationToken);
             if (Details is null) return NotFound();
+            ViewData[TakeawayPayView.ViewDataKey] = await PayViewAsync(Details);
         }
         return Page();
     }
@@ -38,6 +40,13 @@ public class IndexModel(ICustomerCartService carts) : PageModel
         string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrWhiteSpace(userId)) return Challenge();
         var details = await carts.GetHistoryOrderAsync(userId, id, cancellationToken);
-        return details is null ? NotFound() : Partial("_OrderHistoryDetails", details);
+        if (details is null) return NotFound();
+        var result = Partial("_OrderHistoryDetails", details);
+        result.ViewData[TakeawayPayView.ViewDataKey] = await PayViewAsync(details);
+        return result;
     }
+
+    // Pay now panel in the order details (US33 hook-up, Member 4's payment status).
+    private Task<TakeawayPayView> PayViewAsync(HistoryOrderDetails details)
+        => TakeawayPayView.LoadAsync(online, logger, details.Id, details.Dining, details.Status, details.Total);
 }

@@ -374,8 +374,8 @@ public partial class ReservationService : IMyReservationsService
                 ? "You cannot modify a reservation after its booking time."
                 : "This reservation can no longer be modified.", false);
 
-        if (guests < 1 || guests > 20)
-            return Bad("Choose between 1 and 20 guests.", false);
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return Bad($"Choose between 1 and {BookingRules.MaxGuests} guests.", false);
 
         var table = res.Table;
         if (table?.TableTypeDefinitionId is not int currentTypeId)
@@ -463,8 +463,8 @@ public partial class ReservationService : IMyReservationsService
         start = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
         var end = start.AddMinutes(BookingRules.DurationMinutes);
 
-        if (guests < 1 || guests > 20)
-            return new(false, "guests", "Choose between 1 and 20 guests.");
+        if (guests < 1 || guests > BookingRules.MaxGuests)
+            return new(false, "guests", $"Choose between 1 and {BookingRules.MaxGuests} guests.");
 
         // Same rules as a new booking: trimmed, no control characters, at most 500 characters.
         string? special = null;

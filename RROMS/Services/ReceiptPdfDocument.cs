@@ -156,6 +156,12 @@ namespace RROMS.Services
                 .FontFamily(Display).Bold().FontSize(12).LetterSpacing(0.19f);
             col.Item().AlignCenter().Text("Japanese Dining").FontSize(8).FontColor(Muted);
 
+            // US54: same receipt (proof of the original payment), clearly marked as refunded.
+            if (r.RefundedAt.HasValue)
+                col.Item().PaddingTop(8).AlignCenter()
+                    .Border(1).BorderColor(Red).PaddingVertical(2).PaddingHorizontal(10)
+                    .Text("REFUNDED").FontColor(Red).Bold().FontSize(9).LetterSpacing(0.19f);
+
             col.Item().PaddingTop(16).Column(info =>
             {
                 Row(info, "Receipt No.", r.ReceiptNo);
@@ -163,6 +169,12 @@ namespace RROMS.Services
                     Row(info, "Bill No.", r.BillNo);
                 Row(info, r.OrderType == OrderType.DineIn ? "Dine-in" : "Takeaway", Visit(r));
                 Row(info, "Paid", When(r.PaidAt));
+                if (r.RefundedAt is DateTime refundedAt)   // US54
+                {
+                    Row(info, "Refunded", When(refundedAt));
+                    if (!string.IsNullOrWhiteSpace(r.RefundReason))
+                        Row(info, "Refund reason", r.RefundReason);
+                }
             });
         }
 

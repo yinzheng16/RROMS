@@ -187,7 +187,6 @@
             '<div class="occ-slot-grid">' +
             '<div><small>Tables in use</small><b>' + esc(pct) + '</b></div>' +
             '<div><small>Reservations</small><b>' + d.reservations + '</b></div>' +
-            '<div><small>Walk-ins</small><b>' + d.walkIns + '</b></div>' +
             '<div><small>Avg party</small><b>' + (d.reservations > 0 ? fmt(d.avgGuests, 1) : '—') + '</b></div>' +
             '</div>';
         var more = [];
@@ -199,11 +198,10 @@
         if (d.busiestDate) {
             var parts = [];
             if (d.busiestDateReservations) parts.push(d.busiestDateReservations + (d.busiestDateReservations === 1 ? ' reservation' : ' reservations'));
-            if (d.busiestDateWalkIns) parts.push(d.busiestDateWalkIns + (d.busiestDateWalkIns === 1 ? ' walk-in' : ' walk-ins'));
             more.push('<span><em>Busiest day:</em> ' + esc(d.busiestDateText) + ' · ' + parts.join(', ') +
                 (d.staffUrl ? ' · <a href="' + esc(d.staffUrl) + '">Open that day</a>' : '') + '</span>');
         }
-        if (!d.reservations && !d.walkIns) more.push('<span><em>No parties in this slot for the chosen range.</em></span>');
+        if (!d.reservations) more.push('<span><em>No parties in this slot for the chosen range.</em></span>');
         html += '<div class="occ-slot-more">' + more.join('') + '</div></div>';
         swap(html);
     }
@@ -280,7 +278,7 @@
         if (!link || !form) return;
 
         var url = new URL(link.getAttribute('href'), window.location.href);
-        var names = ['area', 'type', 'mode'];
+        var names = ['area', 'type'];
         if (link.href.indexOf('handler=Export') >= 0) names = names.concat(['from', 'to']);
         names.forEach(function (name) {
             var field = form.elements[name];

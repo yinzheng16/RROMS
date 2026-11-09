@@ -1,7 +1,9 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using RROMS.Hubs;
 using RROMS.Models;
 using RROMS.Repositories;
 using RROMS.Services.Interfaces;
@@ -31,6 +33,11 @@ namespace RROMS.Services
         private readonly IHomeService _home;
         private readonly IHttpContextAccessor _http;
         private readonly ILogger<NotificationService> _logger;
+        private readonly IHubContext<NotificationHub> _hub;   // US37: real-time push to the bell
+        private readonly IServiceScopeFactory _scopes;         // US38: emails are sent in the background
+
+        // Site address for email buttons when the email is built outside the web request (background send).
+        private string? _siteBase;
 
         public NotificationService(
             IRepository<Notification> notifications,
@@ -40,7 +47,9 @@ namespace RROMS.Services
             IEmailSender email,
             IHomeService home,
             IHttpContextAccessor http,
-            ILogger<NotificationService> logger)
+            ILogger<NotificationService> logger,
+            IHubContext<NotificationHub> hub,
+            IServiceScopeFactory scopes)
         {
             _notifications = notifications;
             _reservations = reservations;
@@ -50,6 +59,8 @@ namespace RROMS.Services
             _home = home;
             _http = http;
             _logger = logger;
+            _hub = hub;
+            _scopes = scopes;
         }
 
         public Task SendAsync(string userId, string title, string message, NotificationType type) =>
@@ -77,15 +88,42 @@ namespace RROMS.Services
                 return;
             }
 
-            // US38: the in-app notification is already saved; the email is extra and must never fail the caller.
+            // US37: tell the customer's open pages straight away (bell badge + toast).
+            // Only a signal is sent; if it fails, the bell still finds the notice on its 30-second check.
             try
             {
-                await SendEmailAsync(userId, title, message, type, email);
+                await _hub.Clients.User(userId).SendAsync(NotificationHub.ReceivedEvent);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Notification email for user {UserId} ({Title}) was not sent.", userId, title);
+                _logger.LogWarning(ex, "Live push for user {UserId} ({Title}) was not sent.", userId, title);
             }
+
+            // US38: the in-app notification is already saved; the email is extra and must never fail the caller.
+            // It is sent in the background, so the caller (e.g. staff pressing "Ready") does not wait for Gmail.
+            // A fresh scope gives it its own database context, because the request's one is gone by then.
+            var siteBase = CurrentSiteBase();
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using var scope = _scopes.CreateScope();
+                    var worker = (NotificationService)scope.ServiceProvider.GetRequiredService<INotificationService>();
+                    worker._siteBase = siteBase;
+                    await worker.SendEmailAsync(userId, title, message, type, email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Notification email for user {UserId} ({Title}) was not sent.", userId, title);
+                }
+            });
+        }
+
+        // "https://localhost:7223" from the current request; null when there is no request.
+        private string? CurrentSiteBase()
+        {
+            var request = _http.HttpContext?.Request;
+            return request is null ? null : $"{request.Scheme}://{request.Host}{request.PathBase}";
         }
 
         public Task<List<Notification>> GetForUserAsync(string userId, bool unreadOnly = false) =>
@@ -312,14 +350,14 @@ namespace RROMS.Services
 
             var footer = await FooterAsync();
 
+            // Reservation: a detailed email for received / confirmed / updated / cancelled only;
+            // other moments (seated, completed, no-show) stay in-app.
             if (email is null && type == NotificationType.Reservation)
             {
-                var reservationEmail = await BuildReservationEmailAsync(user, message, footer);
+                var reservationEmail = await BuildReservationEmailAsync(user, title, message, footer);
                 if (reservationEmail is not null)
-                {
                     await _email.SendEmailAsync(user.Email, reservationEmail.Value.Subject, reservationEmail.Value.Html);
-                    return;
-                }
+                return;
             }
 
             // Order: a detailed email for the important moments only; other status changes stay in-app.
@@ -352,10 +390,14 @@ namespace RROMS.Services
             await _email.SendEmailAsync(user.Email, email.Subject, html);
         }
 
-        // Reservation emails show the booking itself. The callers (Member 2's pages) put the reference number
-        // in the message, so the booking is found from it; the status decides which email is sent.
+        // Reservation emails show the booking itself. The callers (Member 2's pages and StaffReservationService)
+        // put the reference number in the message, so the booking is found from it. The booking's CURRENT
+        // status (and the title, for a change of date/time/guests) decides the email:
+        //   Pending -> received, Confirmed -> confirmed, Cancelled -> cancelled,
+        //   title "Reservation modified" / "Reservation updated" (still Pending/Confirmed) -> updated,
+        //   Seated / Completed / NoShow -> no email (in-app only).
         private async Task<(string Subject, string Html)?> BuildReservationEmailAsync(
-            ApplicationUser user, string message, string footer)
+            ApplicationUser user, string notificationTitle, string message, string footer)
         {
             var recent = await _reservations.Query()
                 .AsNoTracking()
@@ -368,6 +410,14 @@ namespace RROMS.Services
 
             var r = recent.FirstOrDefault(x => !string.IsNullOrEmpty(x.ReferenceNo) && message.Contains(x.ReferenceNo));
             if (r is null) return null;
+
+            // Seated, completed and no-show are only shown in-app (the guest is at the restaurant or the visit is over).
+            if (r.Status is not (ReservationStatus.Pending or ReservationStatus.Confirmed or ReservationStatus.Cancelled))
+                return null;
+
+            bool changed = r.Status != ReservationStatus.Cancelled &&
+                (notificationTitle.Contains("modified", StringComparison.OrdinalIgnoreCase) ||
+                 notificationTitle.Contains("updated", StringComparison.OrdinalIgnoreCase));
 
             var rows = new List<EmailTemplates.Row>
             {
@@ -397,6 +447,16 @@ namespace RROMS.Services
 
             switch (r.Status)
             {
+                case not ReservationStatus.Cancelled when changed:
+                    subject = $"Your YORU booking {r.ReferenceNo} was updated";
+                    kicker = "Reservation updated";
+                    title = "Your booking was updated";
+                    intro = r.Status == ReservationStatus.Confirmed
+                        ? "Your booking has been changed and your table stays confirmed. Here are the new details."
+                        : "Your booking has been changed. Here are the new details. It is waiting for the restaurant to confirm.";
+                    small = "Need to change plans again? You can manage your booking from My Reservations.";
+                    break;
+
                 case ReservationStatus.Cancelled:
                     subject = $"Your YORU booking {r.ReferenceNo} was cancelled";
                     kicker = "Reservation cancelled";
@@ -565,9 +625,9 @@ namespace RROMS.Services
             if (string.IsNullOrWhiteSpace(path)) return null;
             if (path.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return path;
 
-            var request = _http.HttpContext?.Request;
-            if (request is null) return null;
-            return $"{request.Scheme}://{request.Host}{request.PathBase}{(path.StartsWith('/') ? path : "/" + path)}";
+            var site = _siteBase ?? CurrentSiteBase();
+            if (site is null) return null;
+            return $"{site}{(path.StartsWith('/') ? path : "/" + path)}";
         }
 
         private async Task<HomeInfo?> SafeHomeAsync()

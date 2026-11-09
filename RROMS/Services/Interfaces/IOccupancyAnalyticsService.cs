@@ -2,7 +2,7 @@
 namespace RROMS.Services.Interfaces;
 
 /// <summary>What the admin picked on the page. From/To are whole days, both included.</summary>
-public record OccupancyFilter(DateTime From, DateTime To, int? AreaId, int? TableTypeId, bool IncludeWalkIns);
+public record OccupancyFilter(DateTime From, DateTime To, int? AreaId, int? TableTypeId);
 
 /// <summary>One weekday + hour box of the heatmap. Percent is null when the restaurant is never open at that hour.</summary>
 public record OccupancyHeatCell(double? Percent, int Bookings);
@@ -12,16 +12,16 @@ public record OccupancyHeatmap(IReadOnlyList<int> Hours, IReadOnlyList<IReadOnly
 
 /// <summary>One point of the trend line: a block of 7 days counted from the first day of the range.</summary>
 public record OccupancyWeek(DateTime Start, DateTime End, int Days, bool IsPartial,
-    int Reservations, int WalkIns, double UtilisationPercent);
+    int Reservations, double UtilisationPercent);
 
 public record OccupancyTableRow(int TableId, string Name, string TypeName, string AreaName, int Capacity,
-    double Percent, int Bookings, int WalkIns, double OccupiedHours);
+    double Percent, int Bookings, double OccupiedHours);
 
 /// <summary>A day range and an hour range, e.g. Tue-Thu from 3 PM to 5 PM (ToHour is the hour after the last box).</summary>
 public record OccupancyWindow(int FromDay, int ToDay, int FromHour, int ToHour, double Percent);
 
 public record OccupancyTotals(
-    int Reservations, int Completed, int Cancelled, int NoShow, int Active, int Due, int WalkIns,
+    int Reservations, int Completed, int Cancelled, int NoShow, int Active, int Due,
     double AvgUtilisation, double NoShowRate, double AvgGuests, double AvgDwellMinutes,
     int TableCount, double OpenHours);
 
@@ -42,8 +42,8 @@ public record OccupancySlotTable(string Name, string TypeName, double Hours);
 
 /// <summary>What the page shows when the admin clicks one heatmap box.</summary>
 public record OccupancySlotDetail(
-    int Day, int Hour, double? Percent, int Reservations, int WalkIns, double AvgGuests,
-    IReadOnlyList<OccupancySlotTable> TopTables, DateTime? BusiestDate, int BusiestDateReservations, int BusiestDateWalkIns, int DaysCounted);
+    int Day, int Hour, double? Percent, int Reservations, double AvgGuests,
+    IReadOnlyList<OccupancySlotTable> TopTables, DateTime? BusiestDate, int BusiestDateReservations, int DaysCounted);
 
 public record OccupancyChoice(int Id, string Name);
 
