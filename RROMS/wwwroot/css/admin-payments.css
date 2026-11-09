@@ -893,44 +893,6 @@ html.ap-restoring .ap-page { visibility: hidden; }
     .ap-menu-item:hover,
     .ap-menu-item:focus-visible { outline: 0; background: var(--ap-ref-bg); }
 
-/* message after a refund: fixed at the bottom, because the page returns to the same scroll place */
-.ap-toast {
-    position: fixed;
-    left: 50%;
-    bottom: 1.5rem;
-    z-index: 1080;
-    display: flex;
-    align-items: center;
-    gap: .6rem;
-    width: max-content;
-    max-width: min(40rem, calc(100vw - 2rem));
-    padding: .75rem .75rem .75rem 1rem;
-    border-radius: 10px;
-    font-size: .88rem;
-    color: var(--ap-fail);
-    background: var(--ap-fail-bg);
-    border: 1px solid rgba(155, 40, 35, .25);
-    box-shadow: 0 16px 32px -16px rgba(25, 20, 15, .45);
-    transform: translateX(-50%);
-    transition: opacity .3s, transform .3s;
-}
-    .ap-toast.is-ok { color: var(--ap-paid); background: var(--ap-paid-bg); border-color: rgba(47, 107, 52, .25); }
-    .ap-toast.is-hiding { opacity: 0; transform: translate(-50%, 8px); }
-    .ap-toast > .bi { font-size: 1rem; }
-
-.ap-toast-x {
-    display: grid;
-    place-items: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    margin-left: .25rem;
-    border: 0;
-    border-radius: 6px;
-    color: inherit;
-    background: transparent;
-}
-    .ap-toast-x:hover { background: rgba(0, 0, 0, .06); }
-
 /* refund pop-up: same header as the receipt pop-up */
 .ap-rf {
     width: min(30rem, calc(100vw - 2rem));
@@ -1099,3 +1061,52 @@ button.ap-flag.is-reason > span {
 /* the box cuts at its edge (needed for "…"); 3px room below so the underline is never cut,
    the negative margin keeps the line spacing the same */
 button.ap-flag.is-reason > span { padding-bottom: 3px; margin-bottom: -3px; }
+
+/* =====================================================
+   9 Nov: YORU pickers (yoru-pick.css / yoru-pick.js)
+   Method / refund reason lists and the date calendars:
+   table-head beige header with a seigaiha edge (same
+   waves as the banner and KPI cards), red for the chosen day.
+   ===================================================== */
+.ap-page {
+    --yp-bg: #fff;
+    --yp-ink: var(--ap-ink);
+    --yp-mute: var(--ap-mute);
+    --yp-line: var(--ap-line);
+    --yp-line-soft: var(--ap-line-2);
+    --yp-hover: var(--ap-hover);
+    --yp-accent: var(--ap-gold);
+    --yp-tick: var(--ap-red);
+    --yp-on-text: var(--ap-red-t);
+    --yp-on-bg: var(--ap-red);
+    --yp-on-ink: #fff;
+    --yp-link: var(--ap-red-t);
+    --yp-head-bg: var(--ap-head);
+    --yp-head-hover: rgba(183, 155, 114, .2);
+    --yp-radius: 10px;
+    --yp-day-radius: 6px;
+    --yp-cal-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B79B72' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2.5'/%3E%3Cpath d='M8 3v4M16 3v4M3.5 10h17'/%3E%3C/svg%3E");
+}
+
+/* calendar icon in the same place as the select arrow (15px from the edge) */
+input[type="date"].ap-input.yp-on {
+    padding-right: 2.25rem;
+    background-position: right 13px center;
+    background-size: 14px 14px;
+}
+
+.ap-page .yp-cal-head { padding-bottom: .8rem; }
+
+    .ap-page .yp-cal-head::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 8px;
+        opacity: .6;
+        background: radial-gradient(circle at 50% 100%,
+            transparent 0 22%, #B79B72 23% 26%, transparent 27% 44%,
+            #B79B72 45% 48%, transparent 49% 66%, #B79B72 67% 70%, transparent 71%) 0 100% / 16px 8px repeat-x;
+        pointer-events: none;
+    }

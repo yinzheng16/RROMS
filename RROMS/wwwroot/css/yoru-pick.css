@@ -1,0 +1,287 @@
+/* =====================================================
+   YORU pickers (Member 4) — pop-ups for wwwroot/js/yoru-pick.js
+   Dropdown lists and date / date-time calendars on:
+   Staff/Billing, Customer/Payments, Admin/Payments, Admin/Announcements.
+   Each page sets its own colours with the --yp-* variables in its
+   own CSS file (search "YORU pickers" there); this file is the layout.
+   ===================================================== */
+
+/* ---------- the boxes themselves ---------- */
+
+/* the browser's calendar button is replaced by our own icon */
+input.yp-on::-webkit-calendar-picker-indicator { display: none; }
+
+input.yp-on {
+    padding-right: 2.3rem;
+    background-image: var(--yp-cal-icon, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235C5F55' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2.5'/%3E%3Cpath d='M8 3v4M16 3v4M3.5 10h17'/%3E%3C/svg%3E"));
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 15px 15px;
+    cursor: pointer;
+}
+
+select.yp-on[aria-expanded="true"],
+input.yp-on[aria-expanded="true"] {
+    border-color: var(--yp-accent, #B79B72);
+    box-shadow: 0 0 0 3px var(--yp-ring, rgba(183, 155, 114, .22));
+}
+
+/* ---------- pop-up frame ---------- */
+
+.yp-pop {
+    position: fixed;
+    z-index: 1090;   /* above the Announcements pop-up (1080) */
+    overflow: hidden;
+    border: 1px solid var(--yp-line, #E4DACA);
+    border-radius: var(--yp-radius, 10px);
+    background: var(--yp-bg, #FCFAF5);
+    color: var(--yp-ink, #191919);
+    box-shadow: var(--yp-shadow, 0 18px 40px -16px rgba(40, 25, 10, .45));
+    font-family: var(--font-body);
+    font-size: .86rem;
+    line-height: 1.3;
+    text-align: left;
+    animation: yp-in .14s ease;
+}
+
+@keyframes yp-in { from { opacity: 0; transform: translateY(-4px); } }
+
+@media (prefers-reduced-motion: reduce) { .yp-pop { animation: none; } }
+
+.yp-pop button { font: inherit; color: inherit; }
+
+/* ---------- dropdown list ---------- */
+
+.yp-menu {
+    max-height: 18rem;
+    overflow-y: auto;
+    padding: .3rem;
+}
+
+.yp-opt {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .5rem .6rem .5rem .75rem;
+    border-radius: calc(var(--yp-radius, 10px) - 4px);
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+    .yp-opt.is-active { background: var(--yp-hover, #FBF5EA); }
+    .yp-opt[aria-disabled="true"] { opacity: .45; cursor: default; }
+
+    .yp-opt-icon { flex: none; color: var(--yp-mute, #5C5F55); }
+
+    .yp-opt-tick {
+        flex: none;
+        margin-left: auto;
+        padding-left: .75rem;
+        color: var(--yp-tick, var(--yp-accent, #B79B72));
+        visibility: hidden;
+    }
+
+    /* chosen: tick on the right and a short bar on the left */
+    .yp-opt.is-on { font-weight: 700; color: var(--yp-on-text, inherit); }
+    .yp-opt.is-on .yp-opt-tick { visibility: visible; }
+    .yp-opt.is-on::before {
+        content: "";
+        position: absolute;
+        left: .25rem;
+        top: 28%;
+        bottom: 28%;
+        width: 3px;
+        border-radius: 3px;
+        background: var(--yp-tick, var(--yp-accent, #B79B72));
+    }
+
+/* ---------- calendar ---------- */
+
+.yp-cal { width: 17.75rem; }
+.yp-cal.has-time { width: 24rem; }
+
+.yp-cal-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem;
+    padding: .55rem .6rem;
+    border-bottom: 1px solid var(--yp-head-border, var(--yp-line, #E4DACA));
+    background: var(--yp-head-bg, transparent);
+    color: var(--yp-head-ink, inherit);
+}
+
+.yp-nav {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid var(--yp-head-line, var(--yp-line, #E4DACA));
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color .15s;
+}
+
+    .yp-nav .bi { font-size: .8rem; }
+
+.yp-cal-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: .15rem .7rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color .15s;
+}
+
+    .yp-cal-title span {
+        font-family: var(--yp-title-font, var(--font-display));
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    /* small Japanese month above the title: shown only where the page asks for it */
+    .yp-cal-jp {
+        display: var(--yp-jp, none);
+        font-size: .62rem;
+        font-weight: 700;
+        letter-spacing: .22em;
+        color: var(--yp-accent, #B79B72);
+    }
+
+    .yp-nav:hover, .yp-cal-title:hover { background: var(--yp-head-hover, var(--yp-hover, #FBF5EA)); }
+
+/* flex-start: the calendar keeps its own height; the time columns are then set to it */
+.yp-cal-main { display: flex; align-items: flex-start; }
+
+.yp-cal-days { flex: 1; min-width: 0; padding: .5rem .6rem .35rem; }
+
+.yp-cal-week, .yp-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+    .yp-cal-week span {
+        padding: .2rem 0 .35rem;
+        font-size: .64rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-align: center;
+        text-transform: uppercase;
+        color: var(--yp-mute, #5C5F55);
+    }
+
+.yp-day, .yp-month, .yp-tm {
+    border: 1px solid transparent;
+    border-radius: var(--yp-day-radius, 8px);
+    background: transparent;
+    cursor: pointer;
+    transition: background-color .12s;
+}
+
+.yp-day { height: 2.1rem; padding: 0; font-size: .82rem; }
+    .yp-day.is-out { color: var(--yp-mute, #5C5F55); opacity: .6; }
+    .yp-day.is-today { border-color: var(--yp-today, var(--yp-accent, #B79B72)); font-weight: 700; }
+
+.yp-day:hover:not(:disabled), .yp-month:hover:not(:disabled), .yp-tm:hover { background: var(--yp-hover, #FBF5EA); }
+
+.yp-day.is-on, .yp-month.is-on, .yp-tm.is-on,
+.yp-day.is-on:hover, .yp-month.is-on:hover, .yp-tm.is-on:hover {
+    border-color: transparent;
+    background: var(--yp-on-bg, #B79B72);
+    color: var(--yp-on-ink, #fff);
+    font-weight: 700;
+}
+
+.yp-day:disabled, .yp-month:disabled { opacity: .28; cursor: not-allowed; }
+
+.yp-cal-months {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .35rem;
+    padding: .7rem .6rem;
+}
+
+.yp-month { height: 2.5rem; font-size: .84rem; font-weight: 500; }
+
+/* hour / minute columns next to the calendar (date-time boxes) */
+.yp-time {
+    display: flex;
+    flex: none;
+    border-left: 1px solid var(--yp-line-soft, var(--yp-line, #E4DACA));
+}
+
+.yp-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 3.1rem;
+    padding: 0 .3rem .35rem;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+    .yp-col + .yp-col { border-left: 1px solid var(--yp-line-soft, var(--yp-line, #E4DACA)); }
+
+.yp-col-h {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: .7rem 0 .4rem;
+    background: var(--yp-bg, #FCFAF5);
+    font-size: .6rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-align: center;
+    color: var(--yp-mute, #5C5F55);
+}
+
+.yp-tm { flex: none; height: 1.9rem; padding: 0; font-size: .8rem; font-variant-numeric: tabular-nums; }
+
+/* footer: Today / Clear (dates), Now / Done (date-time) */
+.yp-cal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .45rem .6rem .55rem;
+    border-top: 1px solid var(--yp-line-soft, var(--yp-line, #E4DACA));
+}
+
+.yp-link {
+    padding: .3rem .5rem;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--yp-link, var(--yoru-red-text, #B23526)) !important;
+    font-size: .78rem !important;
+    font-weight: 700;
+    letter-spacing: .04em;
+    cursor: pointer;
+}
+
+    .yp-link.is-soft { color: var(--yp-mute, #5C5F55) !important; font-weight: 500; }
+    .yp-link:hover:not(:disabled) { background: var(--yp-hover, #FBF5EA); }
+    .yp-link:disabled { opacity: .35; cursor: not-allowed; }
+
+.yp-done {
+    margin-left: auto;
+    padding: .35rem 1rem;
+    border: 0;
+    border-radius: var(--yp-day-radius, 8px);
+    background: var(--yp-on-bg, #B79B72);
+    color: var(--yp-on-ink, #fff) !important;
+    font-size: .8rem !important;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+    .yp-done:hover { filter: brightness(1.08); }

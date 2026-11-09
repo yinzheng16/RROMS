@@ -57,6 +57,10 @@ namespace RROMS.Services.Interfaces
         public decimal Subtotal { get; init; }
         public decimal ServiceCharge { get; init; }
         public decimal TaxAmount { get; init; }
+        // Rates saved on the orders (display only). Null when an order saved
+        // no rate or the orders differ: the receipt then shows amounts only.
+        public decimal? TaxRatePercent { get; init; }
+        public decimal? ServiceChargePercent { get; init; }
         public decimal TotalAmount { get; init; }
 
         // Payment details.

@@ -585,8 +585,8 @@ namespace RROMS.Services
                 rows.Add(new($"+ {items.Count - maxItems} more item(s)", ""));
 
             rows.Add(new("Subtotal", Money(order.Subtotal)));
-            if (order.ServiceCharge > 0) rows.Add(new("Service charge", Money(order.ServiceCharge)));
-            if (order.TaxAmount > 0) rows.Add(new("Tax", Money(order.TaxAmount)));
+            if (order.ServiceCharge > 0) rows.Add(new(ChargeRates.Label("Service charge", order.ServiceChargePercent), Money(order.ServiceCharge)));
+            if (order.TaxAmount > 0) rows.Add(new(ChargeRates.Label("Tax", order.TaxRatePercent), Money(order.TaxAmount)));
             rows.Add(new("Total", Money(order.TotalAmount)));
             if (order.Status != OrderStatus.Cancelled)
                 rows.Add(new("Payment", paid ? "Paid" : "Not paid yet"));

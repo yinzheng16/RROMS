@@ -115,7 +115,8 @@ public class PaymentsModel(
     }
 
     // US54: Refund pop-up (POST). Back to the same list (filters kept)
-    // with a message on top; the scroll position is kept by admin-payments.js.
+    // with the team toast (shared _Layout, TempData Success/ErrorMessage);
+    // the scroll position is kept by admin-payments.js.
     public async Task<IActionResult> OnPostRefundAsync(
         int id, string? reason, string? note, bool returned = false, string? returnUrl = null)
     {
@@ -125,13 +126,13 @@ public class PaymentsModel(
         try
         {
             var done = await _refunds.RefundAsync(id, adminId, reason ?? "", note, returned);
-            TempData["ApRefundOk"] = done.Method == PaymentMethod.Online
+            TempData["SuccessMessage"] = done.Method == PaymentMethod.Online
                 ? $"{done.PaymentNo} refunded. RM {done.Amount.ToString("N2", CultureInfo.InvariantCulture)} goes back to the customer's card through Stripe."
                 : $"{done.PaymentNo} refunded. RM {done.Amount.ToString("N2", CultureInfo.InvariantCulture)} recorded as returned to the customer.";
         }
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
         {
-            TempData["ApRefundError"] = $"{PaymentReceipt.FormatReceiptNo(id)} was not refunded. {ex.Message}";
+            TempData["ErrorMessage"] = $"{PaymentReceipt.FormatReceiptNo(id)} was not refunded. {ex.Message}";
         }
 
         return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : Url.Page("/Admin/Payments")!);
