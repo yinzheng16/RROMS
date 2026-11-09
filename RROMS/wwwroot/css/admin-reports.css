@@ -1807,3 +1807,310 @@
 .rp-table th.rp-badgecol {
     width: 172px;
 }
+
+
+
+/* Reports navigation - single row on desktop */
+
+@media (min-width: 1100px) {
+    .rp-tools {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 12px;
+    }
+
+    .rp-tabs {
+        display: flex;
+        flex: 1 1 auto;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .rp-page .rp-tab {
+        flex: 0 0 auto;
+        padding: 10px 11px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    .rp-when {
+        flex: 0 0 auto;
+        margin: 0;
+        padding-right: 0;
+    }
+
+    .rp-dd-cal .rp-ddb,
+    .rp-dd-cal select {
+        min-width: 175px;
+    }
+}
+
+
+/* Better spacing between report tabs */
+
+@media (min-width: 1100px) {
+    .rp-tabs {
+        gap: 8px;
+    }
+
+    .rp-when {
+        margin-left: 16px;
+    }
+
+    .rp-page .rp-tab {
+        padding: 10px 12px;
+    }
+}
+
+
+
+/* Show complete Order IDs in Orders and Sales reports */
+
+.rp-table.rp-table-codes {
+    table-layout: auto;
+    width: 100%;
+    min-width: 1100px;
+}
+
+.rp-table.rp-table-codes th,
+.rp-table.rp-table-codes td {
+    white-space: nowrap;
+}
+
+.rp-table.rp-table-codes td.rp-code-cell {
+    min-width: max-content;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.rp-table.rp-table-codes .rp-code {
+    display: inline-block;
+    max-width: none;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+/* Horizontal scrolling if the table is wider than the screen */
+
+.rp-tw {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+
+
+/* Give the remaining KPI cards a little breathing room */
+
+.rp-kpi {
+    gap: 8px;
+}
+
+@media (max-width: 600px) {
+    .rp-kpis .rp-kpi:first-child .rp-kpi-v {
+        font-size: clamp(26px, 7vw, 38px);
+    }
+}
+
+
+/* Consistent Overview card heights */
+
+.rp-kpis {
+    align-items: stretch;
+}
+
+.rp-kpi {
+    height: 240px;
+    min-height: 0;
+}
+
+/* Third card: fixed-height status/category area */
+
+.rp-kpis .rp-kpi:nth-child(3) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.rp-kpis .rp-kpi:nth-child(3) .rp-slist {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-content: start;
+    padding-right: 4px;
+    scrollbar-width: thin;
+}
+
+/* Keep status/category rows from shrinking */
+
+.rp-kpis .rp-kpi:nth-child(3) .rp-slist > a,
+.rp-kpis .rp-kpi:nth-child(3) .rp-slist > button {
+    flex-shrink: 0;
+}
+
+/* Keep the chart and KPI content within their cards */
+
+.rp-kpi-row {
+    min-height: 0;
+}
+
+.rp-kpi-v {
+    font-size: clamp(28px, 2.5vw, 40px);
+}
+
+/* Tablet and mobile */
+
+@media (max-width: 980px) {
+    .rp-kpi {
+        height: 300px;
+    }
+}
+
+@media (max-width: 600px) {
+    .rp-kpi {
+        height: 280px;
+    }
+}
+
+
+/* Unified KPI layout for all five report tabs */
+
+.rp-kpis .rp-kpi:nth-child(-n+2) {
+    height: 320px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Keep both KPI contents vertically centred */
+.rp-kpis .rp-kpi:nth-child(-n+2) .rp-kpi-row {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+/* Give the number and description enough space */
+.rp-kpis .rp-kpi:nth-child(-n+2) .rp-kpi-row > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Keep financial amounts readable */
+.rp-kpis .rp-kpi:nth-child(-n+2) .rp-kpi-v {
+    font-size: clamp(26px, 2.4vw, 38px);
+    line-height: 1.15;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Keep the mini bar chart beside the value */
+.rp-kpis .rp-kpi:first-child .rp-mini {
+    flex: 0 0 78px;
+    width: 78px;
+    height: 90px;
+    align-self: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+/* Keep the circular chart beside the value */
+.rp-kpis .rp-kpi:nth-child(2) .rp-ring {
+    flex: 0 0 100px;
+    width: 100px;
+}
+
+/* Tablet and mobile: stack when space is limited */
+@media (max-width: 600px) {
+    .rp-kpis .rp-kpi:nth-child(-n+2) {
+        height: auto;
+        min-height: 240px;
+    }
+
+    .rp-kpis .rp-kpi:nth-child(-n+2) .rp-kpi-v {
+        font-size: clamp(26px, 7vw, 36px);
+    }
+
+    .rp-kpis .rp-kpi:first-child .rp-mini {
+        flex-basis: 65px;
+        width: 65px;
+    }
+
+    .rp-kpis .rp-kpi:nth-child(2) .rp-ring {
+        flex-basis: 86px;
+        width: 86px;
+    }
+
+    .rp-ring svg {
+        max-width: 78px;
+        height: auto;
+    }
+}
+
+
+/* Compact Overview cards */
+
+.rp-kpi,
+.rp-kpis .rp-kpi:nth-child(-n+2) {
+    height: 240px;
+    min-height: 0;
+}
+
+@media (max-width: 980px) {
+    .rp-kpi,
+    .rp-kpis .rp-kpi:nth-child(-n+2) {
+        height: 240px;
+    }
+}
+
+@media (max-width: 600px) {
+    .rp-kpi,
+    .rp-kpis .rp-kpi:nth-child(-n+2) {
+        height: auto;
+        min-height: 220px;
+    }
+}
+
+
+/* Menu Items: show full category names */
+
+.rp-table:has(td.rp-category-cell) {
+    table-layout: auto;
+    width: 100%;
+    min-width: 1250px;
+}
+
+/* Allow category column to expand */
+.rp-table td.rp-category-cell {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+/* Display the complete category name */
+.rp-table .rp-cat.rp-cat-scroll {
+    display: inline-block;
+    max-width: none;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+/* Scroll the table horizontally when necessary */
+.rp-tw {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+
+

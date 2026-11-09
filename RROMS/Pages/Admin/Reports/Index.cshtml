@@ -81,7 +81,8 @@
     var anySelected = R.Groups.Any(g => g.Selected);
     int Pct(decimal v) => stackTotal == 0 ? 0 : (int)Math.Round(v * 100 / stackTotal);
     // Show the 6 biggest (plus any that are chosen); the rest open with "+N more".
-    bool IsExtra(int index) => index >= 4 && !R.Groups[index].Selected;
+    bool IsExtra(int index) =>
+        R.Groups.Count > 3 && index >= 2;
     string GroupCount(ReportGroup g) => isMenu ? "RM " + g.Value.ToString("N2", inv)
         : g.Value.ToString("0") + (isCustomers ? (g.Value == 1 ? " customer" : " customers") : (g.Value == 1 ? " record" : " records"));
 
@@ -604,7 +605,7 @@ else
             else
             {
                 <div class="rp-tw">
-                    <table class="rp-table">
+                    <table class="rp-table @(Q.Type is ReportType.Orders or ReportType.Sales ? "rp-table-codes" : "")">
                         <thead>
                             <tr>
                                 @for (var i = 0; i < R.Columns.Count; i++)
@@ -625,11 +626,19 @@ else
                                     {
                                         var cell = row.Cells[i];
                                         var title = R.Columns[i].Title;
-                                        if (cell.Badge == "rp-b-cat")
-                                        {
-                                            <td><span class="rp-cat">@cell.Text</span></td>
-                                        }
-                                        else if (cell.Badge != null)
+
+                                    if (cell.Badge == "rp-b-cat")
+                                    {
+                                    <td class="rp-category-cell">
+        <span class="rp-cat rp-cat-scroll"
+              title="@cell.Text"
+              tabindex="0">
+            @cell.Text
+        </span>
+                                    </td>
+                                    }
+
+                                    else if (cell.Badge != null)
                                         {
                                             <td><span class="rp-st @cell.Badge">@cell.Text</span></td>
                                         }
@@ -646,10 +655,16 @@ else
                                                 </span>
                                             </td>
                                         }
+                                        
                                         else if (codeColumns.Contains(title))
                                         {
-                                            <td><span class="rp-code">@cell.Text</span></td>
+                                            <td class="rp-code-cell">
+                                                <span class="rp-code" title="@cell.Text">
+                                                    @cell.Text
+                                                </span>
+                                            </td>
                                         }
+
                                         else if (cell.Text is "0" or "0.00" or "0%")
                                         {
                                             <td class="rp-zero">@cell.Text</td>
