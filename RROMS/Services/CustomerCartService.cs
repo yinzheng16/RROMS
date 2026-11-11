@@ -180,6 +180,10 @@ public sealed partial class CustomerCartService : ICustomerCartService
         if (!validation.Succeeded) return new(validation.Status, validation.Message, view);
         string? orderingError = await GetOrderingHoursError(cancellationToken);
         if (orderingError is not null) return new(CartResult.Invalid, orderingError, view);
+        // US24 + US32: once the table's bill is confirmed or paid, the visit is closed for new orders.
+        if (view.OrderType == OrderType.DineIn && view.DiningSessionId.HasValue &&
+            await IsSessionBillLockedAsync(view.DiningSessionId.Value, cancellationToken))
+            return new(CartResult.Invalid, BillLockedMessage, view);
         // 20-character order number, independently protected from client editing.
         string orderNo = "YR" + Now.ToString("yyMMdd", CultureInfo.InvariantCulture) +
             Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
@@ -241,6 +245,9 @@ public sealed partial class CustomerCartService : ICustomerCartService
                     session.Id == view.DiningSessionId.Value && session.Status == DiningSessionStatus.Open &&
                     session.CustomerId == userId && session.ReservationId == view.ReservationId, ct);
                 if (!stillValid) return Invalid("Your reservation or dining session changed. Please review your reservation again.");
+                // US24 + US32: checked again inside the serializable transaction, so a bill
+                // confirmed between Review and Confirm still blocks this order.
+                if (await IsSessionBillLockedAsync(view.DiningSessionId.Value, ct)) return Invalid(BillLockedMessage);
             }
 
             var order = new Order
@@ -479,6 +486,15 @@ public sealed partial class CustomerCartService : ICustomerCartService
     private static void Touch(CustomerCart cart, DateTime now)
     { cart.Revision = Guid.NewGuid(); cart.UpdatedAt = now; }
     private static CartOperation Invalid(string text) => new(CartResult.Invalid, text);
+    private const string BillLockedMessage =
+    "The bill for this table has already been confirmed, so no more dishes can be ordered for this visit. Please ask our staff if you need anything else.";
+
+    // Same rule as Member 4's IBillingService.IsSessionLockedAsync (US32): a Confirmed or Paid
+    // bill locks its dining session. Read through this DbContext so the check runs inside
+    // the checkout transaction.
+    private Task<bool> IsSessionBillLockedAsync(int sessionId, CancellationToken ct) =>
+        _db.Bills.AsNoTracking().AnyAsync(bill => bill.DiningSessionId == sessionId &&
+            (bill.Status == BillStatus.Confirmed || bill.Status == BillStatus.Paid), ct);
     private static CartOperation Changed() => new(CartResult.Changed,
         "Your cart changed in another tab. Review the latest cart before continuing.");
     private static CartOperation Expired() => new(CartResult.Changed,
