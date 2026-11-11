@@ -13,6 +13,7 @@ public class StaffReservationService(
     IReservationService reservations,
     IProfileService profiles,
     IDiningSessionService sessions,
+    IBillingService billing,
     INotificationService notifications,
     ILogger<StaffReservationService> logger) : IStaffReservationService
 {
@@ -510,6 +511,11 @@ public class StaffReservationService(
         var session = await sessions.GetOpenSessionForReservationAsync(reservationId, ct);
         if (session != null)
         {
+            // The table cannot be released while the bill is still open (Member 4's settlement check).
+            if (!await billing.IsSessionFinanciallySettledAsync(session.Id))
+                return new(false, "not_settled",
+                    "This table still has an unpaid bill. Please settle the bill before marking the guests as left.");
+
             var closed = await sessions.CloseSessionAsync(session.Id, staffUserId, RoleName(role), ct);
             if (!closed.Success) return new(false, closed.Code, closed.Message);
         }
